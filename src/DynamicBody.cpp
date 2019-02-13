@@ -37,8 +37,6 @@ DynamicBody::DynamicBody() :
 	m_lastTorque = vector3d(0.0);
 	m_aiMessage = AIError::AIERROR_NONE;
 	m_decelerating = false;
-	for (int i = 0; i < Feature::MAX_FEATURE; i++)
-		m_features[i] = false;
 }
 
 DynamicBody::DynamicBody(const Json &jsonObj, Space *space) :
@@ -72,8 +70,6 @@ DynamicBody::DynamicBody(const Json &jsonObj, Space *space) :
 
 	m_aiMessage = AIError::AIERROR_NONE;
 	m_decelerating = false;
-	for (int i = 0; i < Feature::MAX_FEATURE; i++)
-		m_features[i] = false;
 }
 
 void DynamicBody::SaveToJson(Json &jsonObj, Space *space)
@@ -108,7 +104,7 @@ DynamicBody::~DynamicBody()
 
 void DynamicBody::AddFeature(Feature f)
 {
-	m_features[f] = true;
+	Body::AddFeature(f);
 	if (f == Feature::PROPULSION && m_propulsion == nullptr) {
 		m_propulsion.Reset(new Propulsion());
 	}

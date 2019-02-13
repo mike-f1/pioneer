@@ -7,25 +7,7 @@
 #include "Body.h"
 #include "graphics/Material.h"
 
-struct ProjectileData {
-	ProjectileData() :
-		lifespan(0.0f),
-		damage(0.0f),
-		length(0.0f),
-		width(0.0f),
-		speed(0.0f),
-		color(Color::WHITE),
-		mining(false),
-		beam(false) {}
-	float lifespan;
-	float damage;
-	float length;
-	float width;
-	float speed;
-	Color color;
-	bool mining;
-	bool beam;
-};
+struct ProjectileData;
 
 class Frame;
 

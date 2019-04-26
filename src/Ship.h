@@ -13,7 +13,6 @@
 #include "ShipType.h"
 #include "galaxy/SystemPath.h"
 #include "scenegraph/ModelSkin.h"
-#include "sound/Sound.h"
 
 #include "FixedGuns.h"
 #include "ship/Propulsion.h"
@@ -286,8 +285,6 @@ private:
 	shipstats_t m_stats;
 	const ShipType *m_type;
 	SceneGraph::ModelSkin m_skin;
-
-	Sound::Event m_beamLaser[2];
 
 	FlightState m_flightState;
 	bool m_testLanded;

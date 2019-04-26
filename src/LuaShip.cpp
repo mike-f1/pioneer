@@ -1389,6 +1389,7 @@ static int l_ship_mount_gun(lua_State *l)
 	{
 		float recharge, heatrate, coolrate;
 		int barrels;
+		std::string sound;
 		ProjectileData pd;
 
 		LuaTable t = LuaTable(l, 4);
@@ -1404,6 +1405,12 @@ static int l_ship_mount_gun(lua_State *l)
 
 		coolrate = t.Get<float>("coolRate", -1.);
 		check_error(coolrate, 0.01f, "coolRate", s->GetLabel(), name);
+
+		sound = t.Get("sound", "NoSound");
+		if (sound == "NoSound") {
+			Output("WARNING: %s call 'MountGun' for %s without 'sound'\n", s->GetLabel().c_str(), name.c_str());
+			sound = "";
+		}
 
 		pd.length = t.Get<float>("length", -1);
 		check_error(pd.length, 10.0f, "length", s->GetLabel(), name);
@@ -1437,7 +1444,7 @@ static int l_ship_mount_gun(lua_State *l)
 			pd.color = Color::BLANK;
 		}
 
-		LuaPush(l, s->MountGun(mount_num, name, recharge, heatrate, coolrate, barrels, pd));
+		LuaPush(l, s->MountGun(mount_num, name, sound, recharge, heatrate, coolrate, barrels, pd));
 	} else {
 		luaL_error(l, "Ship %s call 'MountGun' without gun or mount data", s->GetLabel().c_str());
 		LuaPush(l, false);

@@ -21,7 +21,7 @@
    "slots" : {
       "cargo" : 10,
       "scoop" : 1,
-      "laser_front" : 1,
+      "laser_front" : 2,
       "laser_rear" : 0,
       "missile" : 4,
       "sensor"  : 8

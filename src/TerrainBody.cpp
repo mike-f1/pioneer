@@ -105,13 +105,14 @@ void TerrainBody::Render(Graphics::Renderer *renderer, const Camera *camera, con
 
 	std::vector<Camera::Shadow> shadows;
 	if (camera) {
-		camera->PrincipalShadows(this, 3, shadows);
-		for (std::vector<Camera::Shadow>::iterator it = shadows.begin(), itEnd = shadows.end(); it != itEnd; ++it) {
-			it->centre = ftran * it->centre;
-		}
+		shadows = camera->PrincipalShadows(this, 3);
+		std::for_each(begin(shadows), end(shadows), [&ftran](Camera::Shadow &sh)
+		{
+			sh.centre = ftran * sh.centre;
+		});
 	}
 
-	ftran.Scale(rad, rad, rad);
+	ftran.Scale(rad);
 
 	// translation not applied until patch render to fix jitter
 	m_baseSphere->Render(renderer, ftran, -campos, m_sbody->GetRadius(), shadows);

@@ -106,7 +106,7 @@ public:
 
 	void CalcShadows(const int lightNum, const Body *b, std::vector<Shadow> &shadowsOut) const;
 	float ShadowedIntensity(const int lightNum, const Body *b) const;
-	void PrincipalShadows(const Body *b, const int n, std::vector<Shadow> &shadowsOut) const;
+	std::vector<Shadow> PrincipalShadows(const Body *b, const int n) const;
 
 	// lights with properties in camera space
 	const std::vector<LightSource> &GetLightSources() const { return m_lightSources; }

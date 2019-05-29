@@ -365,18 +365,22 @@ float Camera::ShadowedIntensity(const int lightNum, const Body *b) const
 }
 
 // PrincipalShadows(b,n): returns the n biggest shadows on b in order of size
-void Camera::PrincipalShadows(const Body *b, const int n, std::vector<Shadow> &shadowsOut) const
+std::vector<Camera::Shadow> Camera::PrincipalShadows(const Body *b, const int n) const
 {
-	shadows.clear();
-	shadows.reserve(16);
-	for (size_t i = 0; i < 4 && i < m_lightSources.size(); i++) {
+	std::vector<Camera::Shadow> shadows;
+	shadows.reserve(m_lightSources.size());
+	for (size_t i = 0; i < m_lightSources.size(); i++) {
 		CalcShadows(i, b, shadows);
 	}
-	shadowsOut.reserve(shadows.size());
 	std::sort(shadows.begin(), shadows.end());
 	std::vector<Shadow>::reverse_iterator it = shadows.rbegin(), itREnd = shadows.rend();
-	for (int i = 0; i < n; i++) {
-		if (it == itREnd) break;
+
+	unsigned int num_shadows = std::min(size_t(n), shadows.size());
+
+	std::vector<Camera::Shadow> shadowsOut;
+	shadowsOut.reserve(num_shadows);
+	for (int i = 0; i < num_shadows; i++) {
 		shadowsOut.push_back(*(it++));
 	}
+	return shadowsOut;
 }

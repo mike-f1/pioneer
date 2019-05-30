@@ -16,6 +16,8 @@ namespace Graphics {
 	class Renderer;
 }
 
+class GeomTree;
+
 class SystemBody;
 class GeoPatch;
 class GeoPatchContext;
@@ -32,6 +34,8 @@ public:
 
 	virtual void Update() override;
 	virtual void Render(Graphics::Renderer *renderer, const matrix4x4d &modelView, vector3d campos, const float radius, const std::vector<Camera::Shadow> &shadows) override;
+
+	GeomTree *GetGeomTree(const matrix4x4d &trans, vector3d &center);
 
 	virtual double GetHeight(const vector3d &p) const override final
 	{
@@ -78,6 +82,12 @@ private:
 	void ProcessQuadSplitRequests();
 
 	std::unique_ptr<GeoPatch> m_patches[6];
+
+	GeoPatch *m_nearest_patch;
+
+	bool m_geomTreeShouldBeUpdated;
+	std::unique_ptr<GeomTree> m_geomTree;
+
 	struct TDistanceRequest {
 		TDistanceRequest(double dist, SQuadSplitRequest *pRequest, GeoPatch *pRequester) :
 			mDistance(dist),
@@ -113,6 +123,7 @@ private:
 	EGSInitialisationStage m_initStage;
 
 	Sint32 m_maxDepth;
+
 };
 
 #endif /* _GEOSPHERE_H */

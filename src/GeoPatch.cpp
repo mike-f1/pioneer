@@ -10,13 +10,13 @@
 #include "Pi.h"
 #include "RefCounted.h"
 #include "Sphere.h"
+#include "collider/GeomTree.h"
 #include "galaxy/SystemBody.h"
 #include "graphics/Frustum.h"
 #include "graphics/Graphics.h"
 #include "graphics/Material.h"
 #include "graphics/Renderer.h"
 #include "perlin.h"
-#include "vcacheopt/vcacheopt.h"
 #include <algorithm>
 #include <deque>
 
@@ -46,6 +46,7 @@ GeoPatch::GeoPatch(const RefCountedPtr<GeoPatchContext> &ctx_, GeoSphere *gs,
 {
 
 	m_clipCentroid = (m_v0 + m_v1 + m_v2 + m_v3) * 0.25;
+	// FIXME: m_centroid is normalized here, and then re-normalized...
 	m_centroid = m_clipCentroid.Normalized();
 	m_clipRadius = 0.0;
 	m_clipRadius = std::max(m_clipRadius, (m_v0 - m_clipCentroid).Length());
@@ -60,6 +61,9 @@ GeoPatch::GeoPatch(const RefCountedPtr<GeoPatchContext> &ctx_, GeoSphere *gs,
 	}
 	m_roughLength = GEOPATCH_SUBDIVIDE_AT_CAMDIST / pow(2.0, m_depth) * distMult;
 	m_needUpdateVBOs = false;
+
+	m_distances.assign(NUM_KIDS, TPatchDistance());
+	for (int i = 0; i < NUM_KIDS; i++) m_distances[i].id = i;
 }
 
 GeoPatch::~GeoPatch()
@@ -71,6 +75,60 @@ GeoPatch::~GeoPatch()
 	m_heights.reset();
 	m_normals.reset();
 	m_colors.reset();
+}
+
+GeoPatch::TPatchDistance GeoPatch::FindNearestGeoPatch()
+{
+	if (m_kids[0] == nullptr) {
+		return TPatchDistance(this, m_distance_sqr);
+	} else {
+		int temp;
+		for (TPatchDistance &pd : m_distances) {
+			// TODO: Remove this "temp", needed because
+			// ctor's otherwise will put it to 0
+			temp = pd.id;
+			pd = m_kids[temp]->FindNearestGeoPatch();
+			pd.id = temp;
+		};
+		// "sort" acts only when the patch under camera
+		// changes in a contiguous patch, otherwise it is O(NUM_KIDS)
+		std::sort(begin(m_distances), end(m_distances));
+		return m_distances.front();
+	}
+}
+
+GeomTree *GeoPatch::BuildGeomTree(const matrix4x4d &trans, vector3d &center)
+{
+	if (m_vertexBuffer == nullptr) return nullptr;
+
+	center = m_clipCentroid * trans;
+
+	const GeoPatchContext::VBOVertex *vb = m_vertexBuffer->Map<GeoPatchContext::VBOVertex>(Graphics::BUFFER_MAP_READ);
+
+	std::vector<vector3f> vertices;
+	vertices.reserve(m_ctx->NUMVERTICES());
+
+	for (int i = 0; i < m_ctx->NUMVERTICES(); i++ ) {
+		vector3f pos = vector3f(vector3d(vb[i].pos) * trans);
+		vertices.push_back(pos);
+	}
+
+	m_vertexBuffer->Unmap();
+
+	Graphics::IndexBuffer *ib = m_ctx->GetIndexBuffer();
+	Uint32* indices = ib->Map(Graphics::BUFFER_MAP_READ);
+
+	Uint32 *triflags = new Uint32[ib->GetIndexCount() / 3];
+
+	for (int i = 0; i < ib->GetIndexCount() / 3; i++) triflags[i] = 0;
+
+	GeomTree *geomtree = new GeomTree(m_ctx->NUMVERTICES(), m_ctx->GetNumTris(), vertices, indices, triflags);
+
+	ib->Unmap();
+
+	delete[] triflags;
+
+	return geomtree;
 }
 
 void GeoPatch::UpdateVBOs(Graphics::Renderer *renderer)
@@ -118,6 +176,7 @@ void GeoPatch::UpdateVBOs(Graphics::Renderer *renderer)
 
 				GeoPatchContext::VBOVertex *vtxPtr = &VBOVtxPtr[x + (y * edgeLen)];
 				vtxPtr->pos = vector3f(p);
+
 				++pHts; // next height
 
 				const vector3f norma(pNorm->Normalized());
@@ -244,11 +303,11 @@ void GeoPatch::UpdateVBOs(Graphics::Renderer *renderer)
 #ifdef DEBUG_BOUNDING_SPHERES
 		RefCountedPtr<Graphics::Material> mat(Pi::renderer->CreateMaterial(Graphics::MaterialDescriptor()));
 		switch (m_depth) {
-			case 0: mat->diffuse = Color::WHITE; break;
+			case 0: mat->diffuse = Color::BLACK; break;
 			case 1: mat->diffuse = Color::RED; break;
 			case 2: mat->diffuse = Color::GREEN; break;
 			case 3: mat->diffuse = Color::BLUE; break;
-			default: mat->diffuse = Color::BLACK; break;
+			default: mat->diffuse = Color::WHITE; break;
 		}
 		m_boundsphere.reset(new Graphics::Drawables::Sphere3D(Pi::renderer, mat, Pi::renderer->CreateRenderState(Graphics::RenderStateDesc()), 2, m_clipRadius));
 #endif
@@ -257,12 +316,17 @@ void GeoPatch::UpdateVBOs(Graphics::Renderer *renderer)
 
 // the default sphere we do the horizon culling against
 static const SSphere s_sph;
+
 void GeoPatch::Render(Graphics::Renderer *renderer, const vector3d &campos, const matrix4x4d &modelView, const Graphics::Frustum &frustum)
 {
 	PROFILE_SCOPED()
 	// must update the VBOs to calculate the clipRadius...
 	UpdateVBOs(renderer);
-	// ...before doing the furstum culling that relies on it.
+
+	// update distance from camera for this patch
+	m_distance_sqr = (campos - m_clipCentroid).LengthSqr();
+
+	// ...before doing the frustum culling that relies on it.
 	if (!frustum.TestPoint(m_clipCentroid, m_clipRadius))
 		return; // nothing below this patch is visible
 
@@ -299,6 +363,7 @@ void GeoPatch::Render(Graphics::Renderer *renderer, const vector3d &campos, cons
 		m_geosphere->GetMaterialParameters().patchDepth = m_depth;
 
 		renderer->DrawBufferIndexed(m_vertexBuffer.get(), m_ctx->GetIndexBuffer(), rs, mat.Get());
+
 #ifdef DEBUG_BOUNDING_SPHERES
 		if (m_boundsphere.get()) {
 			renderer->SetWireFrameMode(true);

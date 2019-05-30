@@ -27,6 +27,8 @@ namespace Graphics {
 	class Frustum;
 }
 
+class GeomTree;
+
 class GeoPatchContext;
 class GeoSphere;
 class BasePatchJob;
@@ -40,6 +42,29 @@ public:
 		const int depth, const GeoPatchID &ID_);
 
 	~GeoPatch();
+
+	// Store patch pointer and distance
+	struct TPatchDistance {
+		TPatchDistance():
+			gp(nullptr),
+			distance_sqr(std::numeric_limits<double>::max()),
+			id(0)
+			{}
+		TPatchDistance(GeoPatch *p, double d):
+			gp(p),
+			distance_sqr(d),
+			id(0)
+			{}
+		GeoPatch *gp;
+		double distance_sqr;
+		int id;
+
+		friend bool operator<(const TPatchDistance &a, const TPatchDistance &b) { return a.distance_sqr < b.distance_sqr;};
+	};
+
+	TPatchDistance FindNearestGeoPatch();
+
+	GeomTree *BuildGeomTree(const matrix4x4d &trans, vector3d &center);
 
 	inline void NeedToUpdateVBOs()
 	{
@@ -102,6 +127,9 @@ private:
 	double m_clipRadius;
 	Sint32 m_depth;
 	bool m_needUpdateVBOs;
+
+	double m_distance_sqr;
+	std::vector<TPatchDistance> m_distances;
 
 	const GeoPatchID m_PatchID;
 	Job::Handle m_job;

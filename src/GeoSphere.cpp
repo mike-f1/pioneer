@@ -11,6 +11,7 @@
 #include "RefCounted.h"
 #include "galaxy/StarSystem.h"
 #include "galaxy/AtmosphereParameters.h"
+#include "collider/GeomTree.h"
 #include "graphics/Frustum.h"
 #include "graphics/Graphics.h"
 #include "graphics/Material.h"
@@ -177,6 +178,7 @@ GeoSphere::GeoSphere(const SystemBody *body) :
 	m_tempCampos(0.0),
 	m_tempFrustum(800, 600, 0.5, 1.0, 1000.0),
 	m_initStage(eBuildFirstPatches),
+	m_nearest_patch(nullptr),
 	m_maxDepth(0)
 {
 	print_info(body, m_terrain.Get());
@@ -376,8 +378,23 @@ void GeoSphere::Render(Graphics::Renderer *renderer, const matrix4x4d &modelView
 	if (m_initStage < eDefaultUpdateState)
 		return;
 
+	// Find patch between campos and center:
+	GeoPatch::TPatchDistance nearest;
+
+	for (int i = 0; i < NUM_PATCHES; i++) {
+		GeoPatch::TPatchDistance test = m_patches[i]->FindNearestGeoPatch();
+		if (test < nearest) {
+			nearest = test;
+		}
+	}
+
+	if (nearest.gp != m_nearest_patch) {
+		m_nearest_patch = nearest.gp;
+		m_geomTreeShouldBeUpdated = true;
+	}
+
 	matrix4x4d trans = modelView;
-	trans.Translate(-campos.x, -campos.y, -campos.z);
+	trans.Translate(-campos);
 	renderer->SetTransform(trans); //need to set this for the following line to work
 	matrix4x4d modv;
 	matrix4x4d proj;
@@ -430,9 +447,7 @@ void GeoSphere::Render(Graphics::Renderer *renderer, const matrix4x4d &modelView
 		ambient.a = 255;
 		emission = StarSystem::starRealColors[GetSystemBody()->GetType()];
 		emission.a = 255;
-	}
-
-	else {
+	} else {
 		// give planet some ambient lighting if the viewer is close to it
 		double camdist = 0.1 / campos.LengthSqr();
 		// why the fuck is this returning 0.1 when we are sat on the planet??
@@ -453,6 +468,17 @@ void GeoSphere::Render(Graphics::Renderer *renderer, const matrix4x4d &modelView
 	renderer->SetAmbientColor(oldAmbient);
 
 	renderer->GetStats().AddToStatCount(Graphics::Stats::STAT_PLANETS, 1);
+}
+
+GeomTree *GeoSphere::GetGeomTree(const matrix4x4d &trans, vector3d &center) {
+	if (m_geomTreeShouldBeUpdated) {
+		printf("GeoSphere::GetGeomTree()\n");
+		if (m_nearest_patch == nullptr) return nullptr;
+		m_geomTree.reset(m_nearest_patch->BuildGeomTree(trans, center));
+		m_geomTreeShouldBeUpdated = false;
+	} else {
+	}
+	return m_geomTree.get();
 }
 
 void GeoSphere::SetUpMaterials()

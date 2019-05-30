@@ -997,9 +997,9 @@ void Space::TimeStep(float step)
 
 	// XXX does not need to be done this often
 	CollideFrame(m_rootFrame.get());
-	for (Body *b : m_bodies)
+/*	for (Body *b : m_bodies)
 		CollideWithTerrain(b, step);
-
+*/
 	// update frames of reference
 	for (Body *b : m_bodies)
 		b->UpdateFrame();

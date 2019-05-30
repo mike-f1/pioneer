@@ -10,7 +10,7 @@ GeomTree::~GeomTree()
 {
 }
 
-GeomTree::GeomTree(const int numVerts, const int numTris, const std::vector<vector3f> &vertices, const Uint32 *indices, const Uint32 *triflags) :
+GeomTree::GeomTree(const int numVerts, const int numTris, const std::vector<vector3f> &vertices, const Uint32 indices[], const Uint32 triflags[]) :
 	m_numVertices(numVerts),
 	m_numTris(numTris),
 	m_vertices(vertices)

@@ -36,6 +36,7 @@ public:
 	// returns value in metres
 	double GetMaxFeatureRadius() const { return m_maxFeatureHeight; }
 
+	void EnableCollisionDebug(bool enable) { m_enable_debug = enable; }
 	// implements calls to all relevant terrain management sub-systems
 	static void OnChangeDetailLevel();
 
@@ -62,6 +63,8 @@ private:
 
 	GeomTree *m_previous_gt;
 	Geom *m_terrainGeom;
+
+	// For debug:
 	Graphics::Renderer *m_renderer;
 };
 

@@ -472,7 +472,6 @@ void GeoSphere::Render(Graphics::Renderer *renderer, const matrix4x4d &modelView
 
 GeomTree *GeoSphere::GetGeomTree(const matrix4x4d &trans, vector3d &center) {
 	if (m_geomTreeShouldBeUpdated) {
-		printf("GeoSphere::GetGeomTree()\n");
 		if (m_nearest_patch == nullptr) return nullptr;
 		m_geomTree.reset(m_nearest_patch->BuildGeomTree(trans, center));
 		m_geomTreeShouldBeUpdated = false;

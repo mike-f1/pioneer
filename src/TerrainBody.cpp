@@ -15,14 +15,20 @@
 #include "graphics/Graphics.h"
 #include "graphics/Renderer.h"
 
+//includes for debug:
+#include "collider/GeomTree.h"
+#include "graphics/RenderState.h"
+
 TerrainBody::TerrainBody(SystemBody *sbody) :
 	Body(),
 	m_sbody(sbody),
 	m_mass(0),
+	m_enable_debug(false),
 	m_previous_gt(nullptr),
 	m_terrainGeom(nullptr)
 {
 	InitTerrainBody();
+	EnableCollisionDebug(true);
 }
 
 TerrainBody::~TerrainBody()
@@ -57,9 +63,11 @@ void TerrainBody::SaveToJson(Json &jsonObj, Space *space)
 
 TerrainBody::TerrainBody(const Json &jsonObj, Space *space) :
 	Body(jsonObj, space),
+	m_enable_debug(false),
 	m_previous_gt(nullptr),
 	m_terrainGeom(nullptr)
 {
+	EnableCollisionDebug(true);
 
 	try {
 		Json terrainBodyObj = jsonObj["terrain_body"];
@@ -71,12 +79,7 @@ TerrainBody::TerrainBody(const Json &jsonObj, Space *space) :
 
 	InitTerrainBody();
 }
-/*
-#include "Player.h"
-#include "Pi.h"
-#include "graphics/RenderState.h"
-#include "MathUtil.h"
-*/
+
 void TerrainBody::Render(Graphics::Renderer *renderer, const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform)
 {
 	m_renderer = renderer;
@@ -138,7 +141,7 @@ void TerrainBody::Render(Graphics::Renderer *renderer, const Camera *camera, con
 	if (shrink)
 		renderer->ClearDepthBuffer();
 
-	if (m_collisionMeshVB.Valid() && m_enable_debug) {
+	if (m_enable_debug && m_collisionMeshVB.Valid()) {
 		renderer->SetWireFrameMode(true);
 		Graphics::RenderStateDesc rsd;
 		rsd.cullMode = Graphics::CULL_NONE;
@@ -162,7 +165,6 @@ void TerrainBody::StaticUpdate(const float timeStep)
 
 		if (gt != nullptr && gt != m_previous_gt) {
 			// Remove old (if any), add new:
-			printf("TerrainBody::Render : Update StaticGeom\n");
 			m_previous_gt = gt;
 			printf("*** TerrainBody::StaticUpdate:\n");
 			printf("  Radius: %f\n", m_previous_gt->GetRadius());
@@ -236,7 +238,6 @@ void TerrainBody::RebuildDebugMesh(GeomTree *debug_gt, vector3d position)
 	for (unsigned int i = 0; i < numIndices; i++) {
 		if (i % 3 == 0)
 			trindex++;
-
 		va.Add(vertices[indices[i]], Color::WHITE);
 	}
 

@@ -3,12 +3,12 @@
 
 #include "Frame.h"
 
-#include "Body.h"
 #include "GameSaveError.h"
 #include "JsonUtils.h"
 #include "Sfx.h"
 #include "Space.h"
-#include "collider/collider.h"
+#include "collider/CollisionSpace.h"
+#include "utils.h"
 
 std::list<Frame> Frame::s_frames;
 

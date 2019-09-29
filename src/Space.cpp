@@ -64,7 +64,6 @@ Space::BodyNearList Space::BodyNearFinder::GetBodiesMaybeNear(const vector3d &po
 Space::Space(Game *game, RefCountedPtr<Galaxy> galaxy, Space *oldSpace) :
 	m_starSystemCache(oldSpace ? oldSpace->m_starSystemCache : galaxy->NewStarSystemSlaveCache()),
 	m_game(game),
-	m_frameIndexValid(false),
 	m_bodyIndexValid(false),
 	m_sbodyIndexValid(false),
 	m_bodyNearFinder(this)
@@ -84,7 +83,6 @@ Space::Space(Game *game, RefCountedPtr<Galaxy> galaxy, const SystemPath &path, S
 	m_starSystemCache(oldSpace ? oldSpace->m_starSystemCache : galaxy->NewStarSystemSlaveCache()),
 	m_starSystem(galaxy->GetStarSystem(path)),
 	m_game(game),
-	m_frameIndexValid(false),
 	m_bodyIndexValid(false),
 	m_sbodyIndexValid(false),
 	m_bodyNearFinder(this)
@@ -113,7 +111,6 @@ Space::Space(Game *game, RefCountedPtr<Galaxy> galaxy, const SystemPath &path, S
 Space::Space(Game *game, RefCountedPtr<Galaxy> galaxy, const Json &jsonObj, double at_time) :
 	m_starSystemCache(galaxy->NewStarSystemSlaveCache()),
 	m_game(game),
-	m_frameIndexValid(false),
 	m_bodyIndexValid(false),
 	m_sbodyIndexValid(false),
 	m_bodyNearFinder(this)
@@ -137,7 +134,6 @@ Space::Space(Game *game, RefCountedPtr<Galaxy> galaxy, const Json &jsonObj, doub
 
 	if (!spaceObj.count("frame")) throw SavedGameCorruptException();
 	m_rootFrame.reset(Frame::FromJson(spaceObj["frame"], this, nullptr, at_time));
-	RebuildFrameIndex();
 
 	try {
 		Json bodyArray = spaceObj["bodies"].get<Json::array_t>();
@@ -178,7 +174,6 @@ void Space::RefreshBackground()
 void Space::ToJson(Json &jsonObj)
 {
 	PROFILE_SCOPED()
-	RebuildFrameIndex();
 	RebuildBodyIndex();
 	RebuildSystemBodyIndex();
 
@@ -201,13 +196,6 @@ void Space::ToJson(Json &jsonObj)
 	jsonObj["space"] = spaceObj; // Add space object to supplied object.
 }
 
-Frame *Space::GetFrameByIndex(Uint32 idx) const
-{
-	assert(m_frameIndexValid);
-	assert(m_frameIndex.size() > idx);
-	return m_frameIndex[idx];
-}
-
 Body *Space::GetBodyByIndex(Uint32 idx) const
 {
 	assert(m_bodyIndexValid);
@@ -220,15 +208,6 @@ SystemBody *Space::GetSystemBodyByIndex(Uint32 idx) const
 	assert(m_sbodyIndexValid);
 	assert(m_sbodyIndex.size() > idx);
 	return m_sbodyIndex[idx];
-}
-
-Uint32 Space::GetIndexForFrame(const Frame *frame) const
-{
-	assert(m_frameIndexValid);
-	for (Uint32 i = 0; i < m_frameIndex.size(); i++)
-		if (m_frameIndex[i] == frame) return i;
-	assert(0);
-	return Uint32(-1);
 }
 
 Uint32 Space::GetIndexForBody(const Body *body) const
@@ -249,14 +228,6 @@ Uint32 Space::GetIndexForSystemBody(const SystemBody *sbody) const
 	return Uint32(-1);
 }
 
-void Space::AddFrameToIndex(Frame *frame)
-{
-	assert(frame);
-	m_frameIndex.push_back(frame);
-	for (Frame *kid : frame->GetChildren())
-		AddFrameToIndex(kid);
-}
-
 void Space::AddSystemBodyToIndex(SystemBody *sbody)
 {
 	assert(sbody);
@@ -265,21 +236,10 @@ void Space::AddSystemBodyToIndex(SystemBody *sbody)
 		AddSystemBodyToIndex(sbody->GetChildren()[i]);
 }
 
-void Space::RebuildFrameIndex()
-{
-	m_frameIndex.clear();
-	m_frameIndex.push_back(0);
-
-	if (m_rootFrame)
-		AddFrameToIndex(m_rootFrame.get());
-
-	m_frameIndexValid = true;
-}
-
 void Space::RebuildBodyIndex()
 {
 	m_bodyIndex.clear();
-	m_bodyIndex.push_back(0);
+	m_bodyIndex.push_back(nullptr);
 
 	for (Body *b : m_bodies) {
 		m_bodyIndex.push_back(b);
@@ -300,7 +260,7 @@ void Space::RebuildBodyIndex()
 void Space::RebuildSystemBodyIndex()
 {
 	m_sbodyIndex.clear();
-	m_sbodyIndex.push_back(0);
+	m_sbodyIndex.push_back(nullptr);
 
 	if (m_starSystem)
 		AddSystemBodyToIndex(m_starSystem->GetRootBody().Get());
@@ -1014,10 +974,11 @@ void Space::TimeStep(float step)
 	if (Pi::MustRefreshBackgroundClearFlag())
 		RefreshBackground();
 
-	m_frameIndexValid = m_bodyIndexValid = m_sbodyIndexValid = false;
+	m_bodyIndexValid = m_sbodyIndexValid = false;
 
 	// XXX does not need to be done this often
 	CollideFrame(m_rootFrame.get());
+
 	for (Body *b : m_bodies)
 		CollideWithTerrain(b, step);
 

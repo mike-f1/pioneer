@@ -851,7 +851,7 @@ void AICmdFlyTo::PostLoadFixup(Space *space)
 {
 	AICommand::PostLoadFixup(space);
 	m_target = space->GetBodyByIndex(m_targetIndex);
-	m_targframe = space->GetFrameByIndex(m_targframeIndex);
+	m_targframe = Frame::FindFrame(m_targframeIndex);
 	m_lockhead = true;
 	// Ensure needed sub-system:
 	m_prop.Reset(m_dBody->GetPropulsion());
@@ -876,7 +876,7 @@ AICmdFlyTo::AICmdFlyTo(DynamicBody *dBody, Body *target) :
 		m_dist = VICINITY_MUL * MaxEffectRad(target, m_prop.Get());
 
 	if (target->IsType(Object::SPACESTATION) && static_cast<SpaceStation *>(target)->IsGroundStation()) {
-		m_posoff = target->GetPosition() + 15000.0 * target->GetOrient().VectorY();
+		m_posoff = target->GetPosition() + VICINITY_MIN * target->GetOrient().VectorY();
 		//		m_posoff += 500.0 * target->GetOrient().VectorX();
 		m_targframe = target->GetFrame();
 		m_target = 0;
@@ -885,7 +885,7 @@ AICmdFlyTo::AICmdFlyTo(DynamicBody *dBody, Body *target) :
 		m_targframe = 0;
 	}
 
-	if (dBody->GetPositionRelTo(target).Length() <= 15000.0) m_targframe = 0;
+	if (dBody->GetPositionRelTo(target).Length() <= VICINITY_MIN) m_targframe = 0;
 }
 
 // Specified pos, endvel should be > 0
@@ -929,7 +929,7 @@ void AICmdFlyTo::SaveToJson(Json &jsonObj)
 	AICommand::SaveToJson(aiCommandObj);
 	aiCommandObj["index_for_target"] = Pi::game->GetSpace()->GetIndexForBody(m_target);
 	aiCommandObj["dist"] = m_dist;
-	aiCommandObj["index_for_target_frame"] = Pi::game->GetSpace()->GetIndexForFrame(m_targframe);
+	aiCommandObj["index_for_target_frame"] = (m_targframe != nullptr ? m_targframe->GetId() : noFrameId);
 	aiCommandObj["pos_off"] = m_posoff;
 	aiCommandObj["end_vel"] = m_endvel;
 	aiCommandObj["tangent"] = m_tangent;

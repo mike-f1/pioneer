@@ -32,8 +32,28 @@ local ui = { }
 local defaultTheme = import("themes/default")
 ui.theme = defaultTheme
 
+ui.rescaleUI = function(val, baseResolution, rescaleToScreenAspect)
+	local rescaleVector = Vector2(pigui.screen_width / baseResolution.x, pigui.screen_height / baseResolution.y)
+	local rescaleFactor = math.min(rescaleVector.x, rescaleVector.y)
+	local type = type(val)
+
+	if type == 'table' then
+		local result = {}
+		for k, v in pairs(val) do
+			result[k] = ui.rescaleUI(v, baseResolution)
+		end
+
+		return result
+	elseif type == 'userdata' and val.x and val.y then
+		return Vector2(val.x * ((rescaleToScreenAspect and rescaleVector.x) or rescaleFactor), val.y * ((rescaleToScreenAspect and rescaleVector.y) or rescaleFactor))
+	elseif type == 'number' then
+		return val * rescaleFactor
+	end
+end
+
 -- font sizes are correct for 1920x1200
-local font_factor = pigui.screen_height / 1200.0
+local font_factor = ui.rescaleUI(1, Vector2(1920, 1200))
+
 ui.fonts = {
 	-- dummy font, actually renders icons
 	pionicons = {
@@ -42,6 +62,7 @@ ui.fonts = {
 		large = { name = "icons", size = 22 * font_factor, offset = 28 * font_factor}
 	},
 	pionillium = {
+		xlarge = { name = "pionillium", size = 36 * font_factor, offset = 24 * font_factor },
 		large = { name = "pionillium", size = 30 * font_factor, offset = 24 * font_factor},
 		medlarge = { name = "pionillium", size = 24 * font_factor, offset = 18 * font_factor},
 		medium = { name = "pionillium", size = 18 * font_factor, offset = 14 * font_factor},
@@ -54,6 +75,8 @@ ui.fonts = {
 		large = { name = "orbiteer", size = 30 * font_factor, offset = 24 * font_factor },
 		medlarge = { name = "orbiteer", size = 24 * font_factor, offset = 20 * font_factor},
 		medium = { name = "orbiteer", size = 20 * font_factor, offset = 16 * font_factor},
+		small = { name = "orbiteer", size = 14 * font_factor, offset = 11 * font_factor},
+		tiny = { name = "orbiteer", size = 8 * font_factor, offset = 7 * font_factor},
 	},
 }
 
@@ -87,6 +110,14 @@ function ui.popup(name, fun)
 		pigui.EndPopup()
 	end
 end
+
+function ui.popupModal(name, flags, fun)
+    if pigui.BeginPopupModal(name, flags) then
+        fun()
+        pigui.EndPopup()
+    end
+end
+
 function ui.child(id, size, flags, fun)
 	if flags == nil and fun == nil then -- size is optional
 		fun = size
@@ -530,6 +561,8 @@ ui.setCursorPos = pigui.SetCursorPos
 ui.getCursorPos = pigui.GetCursorPos
 ui.setCursorScreenPos = pigui.SetCursorScreenPos
 ui.getCursorScreenPos = pigui.GetCursorScreenPos
+ui.getTextLineHeight = pigui.GetTextLineHeight
+ui.getTextLineHeightWithSpacing = pigui.GetTextLineHeightWithSpacing
 ui.lowThrustButton = pigui.LowThrustButton
 ui.thrustIndicator = pigui.ThrustIndicator
 ui.oneOverSqrtTwo = one_over_sqrt_two
@@ -561,11 +594,14 @@ ui.isAnyWindowHovered = function()
 end
 ui.collapsingHeader = pigui.CollapsingHeader
 ui.openPopup = pigui.OpenPopup
+ui.closeCurrentPopup = pigui.CloseCurrentPopup
 ui.shouldShowLabels = pigui.ShouldShowLabels
 ui.columns = pigui.Columns
 ui.nextColumn = pigui.NextColumn
 ui.setColumnOffset = pigui.SetColumnOffset
 ui.getColumnWidth = pigui.GetColumnWidth
+ui.setColumnWidth = pigui.SetColumnWidth
+ui.getScrollY = pigui.GetScrollY
 ui.keys = pigui.keys
 ui.systemInfoViewNextPage = pigui.SystemInfoViewNextPage -- deprecated
 ui.isKeyReleased = pigui.IsKeyReleased
@@ -796,34 +832,40 @@ local gauge_show_percent = true
 ui.gauge_height = 25
 ui.gauge_width = 275
 
-ui.gauge = function(position, value, unit, format, minimum, maximum, icon, color, tooltip)
+ui.gauge = function(position, value, unit, format, minimum, maximum, icon, color, tooltip, width, height, formatFont, percentFont)
 	local percent = math.clamp((value - minimum) / (maximum - minimum), 0, 1)
 	local offset = 60
 	local uiPos = Vector2(position.x, position.y)
+	local gauge_width = width or ui.gauge_width
+	local gauge_height = height or ui.gauge_height
 	ui.withFont(ui.fonts.pionillium.medium.name, ui.fonts.pionillium.medium.size, function()
-		ui.addLine(uiPos, Vector2(uiPos.x + ui.gauge_width, uiPos.y), ui.theme.colors.gaugeBackground, ui.gauge_height)
+		ui.addLine(uiPos, Vector2(uiPos.x + gauge_width, uiPos.y), ui.theme.colors.gaugeBackground, gauge_height, false)
 		if gauge_show_percent then
-			local one_hundred = ui.calcTextSize("100")
+			local one_hundred = ui.calcTextSize("100%")
 			uiPos.x = uiPos.x + one_hundred.x * 1.2 -- 1.2 for a bit of slack
-			ui.addStyledText(Vector2(uiPos.x, uiPos.y + ui.gauge_height / 12), ui.anchor.right, ui.anchor.center, string.format("%i", percent * 100), ui.theme.colors.reticuleCircle, ui.fonts.pionillium.medium, tooltip)
+			ui.addStyledText(Vector2(uiPos.x, uiPos.y + gauge_height / 12), ui.anchor.right, ui.anchor.center, string.format("%i%%", percent * 100), ui.theme.colors.reticuleCircle, percentFont or ui.fonts.pionillium.medium, tooltip)
 		end
-		uiPos.x = uiPos.x + ui.gauge_height * 1.2
-		ui.addIcon(Vector2(uiPos.x - ui.gauge_height / 2, uiPos.y), icon, ui.theme.colors.reticuleCircle, Vector2(ui.gauge_height * 0.9, ui.gauge_height * 0.9), ui.anchor.center, ui.anchor.center, tooltip)
-		local w = (position.x + ui.gauge_width) - uiPos.x
-		ui.addLine(uiPos, Vector2(uiPos.x + w * percent, uiPos.y), color, ui.gauge_height)
+		uiPos.x = uiPos.x + gauge_height * 1.2
+		ui.addIcon(Vector2(uiPos.x - gauge_height / 2, uiPos.y), icon, ui.theme.colors.reticuleCircle, Vector2(gauge_height * 0.9, gauge_height * 0.9), ui.anchor.center, ui.anchor.center, tooltip)
+		local w = (position.x + gauge_width) - uiPos.x
+		ui.addLine(uiPos, Vector2(uiPos.x + w * percent, uiPos.y), color, gauge_height, false)
 		if value and format then
-			ui.addFancyText(Vector2(uiPos.x + ui.gauge_height/2, uiPos.y + ui.gauge_height/4), ui.anchor.left, ui.anchor.center, {
-				{ text=string.format(format, value), color=ui.theme.colors.reticuleCircle,     font=ui.fonts.pionillium.small, tooltip=tooltip },
-				{ text=unit,                         color=ui.theme.colors.reticuleCircleDark, font=ui.fonts.pionillium.small, tooltip=tooltip }},
-			ui.theme.colors.gaugeBackground)
+			ui.addFancyText(Vector2(uiPos.x + gauge_height/2, uiPos.y + gauge_height/4), ui.anchor.left, ui.anchor.center, {
+				{ text=string.format(format, value), color=ui.theme.colors.reticuleCircle,     font=(formatFont or ui.fonts.pionillium.small), tooltip=tooltip },
+				{ text=unit,                         color=ui.theme.colors.reticuleCircleDark, font=(formatFont or ui.fonts.pionillium.small), tooltip=tooltip }},
+					ui.theme.colors.gaugeBackground)
 		end
 	end)
-
 end
 
 ui.loadTextureFromSVG = function(a, b, c)
 	return pigui:LoadTextureFromSVG(a, b, c)
 end
+
+ui.loadTexture = function(filename)
+	return pigui:LoadTexture(filename)
+end
+
 ui.dataDirPath = pigui.DataDirPath
 ui.addImage = pigui.AddImage
 ui.image = pigui.Image
@@ -839,6 +881,19 @@ end
 
 ui.getModules = function(mode)
 	return modules[mode] or {}
+end
+
+ui.withTooltip = function(tooltip, fun)
+	local startPos = pigui.GetCursorPos()
+	fun()
+	if string.len(tooltip) > 0 then
+		local endPos = pigui.GetCursorPos()
+		local offset = pigui.GetWindowPos()
+		offset.y = offset.y - pigui.GetScrollY()
+		if pigui.IsMouseHoveringRect(offset + startPos, offset + endPos, false) then
+			pigui.SetTooltip(tooltip)
+		end
+	end
 end
 
 return ui

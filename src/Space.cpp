@@ -101,9 +101,7 @@ Space::Space(Game *game, RefCountedPtr<Galaxy> galaxy, const SystemPath &path, S
 
 	std::vector<vector3d> positionAccumulator;
 	GenBody(m_game->GetTime(), m_starSystem->GetRootBody().Get(), m_rootFrameId, positionAccumulator);
-	Frame::GetFrame(m_rootFrameId)->UpdateOrbitRails(m_game->GetTime(), m_game->GetTimeStep());
-
-	//DebugDumpFrames(false);
+	Frame::UpdateOrbitRails(m_game->GetTime(), m_game->GetTimeStep());
 
 	GenSectorCache(galaxy, &path);
 
@@ -161,7 +159,7 @@ Space::~Space()
 	for (std::list<Body *>::iterator i = m_bodies.begin(); i != m_bodies.end(); ++i)
 		KillBody(*i);
 	UpdateBodies();
-	Frame::DeleteFrame(m_rootFrameId);
+	Frame::DeleteFrames();
 }
 
 void Space::RefreshBackground()
@@ -967,15 +965,6 @@ static void CollideWithTerrain(Body *body, float timeStep)
 	hitCallback(&c);
 }
 
-void Space::CollideFrame(FrameId fId)
-{
-	Frame *f = Frame::GetFrame(fId);
-	f->GetCollisionSpace()->Collide(&hitCallback);
-
-	for (FrameId kid : f->GetChildren())
-		CollideFrame(kid);
-}
-
 void Space::TimeStep(float step)
 {
 	PROFILE_SCOPED()
@@ -985,8 +974,7 @@ void Space::TimeStep(float step)
 
 	m_bodyIndexValid = m_sbodyIndexValid = false;
 
-	// XXX does not need to be done this often
-	CollideFrame(m_rootFrameId);
+	Frame::CollideFrames(&hitCallback);
 
 	for (Body *b : m_bodies)
 		CollideWithTerrain(b, step);
@@ -999,7 +987,7 @@ void Space::TimeStep(float step)
 	for (Body *b : m_bodies)
 		b->StaticUpdate(step);
 
-	Frame::GetFrame(m_rootFrameId)->UpdateOrbitRails(m_game->GetTime(), m_game->GetTimeStep());
+	Frame::UpdateOrbitRails(m_game->GetTime(), m_game->GetTimeStep());
 
 	for (Body *b : m_bodies)
 		b->TimeStepUpdate(step);
@@ -1019,7 +1007,7 @@ void Space::UpdateBodies()
 #endif
 
 	for (Body *rmb : m_removeBodies) {
-		rmb->SetFrame(0);
+		rmb->SetFrame(noFrameId);
 		for (Body *b : m_bodies)
 			b->NotifyRemoved(rmb);
 		m_bodies.remove(rmb);
@@ -1063,6 +1051,7 @@ void Space::DebugDumpFrames(bool details)
 {
 	memset(space, ' ', sizeof(space));
 
-	Output("Frame structure for '%s':\n", m_starSystem->GetName().c_str());
+	if (m_starSystem ) Output("Frame structure for '%s':\n", m_starSystem->GetName().c_str());
+	else Output("Frame structure while in hyperspace:\n");
 	DebugDumpFrame(m_rootFrameId, details, 3);
 }

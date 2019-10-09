@@ -666,8 +666,10 @@ local createTargetShipParameters = function (flavour)
 	elseif flavour.deliver_crew > 0 then
 		crew_num = rand:Integer(flavour.deliver_crew+1,shipdef.maxCrew)
 		crew_num = crew_num - flavour.deliver_crew
+		deliver_crew = flavour.deliver_crew
 	elseif flavour.pickup_crew > 0 then
-		crew_num = pickup_crew
+		crew_num = flavour.pickup_crew
+		pickup_crew = flavour.pickup_crew
 	else
 		crew_num = rand:Integer(shipdef.minCrew,shipdef.maxCrew)
 		pickup_crew = flavour.pickup_crew
@@ -1983,7 +1985,7 @@ local onCreateBB = function (station)
 	for _ = 1,num do
 		-- makeAdvert(station, 1, closestplanets)
 		-- makeAdvert(station, 2, closestplanets)
-		makeAdvert(station, 3, closestplanets)
+		-- makeAdvert(station, 3, closestplanets)
 		-- makeAdvert(station, 4, closestplanets)
 		-- makeAdvert(station, 5, closestplanets)
 		-- makeAdvert(station, 6, closestplanets)

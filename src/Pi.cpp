@@ -6,7 +6,6 @@
 #include "Pi.h"
 
 #include "BaseSphere.h"
-#include "CargoBody.h"
 #include "CityOnPlanet.h"
 #include "DeathView.h"
 #include "EnumStrings.h"
@@ -34,13 +33,9 @@
 #include "LuaJson.h"
 #include "LuaLang.h"
 #include "LuaManager.h"
-#include "LuaMissile.h"
 #include "LuaMusic.h"
 #include "LuaNameGen.h"
-#include "LuaPiGui.h"
-#include "LuaRef.h"
 #include "LuaSerializer.h"
-#include "LuaServerAgent.h"
 #include "LuaShipDef.h"
 #include "LuaSpace.h"
 #include "LuaTimer.h"
@@ -57,12 +52,9 @@
 #endif
 #include "Beam.h"
 #include "PiGui.h"
-#include "Planet.h"
 #include "Player.h"
 #include "Projectile.h"
-#include "SDLWrappers.h"
 #include "SectorView.h"
-#include "ServerAgent.h"
 #include "Sfx.h"
 #include "Shields.h"
 #include "ShipCpanel.h"
@@ -77,7 +69,6 @@
 #include "UIView.h"
 #include "WorldView.h"
 #include "galaxy/GalaxyGenerator.h"
-#include "galaxy/StarSystem.h"
 #include "gameui/Lua.h"
 #include "libs.h"
 #include "pigui/PiGuiLua.h"
@@ -96,8 +87,6 @@
 
 #include "scenegraph/Lua.h"
 #include "versioningInfo.h"
-#include <algorithm>
-#include <sstream>
 
 #ifdef PROFILE_LUA_TIME
 #include <time.h>
@@ -655,70 +644,6 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 
 	OS::NotifyLoadEnd();
 	draw_progress(0.95f);
-
-#if 0
-	// frame test code
-
-	Frame *root = new Frame(0, "root", 0);
-	Frame *p1 = new Frame(root, "p1", Frame::FLAG_HAS_ROT);
-	Frame *p1r = new Frame(p1, "p1r", Frame::FLAG_ROTATING);
-	Frame *m1 = new Frame(p1, "m1", Frame::FLAG_HAS_ROT);
-	Frame *m1r = new Frame(m1, "m1r", Frame::FLAG_ROTATING);
-	Frame *p2 = new Frame(root, "p2", Frame::FLAG_HAS_ROT);
-	Frame *p2r = new Frame(p2, "pr2", Frame::FLAG_ROTATING);
-
-	p1->SetPosition(vector3d(1000,0,0));
-	p1->SetVelocity(vector3d(0,1,0));
-	p2->SetPosition(vector3d(0,2000,0));
-	p2->SetVelocity(vector3d(-2,0,0));
-	p1r->SetAngVelocity(vector3d(0,0,0.0001));
-	p1r->SetOrient(matrix3x3d::BuildRotate(M_PI/4, vector3d(0,0,1)));
-	p2r->SetAngVelocity(vector3d(0,0,-0.0004));
-	p2r->SetOrient(matrix3x3d::BuildRotate(-M_PI/2, vector3d(0,0,1)));
-	root->UpdateOrbitRails(0, 0);
-
-	CargoBody *c1 = new CargoBody(Equip::Type::SLAVES);
-	c1->SetFrame(p1r);
-	c1->SetPosition(vector3d(0,180,0));
-//	c1->SetVelocity(vector3d(1,0,0));
-	CargoBody *c2 = new CargoBody(Equip::Type::SLAVES);
-	c2->SetFrame(p1r);
-	c2->SetPosition(vector3d(0,200,0));
-//	c2->SetVelocity(vector3d(1,0,0));
-
-	vector3d pos = c1->GetPositionRelTo(p1);
-	vector3d vel = c1->GetVelocityRelTo(p1);
-	double speed = vel.Length();
-	vector3d pos2 = c2->GetPositionRelTo(p1);
-	vector3d vel2 = c2->GetVelocityRelTo(p1);
-	double speed2 = vel2.Length();
-
-	double speed3 = c2->GetVelocityRelTo(c1).Length();
-	c2->SwitchToFrame(p1);
-	vector3d vel4 = c2->GetVelocityRelTo(c1);
-	double speed4 = c2->GetVelocityRelTo(c1).Length();
-
-	root->UpdateOrbitRails(0, 1.0);
-
-	//buildrotate test
-
-	matrix3x3d m = matrix3x3d::BuildRotate(M_PI/2, vector3d(0,0,1));
-	vector3d v = m * vector3d(1,0,0);
-
-/*	vector3d pos = p1r->GetPositionRelTo(p2r);
-	vector3d vel = p1r->GetVelocityRelTo(p2r);
-	matrix3x3d o1 = p1r->GetOrientRelTo(p2r);
-	double speed = vel.Length();
-	vector3d pos2 = p2r->GetPositionRelTo(p1r);
-	vector3d vel2 = p2r->GetVelocityRelTo(p1r);
-	matrix3x3d o2 = p2r->GetOrientRelTo(p1r);
-	double speed2 = vel2.Length();
-*/	root->UpdateOrbitRails(0, 1.0/60);
-
-	delete p2r; delete p2; delete m1r; delete m1; delete p1r; delete p1; delete root;
-	delete c1; delete c2;
-
-#endif
 
 #if 0
 	// test code to produce list of ship stats
@@ -1437,7 +1362,7 @@ void Pi::MainLoop()
 		for (Body *b : game->GetSpace()->GetBodies()) {
 			b->UpdateInterpTransform(Pi::GetGameTickAlpha());
 		}
-		game->GetSpace()->GetRootFrame()->UpdateInterpTransform(Pi::GetGameTickAlpha());
+		Frame::GetFrame(game->GetSpace()->GetRootFrame())->UpdateInterpTransform(Pi::GetGameTickAlpha());
 
 		currentView->Update();
 		currentView->Draw3D();

@@ -18,7 +18,7 @@
 #include "Player.h"
 #include "SpaceStation.h"
 #include "Star.h"
-#include "collider/collider.h"
+#include "collider/CollisionContact.h"
 #include "galaxy/Galaxy.h"
 #include "graphics/Graphics.h"
 #include <algorithm>
@@ -64,7 +64,6 @@ Space::BodyNearList Space::BodyNearFinder::GetBodiesMaybeNear(const vector3d &po
 Space::Space(Game *game, RefCountedPtr<Galaxy> galaxy, Space *oldSpace) :
 	m_starSystemCache(oldSpace ? oldSpace->m_starSystemCache : galaxy->NewStarSystemSlaveCache()),
 	m_game(game),
-	m_frameIndexValid(false),
 	m_bodyIndexValid(false),
 	m_sbodyIndexValid(false),
 	m_bodyNearFinder(this)
@@ -75,8 +74,7 @@ Space::Space(Game *game, RefCountedPtr<Galaxy> galaxy, Space *oldSpace) :
 {
 	m_background.reset(new Background::Container(Pi::renderer, Pi::rng));
 
-	m_rootFrame.reset(new Frame(0, Lang::SYSTEM));
-	m_rootFrame->SetRadius(FLT_MAX);
+	m_rootFrameId = Frame::CreateFrame(noFrameId, Lang::SYSTEM, Frame::FLAG_DEFAULT, FLT_MAX);
 
 	GenSectorCache(galaxy, &game->GetHyperspaceDest());
 }
@@ -85,7 +83,6 @@ Space::Space(Game *game, RefCountedPtr<Galaxy> galaxy, const SystemPath &path, S
 	m_starSystemCache(oldSpace ? oldSpace->m_starSystemCache : galaxy->NewStarSystemSlaveCache()),
 	m_starSystem(galaxy->GetStarSystem(path)),
 	m_game(game),
-	m_frameIndexValid(false),
 	m_bodyIndexValid(false),
 	m_sbodyIndexValid(false),
 	m_bodyNearFinder(this)
@@ -100,23 +97,19 @@ Space::Space(Game *game, RefCountedPtr<Galaxy> galaxy, const SystemPath &path, S
 
 	CityOnPlanet::SetCityModelPatterns(m_starSystem->GetPath());
 
-	// XXX set radius in constructor
-	m_rootFrame.reset(new Frame(0, Lang::SYSTEM));
-	m_rootFrame->SetRadius(FLT_MAX);
+	m_rootFrameId = Frame::CreateFrame(noFrameId, Lang::SYSTEM, Frame::FLAG_DEFAULT, FLT_MAX);
 
 	std::vector<vector3d> positionAccumulator;
-	GenBody(m_game->GetTime(), m_starSystem->GetRootBody().Get(), m_rootFrame.get(), positionAccumulator);
-	m_rootFrame->UpdateOrbitRails(m_game->GetTime(), m_game->GetTimeStep());
+	GenBody(m_game->GetTime(), m_starSystem->GetRootBody().Get(), m_rootFrameId, positionAccumulator);
+	Frame::UpdateOrbitRails(m_game->GetTime(), m_game->GetTimeStep());
 
 	GenSectorCache(galaxy, &path);
 
-	//DebugDumpFrames();
 }
 
 Space::Space(Game *game, RefCountedPtr<Galaxy> galaxy, const Json &jsonObj, double at_time) :
 	m_starSystemCache(galaxy->NewStarSystemSlaveCache()),
 	m_game(game),
-	m_frameIndexValid(false),
 	m_bodyIndexValid(false),
 	m_sbodyIndexValid(false),
 	m_bodyNearFinder(this)
@@ -139,8 +132,7 @@ Space::Space(Game *game, RefCountedPtr<Galaxy> galaxy, const Json &jsonObj, doub
 	CityOnPlanet::SetCityModelPatterns(m_starSystem->GetPath());
 
 	if (!spaceObj.count("frame")) throw SavedGameCorruptException();
-	m_rootFrame.reset(Frame::FromJson(spaceObj["frame"], this, 0, at_time));
-	RebuildFrameIndex();
+	m_rootFrameId = Frame::FromJson(spaceObj["frame"], this, noFrameId, at_time);
 
 	try {
 		Json bodyArray = spaceObj["bodies"].get<Json::array_t>();
@@ -152,7 +144,7 @@ Space::Space(Game *game, RefCountedPtr<Galaxy> galaxy, const Json &jsonObj, doub
 
 	RebuildBodyIndex();
 
-	Frame::PostUnserializeFixup(m_rootFrame.get(), this);
+	Frame::PostUnserializeFixup(m_rootFrameId, this);
 	for (Body *b : m_bodies)
 		b->PostLoadFixup(this);
 
@@ -167,6 +159,7 @@ Space::~Space()
 	for (std::list<Body *>::iterator i = m_bodies.begin(); i != m_bodies.end(); ++i)
 		KillBody(*i);
 	UpdateBodies();
+	Frame::DeleteFrames();
 }
 
 void Space::RefreshBackground()
@@ -180,7 +173,6 @@ void Space::RefreshBackground()
 void Space::ToJson(Json &jsonObj)
 {
 	PROFILE_SCOPED()
-	RebuildFrameIndex();
 	RebuildBodyIndex();
 	RebuildSystemBodyIndex();
 
@@ -189,7 +181,7 @@ void Space::ToJson(Json &jsonObj)
 	StarSystem::ToJson(spaceObj, m_starSystem.Get());
 
 	Json frameObj({});
-	Frame::ToJson(frameObj, m_rootFrame.get(), this);
+	Frame::ToJson(frameObj, m_rootFrameId, this);
 	spaceObj["frame"] = frameObj;
 
 	Json bodyArray = Json::array(); // Create JSON array to contain body data.
@@ -201,13 +193,6 @@ void Space::ToJson(Json &jsonObj)
 	spaceObj["bodies"] = bodyArray; // Add body array to space object.
 
 	jsonObj["space"] = spaceObj; // Add space object to supplied object.
-}
-
-Frame *Space::GetFrameByIndex(Uint32 idx) const
-{
-	assert(m_frameIndexValid);
-	assert(m_frameIndex.size() > idx);
-	return m_frameIndex[idx];
 }
 
 Body *Space::GetBodyByIndex(Uint32 idx) const
@@ -222,15 +207,6 @@ SystemBody *Space::GetSystemBodyByIndex(Uint32 idx) const
 	assert(m_sbodyIndexValid);
 	assert(m_sbodyIndex.size() > idx);
 	return m_sbodyIndex[idx];
-}
-
-Uint32 Space::GetIndexForFrame(const Frame *frame) const
-{
-	assert(m_frameIndexValid);
-	for (Uint32 i = 0; i < m_frameIndex.size(); i++)
-		if (m_frameIndex[i] == frame) return i;
-	assert(0);
-	return Uint32(-1);
 }
 
 Uint32 Space::GetIndexForBody(const Body *body) const
@@ -251,14 +227,6 @@ Uint32 Space::GetIndexForSystemBody(const SystemBody *sbody) const
 	return Uint32(-1);
 }
 
-void Space::AddFrameToIndex(Frame *frame)
-{
-	assert(frame);
-	m_frameIndex.push_back(frame);
-	for (Frame *kid : frame->GetChildren())
-		AddFrameToIndex(kid);
-}
-
 void Space::AddSystemBodyToIndex(SystemBody *sbody)
 {
 	assert(sbody);
@@ -267,21 +235,10 @@ void Space::AddSystemBodyToIndex(SystemBody *sbody)
 		AddSystemBodyToIndex(sbody->GetChildren()[i]);
 }
 
-void Space::RebuildFrameIndex()
-{
-	m_frameIndex.clear();
-	m_frameIndex.push_back(0);
-
-	if (m_rootFrame)
-		AddFrameToIndex(m_rootFrame.get());
-
-	m_frameIndexValid = true;
-}
-
 void Space::RebuildBodyIndex()
 {
 	m_bodyIndex.clear();
-	m_bodyIndex.push_back(0);
+	m_bodyIndex.push_back(nullptr);
 
 	for (Body *b : m_bodies) {
 		m_bodyIndex.push_back(b);
@@ -302,7 +259,7 @@ void Space::RebuildBodyIndex()
 void Space::RebuildSystemBodyIndex()
 {
 	m_sbodyIndex.clear();
-	m_sbodyIndex.push_back(0);
+	m_sbodyIndex.push_back(nullptr);
 
 	if (m_starSystem)
 		AddSystemBodyToIndex(m_starSystem->GetRootBody().Get());
@@ -435,25 +392,26 @@ Body *Space::FindBodyForPath(const SystemPath *path) const
 	return 0;
 }
 
-static Frame *find_frame_with_sbody(Frame *f, const SystemBody *b)
+static FrameId find_frame_with_sbody(FrameId fId, const SystemBody *b)
 {
+	Frame *f = Frame::GetFrame(fId);
 	if (f->GetSystemBody() == b)
-		return f;
+		return fId;
 	else {
-		for (Frame *kid : f->GetChildren()) {
-			Frame *found = find_frame_with_sbody(kid, b);
-			if (found) return found;
+		for (FrameId kid : f->GetChildren()) {
+			FrameId found = find_frame_with_sbody(kid, b);
+			if (IsIdValid(found)) return found;
 		}
 	}
-	return 0;
+	return noFrameId;
 }
 
-Frame *Space::GetFrameWithSystemBody(const SystemBody *b) const
+FrameId Space::GetFrameWithSystemBody(const SystemBody *b) const
 {
-	return find_frame_with_sbody(m_rootFrame.get(), b);
+	return find_frame_with_sbody(m_rootFrameId, b);
 }
 
-static void RelocateStarportIfNecessary(SystemBody *sbody, Frame *frame, Planet *planet, vector3d &pos, matrix3x3d &rot, const std::vector<vector3d> &prevPositions)
+static void RelocateStarportIfNecessary(SystemBody *sbody, Planet *planet, vector3d &pos, matrix3x3d &rot, const std::vector<vector3d> &prevPositions)
 {
 	const double radius = planet->GetSystemBody()->GetRadius();
 
@@ -576,100 +534,6 @@ static void RelocateStarportIfNecessary(SystemBody *sbody, Frame *frame, Planet 
 				sbody->GetName().c_str(), sbody->GetParent()->GetName().c_str(), p.sectorX, p.sectorY, p.sectorZ);
 		}
 	}
-}
-
-static Frame *MakeFrameFor(const double at_time, SystemBody *sbody, Body *b, Frame *f, std::vector<vector3d> &prevPositions)
-{
-	if (!sbody->GetParent()) {
-		if (b) b->SetFrame(f);
-		f->SetBodies(sbody, b);
-		return f;
-	}
-
-	if (sbody->GetType() == SystemBody::TYPE_GRAVPOINT) {
-		Frame *orbFrame = new Frame(f, sbody->GetName().c_str());
-		orbFrame->SetBodies(sbody, b);
-		orbFrame->SetRadius(sbody->GetMaxChildOrbitalDistance() * 1.1);
-		return orbFrame;
-	}
-
-	SystemBody::BodySuperType supertype = sbody->GetSuperType();
-
-	if ((supertype == SystemBody::SUPERTYPE_GAS_GIANT) ||
-		(supertype == SystemBody::SUPERTYPE_ROCKY_PLANET)) {
-		// for planets we want an non-rotating frame for a few radii
-		// and a rotating frame with no radius to contain attached objects
-		double frameRadius = std::max(4.0 * sbody->GetRadius(), sbody->GetMaxChildOrbitalDistance() * 1.05);
-		Frame *orbFrame = new Frame(f, sbody->GetName().c_str(), Frame::FLAG_HAS_ROT);
-		orbFrame->SetBodies(sbody, b);
-		orbFrame->SetRadius(frameRadius);
-		//Output("\t\t\t%s has frame size %.0fkm, body radius %.0fkm\n", sbody->name.c_str(),
-		//	(frameRadius ? frameRadius : 10*sbody->GetRadius())*0.001f,
-		//	sbody->GetRadius()*0.001f);
-
-		assert(sbody->IsRotating() != 0);
-		Frame *rotFrame = new Frame(orbFrame, sbody->GetName().c_str(), Frame::FLAG_ROTATING);
-		rotFrame->SetBodies(sbody, b);
-
-		// rotating frame has atmosphere radius or feature height, whichever is larger
-		rotFrame->SetRadius(b->GetPhysRadius());
-
-		matrix3x3d rotMatrix = matrix3x3d::RotateX(sbody->GetAxialTilt());
-		double angSpeed = 2.0 * M_PI / sbody->GetRotationPeriod();
-		rotFrame->SetAngSpeed(angSpeed);
-
-		if (sbody->HasRotationPhase())
-			rotMatrix = rotMatrix * matrix3x3d::RotateY(sbody->GetRotationPhaseAtStart());
-		rotFrame->SetInitialOrient(rotMatrix, at_time);
-
-		b->SetFrame(rotFrame);
-		return orbFrame;
-	} else if (supertype == SystemBody::SUPERTYPE_STAR) {
-		// stars want a single small non-rotating frame
-		// bigger than it's furtherest orbiting body.
-		// if there are no orbiting bodies use a frame of several radii.
-		Frame *orbFrame = new Frame(f, sbody->GetName().c_str());
-		orbFrame->SetBodies(sbody, b);
-		const double bodyRadius = sbody->GetEquatorialRadius();
-		double frameRadius = std::max(10.0 * bodyRadius, sbody->GetMaxChildOrbitalDistance() * 1.1);
-		// Respect the frame of other stars in the multi-star system. We still make sure that the frame ends outside
-		// the body. For a minimum separation of 1.236 radii, nothing will overlap (see StarSystem::StarSystem()).
-		if (sbody->GetParent() && frameRadius > AU * 0.11 * sbody->GetOrbMin())
-			frameRadius = std::max(1.1 * bodyRadius, AU * 0.11 * sbody->GetOrbMin());
-		orbFrame->SetRadius(frameRadius);
-		b->SetFrame(orbFrame);
-		return orbFrame;
-	} else if (sbody->GetType() == SystemBody::TYPE_STARPORT_ORBITAL) {
-		// space stations want non-rotating frame to some distance
-		Frame *orbFrame = new Frame(f, sbody->GetName().c_str());
-		orbFrame->SetBodies(sbody, b);
-		//		orbFrame->SetRadius(10*sbody->GetRadius());
-		orbFrame->SetRadius(20000.0); // 4x standard parking radius
-		b->SetFrame(orbFrame);
-		return orbFrame;
-
-	} else if (sbody->GetType() == SystemBody::TYPE_STARPORT_SURFACE) {
-		// just put body into rotating frame of planet, not in its own frame
-		// (because collisions only happen between objects in same frame,
-		// and we want collisions on starport and on planet itself)
-		Frame *rotFrame = f->GetRotFrame();
-		b->SetFrame(rotFrame);
-		assert(rotFrame->IsRotFrame());
-		assert(rotFrame->GetBody()->IsType(Object::PLANET));
-		matrix3x3d rot;
-		vector3d pos;
-		Planet *planet = static_cast<Planet *>(rotFrame->GetBody());
-		RelocateStarportIfNecessary(sbody, rotFrame, planet, pos, rot, prevPositions);
-		sbody->SetOrbitPlane(rot);
-		b->SetPosition(pos * planet->GetTerrainHeight(pos));
-		b->SetOrient(rot);
-		// accumulate for testing against
-		prevPositions.push_back(pos);
-		return rotFrame;
-	} else {
-		assert(0);
-	}
-	return 0;
 }
 
 // used to define a cube centred on your current location
@@ -796,7 +660,120 @@ void Space::UpdateStarSystemCache(const SystemPath *here)
 	m_starSystemCache->FillCache(paths);
 }
 
-void Space::GenBody(const double at_time, SystemBody *sbody, Frame *f, std::vector<vector3d> &posAccum)
+static FrameId MakeFramesFor(const double at_time, SystemBody *sbody, Body *b, FrameId fId, std::vector<vector3d> &prevPositions)
+{
+	Frame *f = Frame::GetFrame(fId);
+
+	if (!sbody->GetParent()) {
+		if (b) b->SetFrame(fId);
+		Frame *f = Frame::GetFrame(fId);
+		f->SetBodies(sbody, b);
+		return fId;
+	}
+
+	if (sbody->GetType() == SystemBody::TYPE_GRAVPOINT) {
+		FrameId orbFrameId = Frame::CreateFrame(fId,
+							sbody->GetName().c_str(),
+							Frame::FLAG_DEFAULT,
+							sbody->GetMaxChildOrbitalDistance() * 1.1
+							);
+		Frame *orbFrame = Frame::GetFrame(orbFrameId);
+		orbFrame->SetBodies(sbody, b);
+		return orbFrameId;
+	}
+
+	SystemBody::BodySuperType supertype = sbody->GetSuperType();
+
+	if ((supertype == SystemBody::SUPERTYPE_GAS_GIANT) ||
+		(supertype == SystemBody::SUPERTYPE_ROCKY_PLANET)) {
+		// for planets we want an non-rotating frame for a few radii
+		// and a rotating frame with no radius to contain attached objects
+		double frameRadius = std::max(4.0 * sbody->GetRadius(), sbody->GetMaxChildOrbitalDistance() * 1.05);
+		FrameId orbFrameId = Frame::CreateFrame(fId,
+							sbody->GetName().c_str(),
+							Frame::FLAG_HAS_ROT,
+							frameRadius
+							);
+		Frame *orbFrame = Frame::GetFrame(orbFrameId);
+		orbFrame->SetBodies(sbody, b);
+		//Output("\t\t\t%s has frame size %.0fkm, body radius %.0fkm\n", sbody->name.c_str(),
+		//	(frameRadius ? frameRadius : 10*sbody->GetRadius())*0.001f,
+		//	sbody->GetRadius()*0.001f);
+
+		assert(sbody->IsRotating() != 0);
+		// rotating frame has atmosphere radius or feature height, whichever is larger
+		FrameId rotFrameId = Frame::CreateFrame(orbFrameId,
+							sbody->GetName().c_str(),
+							Frame::FLAG_ROTATING,
+							b->GetPhysRadius()
+							);
+		Frame *rotFrame = Frame::GetFrame(rotFrameId);
+		rotFrame->SetBodies(sbody, b);
+
+		matrix3x3d rotMatrix = matrix3x3d::RotateX(sbody->GetAxialTilt());
+		double angSpeed = 2.0 * M_PI / sbody->GetRotationPeriod();
+		rotFrame->SetAngSpeed(angSpeed);
+
+		if (sbody->HasRotationPhase())
+			rotMatrix = rotMatrix * matrix3x3d::RotateY(sbody->GetRotationPhaseAtStart());
+		rotFrame->SetInitialOrient(rotMatrix, at_time);
+
+		b->SetFrame(rotFrameId);
+		return orbFrameId;
+	} else if (supertype == SystemBody::SUPERTYPE_STAR) {
+		// stars want a single small non-rotating frame
+		// bigger than it's furtherest orbiting body.
+		// if there are no orbiting bodies use a frame of several radii.
+		FrameId orbFrameId = Frame::CreateFrame(fId, sbody->GetName().c_str());
+		Frame *orbFrame = Frame::GetFrame(orbFrameId);
+		orbFrame->SetBodies(sbody, b);
+		const double bodyRadius = sbody->GetEquatorialRadius();
+		double frameRadius = std::max(10.0 * bodyRadius, sbody->GetMaxChildOrbitalDistance() * 1.1);
+		// Respect the frame of other stars in the multi-star system. We still make sure that the frame ends outside
+		// the body. For a minimum separation of 1.236 radii, nothing will overlap (see StarSystem::StarSystem()).
+		if (sbody->GetParent() && frameRadius > AU * 0.11 * sbody->GetOrbMin())
+			frameRadius = std::max(1.1 * bodyRadius, AU * 0.11 * sbody->GetOrbMin());
+		orbFrame->SetRadius(frameRadius);
+		b->SetFrame(orbFrameId);
+		return orbFrameId;
+	} else if (sbody->GetType() == SystemBody::TYPE_STARPORT_ORBITAL) {
+		// space stations want non-rotating frame to some distance
+		FrameId orbFrameId = Frame::CreateFrame(fId,
+							sbody->GetName().c_str(),
+							Frame::FLAG_DEFAULT,
+							20000.0
+							);
+		Frame *orbFrame = Frame::GetFrame(orbFrameId);
+		orbFrame->SetBodies(sbody, b);
+		b->SetFrame(orbFrameId);
+		return orbFrameId;
+	} else if (sbody->GetType() == SystemBody::TYPE_STARPORT_SURFACE) {
+		// just put body into rotating frame of planet, not in its own frame
+		// (because collisions only happen between objects in same frame,
+		// and we want collisions on starport and on planet itself)
+		FrameId rotFrameId = Frame::GetFrame(fId)->GetRotFrame();
+		b->SetFrame(rotFrameId);
+
+		Frame *rotFrame = Frame::GetFrame(rotFrameId);
+		assert(rotFrame->IsRotFrame());
+		assert(rotFrame->GetBody()->IsType(Object::PLANET));
+		matrix3x3d rot;
+		vector3d pos;
+		Planet *planet = static_cast<Planet *>(rotFrame->GetBody());
+		RelocateStarportIfNecessary(sbody, planet, pos, rot, prevPositions);
+		sbody->SetOrbitPlane(rot);
+		b->SetPosition(pos * planet->GetTerrainHeight(pos));
+		b->SetOrient(rot);
+		// accumulate for testing against
+		prevPositions.push_back(pos);
+		return rotFrameId;
+	} else {
+		assert(0);
+	}
+	return 0;
+}
+
+void Space::GenBody(const double at_time, SystemBody *sbody, FrameId fId, std::vector<vector3d> &posAccum)
 {
 	Body *b = nullptr;
 
@@ -818,10 +795,10 @@ void Space::GenBody(const double at_time, SystemBody *sbody, Frame *f, std::vect
 		b->SetPosition(vector3d(0, 0, 0));
 		AddBody(b);
 	}
-	f = MakeFrameFor(at_time, sbody, b, f, posAccum);
+	fId = MakeFramesFor(at_time, sbody, b, fId, posAccum);
 
 	for (SystemBody *kid : sbody->GetChildren()) {
-		GenBody(at_time, kid, f, posAccum);
+		GenBody(at_time, kid, fId, posAccum);
 	}
 }
 
@@ -951,7 +928,7 @@ static void hitCallback(CollisionContact *c)
 		mover->SetPosition(mover->GetPosition() + correction);
 
 		const float reduction = std::max(1 - coeff_slide * c->timestep, 0.0);
-		vector3d final_vel = linVel1 * (1 - coeff_slide * c->timestep) + force * invMass1;
+		vector3d final_vel = linVel1 * reduction + force * invMass1;
 		if (final_vel.LengthSqr() < 0.1) final_vel = vector3d(0.0);
 
 		mover->SetVelocity(final_vel);
@@ -968,8 +945,8 @@ static void CollideWithTerrain(Body *body, float timeStep)
 	if (!dynBody->IsMoving())
 		return;
 
-	Frame *f = body->GetFrame();
-	if (!f || !f->GetBody() || f != f->GetBody()->GetFrame())
+	Frame *f = Frame::GetFrame(body->GetFrame());
+	if (!f || !f->GetBody() || f->GetId() != f->GetBody()->GetFrame())
 		return;
 	if (!f->GetBody()->IsType(Object::TERRAINBODY))
 		return;
@@ -988,13 +965,6 @@ static void CollideWithTerrain(Body *body, float timeStep)
 	hitCallback(&c);
 }
 
-void Space::CollideFrame(Frame *f)
-{
-	f->GetCollisionSpace()->Collide(&hitCallback);
-	for (Frame *kid : f->GetChildren())
-		CollideFrame(kid);
-}
-
 void Space::TimeStep(float step)
 {
 	PROFILE_SCOPED()
@@ -1002,10 +972,10 @@ void Space::TimeStep(float step)
 	if (Pi::MustRefreshBackgroundClearFlag())
 		RefreshBackground();
 
-	m_frameIndexValid = m_bodyIndexValid = m_sbodyIndexValid = false;
+	m_bodyIndexValid = m_sbodyIndexValid = false;
 
-	// XXX does not need to be done this often
-	CollideFrame(m_rootFrame.get());
+	Frame::CollideFrames(&hitCallback);
+
 	for (Body *b : m_bodies)
 		CollideWithTerrain(b, step);
 
@@ -1017,7 +987,7 @@ void Space::TimeStep(float step)
 	for (Body *b : m_bodies)
 		b->StaticUpdate(step);
 
-	m_rootFrame->UpdateOrbitRails(m_game->GetTime(), m_game->GetTimeStep());
+	Frame::UpdateOrbitRails(m_game->GetTime(), m_game->GetTimeStep());
 
 	for (Body *b : m_bodies)
 		b->TimeStepUpdate(step);
@@ -1037,7 +1007,7 @@ void Space::UpdateBodies()
 #endif
 
 	for (Body *rmb : m_removeBodies) {
-		rmb->SetFrame(0);
+		rmb->SetFrame(noFrameId);
 		for (Body *b : m_bodies)
 			b->NotifyRemoved(rmb);
 		m_bodies.remove(rmb);
@@ -1059,19 +1029,21 @@ void Space::UpdateBodies()
 
 static char space[256];
 
-static void DebugDumpFrame(Frame *f, bool details, unsigned int indent)
+static void DebugDumpFrame(FrameId fId, bool details, unsigned int indent)
 {
-	Output("%.*s%p (%s)\n", indent, space, static_cast<void *>(f), f->GetLabel().c_str());
-	if (f->GetParent())
-		Output("%.*s parent %p (%s)\n", indent, space, static_cast<void *>(f->GetParent()), f->GetParent()->GetLabel().c_str());
-	if (f->GetBody())
-		Output("%.*s body %p (%s)\n", indent, space, static_cast<void *>(f->GetBody()), f->GetBody()->GetLabel().c_str());
-	if (Body *b = f->GetBody())
-		Output("%.*s bodyFor %p (%s)\n", indent, space, static_cast<void *>(b), b->GetLabel().c_str());
-	Output("%.*s distance %f radius %f", indent, space, f->GetPosition().Length(), f->GetRadius());
-	Output("%s\n", f->IsRotFrame() ? " [rotating]" : "[non rotating]");
+	Frame *f = Frame::GetFrame(fId);
+	Frame *parent = Frame::GetFrame(f->GetParent());
 
-	for (Frame *kid : f->GetChildren())
+	Output("%.*s%2i) %p (%s)%s\n", indent, space, fId, static_cast<void *>(f), f->GetLabel().c_str(), f->IsRotFrame() ? " [rotating]" : " [non rotating]");
+	if (IsIdValid(f->GetParent()))
+		Output("%.*s parent %p (%s)\n", indent + 3, space, static_cast<void *>(parent), parent->GetLabel().c_str());
+	if (f->GetBody())
+		Output("%.*s body %p (%s)\n", indent + 3, space, static_cast<void *>(f->GetBody()), f->GetBody()->GetLabel().c_str());
+	if (Body *b = f->GetBody())
+		Output("%.*s bodyFor %p (%s)\n", indent + 3, space, static_cast<void *>(b), b->GetLabel().c_str());
+	Output("%.*s distance: %f radius: %f children: %u\n", indent + 3, space, f->GetPosition().Length(), f->GetRadius(), f->GetNumChildren());
+
+	for (FrameId kid : f->GetChildren())
 		DebugDumpFrame(kid, details, indent + 2);
 }
 
@@ -1079,6 +1051,7 @@ void Space::DebugDumpFrames(bool details)
 {
 	memset(space, ' ', sizeof(space));
 
-	Output("Frame structure for '%s':\n", m_starSystem->GetName().c_str());
-	DebugDumpFrame(m_rootFrame.get(), details, 2);
+	if (m_starSystem ) Output("Frame structure for '%s':\n", m_starSystem->GetName().c_str());
+	else Output("Frame structure while in hyperspace:\n");
+	DebugDumpFrame(m_rootFrameId, details, 3);
 }

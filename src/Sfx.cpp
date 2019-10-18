@@ -41,12 +41,6 @@ Graphics::RenderState *SfxManager::additiveAlphaState = nullptr;
 Graphics::RenderState *SfxManager::alphaOneState = nullptr;
 SfxManager::MaterialData SfxManager::m_materialData[TYPE_NONE];
 
-Sfx::Sfx() :
-	m_speed(200.0f),
-	m_type(TYPE_NONE)
-{
-}
-
 Sfx::Sfx(const vector3d &pos, const vector3d &vel, const float speed, const SFX_TYPE type) :
 	m_pos(pos),
 	m_vel(vel),
@@ -54,6 +48,20 @@ Sfx::Sfx(const vector3d &pos, const vector3d &vel, const float speed, const SFX_
 	m_speed(speed),
 	m_type(type)
 {
+}
+
+Sfx::Sfx(const Json &jsonObj)
+{
+	try {
+		Json sfxObj = jsonObj["sfx"];
+
+		m_pos = jsonObj["pos"];
+		m_vel = jsonObj["vel"];
+		m_age = sfxObj["age"];
+		m_type = sfxObj["type"];
+	} catch (Json::type_error &) {
+		throw SavedGameCorruptException();
+	}
 }
 
 Sfx::Sfx(const Sfx &b) :
@@ -75,20 +83,6 @@ void Sfx::SaveToJson(Json &jsonObj)
 	sfxObj["type"] = m_type;
 
 	jsonObj["sfx"] = sfxObj; // Add sfx object to supplied object.
-}
-
-void Sfx::LoadFromJson(const Json &jsonObj)
-{
-	try {
-		Json sfxObj = jsonObj["sfx"];
-
-		m_pos = jsonObj["pos"];
-		m_vel = jsonObj["vel"];
-		m_age = sfxObj["age"];
-		m_type = sfxObj["type"];
-	} catch (Json::type_error &) {
-		throw SavedGameCorruptException();
-	}
 }
 
 void Sfx::SetPosition(const vector3d &p)
@@ -134,8 +128,9 @@ SfxManager::SfxManager()
 	}
 }
 
-void SfxManager::ToJson(Json &jsonObj, const Frame *f)
+void SfxManager::ToJson(Json &jsonObj, const FrameId fId)
 {
+	Frame *f = Frame::GetFrame(fId);
 	Json sfxArray = Json::array(); // Create JSON array to contain sfx data.
 
 	if (f->m_sfx) {
@@ -154,20 +149,23 @@ void SfxManager::ToJson(Json &jsonObj, const Frame *f)
 	jsonObj["sfx_array"] = sfxArray; // Add sfx array to supplied object.
 }
 
-void SfxManager::FromJson(const Json &jsonObj, Frame *f)
+void SfxManager::FromJson(const Json &jsonObj, FrameId fId)
 {
 	Json sfxArray = jsonObj["sfx_array"].get<Json::array_t>();
 
+	Frame *f = Frame::GetFrame(fId);
+
 	if (sfxArray.size()) f->m_sfx.reset(new SfxManager);
 	for (unsigned int i = 0; i < sfxArray.size(); ++i) {
-		Sfx inst;
-		inst.LoadFromJson(sfxArray[i]);
+		Sfx inst(sfxArray[i]);
 		f->m_sfx->AddInstance(inst);
 	}
 }
 
-SfxManager *SfxManager::AllocSfxInFrame(Frame *f)
+SfxManager *SfxManager::AllocSfxInFrame(FrameId fId)
 {
+	Frame *f = Frame::GetFrame(fId);
+
 	if (!f->m_sfx) {
 		f->m_sfx.reset(new SfxManager);
 	}
@@ -208,9 +206,12 @@ void SfxManager::AddThrustSmoke(const Body *b, const float speed, const vector3d
 	sfxman->AddInstance(sfx);
 }
 
-void SfxManager::TimeStepAll(const float timeStep, Frame *f)
+void SfxManager::TimeStepAll(const float timeStep, FrameId fId)
 {
 	PROFILE_SCOPED()
+
+	Frame *f = Frame::GetFrame(fId);
+
 	if (f->m_sfx) {
 		for (size_t t = TYPE_EXPLOSION; t < TYPE_NONE; t++) {
 			for (size_t i = 0; i < f->m_sfx->GetNumberInstances(SFX_TYPE(t)); i++) {
@@ -221,7 +222,7 @@ void SfxManager::TimeStepAll(const float timeStep, Frame *f)
 		f->m_sfx->Cleanup();
 	}
 
-	for (Frame *kid : f->GetChildren()) {
+	for (FrameId kid : f->GetChildren()) {
 		TimeStepAll(timeStep, kid);
 	}
 }
@@ -242,12 +243,14 @@ void SfxManager::Cleanup()
 	}
 }
 
-void SfxManager::RenderAll(Renderer *renderer, Frame *f, const Frame *camFrame)
+void SfxManager::RenderAll(Renderer *renderer, FrameId fId, FrameId camFrameId)
 {
+	Frame *f = Frame::GetFrame(fId);
+
 	PROFILE_SCOPED()
 	if (f->m_sfx) {
 		matrix4x4d ftran;
-		Frame::GetFrameTransform(f, camFrame, ftran);
+		Frame::GetFrameTransform(fId, camFrameId, ftran);
 
 		for (size_t t = TYPE_EXPLOSION; t < TYPE_NONE; t++) {
 			const size_t numInstances = f->m_sfx->GetNumberInstances(SFX_TYPE(t));
@@ -299,8 +302,8 @@ void SfxManager::RenderAll(Renderer *renderer, Frame *f, const Frame *camFrame)
 		}
 	}
 
-	for (Frame *kid : f->GetChildren()) {
-		RenderAll(renderer, kid, camFrame);
+	for (FrameId kid : f->GetChildren()) {
+		RenderAll(renderer, kid, camFrameId);
 	}
 }
 

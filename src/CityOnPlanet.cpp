@@ -2,6 +2,7 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "CityOnPlanet.h"
+
 #include "FileSystem.h"
 #include "Frame.h"
 #include "Game.h"
@@ -10,6 +11,7 @@
 #include "Planet.h"
 #include "SpaceStation.h"
 #include "collider/Geom.h"
+#include "graphics/Frustum.h"
 #include "scenegraph/Animation.h"
 #include "scenegraph/ModelSkin.h"
 #include "scenegraph/SceneGraph.h"
@@ -62,7 +64,8 @@ void CityOnPlanet::AddStaticGeomsToCollisionSpace()
 	for (unsigned int i = 0; i < m_buildings.size(); i++) {
 		if (i & skipMask) {
 		} else {
-			m_frame->AddStaticGeom(m_buildings[i].geom);
+			Frame *f = Frame::GetFrame(m_frame);
+			f->AddStaticGeom(m_buildings[i].geom);
 			m_enabledBuildings.push_back(m_buildings[i]);
 			// Update building types
 			++(m_buildingCounts[m_buildings[i].instIndex]);
@@ -77,7 +80,8 @@ void CityOnPlanet::RemoveStaticGeomsFromCollisionSpace()
 {
 	m_enabledBuildings.clear();
 	for (unsigned int i = 0; i < m_buildings.size(); i++) {
-		m_frame->RemoveStaticGeom(m_buildings[i].geom);
+		Frame *f = Frame::GetFrame(m_frame);
+		f->RemoveStaticGeom(m_buildings[i].geom);
 	}
 }
 
@@ -188,7 +192,8 @@ CityOnPlanet::~CityOnPlanet()
 {
 	// frame may be null (already removed from
 	for (unsigned int i = 0; i < m_buildings.size(); i++) {
-		m_frame->RemoveStaticGeom(m_buildings[i].geom);
+		Frame *f = Frame::GetFrame(m_frame);
+		f->RemoveStaticGeom(m_buildings[i].geom);
 		delete m_buildings[i].geom;
 	}
 }

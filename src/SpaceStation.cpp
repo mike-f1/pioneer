@@ -3,6 +3,7 @@
 
 #include "SpaceStation.h"
 
+#include "Camera.h"
 #include "CityOnPlanet.h"
 #include "Frame.h"
 #include "Game.h"
@@ -11,13 +12,13 @@
 #include "Json.h"
 #include "Lang.h"
 #include "LuaEvent.h"
+#include "NavLights.h"
 #include "Pi.h"
 #include "Planet.h"
 #include "Player.h"
 #include "Ship.h"
 #include "Space.h"
 #include "StringF.h"
-#include "graphics/Graphics.h"
 #include "graphics/Renderer.h"
 #include "scenegraph/Animation.h"
 #include "scenegraph/MatrixTransform.h"
@@ -721,7 +722,7 @@ static const double SQRMAXCITYDIST = 1e5 * 1e5;
 
 void SpaceStation::Render(Graphics::Renderer *r, const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform)
 {
-	Body *b = GetFrame()->GetBody();
+	Body *b = Frame::GetFrame(GetFrame())->GetBody();
 	assert(b);
 
 	if (!b->IsType(Object::PLANET)) {
@@ -779,7 +780,7 @@ bool SpaceStation::AllocateStaticSlot(int &slot)
 	return false;
 }
 
-vector3d SpaceStation::GetTargetIndicatorPosition(const Frame *relTo) const
+vector3d SpaceStation::GetTargetIndicatorPosition(FrameId relToId) const
 {
 	// return the next waypoint if permission has been granted for player,
 	// and the docking point's position once the docking anim starts
@@ -792,11 +793,11 @@ vector3d SpaceStation::GetTargetIndicatorPosition(const Frame *relTo) const
 				PiVerify(m_type->GetDockAnimPositionOrient(i, m_type->NumDockingStages(),
 					1.0f, vector3d(0.0), dport, m_shipDocking[i].ship));
 
-			vector3d v = GetInterpPositionRelTo(relTo);
-			return v + GetInterpOrientRelTo(relTo) * dport.pos;
+			vector3d v = GetInterpPositionRelTo(relToId);
+			return v + GetInterpOrientRelTo(relToId) * dport.pos;
 		}
 	}
-	return GetInterpPositionRelTo(relTo);
+	return GetInterpPositionRelTo(relToId);
 }
 
 bool SpaceStation::IsPortLocked(const int bay) const

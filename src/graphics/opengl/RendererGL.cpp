@@ -419,6 +419,22 @@ namespace Graphics {
 		return true;
 	}
 
+	static std::string glerr_to_string(GLenum err)
+	{
+		switch (err) {
+		case GL_INVALID_ENUM:
+			return "GL_INVALID_ENUM";
+		case GL_INVALID_VALUE:
+			return "GL_INVALID_VALUE";
+		case GL_INVALID_OPERATION:
+			return "GL_INVALID_OPERATION";
+		case GL_OUT_OF_MEMORY:
+			return "GL_OUT_OF_MEMORY";
+		default:
+			return stringf("Unknown error 0x0%0{x}", err);
+		}
+	}
+
 	void RendererOGL::CheckErrors(const char *func, const int line)
 	{
 		PROFILE_SCOPED()

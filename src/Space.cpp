@@ -19,7 +19,6 @@
 #include "SpaceStation.h"
 #include "Star.h"
 #include "collider/CollisionContact.h"
-#include "collider/CollisionSpace.h"
 #include "galaxy/Galaxy.h"
 #include "graphics/Graphics.h"
 #include <algorithm>

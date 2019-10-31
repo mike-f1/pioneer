@@ -10,6 +10,7 @@
 #include "JsonFwd.h"
 #include "matrix3x3.h"
 #include "matrix4x4.h"
+#include "utils.h"
 #include "vector3.h"
 #include <list>
 #include <string>
@@ -59,7 +60,15 @@ public:
 
 	static void DeleteFrames();
 
-	static Frame *GetFrame(FrameId FId);
+	static Frame *GetFrame(FrameId fId)
+	{
+		if (IsIdValid(fId)) {
+			if (fId < s_frames.size()) return &s_frames[fId];
+			Error("In '%s': fId is valid but out of range (%i)...\n",__func__, fId);
+			return nullptr;
+		}
+		return nullptr;
+	}
 
 	FrameId GetId() const {return m_thisId; }
 

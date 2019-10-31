@@ -5,6 +5,6 @@ typedef int FrameId;
 
 constexpr FrameId noFrameId = -1;
 
-extern bool IsIdValid(FrameId fId);
+inline bool IsIdValid(FrameId fId) { return fId >= 0; };
 
 #endif // FRAMEID_H_INCLUDED

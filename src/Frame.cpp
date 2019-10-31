@@ -8,7 +8,6 @@
 #include "Sfx.h"
 #include "Space.h"
 #include "collider/CollisionSpace.h"
-#include "utils.h"
 
 std::vector<Frame> Frame::s_frames;
 std::vector<CollisionSpace> Frame::s_collisionSpaces;
@@ -235,22 +234,6 @@ void Frame::DeleteFrames()
 
 	// remember to delete CollisionSpaces
 	s_collisionSpaces.clear();
-}
-
-Frame *Frame::GetFrame(FrameId fId)
-{
-	PROFILE_SCOPED()
-
-	if (IsIdValid(fId)) {
-		if (fId < s_frames.size()) return &s_frames[fId];
-	} else return nullptr;
-	/*
-	for (Frame &elem : s_frames) {
-		if (elem.m_thisId == FId) return &elem;
-	}
-	*/
-	Error("In '%s': fId is valid but out of range (%i)...\n",__func__, fId);
-	return nullptr;
 }
 
 FrameId Frame::CreateCameraFrame(FrameId parent)

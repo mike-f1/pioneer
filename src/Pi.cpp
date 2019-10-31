@@ -1362,7 +1362,7 @@ void Pi::MainLoop()
 		for (Body *b : game->GetSpace()->GetBodies()) {
 			b->UpdateInterpTransform(Pi::GetGameTickAlpha());
 		}
-		Frame::GetFrame(game->GetSpace()->GetRootFrame())->UpdateInterpTransform(Pi::GetGameTickAlpha());
+		Frame::GetRootFrame()->UpdateInterpTransform(Pi::GetGameTickAlpha());
 
 		currentView->Update();
 		currentView->Draw3D();

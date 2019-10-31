@@ -1025,14 +1025,13 @@ void SystemView::DrawShips(const double t, const vector3d &offset)
 	for (auto s = m_contacts.begin(); s != m_contacts.end(); s++) {
 		vector3d pos = offset;
 		if ((*s).first->GetFlightState() != Ship::FlightState::FLYING) {
-			FrameId frameId = Pi::game->GetSpace()->GetRootFrame();
-			pos += (*s).first->GetPositionRelTo(frameId) * double(m_zoom);
+			pos += (*s).first->GetPositionRelTo(Frame::GetRootFrameId()) * double(m_zoom);
 		} else {
 			FrameId frameId = (*s).first->GetFrame();
 			vector3d bpos = vector3d(0., 0., 0.);
-			if (frameId != Pi::game->GetSpace()->GetRootFrame()) {
+			if (frameId != Frame::GetRootFrameId()) {
 				Frame *frame = Frame::GetFrame(frameId);
-				bpos += frame->GetPositionRelTo(Pi::game->GetSpace()->GetRootFrame());
+				bpos += frame->GetPositionRelTo(Frame::GetRootFrameId());
 			}
 			pos += (bpos + (*s).second.OrbitalPosAtTime(t)) * double(m_zoom);
 		}

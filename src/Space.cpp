@@ -31,14 +31,14 @@ void Space::BodyNearFinder::Prepare()
 	m_bodyDist.clear();
 
 	for (Body *b : m_space->GetBodies())
-		m_bodyDist.emplace_back(b, b->GetPositionRelTo(m_space->GetRootFrame()).Length());
+		m_bodyDist.emplace_back(b, b->GetPositionRelTo(Frame::GetRootFrameId()).Length());
 
 	std::sort(m_bodyDist.begin(), m_bodyDist.end());
 }
 
 Space::BodyNearList Space::BodyNearFinder::GetBodiesMaybeNear(const Body *b, double dist)
 {
-	return std::move(GetBodiesMaybeNear(b->GetPositionRelTo(m_space->GetRootFrame()), dist));
+	return std::move(GetBodiesMaybeNear(b->GetPositionRelTo(Frame::GetRootFrameId()), dist));
 }
 
 Space::BodyNearList Space::BodyNearFinder::GetBodiesMaybeNear(const vector3d &pos, double dist)
@@ -359,7 +359,7 @@ void Space::GetHyperspaceExitParams(const SystemPath &source, const SystemPath &
 	vel *= sqrt(G * primary->GetSystemBody()->GetMass() / dist);
 
 	assert(pos.Length() > primary->GetSystemBody()->GetRadius());
-	pos += primary->GetPositionRelTo(GetRootFrame());
+	pos += primary->GetPositionRelTo(Frame::GetRootFrameId());
 }
 
 Body *Space::FindNearestTo(const Body *b, Object::Type t) const

@@ -207,10 +207,10 @@ void Camera::Draw(const Body *excludeBody, ShipCockpit *cockpit)
 	PROFILE_SCOPED()
 
 	FrameId camFrameId = m_context->GetCamFrame();
-	FrameId rootFrameId = Pi::game->GetSpace()->GetRootFrame();
+	FrameId rootFrameId = Frame::GetRootFrameId();
 
 	Frame *camFrame = Frame::GetFrame(camFrameId);
-	Frame *rootFrame = Frame::GetFrame(rootFrameId);
+	Frame *rootFrame = Frame::GetRootFrame();
 
 	m_renderer->ClearScreen();
 

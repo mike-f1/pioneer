@@ -8,6 +8,7 @@
 #include "Body.h"
 #include "DeathView.h"
 #include "FileSystem.h"
+#include "Frame.h"
 #include "GZipFormat.h"
 #include "GameLog.h"
 #include "GameSaveError.h"
@@ -287,7 +288,7 @@ void Game::TimeStep(float step)
 
 	// XXX ui updates, not sure if they belong here
 	m_gameViews->m_cpan->TimeStepUpdate(step);
-	SfxManager::TimeStepAll(step, m_space->GetRootFrame());
+	SfxManager::TimeStepAll(step, Frame::GetRootFrameId());
 
 	if (m_state == STATE_HYPERSPACE) {
 		if (Pi::game->GetTime() >= m_hyperspaceEndTime) {
@@ -467,7 +468,7 @@ void Game::SwitchToHyperspace()
 	Pi::planner->ResetDv();
 
 	// put the player in it
-	m_player->SetFrame(m_space->GetRootFrame());
+	m_player->SetFrame(Frame::GetRootFrameId());
 	m_space->AddBody(m_player.get());
 
 	// put player at the origin. kind of unnecessary since it won't be moving
@@ -498,7 +499,7 @@ void Game::SwitchToNormalSpace()
 	m_space.reset(new Space(this, m_galaxy, m_hyperspaceDest, m_space.get()));
 
 	// put the player in it
-	m_player->SetFrame(m_space->GetRootFrame());
+	m_player->SetFrame(Frame::GetRootFrameId());
 	m_space->AddBody(m_player.get());
 
 	// place it
@@ -517,14 +518,14 @@ void Game::SwitchToNormalSpace()
 
 	// place the exit cloud
 	HyperspaceCloud *cloud = new HyperspaceCloud(0, Pi::game->GetTime(), true);
-	cloud->SetFrame(m_space->GetRootFrame());
+	cloud->SetFrame(Frame::GetRootFrameId());
 	cloud->SetPosition(m_player->GetPosition());
 	m_space->AddBody(cloud);
 
 	for (std::list<HyperspaceCloud *>::iterator i = m_hyperspaceClouds.begin(); i != m_hyperspaceClouds.end(); ++i) {
 		cloud = *i;
 
-		cloud->SetFrame(m_space->GetRootFrame());
+		cloud->SetFrame(Frame::GetRootFrameId());
 		cloud->SetPosition(m_space->GetHyperspaceExitPoint(m_hyperspaceSource, m_hyperspaceDest));
 
 		m_space->AddBody(cloud);
@@ -533,7 +534,7 @@ void Game::SwitchToNormalSpace()
 			// they emerged from hyperspace some time ago
 			Ship *ship = cloud->EvictShip();
 
-			ship->SetFrame(m_space->GetRootFrame());
+			ship->SetFrame(Frame::GetRootFrameId());
 			ship->SetVelocity(vector3d(0, 0, -100.0));
 			ship->SetOrient(matrix3x3d::Identity());
 			ship->SetFlightState(Ship::FLYING);
@@ -573,7 +574,7 @@ void Game::SwitchToNormalSpace()
 
 				if (travel_time <= 0) {
 					pos =
-						target_body->GetPositionRelTo(m_space->GetRootFrame()) +
+						target_body->GetPositionRelTo(Frame::GetRootFrameId()) +
 						cloud->GetPositionRelTo(target_body).Normalized() * (dist_to_target - dist);
 					ship->SetPosition(pos);
 				}

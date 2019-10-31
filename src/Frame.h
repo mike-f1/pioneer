@@ -70,6 +70,15 @@ public:
 		return nullptr;
 	}
 
+	static Frame *GetRootFrame() {
+		if (s_frames.empty()) return nullptr;
+		return &s_frames[rootFrameId];
+	}
+
+	static FrameId GetRootFrameId() {
+		return rootFrameId;
+	}
+
 	FrameId GetId() const {return m_thisId; }
 
 	const std::string &GetLabel() const { return m_label; }

@@ -132,7 +132,7 @@ static int l_space_spawn_ship(lua_State *l)
 	Body *thing = _maybe_wrap_ship_with_cloud(ship, path, due);
 
 	// XXX protect against spawning inside the body
-	thing->SetFrame(Pi::game->GetSpace()->GetRootFrame());
+	thing->SetFrame(Frame::GetRootFrameId());
 	if (!path)
 		thing->SetPosition(MathUtil::RandomPointOnSphere(min_dist, max_dist) * AU);
 	else
@@ -698,8 +698,7 @@ static int l_space_attr_root_system_body(lua_State *l)
 
 	LUA_DEBUG_START(l);
 
-	FrameId rootId = Pi::game->GetSpace()->GetRootFrame();
-	Frame *root = Frame::GetFrame(rootId);
+	Frame *root = Frame::GetRootFrame();
 	LuaObject<SystemBody>::PushToLua(root->GetSystemBody());
 
 	LUA_DEBUG_END(l, 1);

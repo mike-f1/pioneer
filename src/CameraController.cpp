@@ -10,7 +10,6 @@
 #include "MathUtil.h"
 #include "Pi.h"
 #include "Ship.h"
-#include "Space.h"
 #include "scenegraph/MatrixTransform.h"
 
 CameraController::CameraController(RefCountedPtr<CameraContext> camera, const Ship *ship) :
@@ -295,7 +294,7 @@ void SiderealCameraController::Update()
 	const Ship *ship = GetShip();
 
 	m_sidOrient.Renormalize(); // lots of small rotations
-	matrix3x3d shipOrient = ship->GetInterpOrientRelTo(Pi::game->GetSpace()->GetRootFrame());
+	matrix3x3d shipOrient = ship->GetInterpOrientRelTo(Frame::GetRootFrameId());
 
 	SetPosition(shipOrient.Transpose() * m_sidOrient.VectorZ() * m_dist);
 	SetOrient(shipOrient.Transpose() * m_sidOrient);

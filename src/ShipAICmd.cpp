@@ -1074,7 +1074,7 @@ bool AICmdFlyTo::TimeStepUpdate()
 	// cap target speed according to spare fuel remaining
 	double fuelspeed = m_prop->GetSpeedReachedWithFuel();
 	if (m_target && m_target->IsType(Object::SHIP)) fuelspeed -=
-		m_dBody->GetVelocityRelTo(Pi::game->GetSpace()->GetRootFrame()).Length();
+		m_dBody->GetVelocityRelTo(Frame::GetRootFrameId()).Length();
 	if (ispeed > curspeed && curspeed > 0.9 * fuelspeed) ispeed = curspeed;
 
 	// Don't exit a frame faster than some fraction of radius

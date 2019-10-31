@@ -42,8 +42,6 @@ public:
 
 	RefCountedPtr<StarSystem> GetStarSystem() const { return m_starSystem; }
 
-	FrameId GetRootFrame() const { return m_rootFrameId; }
-
 	void AddBody(Body *);
 	void RemoveBody(Body *);
 	void KillBody(Body *);

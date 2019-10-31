@@ -1019,22 +1019,29 @@ void SystemView::RefreshShips(void)
 	}
 }
 
+static vector3d GetShipPositionAtTime(std::pair<Ship *, Orbit> &s, const double t)
+{
+	vector3d pos(0.0);
+
+	if (s.first->GetFlightState() != Ship::FlightState::FLYING) {
+		pos += s.first->GetPositionRelTo(Frame::GetRootFrameId());
+	} else {
+		FrameId frameId = s.first->GetFrame();
+		vector3d bpos = vector3d(0.0);
+		if (frameId != Frame::GetRootFrameId()) {
+			Frame *frame = Frame::GetFrame(frameId);
+			bpos += frame->GetPositionRelTo(Frame::GetRootFrameId());
+		}
+		pos += (bpos + s.second.OrbitalPosAtTime(t));
+	}
+	return pos;
+}
+
 void SystemView::DrawShips(const double t, const vector3d &offset)
 {
 	m_shipLabels->Clear();
 	for (auto s = m_contacts.begin(); s != m_contacts.end(); s++) {
-		vector3d pos = offset;
-		if ((*s).first->GetFlightState() != Ship::FlightState::FLYING) {
-			pos += (*s).first->GetPositionRelTo(Frame::GetRootFrameId()) * double(m_zoom);
-		} else {
-			FrameId frameId = (*s).first->GetFrame();
-			vector3d bpos = vector3d(0., 0., 0.);
-			if (frameId != Frame::GetRootFrameId()) {
-				Frame *frame = Frame::GetFrame(frameId);
-				bpos += frame->GetPositionRelTo(Frame::GetRootFrameId());
-			}
-			pos += (bpos + (*s).second.OrbitalPosAtTime(t)) * double(m_zoom);
-		}
+		vector3d pos = offset + GetShipPositionAtTime(*s, t) * m_zoom;
 		const bool isNavTarget = Pi::player->GetNavTarget() == (*s).first;
 		PutSelectionBox(pos, isNavTarget ? Color::GREEN : Color::BLUE);
 		LabelShip((*s).first, pos);
@@ -1050,7 +1057,6 @@ void SystemView::PrepareGrid()
 
 	m_grid_lines = int(diameter) + 1;
 
-	m_displayed_sbody.clear();
 	if (m_gridDrawing == GridDrawing::GRID_AND_LEGS) {
 			m_displayed_sbody = m_system->GetRootBody()->CollectAllChildren();
 	}
@@ -1060,7 +1066,11 @@ void SystemView::DrawGrid()
 {
 	PrepareGrid();
 
-	m_lineVerts.reset(new Graphics::VertexArray(Graphics::ATTRIB_POSITION, m_grid_lines * 4 + m_displayed_sbody.size() * 2));
+	int contact_num = (m_gridDrawing == GridDrawing::GRID_AND_LEGS &&
+		m_shipDrawing != ShipDrawing::OFF) ? m_contacts.size() : 0;
+
+	m_lineVerts.reset(new Graphics::VertexArray(Graphics::ATTRIB_POSITION,
+		m_grid_lines * 4 + m_displayed_sbody.size() * 2 + contact_num * 2));
 
 	float zoom = m_zoom * float(AU);
 	vector3d pos(0.);
@@ -1084,6 +1094,16 @@ void SystemView::DrawGrid()
 		m_lineVerts->Add(vector3f(pos - offset), Color::GRAY * 0.5);
 		offset.y = 0.0;
 		m_lineVerts->Add(vector3f(pos - offset), Color::GRAY * 0.5);
+	}
+
+	if (contact_num != 0) {
+		for (auto &s: m_contacts) {
+			const bool isNavTarget = Pi::player->GetNavTarget() == s.first;
+			vector3d offset = GetShipPositionAtTime(s, m_time - m_game->GetTime()) * zoom / float(AU);
+			m_lineVerts->Add(vector3f(pos + offset), (isNavTarget ? Color::GREEN : Color::GRAY) * 0.5);
+			offset.y = 0.0;
+			m_lineVerts->Add(vector3f(pos + offset), (isNavTarget ? Color::GREEN : Color::GRAY) * 0.5);
+		}
 	}
 
 	m_lines.SetData(m_lineVerts->GetNumVerts(), &m_lineVerts->position[0], &m_lineVerts->diffuse[0]);

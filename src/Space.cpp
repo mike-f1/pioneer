@@ -392,25 +392,6 @@ Body *Space::FindBodyForPath(const SystemPath *path) const
 	return 0;
 }
 
-static FrameId find_frame_with_sbody(FrameId fId, const SystemBody *b)
-{
-	Frame *f = Frame::GetFrame(fId);
-	if (f->GetSystemBody() == b)
-		return fId;
-	else {
-		for (FrameId kid : f->GetChildren()) {
-			FrameId found = find_frame_with_sbody(kid, b);
-			if (IsIdValid(found)) return found;
-		}
-	}
-	return noFrameId;
-}
-
-FrameId Space::GetFrameWithSystemBody(const SystemBody *b) const
-{
-	return find_frame_with_sbody(m_rootFrameId, b);
-}
-
 static void RelocateStarportIfNecessary(SystemBody *sbody, Planet *planet, vector3d &pos, matrix3x3d &rot, const std::vector<vector3d> &prevPositions)
 {
 	const double radius = planet->GetSystemBody()->GetRadius();

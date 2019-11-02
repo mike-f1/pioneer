@@ -87,12 +87,8 @@ private:
 	void GenSectorCache(RefCountedPtr<Galaxy> galaxy, const SystemPath *here);
 	void UpdateStarSystemCache(const SystemPath *here);
 	void GenBody(const double at_time, SystemBody *b, FrameId fId, std::vector<vector3d> &posAccum);
-	// make sure SystemBody* is in Pi::currentSystem
-	FrameId GetFrameWithSystemBody(const SystemBody *b) const;
 
 	void UpdateBodies();
-
-	void CollideFrame(FrameId fId);
 
 	FrameId m_rootFrameId;
 

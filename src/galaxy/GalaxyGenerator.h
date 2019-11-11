@@ -4,6 +4,7 @@
 #ifndef GALAXYGENERATOR_H
 #define GALAXYGENERATOR_H
 
+#include "Galaxy.h"
 #include "RefCounted.h"
 #include "Sector.h"
 #include "StarSystem.h"
@@ -23,10 +24,7 @@ public:
 	static void Uninit();
 
 	static RefCountedPtr<Galaxy> Create(const std::string &name, Version version = LAST_VERSION);
-	static RefCountedPtr<Galaxy> Create()
-	{
-		return Create(s_defaultGenerator, s_defaultVersion);
-	}
+	static RefCountedPtr<Galaxy> Create();
 	static RefCountedPtr<Galaxy> CreateFromJson(const Json &jsonObj);
 
 	static std::string GetDefaultGeneratorName() { return s_defaultGenerator; }
@@ -123,7 +121,7 @@ class StarSystemGeneratorStage : public GalaxyGeneratorStage {
 public:
 	virtual ~StarSystemGeneratorStage() {}
 
-	virtual bool Apply(Random &rng, RefCountedPtr<Galaxy> galaxy, RefCountedPtr<StarSystem::GeneratorAPI> system, GalaxyGenerator::StarSystemConfig *config) = 0;
+	virtual bool Apply(Random &rng, RefCountedPtr<Galaxy> galaxy, RefCountedPtr<StarSystem> system, GalaxyGenerator::StarSystemConfig *config) = 0;
 };
 
 #endif

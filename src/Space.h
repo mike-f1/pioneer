@@ -4,29 +4,35 @@
 #ifndef _SPACE_H
 #define _SPACE_H
 
-#include "Background.h"
 #include "FrameId.h"
 #include "IterationProxy.h"
+#include "JsonFwd.h"
 #include "Object.h"
 #include "RefCounted.h"
-#include "galaxy/StarSystem.h"
 #include "vector3.h"
 #include <list>
+#include <memory>
 
 class Body;
 class Frame;
-class Game;
+class StarSystem;
+class SystemBody;
+class SystemPath;
+
+namespace Background {
+	class Container;
+}
 
 class Space {
 public:
 	// empty space (eg for hyperspace)
-	Space(Game *game, RefCountedPtr<Galaxy> galaxy, Space *oldSpace = nullptr);
+	Space();
 
 	// initalise with system bodies
-	Space(Game *game, RefCountedPtr<Galaxy> galaxy, const SystemPath &path, Space *oldSpace = nullptr);
+	Space(double total_time, float time_step, RefCountedPtr<StarSystem> starsystem, const SystemPath &path);
 
 	// initialise from save file
-	Space(Game *game, RefCountedPtr<Galaxy> galaxy, const Json &jsonObj, double at_time);
+	Space(RefCountedPtr<StarSystem> starsystem, const Json &jsonObj, double at_time);
 
 	~Space();
 
@@ -40,26 +46,16 @@ public:
 	Uint32 GetIndexForBody(const Body *body) const;
 	Uint32 GetIndexForSystemBody(const SystemBody *sbody) const;
 
-	RefCountedPtr<StarSystem> GetStarSystem() const { return m_starSystem; }
+	RefCountedPtr<StarSystem> GetStarSystem() const;
 
 	void AddBody(Body *);
 	void RemoveBody(Body *);
 	void KillBody(Body *);
 
-	void TimeStep(float step);
+	void TimeStep(float step, double total_time);
 
-	void GetHyperspaceExitParams(const SystemPath &source, const SystemPath &dest,
-		vector3d &pos, vector3d &vel) const;
-	vector3d GetHyperspaceExitPoint(const SystemPath &source, const SystemPath &dest) const
-	{
-		vector3d pos, vel;
-		GetHyperspaceExitParams(source, dest, pos, vel);
-		return pos;
-	}
-	vector3d GetHyperspaceExitPoint(const SystemPath &source) const
-	{
-		return GetHyperspaceExitPoint(source, m_starSystem->GetPath());
-	}
+	void GetRandomOrbitFromDirection(const SystemPath &source, const SystemPath &dest,
+		const vector3d &dir, vector3d &pos, vector3d &vel) const;
 
 	Body *FindNearestTo(const Body *b, Object::Type t) const;
 	Body *FindBodyForPath(const SystemPath *path) const;
@@ -84,20 +80,13 @@ public:
 
 	void DebugDumpFrames(bool details);
 private:
-	void GenSectorCache(RefCountedPtr<Galaxy> galaxy, const SystemPath *here);
-	void UpdateStarSystemCache(const SystemPath *here);
 	void GenBody(const double at_time, SystemBody *b, FrameId fId, std::vector<vector3d> &posAccum);
 
 	void UpdateBodies();
 
 	FrameId m_rootFrameId;
 
-	RefCountedPtr<SectorCache::Slave> m_sectorCache;
-	RefCountedPtr<StarSystemCache::Slave> m_starSystemCache;
-
 	RefCountedPtr<StarSystem> m_starSystem;
-
-	Game *m_game;
 
 	// all the bodies we know about
 	std::list<Body *> m_bodies;

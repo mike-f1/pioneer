@@ -5,11 +5,15 @@
 #define _GAME_H
 
 #include "JsonFwd.h"
-#include "galaxy/Galaxy.h"
+#include "RefCounted.h"
+#include "galaxy/GalaxyCache.h"
 #include "galaxy/SystemPath.h"
 #include "gameconsts.h"
+#include "vector3.h"
 #include <string>
+#include <list>
 
+class Galaxy;
 class GameLog;
 class HyperspaceCloud;
 class Player;
@@ -62,7 +66,7 @@ public:
 	bool IsNormalSpace() const { return m_state == STATE_NORMAL; }
 	bool IsHyperspace() const { return m_state == STATE_HYPERSPACE; }
 
-	RefCountedPtr<Galaxy> GetGalaxy() const { return m_galaxy; }
+	RefCountedPtr<Galaxy> GetGalaxy() const;
 	Space *GetSpace() const { return m_space.get(); }
 	double GetTime() const { return m_time; }
 	Player *GetPlayer() const { return m_player.get(); }
@@ -85,6 +89,17 @@ public:
 	const SystemPath &GetHyperspaceDest() const { return m_hyperspaceDest; }
 	const SystemPath &GetHyperspaceSource() const { return m_hyperspaceSource; }
 	void RemoveHyperspaceCloud(HyperspaceCloud *);
+
+	void GetHyperspaceExitParams(const SystemPath &source, const SystemPath &dest, vector3d &pos, vector3d &vel);
+
+	void GetHyperspaceExitParams(const SystemPath &source, vector3d &pos, vector3d &vel);
+
+	vector3d GetHyperspaceExitPoint(const SystemPath &source, const SystemPath &dest)
+	{
+		vector3d pos, vel;
+		GetHyperspaceExitParams(source, dest, pos, vel);
+		return pos;
+	}
 
 	enum TimeAccel {
 		TIMEACCEL_PAUSED,
@@ -131,11 +146,18 @@ public:
 	GameLog *log;
 
 private:
+	void GenCaches(const SystemPath *here, int sectorRadius,
+		StarSystemCache::CacheFilledCallback callback = StarSystemCache::CacheFilledCallback());
+	void UpdateStarSystemCache(const SystemPath *here, int sectorRadius);
+
+	RefCountedPtr<SectorCache::Slave> m_sectorCache;
+	RefCountedPtr<StarSystemCache::Slave> m_starSystemCache;
+
 	class Views {
 	public:
 		Views();
-		void Init(Game *game);
-		void LoadFromJson(const Json &jsonObj, Game *game);
+		void Init(Game *game, const SystemPath &path);
+		void LoadFromJson(const Json &jsonObj, Game *game, const SystemPath &path);
 		~Views();
 
 		void SetRenderer(Graphics::Renderer *r);
@@ -154,8 +176,8 @@ private:
 		ObjectViewerView *m_objectViewerView;
 	};
 
-	void CreateViews();
-	void LoadViewsFromJson(const Json &jsonObj);
+	void CreateViews(const SystemPath &path);
+	void LoadViewsFromJson(const Json &jsonObj, const SystemPath &path);
 	void DestroyViews();
 
 	static void EmitPauseState(bool paused);

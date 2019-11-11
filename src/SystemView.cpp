@@ -509,7 +509,7 @@ void SystemView::OnClickRealt()
 
 void SystemView::ResetViewpoint()
 {
-	m_selectedObject = 0;
+	m_selectedObject = nullptr;
 	m_rot_z = 0;
 	m_rot_x = 50;
 	m_rot_z_to = m_rot_z;
@@ -727,10 +727,10 @@ void SystemView::OnClickShip(Ship *s)
 
 void SystemView::PutBody(const SystemBody *b, const vector3d &offset, const matrix4x4f &trans)
 {
-	if (b->GetType() == SystemBody::TYPE_STARPORT_SURFACE)
+	if (b->GetType() == GalaxyEnums::BodyType::TYPE_STARPORT_SURFACE)
 		return;
 
-	if (b->GetType() != SystemBody::TYPE_GRAVPOINT) {
+	if (b->GetType() != GalaxyEnums::BodyType::TYPE_GRAVPOINT) {
 		if (!m_bodyIcon) {
 			Graphics::RenderStateDesc rsd;
 			auto solidState = m_renderer->CreateRenderState(rsd);
@@ -788,8 +788,8 @@ void SystemView::PutBody(const SystemBody *b, const vector3d &offset, const matr
 
 			const double axisZoom = kid->GetOrbit().GetSemiMajorAxis() * m_zoom;
 			if (axisZoom < DEFAULT_VIEW_DISTANCE) {
-				const SystemBody::BodySuperType bst = kid->GetSuperType();
-				const bool showLagrange = (bst == SystemBody::SUPERTYPE_ROCKY_PLANET || bst == SystemBody::SUPERTYPE_GAS_GIANT);
+				const GalaxyEnums::BodySuperType bst = kid->GetSuperType();
+				const bool showLagrange = (bst == GalaxyEnums::BodySuperType::SUPERTYPE_ROCKY_PLANET || bst == GalaxyEnums::BodySuperType::SUPERTYPE_GAS_GIANT);
 				PutOrbit(&(kid->GetOrbit()), offset, Color::GREEN, 0.0, showLagrange);
 			}
 
@@ -804,7 +804,7 @@ void SystemView::PutSelectionBox(const SystemBody *b, const vector3d &rootPos, c
 {
 	// surface starports just show the planet as being selected,
 	// because SystemView doesn't render terrains anyway
-	if (b->GetType() == SystemBody::TYPE_STARPORT_SURFACE)
+	if (b->GetType() == GalaxyEnums::BodyType::TYPE_STARPORT_SURFACE)
 		b = b->GetParent();
 	assert(b);
 

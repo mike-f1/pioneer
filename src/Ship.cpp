@@ -18,6 +18,7 @@
 #include "LuaUtils.h"
 #include "Missile.h"
 #include "NavLights.h"
+#include "Pi.h"
 #include "Planet.h"
 #include "Player.h" // <-- Here only for 1 occurence of "Pi::player" in Ship::Explode
 #include "Sensors.h"
@@ -29,6 +30,7 @@
 #include "StringF.h"
 #include "WorldView.h"
 #include "collider/CollisionContact.h"
+#include "galaxy/StarSystem.h"
 #include "graphics/TextureBuilder.h"
 #include "scenegraph/Animation.h"
 #include "scenegraph/MatrixTransform.h"

@@ -4,8 +4,6 @@
 #include "Star.h"
 
 #include "Pi.h"
-#include "galaxy/SystemBody.h"
-#include "galaxy/StarSystem.h"
 #include "graphics/RenderState.h"
 #include "graphics/Renderer.h"
 #include "graphics/VertexArray.h"
@@ -34,9 +32,9 @@ void Star::InitStar()
 
 	// this one is much larger because stars have halo effect
 	// if star is wolf-rayet it gets a very large halo effect
-	const SystemBody *sbody = GetSystemBody();
-	const float wf = (sbody->GetType() < SystemBody::TYPE_STAR_S_BH && sbody->GetType() > SystemBody::TYPE_STAR_O_HYPER_GIANT) ? 100.0f : 1.0f;
-	SetClipRadius(sbody->GetRadius() * 8 * wf);
+	const GalaxyEnums::BodyType type = GetSystemBodyType();
+	const float wf = (type < GalaxyEnums::BodyType::TYPE_STAR_S_BH && type > GalaxyEnums::BodyType::TYPE_STAR_O_HYPER_GIANT) ? 100.0f : 1.0f;
+	SetClipRadius(GetSystemBodyRadius() * 8 * wf);
 
 	Graphics::RenderStateDesc rsd;
 	rsd.blendMode = Graphics::BLEND_ALPHA;
@@ -49,7 +47,7 @@ void Star::BuildHaloBuffer(Graphics::Renderer *renderer, double rad)
 	// build halo vertex buffer
 	Random rand;
 	Graphics::VertexArray va(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE);
-	const Color bright(StarSystem::starRealColors[GetSystemBody()->GetType()]);
+	const Color bright(GalaxyEnums::starRealColors[GetSystemBodyType()]);
 	const Color dark(Color::BLANK);
 
 	va.Add(vector3f(0.f), bright);

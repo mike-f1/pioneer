@@ -3,212 +3,23 @@
 
 #include "StarSystem.h"
 
+#include "Faction.h"
 #include "Galaxy.h"
 #include "Json.h"
 #include "Sector.h"
+#include "StarSystemWriter.h"
 
 #include "EnumStrings.h"
 #include "GameSaveError.h"
-#include "Lang.h"
 #include "LuaEvent.h"
 #include "Orbit.h"
-#include "StringF.h"
 #include "enum_table.h"
-#include "utils.h"
 #include <SDL_stdinc.h>
 #include <algorithm>
 #include <map>
 #include <string>
 
 //#define DEBUG_DUMP
-
-namespace {
-	bool InvalidSystemNameChar(char c)
-	{
-		return !(
-			(c >= 'a' && c <= 'z') ||
-			(c >= 'A' && c <= 'Z') ||
-			(c >= '0' && c <= '9'));
-	}
-} // namespace
-
-// indexed by enum type turd
-const Color StarSystem::starColors[] = {
-	{ 0, 0, 0 }, // gravpoint
-	{ 128, 0, 0 }, // brown dwarf
-	{ 102, 102, 204 }, // white dwarf
-	{ 255, 51, 0 }, // M
-	{ 255, 153, 26 }, // K
-	{ 255, 255, 102 }, // G
-	{ 255, 255, 204 }, // F
-	{ 255, 255, 255 }, // A
-	{ 178, 178, 255 }, // B
-	{ 255, 178, 255 }, // O
-	{ 255, 51, 0 }, // M Giant
-	{ 255, 153, 26 }, // K Giant
-	{ 255, 255, 102 }, // G Giant
-	{ 255, 255, 204 }, // F Giant
-	{ 255, 255, 255 }, // A Giant
-	{ 178, 178, 255 }, // B Giant
-	{ 255, 178, 255 }, // O Giant
-	{ 255, 51, 0 }, // M Super Giant
-	{ 255, 153, 26 }, // K Super Giant
-	{ 255, 255, 102 }, // G Super Giant
-	{ 255, 255, 204 }, // F Super Giant
-	{ 255, 255, 255 }, // A Super Giant
-	{ 178, 178, 255 }, // B Super Giant
-	{ 255, 178, 255 }, // O Super Giant
-	{ 255, 51, 0 }, // M Hyper Giant
-	{ 255, 153, 26 }, // K Hyper Giant
-	{ 255, 255, 102 }, // G Hyper Giant
-	{ 255, 255, 204 }, // F Hyper Giant
-	{ 255, 255, 255 }, // A Hyper Giant
-	{ 178, 178, 255 }, // B Hyper Giant
-	{ 255, 178, 255 }, // O Hyper Giant
-	{ 255, 51, 0 }, // Red/M Wolf Rayet Star
-	{ 178, 178, 255 }, // Blue/B Wolf Rayet Star
-	{ 255, 178, 255 }, // Purple-Blue/O Wolf Rayet Star
-	{ 76, 178, 76 }, // Stellar Blackhole
-	{ 51, 230, 51 }, // Intermediate mass Black-hole
-	{ 0, 255, 0 } // Super massive black hole
-};
-
-// indexed by enum type turd
-const Color StarSystem::starRealColors[] = {
-	{ 0, 0, 0 }, // gravpoint
-	{ 128, 0, 0 }, // brown dwarf
-	{ 255, 255, 255 }, // white dwarf
-	{ 255, 128, 51 }, // M
-	{ 255, 255, 102 }, // K
-	{ 255, 255, 242 }, // G
-	{ 255, 255, 255 }, // F
-	{ 255, 255, 255 }, // A
-	{ 204, 204, 255 }, // B
-	{ 255, 204, 255 }, // O
-	{ 255, 128, 51 }, // M Giant
-	{ 255, 255, 102 }, // K Giant
-	{ 255, 255, 242 }, // G Giant
-	{ 255, 255, 255 }, // F Giant
-	{ 255, 255, 255 }, // A Giant
-	{ 204, 204, 255 }, // B Giant
-	{ 255, 204, 255 }, // O Giant
-	{ 255, 128, 51 }, // M Super Giant
-	{ 255, 255, 102 }, // K Super Giant
-	{ 255, 255, 242 }, // G Super Giant
-	{ 255, 255, 255 }, // F Super Giant
-	{ 255, 255, 255 }, // A Super Giant
-	{ 204, 204, 255 }, // B Super Giant
-	{ 255, 204, 255 }, // O Super Giant
-	{ 255, 128, 51 }, // M Hyper Giant
-	{ 255, 255, 102 }, // K Hyper Giant
-	{ 255, 255, 242 }, // G Hyper Giant
-	{ 255, 255, 255 }, // F Hyper Giant
-	{ 255, 255, 255 }, // A Hyper Giant
-	{ 204, 204, 255 }, // B Hyper Giant
-	{ 255, 204, 255 }, // O Hyper Giant
-	{ 255, 153, 153 }, // M WF
-	{ 204, 204, 255 }, // B WF
-	{ 255, 204, 255 }, // O WF
-	{ 22, 0, 24 }, // small Black hole
-	{ 16, 0, 20 }, // med BH
-	{ 10, 0, 16 } // massive BH
-};
-
-const double StarSystem::starLuminosities[] = {
-	0,
-	0.0003, // brown dwarf
-	0.1, // white dwarf
-	0.08, // M0
-	0.38, // K0
-	1.2, // G0
-	5.1, // F0
-	24.0, // A0
-	100.0, // B0
-	200.0, // O5
-	1000.0, // M0 Giant
-	2000.0, // K0 Giant
-	4000.0, // G0 Giant
-	6000.0, // F0 Giant
-	8000.0, // A0 Giant
-	9000.0, // B0 Giant
-	12000.0, // O5 Giant
-	12000.0, // M0 Super Giant
-	14000.0, // K0 Super Giant
-	18000.0, // G0 Super Giant
-	24000.0, // F0 Super Giant
-	30000.0, // A0 Super Giant
-	50000.0, // B0 Super Giant
-	100000.0, // O5 Super Giant
-	125000.0, // M0 Hyper Giant
-	150000.0, // K0 Hyper Giant
-	175000.0, // G0 Hyper Giant
-	200000.0, // F0 Hyper Giant
-	200000.0, // A0 Hyper Giant
-	200000.0, // B0 Hyper Giant
-	200000.0, // O5 Hyper Giant
-	50000.0, // M WF
-	100000.0, // B WF
-	200000.0, // O WF
-	0.0003, // Stellar Black hole
-	0.00003, // IM Black hole
-	0.000003, // Supermassive Black hole
-};
-
-const float StarSystem::starScale[] = {
-	// Used in sector view
-	0,
-	0.6f, // brown dwarf
-	0.5f, // white dwarf
-	0.7f, // M
-	0.8f, // K
-	0.8f, // G
-	0.9f, // F
-	1.0f, // A
-	1.1f, // B
-	1.1f, // O
-	1.3f, // M Giant
-	1.2f, // K G
-	1.2f, // G G
-	1.2f, // F G
-	1.1f, // A G
-	1.1f, // B G
-	1.2f, // O G
-	1.8f, // M Super Giant
-	1.6f, // K SG
-	1.5f, // G SG
-	1.5f, // F SG
-	1.4f, // A SG
-	1.3f, // B SG
-	1.3f, // O SG
-	2.5f, // M Hyper Giant
-	2.2f, // K HG
-	2.2f, // G HG
-	2.1f, // F HG
-	2.1f, // A HG
-	2.0f, // B HG
-	1.9f, // O HG
-	1.1f, // M WF
-	1.3f, // B WF
-	1.6f, // O WF
-	1.0f, // Black hole
-	2.5f, // Intermediate-mass blackhole
-	4.0f // Supermassive blackhole
-};
-
-SystemBody *StarSystem::GetBodyByPath(const SystemPath &path) const
-{
-	PROFILE_SCOPED()
-	assert(m_path.IsSameSystem(path));
-	assert(path.IsBodyPath());
-	assert(path.bodyIndex < m_bodies.size());
-
-	return m_bodies[path.bodyIndex].Get();
-}
-
-SystemPath StarSystem::GetPathOf(const SystemBody *sbody) const
-{
-	return sbody->GetPath();
-}
 
 /*
  * As my excellent comrades have pointed out, choices that depend on floating
@@ -233,8 +44,30 @@ StarSystem::StarSystem(const SystemPath &path, RefCountedPtr<Galaxy> galaxy, Sta
 	memset(m_tradeLevel, 0, sizeof(m_tradeLevel));
 }
 
-StarSystem::GeneratorAPI::GeneratorAPI(const SystemPath &path, RefCountedPtr<Galaxy> galaxy, StarSystemCache *cache, Random &rand) :
-	StarSystem(path, galaxy, cache, rand) {}
+StarSystem::~StarSystem()
+{
+	PROFILE_SCOPED()
+	// clear parent and children pointers. someone (Lua) might still have a
+	// reference to things that are about to be deleted
+	m_rootBody->ClearParentAndChildPointers();
+	if (m_cache)
+		m_cache->RemoveFromAttic(m_path);
+}
+
+SystemBody *StarSystem::GetBodyByPath(const SystemPath &path) const
+{
+	PROFILE_SCOPED()
+	assert(m_path.IsSameSystem(path));
+	assert(path.IsBodyPath());
+	assert(path.bodyIndex < m_bodies.size());
+
+	return m_bodies[path.bodyIndex].Get();
+}
+
+SystemPath StarSystem::GetPathOf(const SystemBody *sbody) const
+{
+	return sbody->GetPath();
+}
 
 #ifdef DEBUG_DUMP
 struct thing_t {
@@ -294,45 +127,6 @@ void StarSystem::Dump()
 }
 #endif /* DEBUG_DUMP */
 
-void StarSystem::MakeShortDescription()
-{
-	PROFILE_SCOPED()
-	if (GetExplored() == StarSystem::eUNEXPLORED)
-		SetShortDesc(Lang::UNEXPLORED_SYSTEM_NO_DATA);
-
-	else if (GetExplored() == StarSystem::eEXPLORED_BY_PLAYER)
-		SetShortDesc(stringf(Lang::RECENTLY_EXPLORED_SYSTEM, formatarg("date", format_date_only(GetExploredTime()))));
-
-	/* Total population is in billions */
-	else if (GetTotalPop() == 0) {
-		SetShortDesc(Lang::SMALL_SCALE_PROSPECTING_NO_SETTLEMENTS);
-	} else if (GetTotalPop() < fixed(1, 10)) {
-		switch (GetEconType()) {
-		case GalacticEconomy::ECON_INDUSTRY: SetShortDesc(Lang::SMALL_INDUSTRIAL_OUTPOST); break;
-		case GalacticEconomy::ECON_MINING: SetShortDesc(Lang::SOME_ESTABLISHED_MINING); break;
-		case GalacticEconomy::ECON_AGRICULTURE: SetShortDesc(Lang::YOUNG_FARMING_COLONY); break;
-		}
-	} else if (GetTotalPop() < fixed(1, 2)) {
-		switch (GetEconType()) {
-		case GalacticEconomy::ECON_INDUSTRY: SetShortDesc(Lang::INDUSTRIAL_COLONY); break;
-		case GalacticEconomy::ECON_MINING: SetShortDesc(Lang::MINING_COLONY); break;
-		case GalacticEconomy::ECON_AGRICULTURE: SetShortDesc(Lang::OUTDOOR_AGRICULTURAL_WORLD); break;
-		}
-	} else if (GetTotalPop() < fixed(5, 1)) {
-		switch (GetEconType()) {
-		case GalacticEconomy::ECON_INDUSTRY: SetShortDesc(Lang::HEAVY_INDUSTRY); break;
-		case GalacticEconomy::ECON_MINING: SetShortDesc(Lang::EXTENSIVE_MINING); break;
-		case GalacticEconomy::ECON_AGRICULTURE: SetShortDesc(Lang::THRIVING_OUTDOOR_WORLD); break;
-		}
-	} else {
-		switch (GetEconType()) {
-		case GalacticEconomy::ECON_INDUSTRY: SetShortDesc(Lang::INDUSTRIAL_HUB_SYSTEM); break;
-		case GalacticEconomy::ECON_MINING: SetShortDesc(Lang::VAST_STRIP_MINE); break;
-		case GalacticEconomy::ECON_AGRICULTURE: SetShortDesc(Lang::HIGH_POPULATION_OUTDOOR_WORLD); break;
-		}
-	}
-}
-
 void StarSystem::ExploreSystem(double time)
 {
 	if (m_explored != eUNEXPLORED)
@@ -342,18 +136,9 @@ void StarSystem::ExploreSystem(double time)
 	RefCountedPtr<Sector> sec = m_galaxy->GetMutableSector(m_path);
 	Sector::System &secsys = sec->m_systems[m_path.systemIndex];
 	secsys.SetExplored(m_explored, m_exploredTime);
-	MakeShortDescription();
+	StarSystemWriter a(this);
+	a.MakeShortDescription();
 	LuaEvent::Queue("onSystemExplored", this);
-}
-
-StarSystem::~StarSystem()
-{
-	PROFILE_SCOPED()
-	// clear parent and children pointers. someone (Lua) might still have a
-	// reference to things that are about to be deleted
-	m_rootBody->ClearParentAndChildPointers();
-	if (m_cache)
-		m_cache->RemoveFromAttic(m_path);
 }
 
 void StarSystem::ToJson(Json &jsonObj, StarSystem *s)
@@ -384,6 +169,16 @@ RefCountedPtr<StarSystem> StarSystem::FromJson(RefCountedPtr<Galaxy> galaxy, con
 	}
 }
 
+namespace {
+	bool InvalidSystemNameChar(char c)
+	{
+		return !(
+			(c >= 'a' && c <= 'z') ||
+			(c >= 'A' && c <= 'Z') ||
+			(c >= '0' && c <= '9'));
+	}
+} // namespace
+
 std::string StarSystem::ExportBodyToLua(FILE *f, SystemBody *body)
 {
 	const int multiplier = 10000;
@@ -402,7 +197,7 @@ std::string StarSystem::ExportBodyToLua(FILE *f, SystemBody *body)
 		}
 	}
 
-	if (body->GetType() == SystemBody::TYPE_STARPORT_SURFACE) {
+	if (body->GetType() == GalaxyEnums::BodyType::TYPE_STARPORT_SURFACE) {
 		fprintf(f,
 			"local %s = CustomSystemBody:new(\"%s\", '%s')\n"
 			"\t:latitude(math.deg2rad(%.1f))\n"
@@ -422,7 +217,7 @@ std::string StarSystem::ExportBodyToLua(FILE *f, SystemBody *body)
 			int(round(body->GetRadiusAsFixed().ToDouble() * multiplier)), multiplier,
 			int(round(body->GetMassAsFixed().ToDouble() * multiplier)), multiplier);
 
-		if (body->GetType() != SystemBody::TYPE_GRAVPOINT)
+		if (body->GetType() != GalaxyEnums::BodyType::TYPE_GRAVPOINT)
 			fprintf(f,
 				"\t:seed(%u)\n"
 				"\t:temp(%d)\n"
@@ -442,7 +237,7 @@ std::string StarSystem::ExportBodyToLua(FILE *f, SystemBody *body)
 				int(round(body->m_orbitalPhaseAtStart.ToDouble() * multiplier * 180 / M_PI)), multiplier,
 				int(round(body->m_orbitalOffset.ToDouble() * multiplier * 180 / M_PI)), multiplier);
 
-		if (body->GetType() == SystemBody::TYPE_PLANET_TERRESTRIAL)
+		if (body->GetType() == GalaxyEnums::BodyType::TYPE_PLANET_TERRESTRIAL)
 			fprintf(f,
 				"\t:metallicity(f(%d,%d))\n"
 				"\t:volcanicity(f(%d,%d))\n"
@@ -479,7 +274,7 @@ std::string StarSystem::GetStarTypes(SystemBody *body)
 	int bodyTypeIdx = 0;
 	std::string types = "";
 
-	if (body->GetSuperType() == SystemBody::SUPERTYPE_STAR) {
+	if (body->GetSuperType() == GalaxyEnums::BodySuperType::SUPERTYPE_STAR) {
 		for (bodyTypeIdx = 0; ENUM_BodyType[bodyTypeIdx].name != 0; bodyTypeIdx++) {
 			if (ENUM_BodyType[bodyTypeIdx].value == body->GetType())
 				break;

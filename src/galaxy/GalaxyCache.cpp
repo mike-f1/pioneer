@@ -1,21 +1,31 @@
 // Copyright © 2008-2019 Pioneer Developers. See AUTHORS.txt for details
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
-#include "galaxy/GalaxyCache.h"
+#include "GalaxyCache.h"
 
-#include "Game.h"
-#include "galaxy/Galaxy.h"
-#include "galaxy/GalaxyGenerator.h"
-#include "galaxy/Sector.h"
-#include "galaxy/StarSystem.h"
+#include "Galaxy.h"
+#include "GalaxyGenerator.h"
+#include "Sector.h"
+#include "StarSystem.h"
 #include "Pi.h"
 #include "utils.h"
 #include <utility>
 
 //#define DEBUG_CACHE
 
-//virtual
+void SetCache(RefCountedPtr<StarSystem> ssys, StarSystemCache *cache)
+{
+	assert(!m_cache && !ssys);
+	ssys->m_cache = cache;
+}
 
+void SetCache(RefCountedPtr<Sector> sec, SectorCache *cache)
+{
+	assert(!m_cache);
+	sec->m_cache = cache;
+}
+
+//virtual
 template <typename T, typename CompareT>
 GalaxyObjectCache<T, CompareT>::~GalaxyObjectCache()
 {
@@ -32,7 +42,7 @@ void GalaxyObjectCache<T, CompareT>::AddToCache(std::vector<RefCountedPtr<T>> &o
 		if (!inserted.second) {
 			it->Reset(inserted.first->second);
 		} else {
-			(*it)->SetCache(this);
+			SetCache(*it, this);
 		}
 	}
 }
@@ -146,6 +156,7 @@ RefCountedPtr<T> GalaxyObjectCache<T, CompareT>::Slave::GetCached(const SystemPa
 	} else {
 		return RefCountedPtr<T>();
 	}
+	Output("Something wrong here...\n");
 }
 
 template <typename T, typename CompareT>
@@ -178,6 +189,64 @@ void GalaxyObjectCache<T, CompareT>::Slave::AddToCache(std::vector<RefCountedPtr
 		m_master->AddToCache(objects); // This modifies the vector to the sectors already in the master cache
 		for (auto it = objects.begin(), itEnd = objects.end(); it != itEnd; ++it) {
 			m_cache.insert(std::make_pair(it->Get()->GetPath(), *it));
+		}
+	}
+}
+
+template <>
+GalaxyObjectCache<Sector, SystemPath::LessSectorOnly>::PathVector GalaxyObjectCache<Sector, SystemPath::LessSectorOnly>::Slave::SearchPattern(std::string pattern)
+{
+	PathVector result;
+	result.reserve(5); // reserve at least some...
+	for (auto i = Begin(); i != End(); ++i) {
+		for (unsigned int systemIndex = 0; systemIndex < (*i).second->m_systems.size(); systemIndex++) {
+			const Sector::System *ss = &((*i).second->m_systems[systemIndex]);
+
+			// compare with the start of the current system
+			if (strncasecmp(pattern.c_str(), ss->GetName().c_str(), pattern.size()) == 0
+				// look for the pattern term somewhere within the current system
+				|| pi_strcasestr(ss->GetName().c_str(), pattern.c_str())) {
+				SystemPath match((*i).first);
+				match.systemIndex = systemIndex;
+				result.push_back(match);
+			}
+			// now also check other names of this system, if there are any
+			for (const std::string &other_name : ss->GetOtherNames()) {
+				if (strncasecmp(pattern.c_str(), other_name.c_str(), pattern.size()) == 0
+					// look for the pattern term somewhere within the current system
+					|| pi_strcasestr(other_name.c_str(), pattern.c_str())) {
+					SystemPath match((*i).first);
+					match.systemIndex = systemIndex;
+					result.push_back(match);
+				}
+			}
+		}
+	}
+	return result;
+}
+
+template <>
+void GalaxyObjectCache<Sector, SystemPath::LessSectorOnly>::Slave::ShrinkCache(const SystemPath &center, int radius, const SystemPath &dontDrop)
+{
+	const int xmin = center.sectorX - radius;
+	const int xmax = center.sectorX + radius;
+	const int ymin = center.sectorX - radius;
+	const int ymax = center.sectorX + radius;
+	const int zmin = center.sectorX - radius;
+	const int zmax = center.sectorX + radius;
+
+	auto iter = Begin();
+	while (iter != End()) {
+		RefCountedPtr<Sector> s = iter->second;
+		//check_point_in_box
+		if (!s->WithinBox(xmin, xmax, ymin, ymax, zmin, zmax)) {
+			if (!dontDrop.IsSameSector(s->GetPath())) {
+				Erase(iter++);
+			} else {
+				iter++;
+			}
+		} else {
+			iter++;
 		}
 	}
 }

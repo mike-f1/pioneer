@@ -8,12 +8,10 @@
 #include "galaxy/Sector.h"
 #include "galaxy/SystemPath.h"
 #include "graphics/Drawables.h"
-#include "gui/Gui.h"
 #include <set>
 #include <string>
 #include <vector>
 
-class Game;
 class Galaxy;
 
 namespace Graphics {
@@ -22,8 +20,8 @@ namespace Graphics {
 
 class SectorView : public UIView {
 public:
-	SectorView(Game *game);
-	SectorView(const Json &jsonObj, Game *game);
+	SectorView(RefCountedPtr<Galaxy> galaxy, RefCountedPtr<SectorCache::Slave>);
+	SectorView(const Json &jsonObj, RefCountedPtr<Galaxy> galaxy, RefCountedPtr<SectorCache::Slave>);
 	virtual ~SectorView();
 
 	virtual void Update();
@@ -106,7 +104,6 @@ private:
 
 	void OnClickSystem(const SystemPath &path);
 
-	RefCountedPtr<Sector> GetCached(const SystemPath &loc) { return m_sectorCache->GetCached(loc); }
 	void ShrinkCache();
 
 	void MouseWheel(bool up);

@@ -2,6 +2,7 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "LuaSpace.h"
+
 #include "Frame.h"
 #include "Game.h"
 #include "HyperspaceCloud.h"
@@ -12,10 +13,11 @@
 #include "MathUtil.h"
 #include "Pi.h"
 #include "Planet.h"
-#include "Player.h"
 #include "Ship.h"
 #include "Space.h"
 #include "SpaceStation.h"
+#include "galaxy/StarSystem.h"
+#include "galaxy/SystemBody.h"
 
 /*
  * Interface: Space
@@ -122,7 +124,7 @@ static int l_space_spawn_ship(lua_State *l)
 	float min_dist = luaL_checknumber(l, 2);
 	float max_dist = luaL_checknumber(l, 3);
 
-	SystemPath *path = 0;
+	SystemPath *path = nullptr;
 	double due = -1;
 	_unpack_hyperspace_args(l, 4, path, due);
 
@@ -133,13 +135,20 @@ static int l_space_spawn_ship(lua_State *l)
 
 	// XXX protect against spawning inside the body
 	thing->SetFrame(Frame::GetRootFrameId());
-	if (!path)
+	if (!path) {
 		thing->SetPosition(MathUtil::RandomPointOnSphere(min_dist, max_dist) * AU);
-	else
+		thing->SetVelocity(vector3d(0, 0, 0));
+	} else {
 		// XXX broken. this is ignoring min_dist & max_dist. otoh, what's the
 		// correct behaviour given there's now a fixed hyperspace exit point?
-		thing->SetPosition(Pi::game->GetSpace()->GetHyperspaceExitPoint(*path));
-	thing->SetVelocity(vector3d(0, 0, 0));
+		// Half-Fixed (8 Nov 2019): "GetHyperspaceExitParams" would set data
+		// for an orbit around a star as for player, but this branch of "if"
+		// is working on clouds...
+		vector3d pos(0.0), vel(0.0);
+		Pi::game->GetHyperspaceExitParams(*path, pos, vel);
+		thing->SetPosition(pos);
+		thing->SetVelocity(vector3d(0, 0, 0));
+	}
 	Pi::game->GetSpace()->AddBody(thing);
 
 	LuaObject<Ship>::PushToLua(ship);
@@ -433,7 +442,7 @@ static int l_space_spawn_ship_landed(lua_State *l)
 		luaL_error(l, "Unknown ship type '%s'", type);
 
 	Planet *planet = LuaObject<Planet>::CheckFromLua(2);
-	if (planet->GetSystemBody()->GetSuperType() != SystemBody::SUPERTYPE_ROCKY_PLANET)
+	if (planet->GetSystemBody()->GetSuperType() != GalaxyEnums::BodySuperType::SUPERTYPE_ROCKY_PLANET)
 		luaL_error(l, "Body is not a rocky planet");
 	float latitude = luaL_checknumber(l, 3);
 	float longitude = luaL_checknumber(l, 4);
@@ -511,7 +520,7 @@ static int l_space_spawn_ship_landed_near(lua_State *l)
 	if (!newframe->IsRotFrame())
 		luaL_error(l, "Body must be in rotating frame");
 	SystemBody *sbody = newframe->GetSystemBody();
-	if (sbody->GetSuperType() != SystemBody::SUPERTYPE_ROCKY_PLANET)
+	if (sbody->GetSuperType() != GalaxyEnums::BodySuperType::SUPERTYPE_ROCKY_PLANET)
 		luaL_error(l, "Body is not on a rocky planet");
 	if (max_dist > sbody->GetRadius())
 		luaL_error(l, "max_dist too large for planet radius");

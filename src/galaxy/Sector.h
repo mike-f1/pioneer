@@ -4,26 +4,34 @@
 #ifndef _SECTOR_H
 #define _SECTOR_H
 
+#include "ExplorationState.h"
 #include "GalaxyCache.h"
+#include "GalaxyEnums.h"
+#include "Random.h"
 #include "RefCounted.h"
-#include "galaxy/CustomSystem.h"
-#include "galaxy/StarSystem.h"
 #include "galaxy/SystemPath.h"
-#include "libs.h"
+#include "vector3.h"
+
 #include <string>
 #include <vector>
+#include <sigc++/sigc++.h>
 
+class CustomSystem;
 class Faction;
 class Galaxy;
 
 class Sector : public RefCounted {
-	friend class GalaxyObjectCache<Sector, SystemPath::LessSectorOnly>;
 	friend class GalaxyGenerator;
 
+	friend void SetCache(RefCountedPtr<Sector> sec, SectorCache *cache);
+
 public:
+	Sector(const Sector &) = delete; // non-copyable
+	Sector &operator=(const Sector &) = delete; // non-assignable
+	~Sector();
+
 	// lightyears
 	static const float SIZE;
-	~Sector();
 
 	static float DistanceBetween(RefCountedPtr<const Sector> a, int sysIdxA, RefCountedPtr<const Sector> b, int sysIdxB);
 
@@ -35,6 +43,11 @@ public:
 	SystemPath GetPath() const { return SystemPath(sx, sy, sz); }
 
 	class System {
+		friend class Sector;
+		friend class SectorCustomSystemsGenerator;
+		friend class SectorRandomSystemsGenerator;
+		friend class SectorPersistenceGenerator;
+
 	public:
 		System(Sector *sector, int x, int y, int z, Uint32 si) :
 			sx(x),
@@ -47,8 +60,9 @@ public:
 			m_customSys(nullptr),
 			m_faction(nullptr),
 			m_population(-1),
-			m_explored(StarSystem::eUNEXPLORED),
-			m_exploredTime(0.0) {}
+			m_explored(ExplorationState::eUNEXPLORED),
+			m_exploredTime(0.0)
+		{}
 
 		static float DistanceBetween(const System *a, const System *b);
 
@@ -59,7 +73,7 @@ public:
 		const vector3f &GetPosition() const { return m_pos; }
 		vector3f GetFullPosition() const { return Sector::SIZE * vector3f(float(sx), float(sy), float(sz)) + m_pos; };
 		unsigned GetNumStars() const { return m_numStars; }
-		SystemBody::BodyType GetStarType(unsigned i) const
+		GalaxyEnums::BodyType GetStarType(unsigned i) const
 		{
 			assert(i < m_numStars);
 			return m_starType[i];
@@ -73,10 +87,10 @@ public:
 		}
 		fixed GetPopulation() const { return m_population; }
 		void SetPopulation(fixed pop) { m_population = pop; }
-		StarSystem::ExplorationState GetExplored() const { return m_explored; }
+		ExplorationState GetExplored() const { return m_explored; }
 		double GetExploredTime() const { return m_exploredTime; }
-		bool IsExplored() const { return m_explored != StarSystem::eUNEXPLORED; }
-		void SetExplored(StarSystem::ExplorationState e, double time);
+		bool IsExplored() const { return m_explored != ExplorationState::eUNEXPLORED; }
+		void SetExplored(ExplorationState e, double time);
 
 		bool IsSameSystem(const SystemPath &b) const
 		{
@@ -92,11 +106,6 @@ public:
 		const Uint32 idx;
 
 	private:
-		friend class Sector;
-		friend class SectorCustomSystemsGenerator;
-		friend class SectorRandomSystemsGenerator;
-		friend class SectorPersistenceGenerator;
-
 		void AssignFaction() const;
 
 		Sector *m_sector;
@@ -104,35 +113,30 @@ public:
 		std::vector<std::string> m_other_names;
 		vector3f m_pos;
 		unsigned m_numStars;
-		SystemBody::BodyType m_starType[4];
+		GalaxyEnums::BodyType m_starType[4];
 		Uint32 m_seed;
 		const CustomSystem *m_customSys;
 		mutable const Faction *m_faction; // mutable because we only calculate on demand
 		fixed m_population;
-		StarSystem::ExplorationState m_explored;
+		ExplorationState m_explored;
 		double m_exploredTime;
 	};
+
+
 	std::vector<System> m_systems;
 	const int sx, sy, sz;
 
 	void Dump(FILE *file, const char *indent = "") const;
 
-	sigc::signal<void, Sector::System *, StarSystem::ExplorationState, double> onSetExplorationState;
+	sigc::signal<void, Sector::System *, ExplorationState, double> onSetExplorationState;
 
 private:
-	Sector(const Sector &); // non-copyable
-	Sector &operator=(const Sector &); // non-assignable
-
 	RefCountedPtr<Galaxy> m_galaxy;
 	SectorCache *m_cache;
 
 	// Only SectorCache(Job) are allowed to create sectors
 	Sector(RefCountedPtr<Galaxy> galaxy, const SystemPath &path, SectorCache *cache);
-	void SetCache(SectorCache *cache)
-	{
-		assert(!m_cache);
-		m_cache = cache;
-	}
+
 	// sets appropriate factions for all systems in the sector
 };
 

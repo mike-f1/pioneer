@@ -5,11 +5,12 @@
 #define _CUSTOMSYSTEM_H
 
 #include "Color.h"
+#include "GalaxyEnums.h"
 #include "Polit.h"
-#include "galaxy/SystemBody.h"
-
 #include "fixed.h"
 #include "vector3.h"
+#include <string>
+#include <vector>
 
 class Faction;
 class Galaxy;
@@ -20,7 +21,7 @@ public:
 	~CustomSystemBody();
 
 	std::string name;
-	SystemBody::BodyType type;
+	GalaxyEnums::BodyType type;
 	fixed radius; // in earth radii for planets, sol radii for stars (equatorial radius)
 	fixed aspectRatio; // the ratio between equatorial radius and polar radius for bodies flattened due to equatorial bulge (1.0 to infinity)
 	fixed mass; // earth masses or sol masses
@@ -77,7 +78,7 @@ public:
 	std::string name;
 	std::vector<std::string> other_names;
 	CustomSystemBody *sBody;
-	SystemBody::BodyType primaryType[4];
+	GalaxyEnums::BodyType primaryType[4];
 	unsigned numStars;
 	int sectorX, sectorY, sectorZ;
 	vector3f pos;
@@ -94,30 +95,6 @@ public:
 	void SanityChecks();
 
 	bool IsRandom() const { return !sBody; }
-};
-
-class CustomSystemsDatabase {
-public:
-	CustomSystemsDatabase(Galaxy *galaxy, const std::string &customSysDir) :
-		m_galaxy(galaxy),
-		m_customSysDirectory(customSysDir) {}
-	~CustomSystemsDatabase();
-
-	void Load();
-
-	typedef std::vector<const CustomSystem *> SystemList;
-	// XXX this is not as const-safe as it should be
-	const SystemList &GetCustomSystemsForSector(int sectorX, int sectorY, int sectorZ) const;
-	void AddCustomSystem(const SystemPath &path, CustomSystem *csys);
-	Galaxy *GetGalaxy() const { return m_galaxy; }
-
-private:
-	typedef std::map<SystemPath, SystemList> SectorMap;
-
-	Galaxy *const m_galaxy;
-	const std::string m_customSysDirectory;
-	SectorMap m_sectorMap;
-	static const SystemList s_emptySystemList; // see: Null Object pattern
 };
 
 #endif /* _CUSTOMSYSTEM_H */

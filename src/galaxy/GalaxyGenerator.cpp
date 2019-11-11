@@ -3,11 +3,12 @@
 
 #include "GalaxyGenerator.h"
 
+#include "CustomSystem.h"
+#include "Galaxy.h"
 #include "GameSaveError.h"
 #include "Json.h"
 #include "SectorGenerator.h"
-#include "galaxy/Galaxy.h"
-#include "galaxy/StarSystemGenerator.h"
+#include "StarSystemGenerator.h"
 #include "utils.h"
 
 static const GalaxyGenerator::Version LAST_VERSION_LEGACY = 1;
@@ -78,6 +79,12 @@ RefCountedPtr<Galaxy> GalaxyGenerator::Create(const std::string &name, Version v
 		Output("Galaxy generation failed: Unknown generator '%s' version %d\n", name.c_str(), version);
 		return RefCountedPtr<Galaxy>();
 	}
+}
+
+// static
+RefCountedPtr<Galaxy> GalaxyGenerator::Create()
+{
+	return Create(s_defaultGenerator, s_defaultVersion);
 }
 
 // static
@@ -182,14 +189,16 @@ RefCountedPtr<StarSystem> GalaxyGenerator::GenerateStarSystem(RefCountedPtr<Gala
 {
 	RefCountedPtr<const Sector> sec = galaxy->GetSector(path);
 	assert(path.systemIndex >= 0 && path.systemIndex < sec->m_systems.size());
-	Uint32 seed = sec->m_systems[path.systemIndex].GetSeed();
-	std::string name = sec->m_systems[path.systemIndex].GetName();
+	const Sector::System &sys = sec->m_systems[path.systemIndex];
+	Uint32 seed = sys.GetSeed();
 	Uint32 _init[6] = { path.systemIndex, Uint32(path.sectorX), Uint32(path.sectorY), Uint32(path.sectorZ), UNIVERSE_SEED, Uint32(seed) };
 	Random rng(_init, 6);
 	StarSystemConfig config;
-	RefCountedPtr<StarSystem::GeneratorAPI> system(new StarSystem::GeneratorAPI(path, galaxy, cache, rng));
-	for (StarSystemGeneratorStage *sysgen : m_starSystemStage)
-		if (!sysgen->Apply(rng, galaxy, system, &config))
+	RefCountedPtr<StarSystem> system(new StarSystem(path, galaxy, cache, rng));
+	for (StarSystemGeneratorStage *sysgen : m_starSystemStage) {
+		if (!sysgen->Apply(rng, galaxy, system, &config)) {
 			break;
+		}
+	}
 	return system;
 }

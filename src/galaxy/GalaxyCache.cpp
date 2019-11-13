@@ -11,7 +11,7 @@
 #include "utils.h"
 #include <utility>
 
-//#define DEBUG_CACHE
+#define DEBUG_CACHE
 
 void SetCache(RefCountedPtr<StarSystem> ssys, StarSystemCache *cache)
 {
@@ -225,23 +225,25 @@ GalaxyObjectCache<Sector, SystemPath::LessSectorOnly>::PathVector GalaxyObjectCa
 	return result;
 }
 
-template <>
-void GalaxyObjectCache<Sector, SystemPath::LessSectorOnly>::Slave::ShrinkCache(const SystemPath &center, int radius, const SystemPath &dontDrop)
+template <typename T, typename CompareT>
+size_t GalaxyObjectCache<T, CompareT>::Slave::ShrinkCache(const SystemPath &center, int radius, const SystemPath &dontDrop)
 {
+	size_t removed = 0;
 	const int xmin = center.sectorX - radius;
 	const int xmax = center.sectorX + radius;
-	const int ymin = center.sectorX - radius;
-	const int ymax = center.sectorX + radius;
-	const int zmin = center.sectorX - radius;
-	const int zmax = center.sectorX + radius;
+	const int ymin = center.sectorY - radius;
+	const int ymax = center.sectorY + radius;
+	const int zmin = center.sectorZ - radius;
+	const int zmax = center.sectorZ + radius;
 
 	auto iter = Begin();
 	while (iter != End()) {
-		RefCountedPtr<Sector> s = iter->second;
+		RefCountedPtr<T> s = iter->second;
 		//check_point_in_box
 		if (!s->WithinBox(xmin, xmax, ymin, ymax, zmin, zmax)) {
 			if (!dontDrop.IsSameSector(s->GetPath())) {
 				Erase(iter++);
+				removed++;
 			} else {
 				iter++;
 			}
@@ -249,6 +251,10 @@ void GalaxyObjectCache<Sector, SystemPath::LessSectorOnly>::Slave::ShrinkCache(c
 			iter++;
 		}
 	}
+#ifdef DEBUG_CACHE
+	Output("%s: Erased %lu entries.\n", CACHE_NAME.c_str(), removed);
+#endif
+	return removed;
 }
 
 template <typename T, typename CompareT>

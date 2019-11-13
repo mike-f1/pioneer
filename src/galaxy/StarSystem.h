@@ -89,6 +89,8 @@ public:
 	fixed GetHumanProx() const { return m_humanProx; }
 	fixed GetTotalPop() const { return m_totalPop; }
 
+	bool WithinBox(const int Xmin, const int Xmax, const int Ymin, const int Ymax, const int Zmin, const int Zmax) const;
+
 	void Dump(FILE *file, const char *indent = "", bool suppressSectorData = false) const;
 
 	const RefCountedPtr<Galaxy> m_galaxy;

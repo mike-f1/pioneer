@@ -60,8 +60,7 @@ public:
 		// TODO: Not templated: Only for Sector because it's searching through Systems)
 		PathVector SearchPattern(std::string pattern);
 		// TODO: Change 'dontDrop' in a vector
-		// TODO: Not templated: Only for Sector because StarSystem doesn't have a 'WithinBox' method)
-		void ShrinkCache(const SystemPath &center, int sectorRadius, const SystemPath &dontDrop);
+		size_t ShrinkCache(const SystemPath &center, int sectorRadius, const SystemPath &dontDrop);
 		bool IsEmpty() { return m_cache.empty(); }
 		~Slave();
 

@@ -325,6 +325,19 @@ void StarSystem::ExportToLua(const char *filename)
 	fclose(f);
 }
 
+bool StarSystem::WithinBox(const int Xmin, const int Xmax, const int Ymin, const int Ymax, const int Zmin, const int Zmax) const
+{
+	PROFILE_SCOPED()
+	if (m_path.sectorX >= Xmin && m_path.sectorX <= Xmax) {
+		if (m_path.sectorY >= Ymin && m_path.sectorY <= Ymax) {
+			if (m_path.sectorZ >= Zmin && m_path.sectorZ <= Zmax) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
 void StarSystem::Dump(FILE *file, const char *indent, bool suppressSectorData) const
 {
 	if (suppressSectorData) {

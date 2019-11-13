@@ -785,19 +785,6 @@ void Game::GenCaches(const SystemPath *here, int sectorRadius,
 	m_galaxy->FillSectorCache(m_sectorCache, center, sectorRadius, callback);
 }
 
-static bool WithinBox(const SystemPath &here, const int Xmin, const int Xmax, const int Ymin, const int Ymax, const int Zmin, const int Zmax)
-{
-	PROFILE_SCOPED()
-	if (here.sectorX >= Xmin && here.sectorX <= Xmax) {
-		if (here.sectorY >= Ymin && here.sectorY <= Ymax) {
-			if (here.sectorZ >= Zmin && here.sectorZ <= Zmax) {
-				return true;
-			}
-		}
-	}
-	return false;
-}
-
 void Game::UpdateStarSystemCache(const SystemPath *here, int sectorRadius)
 {
 	PROFILE_SCOPED()
@@ -807,33 +794,10 @@ void Game::UpdateStarSystemCache(const SystemPath *here, int sectorRadius)
 	const int here_y = here->sectorY;
 	const int here_z = here->sectorZ;
 
-	// we're going to use these to determine if our StarSystems are within a range that we'll keep for later use
-	static const int survivorRadius = sectorRadius * 3;
+	const int survivorRadius = sectorRadius * 3;
 
-	// min/max box limits
-	const int xmin = here->sectorX - survivorRadius;
-	const int xmax = here->sectorX + survivorRadius;
-	const int ymin = here->sectorY - survivorRadius;
-	const int ymax = here->sectorY + survivorRadius;
-	const int zmin = here->sectorZ - survivorRadius;
-	const int zmax = here->sectorZ + survivorRadius;
-
-#ifdef DEBUG_CACHE
-	unsigned removed = 0;
-#endif
-	StarSystemCache::CacheMap::const_iterator i = m_starSystemCache->Begin();
-	while (i != m_starSystemCache->End()) {
-		if (!WithinBox(i->second->GetPath(), xmin, xmax, ymin, ymax, zmin, zmax)) {
-			m_starSystemCache->Erase(i++);
-#ifdef DEBUG_CACHE
-			++removed;
-#endif
-		} else
-			++i;
-	}
-#ifdef DEBUG_CACHE
-	Output("%s: Erased %u entries.\n", StarSystemCache::CACHE_NAME.c_str(), removed);
-#endif
+	size_t rem_sec = m_sectorCache->ShrinkCache(*here, survivorRadius, *here);
+	size_t rem_ss = m_starSystemCache->ShrinkCache(*here, survivorRadius, m_hyperspaceSource);
 
 	m_galaxy->FillStarSystemCache(m_starSystemCache, *here, sectorRadius, m_sectorCache);
 }

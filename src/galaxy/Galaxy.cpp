@@ -10,6 +10,8 @@
 #include "Sector.h"
 #include "utils.h"
 
+#define DEBUG_CACHE
+
 Galaxy::Galaxy(RefCountedPtr<GalaxyGenerator> galaxyGenerator, float radius, float sol_offset_x, float sol_offset_y,
 	const std::string &factionsDir, const std::string &customSysDir) :
 	GALAXY_RADIUS(radius),
@@ -131,27 +133,101 @@ private:
 	SystemPath m_here;
 };
 
+#ifdef DEBUG_CACHE
+#include <chrono>
+typedef std::chrono::high_resolution_clock Clock;
+#endif // DEBUG_CACHE
+
+// Based on Michael answer to the below problem, then expanded on purpose
+// https://stackoverflow.com/questions/398299/looping-in-a-spiral
+static void spiral_gen(const int inner, const int turns, const int layer, std::function<void(SystemPath &)> f)
+{
+	const int outer = inner + turns;
+	const int start = (inner * 2 + 1) * (inner * 2 + 1);
+	const int steps = (outer * 2 + 1) * (outer * 2 + 1);
+	int x = inner + 1;
+	int y = inner;
+	for (int i = start; i < steps; ++i) {
+		SystemPath s(x, y, layer);
+		f(s);
+		if(abs(x) <= abs(y) && (x != y || x >= 0))
+		x += ((y >= 0) ? 1 : -1);
+		else
+		y += ((x >= 0) ? -1 : 1);
+	}
+}
+
+static void spiral_3d(const int radius, std::function<void(SystemPath &)> f)
+{
+	// Build center:
+	SystemPath s(0, 0, 0);
+	f(s);
+	for (int shell = 1; shell <= radius; shell ++) {
+		//std::cout << "Build lateral walls (" << shell << "):\n";
+		for (int layer = 0; layer < (2 * shell - 1); layer++) {
+			int level = (layer % 2) ? (layer + 1) / 2 : -layer / 2;
+			spiral_gen(shell - 1, 1, level, f);
+		}
+		//std::cout << "Build roof:\n";
+		s.sectorX = 0; s.sectorY = 0; s.sectorZ = shell;
+		f(s);
+		spiral_gen(0, shell, shell, f);
+		//std::cout << "Build floor:\n";
+		s.sectorX = 0; s.sectorY = 0; s.sectorZ = -shell;
+		f(s);
+		spiral_gen(0, shell, -shell, f);
+	}
+}
+
 size_t Galaxy::FillSectorCache(RefCountedPtr<SectorCache::Slave> &sc, const SystemPath &center,
 	int sectorRadius, SectorCache::CacheFilledCallback callback)
 {
+
 	const int here_x = center.sectorX;
 	const int here_y = center.sectorY;
 	const int here_z = center.sectorZ;
 
-	SectorCache::PathVector paths;
+#ifdef DEBUG_CACHE
+    auto t1 = Clock::now();
+	SectorCache::PathVector paths2;
 
 	// build all of the possible paths we'll need to build sectors for
-	paths.reserve((sectorRadius * 2 + 1) * (sectorRadius * 2 + 1) * (sectorRadius * 2 + 1));
+	paths2.reserve((sectorRadius * 2 + 1) * (sectorRadius * 2 + 1) * (sectorRadius * 2 + 1));
 	for (int x = here_x - sectorRadius; x <= here_x + sectorRadius; x++) {
 		for (int y = here_y - sectorRadius; y <= here_y + sectorRadius; y++) {
 			for (int z = here_z - sectorRadius; z <= here_z + sectorRadius; z++) {
-				paths.emplace_back(x, y, z);
+				paths2.emplace_back(x, y, z);
 			}
 		}
 	}
 	// sort them so that those closest to the "here" path are processed first
 	SectorDistanceSort SDS(center);
-	std::sort(paths.begin(), paths.end(), SDS);
+	std::sort(paths2.begin(), paths2.end(), SDS);
+
+	auto t2 = Clock::now();
+#endif // DEBUG_CACHE
+
+	SectorCache::PathVector paths;
+	std::function<void(SystemPath&)> emplace = [&paths, &center](SystemPath &path) {
+		path.sectorX += center.sectorX;
+		path.sectorY += center.sectorY;
+		path.sectorZ += center.sectorZ;
+		paths.emplace_back(path);
+	};
+	paths.reserve((sectorRadius * 2 + 1) * (sectorRadius * 2 + 1) * (sectorRadius * 2 + 1));
+	spiral_3d(sectorRadius, emplace);
+
+#ifdef DEBUG_CACHE
+	auto t3 = Clock::now();
+
+	std::cout << "FillSectorCache:: Delta t2-t1: "
+			  << std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1).count()
+			  << " nanoseconds" << std::endl
+			  << "FillSectorCache:: Delta t3-t2: "
+			  << std::chrono::duration_cast<std::chrono::nanoseconds>(t3 - t2).count()
+			  << " nanoseconds" << std::endl;
+#endif // DEBUG_CACHE
+
 	sc->FillCache(paths, callback);
 	return paths.size();
 }
@@ -163,10 +239,13 @@ size_t Galaxy::FillStarSystemCache(RefCountedPtr<StarSystemCache::Slave> &ssc, c
 	const int here_y = center.sectorY;
 	const int here_z = center.sectorZ;
 
-	SectorCache::PathVector paths;
+#ifdef DEBUG_CACHE
+	auto t1 = Clock::now();
+
+	SectorCache::PathVector paths2;
 
 	// build all of the possible paths we'll need to build StarSystem for
-	paths.reserve((sectorRadius * 2 + 1) * (sectorRadius * 2 + 1) * (sectorRadius * 2 + 1));
+	paths2.reserve((sectorRadius * 2 + 1) * (sectorRadius * 2 + 1) * (sectorRadius * 2 + 1));
 	for (int x = here_x - sectorRadius; x <= here_x + sectorRadius; x++) {
 		for (int y = here_y - sectorRadius; y <= here_y + sectorRadius; y++) {
 			for (int z = here_z - sectorRadius; z <= here_z + sectorRadius; z++) {
@@ -174,10 +253,42 @@ size_t Galaxy::FillStarSystemCache(RefCountedPtr<StarSystemCache::Slave> &ssc, c
 				RefCountedPtr<Sector> sec(source->GetIfCached(path));
 				assert(!sec.Valid());
 				for (const Sector::System &ss : sec->m_systems)
-					paths.emplace_back(ss.sx, ss.sy, ss.sz, ss.idx);
+					paths2.emplace_back(ss.sx, ss.sy, ss.sz, ss.idx);
 			}
 		}
 	}
+
+	auto t2 = Clock::now();
+#endif // DEBUG_CACHE
+
+	SectorCache::PathVector paths;
+	const int pathsForStarSystem = 50;
+	paths.reserve((sectorRadius * 2 + 1) * (sectorRadius * 2 + 1) * (sectorRadius * 2 + 1) * pathsForStarSystem);
+
+	std::function<void(SystemPath&)> emplace = [&paths, &center, &source](SystemPath &path) {
+		path.sectorX += center.sectorX;
+		path.sectorY += center.sectorY;
+		path.sectorZ += center.sectorZ;
+		RefCountedPtr<Sector> sec(source->GetIfCached(path));
+
+		for (const Sector::System &ss : sec->m_systems)
+			paths.emplace_back(ss.sx, ss.sy, ss.sz, ss.idx);
+	};
+	spiral_3d(sectorRadius, emplace);
+
+	paths.shrink_to_fit();
+
+#ifdef DEBUG_CACHE
+    auto t3 = Clock::now();
+
+    std::cout << "FillStarSystemCache:: Delta t2-t1: "
+              << std::chrono::duration_cast<std::chrono::nanoseconds>(t2 - t1).count()
+              << " nanoseconds" << std::endl
+              << "FillStarSystemCache:: Delta t3-t2: "
+              << std::chrono::duration_cast<std::chrono::nanoseconds>(t3 - t2).count()
+              << " nanoseconds" << std::endl;
+#endif // DEBUG_CACHE
+
 	ssc->FillCache(paths);
 	return paths.size();
 }

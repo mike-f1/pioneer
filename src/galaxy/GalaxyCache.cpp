@@ -11,7 +11,7 @@
 #include "utils.h"
 #include <utility>
 
-#define DEBUG_CACHE
+//#define DEBUG_CACHE
 
 void SetCache(RefCountedPtr<StarSystem> ssys, StarSystemCache *cache)
 {

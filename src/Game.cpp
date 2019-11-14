@@ -796,7 +796,7 @@ void Game::UpdateStarSystemCache(const SystemPath *here, int sectorRadius)
 
 	const int survivorRadius = sectorRadius * 3;
 
-	size_t rem_sec = m_sectorCache->ShrinkCache(*here, survivorRadius, *here);
+	size_t rem_sec = m_sectorCache->ShrinkCache(*here, survivorRadius, m_hyperspaceSource);
 	size_t rem_ss = m_starSystemCache->ShrinkCache(*here, survivorRadius, m_hyperspaceSource);
 
 	m_galaxy->FillStarSystemCache(m_starSystemCache, *here, sectorRadius, m_sectorCache);

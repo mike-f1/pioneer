@@ -1,7 +1,7 @@
 #ifndef _GAMELOG_H
 #define _GAMELOG_H
 
-#include "libs.h"
+#include <string>
 
 /*
  * For storing all in-game log messages

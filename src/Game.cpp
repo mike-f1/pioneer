@@ -38,7 +38,7 @@
 
 static const int s_saveVersion = 87;
 
-static const int sectorRadius = 5;
+static const int cacheRadius = 5;
 
 //#define DEBUG_CACHE
 
@@ -78,8 +78,8 @@ Game::Game(const SystemPath &path, const double startDateTime) :
 	}
 
 	m_starSystemCache = m_galaxy->NewStarSystemSlaveCache();
-	GenCaches(&path, sectorRadius,
-			[this, path]() { UpdateStarSystemCache(&path, sectorRadius); });
+	GenCaches(&path, cacheRadius + 2,
+			[this, path]() { UpdateStarSystemCache(&path, cacheRadius); });
 
 	m_space.reset(new Space(GetTime(), GetTimeStep(), sys, path));
 
@@ -190,8 +190,8 @@ Game::Game(const Json &jsonObj) :
 	// Prepare caches
 	SystemPath path = starSystem->GetPath();
 	m_starSystemCache = m_galaxy->NewStarSystemSlaveCache();
-	GenCaches(&path, sectorRadius,
-			[this, path]() { UpdateStarSystemCache(&path, sectorRadius); });
+	GenCaches(&path, cacheRadius + 2,
+			[this, path]() { UpdateStarSystemCache(&path, cacheRadius); });
 
 	// views
 	LoadViewsFromJson(jsonObj, path);
@@ -509,8 +509,8 @@ void Game::SwitchToHyperspace()
 
 	// Update caches:
 	assert(m_starSystemCache && m_sectorCache);
-	GenCaches(&m_hyperspaceDest, sectorRadius,
-			[this]() { UpdateStarSystemCache(&this->m_hyperspaceDest, sectorRadius); });
+	GenCaches(&m_hyperspaceDest, cacheRadius + 2,
+			[this]() { UpdateStarSystemCache(&this->m_hyperspaceDest, cacheRadius); });
 
 	// put the player in it
 	m_player->SetFrame(Frame::GetRootFrameId());
@@ -833,7 +833,7 @@ void Game::Views::Init(Game *game, const SystemPath &path)
 {
 	m_cpan = new ShipCpanel(Pi::renderer);
 	RefCountedPtr<SectorCache::Slave> sectorCache = game->m_galaxy->NewSectorSlaveCache();
-    size_t filled = game->m_galaxy->FillSectorCache(sectorCache, path, sectorRadius);
+    size_t filled = game->m_galaxy->FillSectorCache(sectorCache, path, cacheRadius + 2);
     Output("SectorView cache pre-filled with %lu entries\n", filled);
 	m_sectorView = new SectorView(game->m_galaxy, sectorCache);
 	m_worldView = new WorldView(game);
@@ -855,7 +855,7 @@ void Game::Views::LoadFromJson(const Json &jsonObj, Game *game, const SystemPath
 {
 	m_cpan = new ShipCpanel(jsonObj, Pi::renderer);
 	RefCountedPtr<SectorCache::Slave> sectorCache = game->m_galaxy->NewSectorSlaveCache();
-    game->m_galaxy->FillSectorCache(sectorCache, path, sectorRadius);
+    game->m_galaxy->FillSectorCache(sectorCache, path, cacheRadius + 2);
 	m_sectorView = new SectorView(jsonObj, game->m_galaxy, sectorCache);
 	m_worldView = new WorldView(jsonObj, game);
 

@@ -1,10 +1,6 @@
 #include "GameLog.h"
-#include "Game.h"
+
 #include "LuaObject.h"
-#include "Pi.h"
-#include "StringF.h"
-#include "graphics/Renderer.h"
-#include "graphics/VertexArray.h"
 
 void GameLog::Add(const std::string &msg)
 {

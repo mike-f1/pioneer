@@ -146,9 +146,9 @@ public:
 	GameLog *log;
 
 private:
-	void GenCaches(const SystemPath *here, int sectorRadius,
+	void GenCaches(const SystemPath *here, int cacheRadius,
 		StarSystemCache::CacheFilledCallback callback = StarSystemCache::CacheFilledCallback());
-	void UpdateStarSystemCache(const SystemPath *here, int sectorRadius);
+	void UpdateStarSystemCache(const SystemPath *here, int cacheRadius);
 
 	RefCountedPtr<SectorCache::Slave> m_sectorCache;
 	RefCountedPtr<StarSystemCache::Slave> m_starSystemCache;

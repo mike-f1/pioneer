@@ -3,19 +3,19 @@
 
 #include "SpawnTastyStuff.h"
 
+#include "Body.h"
 #include "CargoBody.h"
 #include "Frame.h"
 #include "Game.h"
 #include "Lua.h"
 #include "LuaObject.h"
 #include "Pi.h"
-#include "Player.h"
 #include "Space.h"
 #include "galaxy/Galaxy.h"
 #include "galaxy/StarSystem.h"
 #include "galaxy/SystemBody.h"
 
-void MiningLaserSpawnTastyStuff(FrameId fId, const SystemBody *asteroid, const vector3d &pos)
+void MiningLaserSpawnTastyStuff(FrameId fId, Body *shooter, const SystemBody *asteroid, const vector3d &pos)
 {
 	lua_State *l = Lua::manager->GetLuaState();
 
@@ -27,7 +27,7 @@ void MiningLaserSpawnTastyStuff(FrameId fId, const SystemBody *asteroid, const v
 	// 1, there is no template for LuaObject<LuaTable>::CallMethod(..., SystemBody)
 	// 2, this leaves the return value on the lua stack to be used by "new CargoBody()"
 	LUA_DEBUG_START(l);
-	LuaObject<Player>::PushToLua(Pi::player);
+	LuaObject<Body>::PushToLua(shooter);
 	lua_pushstring(l, "SpawnMiningContainer");
 	lua_gettable(l, -2);
 	lua_pushvalue(l, -2);

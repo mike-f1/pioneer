@@ -1,8 +1,8 @@
-local Player = import_core("Player")
+local Body = import_core("Body")
 local Engine = import("Engine")
 local Equipment = import("Equipment")
 
-function Player:SpawnMiningContainer(body)
+function Body:SpawnMiningContainer(body)
 	-- this function is called from C++ when a mining laser shot hits the surface of an asteroid body and chips off a peice
 	-- body is a valid SystemBody object
 	-- return value needs to be a valid Equipment.cargo.* object

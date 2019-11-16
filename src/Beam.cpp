@@ -256,7 +256,7 @@ void Beam::StaticUpdate(const float timeStep)
 				// hit the fucker
 				if (planet->SystemBodyWrapper::IsType(GalaxyEnums::BodyType::TYPE_PLANET_ASTEROID)) {
 					vector3d n = GetPosition().Normalized();
-					MiningLaserSpawnTastyStuff(planet->GetFrame(), planet->GetSystemBody(), n * terrainHeight + 5.0 * n);
+					MiningLaserSpawnTastyStuff(planet->GetFrame(), m_parent, planet->GetSystemBody(), n * terrainHeight + 5.0 * n);
 					SfxManager::Add(this, TYPE_EXPLOSION);
 				}
 				m_active = false;

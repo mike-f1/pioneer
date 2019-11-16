@@ -7,8 +7,9 @@
 #include "FrameId.h"
 #include "vector3.h"
 
+class Body;
 class SystemBody;
 
-void MiningLaserSpawnTastyStuff(FrameId fId, const SystemBody *asteroid, const vector3d &pos);
+void MiningLaserSpawnTastyStuff(FrameId fId, Body *shooter, const SystemBody *asteroid, const vector3d &pos);
 
 #endif // SPAWNTASTYSTUFF_H_INCLUDED

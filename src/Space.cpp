@@ -68,7 +68,7 @@ Space::Space() :
 	m_processingFinalizationQueue(false)
 #endif
 {
-	m_background.reset(new Background::Container(Pi::renderer, Pi::rng));
+	m_background.reset(new Background::Container(Pi::renderer, Pi::rng, Pi::GetAmountBackgroundStars()));
 
 	m_rootFrameId = Frame::CreateFrame(noFrameId, Lang::SYSTEM, Frame::FLAG_DEFAULT, FLT_MAX);
 }
@@ -85,7 +85,7 @@ Space::Space(double total_time, float time_step, RefCountedPtr<StarSystem> stars
 {
 	Uint32 _init[5] = { path.systemIndex, Uint32(path.sectorX), Uint32(path.sectorY), Uint32(path.sectorZ), UNIVERSE_SEED };
 	Random rand(_init, 5);
-	m_background.reset(new Background::Container(Pi::renderer, rand));
+	m_background.reset(new Background::Container(Pi::renderer, rand, Pi::GetAmountBackgroundStars()));
 
 	CityOnPlanet::SetCityModelPatterns(m_starSystem->GetPath());
 
@@ -111,7 +111,7 @@ Space::Space(RefCountedPtr<StarSystem> starsystem, const Json &jsonObj, double a
 	const SystemPath &path = m_starSystem->GetPath();
 	Uint32 _init[5] = { path.systemIndex, Uint32(path.sectorX), Uint32(path.sectorY), Uint32(path.sectorZ), UNIVERSE_SEED };
 	Random rand(_init, 5);
-	m_background.reset(new Background::Container(Pi::renderer, rand));
+	m_background.reset(new Background::Container(Pi::renderer, rand, Pi::GetAmountBackgroundStars()));
 
 	RebuildSystemBodyIndex();
 
@@ -146,13 +146,6 @@ Space::~Space()
 	Frame::DeleteFrames();
 }
 
-void Space::RefreshBackground()
-{
-	const SystemPath &path = m_starSystem->GetPath();
-	Uint32 _init[5] = { path.systemIndex, Uint32(path.sectorX), Uint32(path.sectorY), Uint32(path.sectorZ), UNIVERSE_SEED };
-	Random rand(_init, 5);
-	m_background.reset(new Background::Container(Pi::renderer, rand));
-}
 
 void Space::ToJson(Json &jsonObj)
 {
@@ -175,6 +168,14 @@ void Space::ToJson(Json &jsonObj)
 	spaceObj["bodies"] = bodyArray; // Add body array to space object.
 
 	jsonObj["space"] = spaceObj; // Add space object to supplied object.
+}
+
+void Space::RefreshBackground()
+{
+	const SystemPath &path = m_starSystem->GetPath();
+	Uint32 _init[5] = { path.systemIndex, Uint32(path.sectorX), Uint32(path.sectorY), Uint32(path.sectorZ), UNIVERSE_SEED };
+	Random rand(_init, 5);
+	m_background.reset(new Background::Container(Pi::renderer, rand, Pi::GetAmountBackgroundStars()));
 }
 
 RefCountedPtr<StarSystem> Space::GetStarSystem() const
@@ -237,8 +238,6 @@ void Space::RebuildBodyIndex()
 			if (s) m_bodyIndex.push_back(s);
 		}
 	}
-
-	Pi::SetAmountBackgroundStars(Pi::GetAmountBackgroundStars());
 
 	m_bodyIndexValid = true;
 }

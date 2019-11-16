@@ -64,10 +64,10 @@ namespace Background {
 	class Starfield : public BackgroundElement {
 	public:
 		//does not Fill the starfield
-		Starfield(Graphics::Renderer *r, Random &rand);
+		Starfield(Graphics::Renderer *r, Random &rand, float amount);
 		void Draw(Graphics::RenderState *);
 		//create or recreate the starfield
-		void Fill(Random &rand);
+		void Fill(Random &rand, float amount);
 
 	private:
 		void Init();
@@ -99,14 +99,14 @@ namespace Background {
 			DRAW_SKYBOX = 1 << 2
 		};
 
-		Container(Graphics::Renderer *, Random &rand);
+		Container(Graphics::Renderer *, Random &rand, float amountOfBackgroundStars);
 		void Draw(const matrix4x4d &transform);
 
 		void SetIntensity(float intensity);
 		void SetDrawFlags(const Uint32 flags);
 
 	private:
-		void Refresh(Random &rand);
+		void Refresh(Random &rand, float amountOfBackgroundStars);
 
 		Graphics::Renderer *m_renderer;
 		MilkyWay m_milkyWay;

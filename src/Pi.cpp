@@ -1114,7 +1114,7 @@ void Pi::StartGame()
 
 void Pi::Start(const SystemPath &startPath)
 {
-	Pi::intro = new Intro(Pi::renderer, Graphics::GetScreenWidth(), Graphics::GetScreenHeight());
+	Pi::intro = new Intro(Pi::renderer, Graphics::GetScreenWidth(), Graphics::GetScreenHeight(), GetAmountBackgroundStars());
 	if (startPath != SystemPath(0, 0, 0, 0, 0)) {
 		Pi::game = new Game(startPath, 0.0);
 	}

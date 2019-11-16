@@ -190,11 +190,11 @@ namespace Background {
 		}
 	}
 
-	Starfield::Starfield(Graphics::Renderer *renderer, Random &rand)
+	Starfield::Starfield(Graphics::Renderer *renderer, Random &rand, float amount)
 	{
 		m_renderer = renderer;
 		Init();
-		Fill(rand);
+		Fill(rand, amount);
 	}
 
 	void Starfield::Init()
@@ -224,9 +224,9 @@ namespace Background {
 		m_bMax = Clamp(cfg.Float("bMax", 0.9), 0.2f, 1.0f);
 	}
 
-	void Starfield::Fill(Random &rand)
+	void Starfield::Fill(Random &rand, float amountOfBackgroundStars)
 	{
-		const Uint32 NUM_BG_STARS = Clamp(Uint32(Pi::GetAmountBackgroundStars() * BG_STAR_MAX), BG_STAR_MIN, BG_STAR_MAX);
+		const Uint32 NUM_BG_STARS = Clamp(Uint32(amountOfBackgroundStars * BG_STAR_MAX), BG_STAR_MIN, BG_STAR_MAX);
 		m_hyperVtx.reset(new vector3f[BG_STAR_MAX * 3]);
 		m_hyperCol.reset(new Color[BG_STAR_MAX * 3]);
 
@@ -462,10 +462,10 @@ namespace Background {
 		m_renderer->DrawBuffer(m_vertexBuffer.get(), rs, m_material.Get(), Graphics::TRIANGLE_STRIP);
 	}
 
-	Container::Container(Graphics::Renderer *renderer, Random &rand) :
+	Container::Container(Graphics::Renderer *renderer, Random &rand, float amountOfBackgroundStars) :
 		m_renderer(renderer),
 		m_milkyWay(renderer),
-		m_starField(renderer, rand),
+		m_starField(renderer, rand, amountOfBackgroundStars),
 		m_universeBox(renderer),
 		m_drawFlags(DRAW_SKYBOX | DRAW_STARS)
 	{
@@ -473,13 +473,12 @@ namespace Background {
 		rsd.depthTest = false;
 		rsd.depthWrite = false;
 		m_renderState = renderer->CreateRenderState(rsd);
-		Refresh(rand);
 	}
 
-	void Container::Refresh(Random &rand)
+	void Container::Refresh(Random &rand, float amountOfBackgroundStars)
 	{
 		// always redo starfield, milkyway stays normal for now
-		m_starField.Fill(rand);
+		m_starField.Fill(rand, amountOfBackgroundStars);
 		m_universeBox.LoadCubeMap(rand);
 	}
 

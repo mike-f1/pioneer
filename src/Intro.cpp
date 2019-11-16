@@ -2,6 +2,8 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "Intro.h"
+
+#include "Background.h"
 #include "Easing.h"
 #include "Lang.h"
 #include "Pi.h"
@@ -19,12 +21,12 @@ struct PiRngWrapper {
 	}
 };
 
-Intro::Intro(Graphics::Renderer *r, int width, int height) :
+Intro::Intro(Graphics::Renderer *r, int width, int height, float amountOfBackgroundStars) :
 	Cutscene(r, width, height)
 {
 	using Graphics::Light;
 
-	m_background.reset(new Background::Container(r, Pi::rng));
+	m_background.reset(new Background::Container(r, Pi::rng, amountOfBackgroundStars));
 	m_ambientColor = Color::BLANK;
 
 	const Color one = Color::WHITE;

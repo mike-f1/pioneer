@@ -4,14 +4,17 @@
 #ifndef _INTRO_H
 #define _INTRO_H
 
-#include "Background.h"
 #include "Cutscene.h"
 #include "ShipType.h"
 #include "scenegraph/ModelSkin.h"
 
+namespace Background {
+	class Container;
+}
+
 class Intro : public Cutscene {
 public:
-	Intro(Graphics::Renderer *r, int width, int height);
+	Intro(Graphics::Renderer *r, int width, int height, float amountOfBackgroundStars);
 	~Intro();
 	virtual void Draw(float time);
 	SceneGraph::Model *getCurrentModel() const { return m_model; }

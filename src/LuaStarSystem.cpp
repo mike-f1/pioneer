@@ -13,7 +13,6 @@
 #include "galaxy/Economy.h"
 #include "galaxy/Faction.h"
 #include "galaxy/Galaxy.h"
-#include "galaxy/Sector.h"
 #include "galaxy/StarSystem.h"
 
 /*
@@ -255,7 +254,7 @@ static int l_starsystem_get_nearby_systems(lua_State *l)
 
 	const int diff_sec = int(ceil(dist_ly / Sector::SIZE));
 
-	std::vector<RefCountedPtr<StarSystem>> ss_vector = s->m_galaxy->GetNearStarSystemLy(here, dist_ly);
+	std::vector<RefCountedPtr<StarSystem>> ss_vector = s->GetGalaxy()->GetNearStarSystemLy(here, dist_ly);
 
 	if (filter) {
 		ss_vector.erase(std::remove_if(ss_vector.begin(), ss_vector.end(), [&l](RefCountedPtr<StarSystem> sys) {
@@ -333,12 +332,9 @@ static int l_starsystem_distance_to(lua_State *l)
 		loc2 = &(s2->GetPath());
 	}
 
-	RefCountedPtr<const Sector> sec1 = s->m_galaxy->GetSector(*loc1);
-	RefCountedPtr<const Sector> sec2 = s->m_galaxy->GetSector(*loc2);
-
 	// this only works if the SystemPath is valid
 	if (loc1->HasValidSystem() && loc2->HasValidSystem()) {
-		double dist = Sector::DistanceBetween(sec1, loc1->systemIndex, sec2, loc2->systemIndex);
+		double dist = s->GetGalaxy()->GetInterSystemPosition(*loc1, *loc2).Length();
 		lua_pushnumber(l, dist);
 	} else {
 		lua_pushnumber(l, FLT_MAX);

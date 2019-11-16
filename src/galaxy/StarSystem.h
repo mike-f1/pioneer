@@ -93,9 +93,9 @@ public:
 
 	void Dump(FILE *file, const char *indent = "", bool suppressSectorData = false) const;
 
-	const RefCountedPtr<Galaxy> m_galaxy;
-
+	const RefCountedPtr<Galaxy> GetGalaxy() const;
 private:
+	const RefCountedPtr<Galaxy> m_galaxy;
 
 	std::string ExportBodyToLua(FILE *f, SystemBody *body);
 	std::string GetStarTypes(SystemBody *body);

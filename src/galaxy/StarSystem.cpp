@@ -338,6 +338,11 @@ bool StarSystem::WithinBox(const int Xmin, const int Xmax, const int Ymin, const
 	return false;
 }
 
+const RefCountedPtr<Galaxy> StarSystem::GetGalaxy() const
+{
+	return m_galaxy;
+}
+
 void StarSystem::Dump(FILE *file, const char *indent, bool suppressSectorData) const
 {
 	if (suppressSectorData) {

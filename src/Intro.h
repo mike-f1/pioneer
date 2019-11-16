@@ -5,7 +5,6 @@
 #define _INTRO_H
 
 #include "Cutscene.h"
-#include "ShipType.h"
 #include "scenegraph/ModelSkin.h"
 
 namespace Background {

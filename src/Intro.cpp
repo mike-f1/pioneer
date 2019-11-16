@@ -7,6 +7,7 @@
 #include "Easing.h"
 #include "Lang.h"
 #include "Pi.h"
+#include "ShipType.h"
 #include "graphics/Graphics.h"
 #include "graphics/Renderer.h"
 #include "graphics/TextureBuilder.h"

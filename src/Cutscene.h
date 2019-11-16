@@ -4,13 +4,18 @@
 #ifndef _CUTSCENE_H
 #define _CUTSCENE_H
 
-#include "graphics/Light.h"
-#include "graphics/Renderer.h"
-#include "libs.h"
+#include "Color.h"
+#include <vector>
+
+namespace Graphics {
+	class Renderer;
+	class Light;
+}
 
 namespace SceneGraph {
 	class Model;
 }
+
 class Shields;
 
 class Cutscene {

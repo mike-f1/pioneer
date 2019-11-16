@@ -179,10 +179,11 @@ FrameId Frame::FromJson(const Json &frameObj, Space *space, FrameId parent, doub
 
 	Frame *f = &s_frames.back();
 
-	if (parent != noFrameId)
+	if (parent != noFrameId) {
 		f->m_parent = Frame::GetFrame(parent)->GetId();
-	else
+	} else {
 		f->m_parent = noFrameId;
+	}
 
 	f->d.madeWithFactory = false;
 
@@ -207,7 +208,11 @@ FrameId Frame::FromJson(const Json &frameObj, Space *space, FrameId parent, doub
 			Json childFrameArray = frameObj["child_frames"];
 			f->m_children.reserve(childFrameArray.size());
 			for (unsigned int i = 0; i < childFrameArray.size(); ++i) {
+				// During 'FromJson' a reallocation may happens, invalidating 'f',
+				// thus store his FrameId and renew it
+				FrameId temp = f->m_thisId;
 				FrameId kidId = FromJson(childFrameArray[i], space, f->m_thisId, at_time);
+				f = &s_frames[temp];
 				f->m_children.push_back(kidId);
 			}
 		} else {

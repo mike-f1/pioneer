@@ -27,7 +27,7 @@
  *
  * We must be sneaky and avoid floating point in these places.
  */
-StarSystem::StarSystem(const SystemPath &path, RefCountedPtr<Galaxy> galaxy, StarSystemCache *cache, Random &rand) :
+StarSystem::StarSystem(const SystemPath &path, RefCountedPtr<Galaxy> galaxy, StarSystemCache *cache) :
 	m_galaxy(galaxy),
 	m_path(path.SystemOnly()),
 	m_numStars(0),

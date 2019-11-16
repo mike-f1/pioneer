@@ -194,7 +194,7 @@ RefCountedPtr<StarSystem> GalaxyGenerator::GenerateStarSystem(RefCountedPtr<Gala
 	Uint32 _init[6] = { path.systemIndex, Uint32(path.sectorX), Uint32(path.sectorY), Uint32(path.sectorZ), UNIVERSE_SEED, Uint32(seed) };
 	Random rng(_init, 6);
 	StarSystemConfig config;
-	RefCountedPtr<StarSystem> system(new StarSystem(path, galaxy, cache, rng));
+	RefCountedPtr<StarSystem> system(new StarSystem(path, galaxy, cache));
 	for (StarSystemGeneratorStage *sysgen : m_starSystemStage) {
 		if (!sysgen->Apply(rng, galaxy, system, &config)) {
 			break;

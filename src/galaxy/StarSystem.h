@@ -28,7 +28,7 @@ class StarSystem : public RefCounted {
 	friend class StarSystemWriter;
 	friend void SetCache(RefCountedPtr<StarSystem> ssys, StarSystemCache *cache);
 public:
-	StarSystem(const SystemPath &path, RefCountedPtr<Galaxy> galaxy, StarSystemCache *cache, Random &rand);
+	StarSystem(const SystemPath &path, RefCountedPtr<Galaxy> galaxy, StarSystemCache *cache);
 	virtual ~StarSystem();
 
 	SystemBody *NewBody()

@@ -253,45 +253,30 @@ static int l_starsystem_get_nearby_systems(lua_State *l)
 
 	const SystemPath &here = s->GetPath();
 
-	const int here_x = here.sectorX;
-	const int here_y = here.sectorY;
-	const int here_z = here.sectorZ;
-	const Uint32 here_idx = here.systemIndex;
-	RefCountedPtr<const Sector> here_sec = s->m_galaxy->GetSector(here);
-
 	const int diff_sec = int(ceil(dist_ly / Sector::SIZE));
 
-	for (int x = here_x - diff_sec; x <= here_x + diff_sec; x++) {
-		for (int y = here_y - diff_sec; y <= here_y + diff_sec; y++) {
-			for (int z = here_z - diff_sec; z <= here_z + diff_sec; z++) {
-				RefCountedPtr<const Sector> sec = s->m_galaxy->GetSector(SystemPath(x, y, z));
+	std::vector<RefCountedPtr<StarSystem>> ss_vector = s->m_galaxy->GetNearStarSystemLy(here, dist_ly);
 
-				for (unsigned int idx = 0; idx < sec->m_systems.size(); idx++) {
-					if (x == here_x && y == here_y && z == here_z && idx == here_idx)
-						continue;
-
-					if (Sector::DistanceBetween(here_sec, here_idx, sec, idx) > dist_ly)
-						continue;
-
-					RefCountedPtr<StarSystem> sys = s->m_galaxy->GetStarSystem(SystemPath(x, y, z, idx));
-					if (filter) {
-						lua_pushvalue(l, 3);
-						LuaObject<StarSystem>::PushToLua(sys.Get());
-						lua_call(l, 1, 1);
-						if (!lua_toboolean(l, -1)) {
-							lua_pop(l, 1);
-							continue;
-						}
-						lua_pop(l, 1);
-					}
-
-					lua_pushinteger(l, lua_rawlen(l, -1) + 1);
-					LuaObject<StarSystem>::PushToLua(sys.Get());
-					lua_rawset(l, -3);
-				}
+	if (filter) {
+		ss_vector.erase(std::remove_if(ss_vector.begin(), ss_vector.end(), [&l](RefCountedPtr<StarSystem> sys) {
+			// Call the filter function in Lua
+			lua_pushvalue(l, 3);
+			LuaObject<StarSystem>::PushToLua(sys.Get());
+			lua_call(l, 1, 1);
+			if (!lua_toboolean(l, -1)) {
+				lua_pop(l, 1);
+				return true;
 			}
-		}
+			lua_pop(l, 1);
+			return false;
+		}), ss_vector.end());
 	}
+
+	std::for_each(begin(ss_vector), end(ss_vector), [&l](RefCountedPtr<StarSystem> sys) {
+		lua_pushinteger(l, lua_rawlen(l, -1) + 1);
+		LuaObject<StarSystem>::PushToLua(sys.Get());
+		lua_rawset(l, -3);
+	});
 
 	LUA_DEBUG_END(l, 1);
 

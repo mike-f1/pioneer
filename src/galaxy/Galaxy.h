@@ -53,6 +53,8 @@ public:
 	size_t FillStarSystemCache(RefCountedPtr<StarSystemCache::Slave> &ssc, const SystemPath &center,
 		int sectorRadius, RefCountedPtr<SectorCache::Slave> &source);
 
+	std::vector<RefCountedPtr<StarSystem>> GetNearStarSystemLy(const SystemPath &here, const double light_year);
+
 	void FlushCaches();
 	void Dump(FILE *file, Sint32 centerX, Sint32 centerY, Sint32 centerZ, Sint32 radius);
 

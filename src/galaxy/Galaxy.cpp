@@ -234,6 +234,40 @@ size_t Galaxy::FillStarSystemCache(RefCountedPtr<StarSystemCache::Slave> &ssc, c
 	return paths.size();
 }
 
+std::vector<RefCountedPtr<StarSystem>> Galaxy::GetNearStarSystemLy(const SystemPath &here, const double range)
+{
+	std::vector<RefCountedPtr<StarSystem>> ss_vec;
+
+	const int here_x = here.sectorX;
+	const int here_y = here.sectorY;
+	const int here_z = here.sectorZ;
+	const Uint32 here_idx = here.systemIndex;
+
+	const int diff_sec = int(ceil(range / Sector::SIZE));
+
+	RefCountedPtr<const Sector> here_sec = GetSector(here);
+
+	for (int x = here_x - diff_sec; x <= here_x + diff_sec; x++) {
+		for (int y = here_y - diff_sec; y <= here_y + diff_sec; y++) {
+			for (int z = here_z - diff_sec; z <= here_z + diff_sec; z++) {
+				RefCountedPtr<const Sector> sec = GetSector(SystemPath(x, y, z));
+
+				for (unsigned int idx = 0; idx < sec->m_systems.size(); idx++) {
+					// Skip self
+					if (x == here_x && y == here_y && z == here_z && idx == here_idx)
+						continue;
+
+					if (Sector::DistanceBetween(here_sec, here_idx, sec, idx) > range)
+						continue;
+
+					ss_vec.emplace_back(GetStarSystem(SystemPath(x, y, z, idx)));
+				}
+			}
+		}
+	}
+	return ss_vec;
+}
+
 RefCountedPtr<StarSystem> Galaxy::GetStarSystem(const SystemPath &path)
 {
 	return m_starSystemCache.GetCached(path);

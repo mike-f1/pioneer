@@ -5,10 +5,12 @@
 
 #include "Game.h"
 #include "GameSaveError.h"
+#include "Json.h"
 #include "Pi.h"
 #include "Sfx.h"
-#include "Ship.h"
 #include "Space.h"
+#include "scenegraph/Model.h"
+#include "scenegraph/ModelSkin.h"
 
 CargoBody::CargoBody(const LuaRef &cargo, float selfdestructTimer) :
 	m_cargo(cargo)
@@ -111,7 +113,7 @@ bool CargoBody::OnCollision(Object *b, Uint32 flags, double relVel)
 	// ignore collision if its about to be scooped
 	if (b->IsType(Object::SHIP)) {
 		int cargoscoop_cap = 0;
-		static_cast<Ship *>(b)->Properties().Get("cargo_scoop_cap", cargoscoop_cap);
+		static_cast<Body *>(b)->Properties().Get("cargo_scoop_cap", cargoscoop_cap);
 		if (cargoscoop_cap > 0)
 			return true;
 	}

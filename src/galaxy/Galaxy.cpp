@@ -121,7 +121,8 @@ typedef std::chrono::high_resolution_clock Clock;
 
 // Based on Michael answer to the below problem, then expanded on purpose
 // https://stackoverflow.com/questions/398299/looping-in-a-spiral
-static void spiral_gen(const int inner, const int turns, const int layer, std::function<void(SystemPath &)> f)
+// NOTE: when return falue of passed-in function is true then it early outs
+static bool spiral_gen(const int inner, const int turns, const int layer, std::function<bool(SystemPath &)> fun)
 {
 	const int outer = inner + turns;
 	const int start = (inner * 2 + 1) * (inner * 2 + 1);
@@ -130,54 +131,50 @@ static void spiral_gen(const int inner, const int turns, const int layer, std::f
 	int y = inner;
 	for (int i = start; i < steps; ++i) {
 		SystemPath s(x, y, layer);
-		f(s);
-		if(abs(x) <= abs(y) && (x != y || x >= 0))
-		x += ((y >= 0) ? 1 : -1);
-		else
-		y += ((x >= 0) ? -1 : 1);
+		if (fun(s)) return true;
+		if(abs(x) <= abs(y) && (x != y || x >= 0)) {
+			x += ((y >= 0) ? 1 : -1);
+		} else {
+			y += ((x >= 0) ? -1 : 1);
+		}
 	}
+	return false;
 }
 
-static void spiral_3d(const int radius, std::function<void(SystemPath &)> f)
+static void spiral_3d(const int radius, std::function<bool(SystemPath &)> fun)
 {
 	// Build center:
 	SystemPath s(0, 0, 0);
-	f(s);
+	if (fun(s)) return;
 	for (int shell = 1; shell <= radius; shell ++) {
 		//std::cout << "Build lateral walls (" << shell << "):\n";
 		for (int layer = 0; layer < (2 * shell - 1); layer++) {
 			int level = (layer % 2) ? (layer + 1) / 2 : -layer / 2;
-			spiral_gen(shell - 1, 1, level, f);
+			if (spiral_gen(shell - 1, 1, level, fun)) return;
 		}
 		//std::cout << "Build roof:\n";
 		s.sectorX = 0; s.sectorY = 0; s.sectorZ = shell;
-		f(s);
-		spiral_gen(0, shell, shell, f);
+		if (fun(s) || spiral_gen(0, shell, shell, fun)) return;
 		//std::cout << "Build floor:\n";
 		s.sectorX = 0; s.sectorY = 0; s.sectorZ = -shell;
-		f(s);
-		spiral_gen(0, shell, -shell, f);
+		if (fun(s) || spiral_gen(0, shell, -shell, fun)) return;
 	}
 }
 
 size_t Galaxy::FillSectorCache(RefCountedPtr<SectorCache::Slave> &sc, const SystemPath &center,
 	int sectorRadius, SectorCache::CacheFilledCallback callback)
 {
-
-	const int here_x = center.sectorX;
-	const int here_y = center.sectorY;
-	const int here_z = center.sectorZ;
-
 #ifdef DEBUG_CACHE
     auto t1 = Clock::now();
 #endif // DEBUG_CACHE
 
 	SectorCache::PathVector paths;
-	std::function<void(SystemPath&)> emplace = [&paths, &center](SystemPath &path) {
+	std::function<bool(SystemPath&)> emplace = [&paths, &center](SystemPath &path) {
 		path.sectorX += center.sectorX;
 		path.sectorY += center.sectorY;
 		path.sectorZ += center.sectorZ;
 		paths.emplace_back(path);
+		return false;
 	};
 	paths.reserve((sectorRadius * 2 + 1) * (sectorRadius * 2 + 1) * (sectorRadius * 2 + 1));
 	spiral_3d(sectorRadius, emplace);
@@ -197,10 +194,6 @@ size_t Galaxy::FillSectorCache(RefCountedPtr<SectorCache::Slave> &sc, const Syst
 size_t Galaxy::FillStarSystemCache(RefCountedPtr<StarSystemCache::Slave> &ssc, const SystemPath &center,
 		int sectorRadius, RefCountedPtr<SectorCache::Slave> &source)
 {
-	const int here_x = center.sectorX;
-	const int here_y = center.sectorY;
-	const int here_z = center.sectorZ;
-
 #ifdef DEBUG_CACHE
 	auto t1 = Clock::now();
 #endif // DEBUG_CACHE
@@ -209,7 +202,7 @@ size_t Galaxy::FillStarSystemCache(RefCountedPtr<StarSystemCache::Slave> &ssc, c
 	const int pathsForStarSystem = 50;
 	paths.reserve((sectorRadius * 2 + 1) * (sectorRadius * 2 + 1) * (sectorRadius * 2 + 1) * pathsForStarSystem);
 
-	std::function<void(SystemPath&)> emplace = [&paths, &center, &source](SystemPath &path) {
+	std::function<bool(SystemPath&)> emplace = [&paths, &center, &source](SystemPath &path) {
 		path.sectorX += center.sectorX;
 		path.sectorY += center.sectorY;
 		path.sectorZ += center.sectorZ;
@@ -217,6 +210,7 @@ size_t Galaxy::FillStarSystemCache(RefCountedPtr<StarSystemCache::Slave> &ssc, c
 
 		for (const Sector::System &ss : sec->m_systems)
 			paths.emplace_back(ss.sx, ss.sy, ss.sz, ss.idx);
+		return false;
 	};
 	spiral_3d(sectorRadius, emplace);
 
@@ -234,37 +228,44 @@ size_t Galaxy::FillStarSystemCache(RefCountedPtr<StarSystemCache::Slave> &ssc, c
 	return paths.size();
 }
 
-std::vector<RefCountedPtr<StarSystem>> Galaxy::GetNearStarSystemLy(const SystemPath &here, const double range)
+std::vector<RefCountedPtr<StarSystem>> Galaxy::GetNearStarSystemLy(const SystemPath &center, const double range)
 {
 	std::vector<RefCountedPtr<StarSystem>> ss_vec;
 
-	const int here_x = here.sectorX;
-	const int here_y = here.sectorY;
-	const int here_z = here.sectorZ;
-	const Uint32 here_idx = here.systemIndex;
-
 	const int diff_sec = int(ceil(range / Sector::SIZE));
 
-	RefCountedPtr<const Sector> here_sec = GetSector(here);
+	RefCountedPtr<const Sector> here_sec = GetSector(center);
 
-	for (int x = here_x - diff_sec; x <= here_x + diff_sec; x++) {
-		for (int y = here_y - diff_sec; y <= here_y + diff_sec; y++) {
-			for (int z = here_z - diff_sec; z <= here_z + diff_sec; z++) {
-				RefCountedPtr<const Sector> sec = GetSector(SystemPath(x, y, z));
+	int notCached = 0;
+	std::function<bool(SystemPath&)> filter = [this, &ss_vec, &center, &here_sec, &range, &notCached](SystemPath &path) {
+		path.sectorX += center.sectorX;
+		path.sectorY += center.sectorY;
+		path.sectorZ += center.sectorZ;
 
-				for (unsigned int idx = 0; idx < sec->m_systems.size(); idx++) {
-					// Skip self
-					if (x == here_x && y == here_y && z == here_z && idx == here_idx)
-						continue;
+		RefCountedPtr<const Sector> sec = GetSector(path);
 
-					if (Sector::DistanceBetween(here_sec, here_idx, sec, idx) > range)
-						continue;
+		for (unsigned int idx = 0; idx < sec->m_systems.size(); idx++) {
+			// Skip self
+			if (path.sectorX == center.sectorX && path.sectorY == center.sectorY
+				&& path.sectorZ == center.sectorZ && idx == center.systemIndex)
+				continue;
 
-					ss_vec.emplace_back(GetStarSystem(SystemPath(x, y, z, idx)));
-				}
-			}
+			if (Sector::DistanceBetween(here_sec, center.systemIndex, sec, idx) > range)
+				continue;
+
+			path.systemIndex = idx;
+			#ifdef DEBUG_CACHE
+				RefCountedPtr<StarSystem> ss = m_starSystemCache.GetIfCached(path);
+				if (!ss.Valid()) notCached++;
+			#endif
+			ss_vec.emplace_back(GetStarSystem(path));
 		}
-	}
+		return false;
+	};
+	spiral_3d(diff_sec, filter);
+	#ifdef DEBUG_CACHE
+		if (notCached != 0) Output("There were %i StarSystem not cached\n", notCached);
+	#endif // DEBUG_CACHE
 	return ss_vec;
 }
 
@@ -278,8 +279,8 @@ vector3d Galaxy::GetInterSystemPosition(const SystemPath &source, const SystemPa
 	RefCountedPtr<const Sector> source_sec = GetSector(source);
 	RefCountedPtr<const Sector> dest_sec = GetSector(dest);
 
-	Sector::System source_sys = source_sec->m_systems[source.systemIndex];
-	Sector::System dest_sys = dest_sec->m_systems[dest.systemIndex];
+	const Sector::System &source_sys = source_sec->m_systems[source.systemIndex];
+	const Sector::System &dest_sys = dest_sec->m_systems[dest.systemIndex];
 
 	const vector3d sourcePos(source_sys.GetFullPosition());
 	const vector3d destPos(dest_sys.GetFullPosition());

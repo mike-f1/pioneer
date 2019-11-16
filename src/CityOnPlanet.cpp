@@ -12,6 +12,7 @@
 #include "SpaceStation.h"
 #include "collider/Geom.h"
 #include "graphics/Frustum.h"
+#include "graphics/Renderer.h"
 #include "scenegraph/Animation.h"
 #include "scenegraph/ModelSkin.h"
 #include "scenegraph/SceneGraph.h"

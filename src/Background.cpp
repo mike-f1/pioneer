@@ -14,9 +14,11 @@
 #include "galaxy/GalaxyEnums.h"
 #include "galaxy/Sector.h"
 #include "galaxy/StarSystem.h"
+#include "graphics/Drawables.h"
 #include "graphics/RenderState.h"
 #include "graphics/TextureBuilder.h"
 #include "graphics/VertexArray.h"
+#include "graphics/VertexBuffer.h"
 #include "perlin.h"
 
 #include <SDL_stdinc.h>

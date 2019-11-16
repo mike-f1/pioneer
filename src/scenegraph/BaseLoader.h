@@ -8,10 +8,12 @@
  */
 #include "LoaderDefinitions.h"
 #include "Model.h"
-#include "StaticGeometry.h"
-#include "graphics/Material.h"
 #include "libs.h"
 #include "text/DistanceFieldFont.h"
+
+namespace Graphics {
+	class Material;
+}
 
 namespace SceneGraph {
 

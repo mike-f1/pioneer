@@ -21,6 +21,7 @@
 #include "Star.h"
 #include "collider/CollisionContact.h"
 #include "galaxy/StarSystem.h"
+#include "graphics/Drawables.h" // W**??? It seems there some problem with unique_ptr at line 65...
 #include <algorithm>
 #include <functional>
 

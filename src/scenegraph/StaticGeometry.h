@@ -8,9 +8,16 @@
  */
 #include "Aabb.h"
 #include "Node.h"
-#include "graphics/Renderer.h"
-#include "graphics/VertexBuffer.h"
-#include "libs.h"
+
+#include "graphics/Types.h"
+
+namespace Graphics {
+	class IndexBuffer;
+	class InstanceBuffer;
+	class Renderer;
+	class RenderState;
+	class VertexBuffer;
+}
 
 namespace SceneGraph {
 

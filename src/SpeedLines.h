@@ -4,14 +4,18 @@
 #ifndef _SPEEDLINES_H
 #define _SPEEDLINES_H
 
+#include "RefCounted.h"
 #include "matrix4x4.h"
 #include "vector3.h"
-#include "graphics/VertexBuffer.h"
-#include "graphics/Material.h"
+#include <memory>
+#include <vector>
 
 namespace Graphics {
+	class Material;
 	class Renderer;
 	class RenderState;
+	class VertexArray;
+	class VertexBuffer;
 }
 
 class Ship;

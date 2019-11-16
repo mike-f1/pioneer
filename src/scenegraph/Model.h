@@ -65,8 +65,6 @@
 #include "Group.h"
 #include "JsonFwd.h"
 #include "Pattern.h"
-#include "graphics/Drawables.h"
-#include "graphics/Material.h"
 #include <stdexcept>
 
 #include "Mount.h"
@@ -75,6 +73,10 @@ namespace Graphics {
 	class Renderer;
 	class RenderState;
 	class VertexBuffer;
+	class Material;
+	namespace Drawables {
+		class Line3D;
+	} // namespace Drawables
 } // namespace Graphics
 
 namespace SceneGraph {

@@ -12,6 +12,7 @@
 #include "Shields.h"
 #include "collider/CollisionSpace.h"
 #include "collider/Geom.h"
+#include "graphics/Renderer.h"
 #include "scenegraph/Animation.h"
 #include "scenegraph/CollisionGeometry.h"
 #include "scenegraph/NodeVisitor.h"

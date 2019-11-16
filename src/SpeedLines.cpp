@@ -10,6 +10,8 @@
 #include "Ship.h"
 #include "graphics/Renderer.h"
 #include "graphics/RenderState.h"
+#include "graphics/VertexArray.h"
+#include "graphics/VertexBuffer.h"
 
 // default values
 float SpeedLines::BOUNDS = 2000.f;

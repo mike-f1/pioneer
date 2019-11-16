@@ -13,6 +13,7 @@
 #include "Space.h"
 #include "graphics/RenderState.h"
 #include "graphics/Renderer.h"
+#include "graphics/VertexArray.h"
 #include "perlin.h"
 
 using namespace Graphics;

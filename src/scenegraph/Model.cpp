@@ -10,6 +10,7 @@
 #include "NodeCopyCache.h"
 #include "StringF.h"
 #include "Thruster.h"
+#include "graphics/Drawables.h"
 #include "graphics/RenderState.h"
 #include "graphics/Renderer.h"
 #include "graphics/TextureBuilder.h"

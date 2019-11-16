@@ -2,11 +2,13 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "DumpVisitor.h"
+
 #include "Group.h"
 #include "LOD.h"
 #include "Model.h"
 #include "Node.h"
 #include "StaticGeometry.h"
+#include "graphics/VertexBuffer.h"
 #include "utils.h"
 #include <iostream>
 #include <sstream>

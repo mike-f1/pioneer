@@ -11,6 +11,8 @@
 #include "graphics/Material.h"
 #include "graphics/RenderState.h"
 #include "graphics/Renderer.h"
+#include "graphics/VertexArray.h"
+#include "graphics/VertexBuffer.h"
 #include "utils.h"
 
 namespace SceneGraph {

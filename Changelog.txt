@@ -1,3 +1,8 @@
+November 2019
+   * New Features
+     * More station names (#4726)
+     * Use system time at start (#4735)
+
 October 2019
    * New Features
      * Music upgrade (#4678)

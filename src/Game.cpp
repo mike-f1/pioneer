@@ -259,16 +259,16 @@ void Game::ToJson(Json &jsonObj)
 	// Stuff to show in the preview in load game window
 	// some may be redundant, but this won't require loading up a game to get it all
 	Json gameInfo = Json::object();
-	float credits = LuaObject<Player>::CallMethod<float>(Pi::player, "GetMoney");
+	float credits = LuaObject<Player>::CallMethod<float>(m_player.get(), "GetMoney");
 
 	gameInfo["system"] = GetSpace()->GetStarSystem()->GetName();
 	gameInfo["credits"] = credits;
-	gameInfo["ship"] = Pi::player->GetShipType()->modelName;
-	if (Pi::player->IsDocked()) {
-		gameInfo["docked_at"] = Pi::player->GetDockedWith()->GetSystemBody()->GetName();
+	gameInfo["ship"] = m_player->GetShipType()->modelName;
+	if (m_player->IsDocked()) {
+		gameInfo["docked_at"] = m_player->GetDockedWith()->GetSystemBody()->GetName();
 	}
 
-	switch (Pi::player->GetFlightState()) {
+	switch (m_player->GetFlightState()) {
 	case Ship::FlightState::DOCKED:
 		gameInfo["flight_state"] = "docked";
 		break;

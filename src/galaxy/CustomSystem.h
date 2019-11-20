@@ -5,6 +5,7 @@
 #define _CUSTOMSYSTEM_H
 
 #include "Color.h"
+
 #include "GalaxyEnums.h"
 #include "Polit.h"
 #include "fixed.h"

@@ -137,6 +137,23 @@ Space::Space(RefCountedPtr<StarSystem> starsystem, const Json &jsonObj, double a
 	//DebugDumpFrames();
 }
 
+Space::~Space()
+{
+	UpdateBodies(); // make sure anything waiting to be removed gets removed before we go and kill everything else
+	for (std::list<Body *>::iterator i = m_bodies.begin(); i != m_bodies.end(); ++i)
+		KillBody(*i);
+	UpdateBodies();
+	Frame::DeleteFrames();
+}
+
+void Space::RefreshBackground()
+{
+	const SystemPath &path = m_starSystem->GetPath();
+	Uint32 _init[5] = { path.systemIndex, Uint32(path.sectorX), Uint32(path.sectorY), Uint32(path.sectorZ), UNIVERSE_SEED };
+	Random rand(_init, 5);
+	m_background.reset(new Background::Container(Pi::renderer, rand));
+}
+
 void Space::ToJson(Json &jsonObj)
 {
 	PROFILE_SCOPED()
@@ -158,23 +175,6 @@ void Space::ToJson(Json &jsonObj)
 	spaceObj["bodies"] = bodyArray; // Add body array to space object.
 
 	jsonObj["space"] = spaceObj; // Add space object to supplied object.
-}
-
-Space::~Space()
-{
-	UpdateBodies(); // make sure anything waiting to be removed gets removed before we go and kill everything else
-	for (std::list<Body *>::iterator i = m_bodies.begin(); i != m_bodies.end(); ++i)
-		KillBody(*i);
-	UpdateBodies();
-	Frame::DeleteFrames();
-}
-
-void Space::RefreshBackground()
-{
-	const SystemPath &path = m_starSystem->GetPath();
-	Uint32 _init[5] = { path.systemIndex, Uint32(path.sectorX), Uint32(path.sectorY), Uint32(path.sectorZ), UNIVERSE_SEED };
-	Random rand(_init, 5);
-	m_background.reset(new Background::Container(Pi::renderer, rand));
 }
 
 RefCountedPtr<StarSystem> Space::GetStarSystem() const
@@ -317,10 +317,9 @@ void Space::GetRandomOrbitFromDirection(const SystemPath &source, const SystemPa
 	const double max_orbit_vel = 100e3;
 	double dist = G * primary->GetSystemBody()->GetMass() /
 		(max_orbit_vel * max_orbit_vel);
-	dist = std::max(dist, primary->GetSystemBody()->GetRadius() * 10);
 
-	// ensure an absolut minimum distance
-	dist = std::max(dist, 0.2 * AU);
+	// ensure an absolute minimum and an absolute maximum distance
+	dist = Clamp(dist, 0.2 * AU, std::max(primary->GetSystemBody()->GetRadius() * 1.1, 100 * AU));
 
 	// point velocity vector along the line from source to dest,
 	// make exit position perpendicular to it,
@@ -802,7 +801,6 @@ static void CollideWithTerrain(Body *body, float timeStep)
 	CollisionContact c(body->GetPosition(), body->GetPosition().Normalized(), terrHeight - altitude, timeStep, static_cast<void *>(body), static_cast<void *>(f->GetBody()));
 	hitCallback(&c);
 }
-
 
 void Space::TimeStep(float step, double total_time)
 {

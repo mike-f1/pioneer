@@ -3,6 +3,12 @@ November 2019
      * More station names (#4726)
      * Use system time at start (#4735)
 
+   * Internal Changes
+     * Little improvements (#4669)
+     * Fix OSX Travis deployment (#4737)
+     * ASAN/valgrind fixes (#4739)
+     * Add a maximum distance to the hyperspace exit calculation (#4660)
+
 October 2019
    * New Features
      * Music upgrade (#4678)

@@ -75,8 +75,6 @@ Ship::Ship(const ShipType::Id &shipId) :
 	ClearAngThrusterState();
 	ClearLinThrusterState();
 
-	InitEquipSet();
-
 	m_hyperspace.countdown = 0;
 	m_hyperspace.now = false;
 	m_ecmRecharge = 0;
@@ -84,6 +82,8 @@ Ship::Ship(const ShipType::Id &shipId) :
 	m_curAICmd = 0;
 	m_aiMessage = AIERROR_NONE;
 	m_decelerating = false;
+
+	InitEquipSet();
 
 	SetModel(m_type->modelName.c_str());
 

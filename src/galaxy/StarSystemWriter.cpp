@@ -3,10 +3,33 @@
 
 #include "StarSystemWriter.h"
 
-#include "Lang.h"
 #include "ExplorationState.h"
+#include "Galaxy.h"
+#include "Lang.h"
+#include "LuaEvent.h"
+#include "Sector.h"
 #include "StringF.h"
 #include "utils.h"
+
+SystemBody *StarSystemWriter::NewBody() const
+{
+	SystemBody *body = new SystemBody(SystemPath(m_ssys->m_path.sectorX, m_ssys->m_path.sectorY, m_ssys->m_path.sectorZ, m_ssys->m_path.systemIndex, static_cast<Uint32>(m_ssys->m_bodies.size())), m_ssys);
+	m_ssys->m_bodies.push_back(RefCountedPtr<SystemBody>(body));
+	return body;
+}
+
+void StarSystemWriter::ExploreSystem(double time)
+{
+	if (m_ssys->m_explored != ExplorationState::eUNEXPLORED)
+		return;
+	m_ssys->m_explored = eEXPLORED_BY_PLAYER;
+	m_ssys->m_exploredTime = time;
+	RefCountedPtr<Sector> sec = m_ssys->m_galaxy->GetMutableSector(m_ssys->m_path);
+	Sector::System &secsys = sec->m_systems[m_ssys->m_path.systemIndex];
+	secsys.SetExplored(m_ssys->m_explored, m_ssys->m_exploredTime);
+	MakeShortDescription();
+	LuaEvent::Queue("onSystemExplored", m_ssys);
+}
 
 void StarSystemWriter::MakeShortDescription()
 {

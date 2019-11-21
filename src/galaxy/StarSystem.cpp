@@ -7,11 +7,8 @@
 #include "Galaxy.h"
 #include "Json.h"
 #include "Sector.h"
-#include "StarSystemWriter.h"
-
 #include "EnumStrings.h"
 #include "GameSaveError.h"
-#include "LuaEvent.h"
 #include "Orbit.h"
 #include "enum_table.h"
 #include <SDL_stdinc.h>
@@ -126,20 +123,6 @@ void StarSystem::Dump()
 	Output("Junk dumped to starsystem.dump\n");
 }
 #endif /* DEBUG_DUMP */
-
-void StarSystem::ExploreSystem(double time)
-{
-	if (m_explored != eUNEXPLORED)
-		return;
-	m_explored = eEXPLORED_BY_PLAYER;
-	m_exploredTime = time;
-	RefCountedPtr<Sector> sec = m_galaxy->GetMutableSector(m_path);
-	Sector::System &secsys = sec->m_systems[m_path.systemIndex];
-	secsys.SetExplored(m_explored, m_exploredTime);
-	StarSystemWriter a(this);
-	a.MakeShortDescription();
-	LuaEvent::Queue("onSystemExplored", this);
-}
 
 void StarSystem::ToJson(Json &jsonObj, StarSystem *s)
 {

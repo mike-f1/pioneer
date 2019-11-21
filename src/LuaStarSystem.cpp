@@ -14,6 +14,7 @@
 #include "galaxy/Faction.h"
 #include "galaxy/Galaxy.h"
 #include "galaxy/StarSystem.h"
+#include "galaxy/StarSystemWriter.h"
 
 /*
  * Class: StarSystem
@@ -415,7 +416,8 @@ static int l_starsystem_explore(lua_State *l)
 	else
 		time = Pi::game->GetTime();
 
-	s->ExploreSystem(time);
+	StarSystemWriter sswrt(s);
+	sswrt.ExploreSystem(time);
 
 	LUA_DEBUG_END(l, 0);
 	return 0;

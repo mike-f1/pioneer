@@ -21,6 +21,10 @@ public:
 	StarSystemWriter(RefCountedPtr<StarSystem> ss) : m_ssys(ss.Get())
 	{ assert(m_ssys); }
 
+	SystemBody *NewBody() const;
+
+	void ExploreSystem(double time);
+
 	bool HasCustomBodies() const { return m_ssys->m_hasCustomBodies; }
 
 	void SetCustom(bool isCustom, bool hasCustomBodies)

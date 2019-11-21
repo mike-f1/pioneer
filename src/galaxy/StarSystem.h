@@ -31,13 +31,6 @@ public:
 	StarSystem(const SystemPath &path, RefCountedPtr<Galaxy> galaxy, StarSystemCache *cache);
 	virtual ~StarSystem();
 
-	SystemBody *NewBody()
-	{
-		SystemBody *body = new SystemBody(SystemPath(m_path.sectorX, m_path.sectorY, m_path.sectorZ, m_path.systemIndex, static_cast<Uint32>(m_bodies.size())), this);
-		m_bodies.push_back(RefCountedPtr<SystemBody>(body));
-		return body;
-	}
-
 	void ExportToLua(const char *filename);
 
 	const std::string &GetName() const { return m_name; }
@@ -78,7 +71,6 @@ public:
 	bool GetUnexplored() const { return m_explored == eUNEXPLORED; }
 	ExplorationState GetExplored() const { return m_explored; }
 	double GetExploredTime() const { return m_exploredTime; }
-	void ExploreSystem(double time);
 
 	fixed GetMetallicity() const { return m_metallicity; }
 	fixed GetIndustrial() const { return m_industrial; }
@@ -94,6 +86,7 @@ public:
 	void Dump(FILE *file, const char *indent = "", bool suppressSectorData = false) const;
 
 	const RefCountedPtr<Galaxy> GetGalaxy() const;
+
 private:
 	const RefCountedPtr<Galaxy> m_galaxy;
 

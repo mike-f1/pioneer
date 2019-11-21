@@ -14,6 +14,12 @@
 
 class Galaxy;
 
+namespace Gui {
+	class Label;
+	class LabelSet;
+	class ToggleButton;
+}
+
 namespace Graphics {
 	class RenderState;
 }

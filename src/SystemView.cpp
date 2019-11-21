@@ -22,6 +22,11 @@
 #include <iomanip>
 #include <sstream>
 
+#include "gui/GuiLabel.h"
+#include "gui/GuiLabelSet.h"
+#include "gui/GuiScreen.h"
+#include "gui/GuiBox.h"
+
 using namespace Graphics;
 
 const double SystemView::PICK_OBJECT_RECT_SIZE = 12.0;

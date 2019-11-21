@@ -12,10 +12,12 @@
 #include "graphics/Graphics.h"
 #include "graphics/Renderer.h"
 
-DeathView::DeathView(Game *game) :
+DeathView::DeathView(Game *game, Graphics::Renderer *r) :
 	View(),
 	m_game(game)
 {
+	m_renderer = r;
+
 	float size[2];
 	GetSizeRequested(size);
 
@@ -23,20 +25,20 @@ DeathView::DeathView(Game *game) :
 
 	float znear;
 	float zfar;
-	Pi::renderer->GetNearFarRange(znear, zfar);
+	m_renderer->GetNearFarRange(znear, zfar);
 
 	const float fovY = Pi::config->Float("FOVVertical");
 	m_cameraContext.Reset(new CameraContext(Graphics::GetScreenWidth(), Graphics::GetScreenHeight(), fovY, znear, zfar));
-	m_camera.reset(new Camera(m_cameraContext, Pi::renderer));
+	m_camera.reset(new Camera(m_cameraContext, m_renderer));
 }
 
 DeathView::~DeathView() {}
 
 void DeathView::Init()
 {
-	m_cameraDist = Pi::player->GetClipRadius() * 5.0;
-	m_cameraContext->SetCameraFrame(Pi::player->GetFrame());
-	m_cameraContext->SetCameraPosition(Pi::player->GetInterpPosition() + vector3d(0, 0, m_cameraDist));
+	m_cameraDist = m_game->GetPlayer()->GetClipRadius() * 5.0;
+	m_cameraContext->SetCameraFrame(m_game->GetPlayer()->GetFrame());
+	m_cameraContext->SetCameraPosition(m_game->GetPlayer()->GetInterpPosition() + vector3d(0, 0, m_cameraDist));
 	m_cameraContext->SetCameraOrient(matrix3x3d::Identity());
 }
 
@@ -47,10 +49,10 @@ void DeathView::OnSwitchTo()
 
 void DeathView::Update()
 {
-	assert(Pi::player->IsDead());
+	assert(m_game->GetPlayer()->IsDead());
 
 	m_cameraDist += 160.0 * Pi::GetFrameTime();
-	m_cameraContext->SetCameraPosition(Pi::player->GetInterpPosition() + vector3d(0, 0, m_cameraDist));
+	m_cameraContext->SetCameraPosition(m_game->GetPlayer()->GetInterpPosition() + vector3d(0, 0, m_cameraDist));
 	m_cameraContext->BeginFrame();
 	m_camera->Update();
 }

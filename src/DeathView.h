@@ -13,16 +13,16 @@ class Game;
 
 class DeathView : public View {
 public:
-	DeathView(Game *game);
+	DeathView(Game *game, Graphics::Renderer *r);
 	virtual ~DeathView();
 
 	void Init();
 
-	virtual void Update();
-	virtual void Draw3D();
+	virtual void Update() override;
+	virtual void Draw3D() override;
 
 protected:
-	virtual void OnSwitchTo();
+	virtual void OnSwitchTo() override;
 
 private:
 	RefCountedPtr<CameraContext> m_cameraContext;

@@ -9,6 +9,9 @@
 #include "ShipCpanelMultiFuncDisplays.h"
 #include "View.h"
 
+#include "gui/GuiScreen.h"
+#include "gui/GuiImage.h"
+
 ShipCpanel::ShipCpanel(Graphics::Renderer *r) :
 	Gui::Fixed(float(Gui::Screen::GetWidth()), 80)
 {

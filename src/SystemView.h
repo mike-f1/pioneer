@@ -16,6 +16,14 @@ class Orbit;
 class Ship;
 class Game;
 
+namespace Gui {
+	class ImageButton;
+	class Label;
+	class LabelSet;
+	class MultiStateImageButton;
+	class TexturedQuad;
+}
+
 enum BurnDirection {
 	PROGRADE,
 	NORMAL,

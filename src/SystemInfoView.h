@@ -8,6 +8,7 @@
 #include "galaxy/SystemPath.h"
 
 #include "UIView.h"
+#include "gui/GuiImageRadioButton.h"
 #include <vector>
 
 class Game;
@@ -17,6 +18,13 @@ class SystemBody;
 namespace Graphics {
 	class Renderer;
 	class RenderState;
+}
+
+namespace Gui {
+	class MultiStateImageButton;
+	class Tabbed;
+	class TexturedQuad;
+	class VBox;
 }
 
 class SystemInfoView : public UIView {

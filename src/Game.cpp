@@ -842,7 +842,7 @@ void Game::Views::Init(Game *game, const SystemPath &path)
 	m_systemInfoView = new SystemInfoView(game);
 	m_spaceStationView = new UIView("StationView");
 	m_infoView = new UIView("InfoView");
-	m_deathView = new DeathView(game);
+	m_deathView = new DeathView(game, Pi::renderer);
 
 #if WITH_OBJECTVIEWER
 	m_objectViewerView = new ObjectViewerView();
@@ -864,7 +864,7 @@ void Game::Views::LoadFromJson(const Json &jsonObj, Game *game, const SystemPath
 	m_systemInfoView = new SystemInfoView(game);
 	m_spaceStationView = new UIView("StationView");
 	m_infoView = new UIView("InfoView");
-	m_deathView = new DeathView(game);
+	m_deathView = new DeathView(game, Pi::renderer);
 
 #if WITH_OBJECTVIEWER
 	m_objectViewerView = new ObjectViewerView();

@@ -5,8 +5,7 @@
 #define _VIEW_H
 
 #include "JsonFwd.h"
-#include "gui/Gui.h"
-#include "libs.h"
+#include "gui/GuiFixed.h"
 
 namespace Graphics {
 	class Renderer;

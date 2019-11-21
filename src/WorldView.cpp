@@ -25,6 +25,8 @@
 #include "sound/Sound.h"
 #include "ui/Widget.h"
 
+#include "gui/GuiScreen.h"
+
 const double WorldView::PICK_OBJECT_RECT_SIZE = 20.0;
 namespace {
 	static const Color s_hudTextColor(0, 255, 0, 230);

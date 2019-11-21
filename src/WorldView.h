@@ -27,7 +27,9 @@ enum PlaneType {
 };
 
 namespace Gui {
+	class Label;
 	class TexturedQuad;
+	class VBox;
 }
 
 namespace KeyBindings {

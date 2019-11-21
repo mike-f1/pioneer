@@ -5,6 +5,8 @@
 #include "Pi.h"
 #include "ShipCpanel.h"
 
+#include "gui/GuiScreen.h"
+
 ShipCpanel *View::s_cpan = nullptr;
 
 View::View() :

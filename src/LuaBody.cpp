@@ -26,6 +26,9 @@
 #include "Star.h"
 #include "HyperspaceCloud.h"
 
+#include "gui/GuiLabel.h"
+#include "gui/GuiTexturedQuad.h"
+
 // Defined in LuaPiGui.h
 extern bool first_body_is_more_important_than(Body*, Body*);
 extern int pushOnScreenPositionDirection(lua_State *l, vector3d position);

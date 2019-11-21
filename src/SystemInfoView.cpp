@@ -18,7 +18,12 @@
 #include "galaxy/Polit.h"
 #include "graphics/Drawables.h"
 #include "graphics/Renderer.h"
+#include "graphics/RenderState.h"
 #include <functional>
+
+#include "gui/GuiLabel.h"
+#include "gui/GuiScreen.h"
+#include "gui/GuiTabbed.h"
 
 SystemInfoView::SystemInfoView(Game *game) :
 	UIView(),

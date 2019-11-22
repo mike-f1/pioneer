@@ -4,7 +4,7 @@
 #include "Tombstone.h"
 
 #include "Lang.h"
-#include "Pi.h"
+#include "ModelCache.h"
 #include "graphics/Renderer.h"
 #include "scenegraph/SceneGraph.h"
 
@@ -16,7 +16,7 @@ Tombstone::Tombstone(Graphics::Renderer *r, int width, int height) :
 	const Color lc(255, 255, 255, 0);
 	m_lights.push_back(Graphics::Light(Graphics::Light::LIGHT_DIRECTIONAL, vector3f(0.f, 0.8f, 1.0f), lc, lc));
 
-	m_model = Pi::FindModel("tombstone");
+	m_model = ModelCache::FindModel("tombstone");
 	m_model->SetLabel(Lang::TOMBSTONE_EPITAPH);
 	const Uint32 numMats = m_model->GetNumMaterials();
 	for (Uint32 m = 0; m < numMats; m++) {

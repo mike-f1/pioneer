@@ -143,7 +143,6 @@ bool Pi::DrawGUI = true;
 Graphics::Renderer *Pi::renderer;
 RefCountedPtr<UI::Context> Pi::ui;
 RefCountedPtr<PiGui> Pi::pigui;
-ModelCache *Pi::modelCache;
 Intro *Pi::intro;
 SDLGraphics *Pi::sdl;
 Graphics::RenderTarget *Pi::renderTarget;
@@ -342,25 +341,6 @@ static void LuaUninit()
 static void LuaInitGame()
 {
 	LuaEvent::Clear();
-}
-
-SceneGraph::Model *Pi::FindModel(const std::string &name, bool allowPlaceholder)
-{
-	SceneGraph::Model *m = 0;
-	try {
-		m = Pi::modelCache->FindModel(name);
-	} catch (const ModelCache::ModelNotFoundException &) {
-		Output("Could not find model: %s\n", name.c_str());
-		if (allowPlaceholder) {
-			try {
-				m = Pi::modelCache->FindModel("error");
-			} catch (const ModelCache::ModelNotFoundException &) {
-				Error("Could not find placeholder model");
-			}
-		}
-	}
-
-	return m;
 }
 
 const char Pi::SAVE_DIR_NAME[] = "savefiles";
@@ -596,7 +576,7 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 	draw_progress(0.2f);
 
 	Output("new ModelCache\n");
-	modelCache = new ModelCache(Pi::renderer);
+	ModelCache::Init(Pi::renderer);
 	draw_progress(0.3f);
 
 	Output("Shields::Init\n");
@@ -734,7 +714,6 @@ void Pi::Quit()
 	Pi::pigui.Reset(0);
 	LuaUninit();
 	Gui::Uninit();
-	delete Pi::modelCache;
 	delete Pi::renderer;
 	delete Pi::config;
 	GalaxyGenerator::Uninit();

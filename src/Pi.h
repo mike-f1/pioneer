@@ -20,7 +20,6 @@ class Intro;
 class LuaConsole;
 class LuaNameGen;
 class LuaTimer;
-class ModelCache;
 class ObjectViewerView;
 class PiGui;
 class Player;
@@ -97,7 +96,6 @@ public:
 	static float GetMoveSpeedShiftModifier();
 
 	static std::string GetSaveDir();
-	static SceneGraph::Model *FindModel(const std::string &, bool allowPlaceholder = true);
 
 	static void CreateRenderTarget(const Uint16 width, const Uint16 height);
 	static void DrawRenderTarget();
@@ -157,7 +155,6 @@ public:
 	static LuaConsole *luaConsole;
 	static Sound::MusicPlayer &GetMusicPlayer() { return musicPlayer; }
 	static Graphics::Renderer *renderer;
-	static ModelCache *modelCache;
 	static Intro *intro;
 	static SDLGraphics *sdl;
 

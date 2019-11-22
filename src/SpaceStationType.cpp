@@ -5,8 +5,8 @@
 #include "FileSystem.h"
 #include "Json.h"
 #include "MathUtil.h"
+#include "ModelCache.h"
 #include "OS.h"
-#include "Pi.h"
 #include "Ship.h"
 #include "StringF.h"
 #include "scenegraph/MatrixTransform.h"
@@ -58,7 +58,7 @@ SpaceStationType::SpaceStationType(const std::string &id_, const std::string &pa
 
 	padOffset = data.value("pad_offset", 150.f);
 
-	model = Pi::FindModel(modelName, /* allowPlaceholder = */ false);
+	model = ModelCache::FindModel(modelName, /* allowPlaceholder = */ false);
 	if (!model) {
 		Output("couldn't initialize station type '%s' because the corresponding model ('%s') could not be found.\n", path_.c_str(), modelName.c_str());
 		throw StationTypeLoadError();

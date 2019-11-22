@@ -3,7 +3,7 @@
 #include "LuaPushPull.h"
 #include "LuaVector.h"
 #include "LuaVector2.h"
-#include "Pi.h"
+#include "ModelCache.h"
 #include "pigui/ModelSpinner.h"
 
 namespace PiGUI {
@@ -22,7 +22,7 @@ namespace PiGUI {
 			unsigned int pattern = 0;
 			if (lua_gettop(l) > 3 && !lua_isnoneornil(l, 4))
 				pattern = luaL_checkinteger(l, 4) - 1; // Lua counts from 1
-			SceneGraph::Model *model = Pi::FindModel(name);
+			SceneGraph::Model *model = ModelCache::FindModel(name);
 			obj->SetModel(model, *skin, pattern);
 
 			return 0;

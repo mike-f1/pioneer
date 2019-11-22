@@ -2,29 +2,29 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "ModelCache.h"
+
 #include "Shields.h"
 #include "scenegraph/SceneGraph.h"
+#include "utils.h"
 
-ModelCache::ModelCache(Graphics::Renderer *r) :
-	m_renderer(r)
+ModelCache::ModelMap ModelCache::s_models;
+Graphics::Renderer *ModelCache::s_renderer = nullptr;
+
+void ModelCache::Init(Graphics::Renderer *r)
 {
+	s_renderer = r;
 }
 
-ModelCache::~ModelCache()
+SceneGraph::Model *ModelCache::findmodel(const std::string &name)
 {
-	Flush();
-}
+	ModelCache::ModelMap::iterator it = s_models.find(name);
 
-SceneGraph::Model *ModelCache::FindModel(const std::string &name)
-{
-	ModelMap::iterator it = m_models.find(name);
-
-	if (it == m_models.end()) {
+	if (it == s_models.end()) {
 		try {
-			SceneGraph::Loader loader(m_renderer);
+			SceneGraph::Loader loader(s_renderer);
 			SceneGraph::Model *m = loader.LoadModel(name);
 			Shields::ReparentShieldNodes(m);
-			m_models[name] = m;
+			s_models[name] = m;
 			return m;
 		} catch (SceneGraph::LoadingError &) {
 			throw ModelNotFoundException();
@@ -33,10 +33,29 @@ SceneGraph::Model *ModelCache::FindModel(const std::string &name)
 	return it->second;
 }
 
+SceneGraph::Model *ModelCache::FindModel(const std::string &name, bool allowPlaceholder)
+{
+	SceneGraph::Model *m = 0;
+	try {
+		m = findmodel(name);
+	} catch (const ModelCache::ModelNotFoundException &) {
+		Output("Could not find model: %s\n", name.c_str());
+		if (allowPlaceholder) {
+			try {
+				m = findmodel("error");
+			} catch (const ModelCache::ModelNotFoundException &) {
+				Error("Could not find placeholder model");
+			}
+		}
+	}
+
+	return m;
+}
+
 void ModelCache::Flush()
 {
-	for (ModelMap::iterator it = m_models.begin(); it != m_models.end(); ++it) {
+	for (ModelMap::iterator it = s_models.begin(); it != s_models.end(); ++it) {
 		delete it->second;
 	}
-	m_models.clear();
+	s_models.clear();
 }

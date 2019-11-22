@@ -11,6 +11,7 @@
 #include "KeyBindings.h"
 #include "Lang.h"
 #include "LuaObject.h"
+#include "ModelCache.h"
 #include "Orbit.h"
 #include "Pi.h"
 #include "SectorView.h"
@@ -90,11 +91,11 @@ void Player::InitCockpit()
 	// directly, but we're not there yet
 	std::string cockpitModelName;
 	if (!GetShipType()->cockpitName.empty()) {
-		if (Pi::FindModel(GetShipType()->cockpitName, false))
+		if (ModelCache::FindModel(GetShipType()->cockpitName, false))
 			cockpitModelName = GetShipType()->cockpitName;
 	}
 	if (cockpitModelName.empty()) {
-		if (Pi::FindModel("default_cockpit", false))
+		if (ModelCache::FindModel("default_cockpit", false))
 			cockpitModelName = "default_cockpit";
 	}
 	if (!cockpitModelName.empty())

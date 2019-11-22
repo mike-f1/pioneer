@@ -17,6 +17,7 @@
 #include "LuaUtils.h"
 #include "LuaVector.h"
 #include "LuaVector2.h"
+#include "ModelCache.h"
 #include "OS.h"
 #include "Pi.h"
 #include "PiGui.h"
@@ -822,7 +823,7 @@ static int l_engine_set_confirm_quit(lua_State *l)
 static int l_engine_get_model(lua_State *l)
 {
 	const std::string name(luaL_checkstring(l, 1));
-	SceneGraph::Model *model = Pi::FindModel(name);
+	SceneGraph::Model *model = ModelCache::FindModel(name);
 	LuaObject<SceneGraph::Model>::PushToLua(model);
 	return 1;
 }

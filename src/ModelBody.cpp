@@ -7,7 +7,7 @@
 #include "Frame.h"
 #include "GameSaveError.h"
 #include "Json.h"
-#include "Pi.h"
+#include "ModelCache.h"
 #include "Planet.h"
 #include "Shields.h"
 #include "collider/CollisionSpace.h"
@@ -17,6 +17,7 @@
 #include "scenegraph/CollisionGeometry.h"
 #include "scenegraph/NodeVisitor.h"
 #include "scenegraph/SceneGraph.h"
+#include "gameconsts.h"
 
 class Space;
 
@@ -181,7 +182,7 @@ void ModelBody::SetModel(const char *modelName)
 	m_modelName = modelName;
 
 	//create model instance (some modelbodies, like missiles could avoid this)
-	m_model = Pi::FindModel(m_modelName)->MakeInstance();
+	m_model = ModelCache::FindModel(m_modelName)->MakeInstance();
 	m_idleAnimation = m_model->FindAnimation("idle");
 
 	SetClipRadius(m_model->GetDrawClipRadius());

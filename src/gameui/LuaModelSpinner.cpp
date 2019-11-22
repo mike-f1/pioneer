@@ -2,8 +2,8 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "LuaObject.h"
+#include "ModelCache.h"
 #include "ModelSpinner.h"
-#include "Pi.h"
 
 namespace GameUI {
 
@@ -19,7 +19,7 @@ namespace GameUI {
 			unsigned int pattern = 0;
 			if (lua_gettop(l) > 3 && !lua_isnoneornil(l, 4))
 				pattern = luaL_checkinteger(l, 4) - 1; // Lua counts from 1
-			SceneGraph::Model *model = Pi::FindModel(name);
+			SceneGraph::Model *model = ModelCache::FindModel(name);
 			LuaObject<ModelSpinner>::PushToLua(new ModelSpinner(c, model, *skin, pattern));
 			return 1;
 		}

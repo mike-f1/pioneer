@@ -6,6 +6,7 @@
 #include "Background.h"
 #include "Easing.h"
 #include "Lang.h"
+#include "ModelCache.h"
 #include "Pi.h"
 #include "ShipType.h"
 #include "graphics/Drawables.h"
@@ -40,7 +41,7 @@ Intro::Intro(Graphics::Renderer *r, int width, int height, float amountOfBackgro
 	m_skin.SetLabel(Lang::PIONEER);
 
 	for (auto i : ShipType::player_ships) {
-		SceneGraph::Model *model = Pi::FindModel(ShipType::types[i].modelName)->MakeInstance();
+		SceneGraph::Model *model = ModelCache::FindModel(ShipType::types[i].modelName)->MakeInstance();
 		model->SetThrust(vector3f(0.f, 0.f, -0.6f), vector3f(0.f));
 		if (ShipType::types[i].isGlobalColorDefined) model->SetThrusterColor(ShipType::types[i].globalThrusterColor);
 		for (int j = 0; j < THRUSTER_MAX; j++) {

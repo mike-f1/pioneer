@@ -6,32 +6,40 @@
 /*
  * This class is a quick thoughtless hack
  * Also it only deals in New Models
+ * Made Singleton (...until there's need for something else...)
  */
-#include "libs.h"
+#include <map>
 #include <stdexcept>
+#include <string>
 
 namespace Graphics {
 	class Renderer;
 }
+
 namespace SceneGraph {
 	class Model;
 }
 
 class ModelCache {
 public:
+	ModelCache() = delete;
+	~ModelCache() = delete;
+
 	struct ModelNotFoundException : public std::runtime_error {
 		ModelNotFoundException() :
 			std::runtime_error("Could not find model") {}
 	};
-	ModelCache(Graphics::Renderer *);
-	~ModelCache();
-	SceneGraph::Model *FindModel(const std::string &);
-	void Flush();
+	static void Init(Graphics::Renderer *r);
+	static SceneGraph::Model *FindModel(const std::string &name, bool allowPlaceholder = true);
 
 private:
+	static void Flush();
+
+	static SceneGraph::Model *findmodel(const std::string &name);
+
 	typedef std::map<std::string, SceneGraph::Model *> ModelMap;
-	ModelMap m_models;
-	Graphics::Renderer *m_renderer;
+	static ModelMap s_models;
+	static Graphics::Renderer *s_renderer;
 };
 
 #endif

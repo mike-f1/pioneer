@@ -17,6 +17,8 @@
 #include "Pi.h"
 #include "Planet.h"
 #include "Player.h"
+#include "Random.h"
+#include "RandomSingleton.h"
 #include "SpaceStation.h"
 #include "Star.h"
 #include "collider/CollisionContact.h"
@@ -69,7 +71,7 @@ Space::Space() :
 	m_processingFinalizationQueue(false)
 #endif
 {
-	m_background.reset(new Background::Container(Pi::renderer, Pi::rng, Pi::GetAmountBackgroundStars()));
+	m_background.reset(new Background::Container(Pi::renderer, RandomSingleton::getInstance(), Pi::GetAmountBackgroundStars()));
 
 	m_rootFrameId = Frame::CreateFrame(noFrameId, Lang::SYSTEM, Frame::FLAG_DEFAULT, FLT_MAX);
 }
@@ -332,7 +334,7 @@ void Space::GetRandomOrbitFromDirection(const SystemPath &source, const SystemPa
 		vector3d p{ MathUtil::RandomPointOnCircle(1.) };
 		pos = p.x * a + p.y * b;
 	}
-	pos *= dist * Pi::rng.Double(0.95, 1.2);
+	pos *= dist * RandomSingleton::getInstance().Double(0.95, 1.2);
 	vel *= sqrt(G * primary->GetSystemBody()->GetMass() / dist);
 
 	assert(pos.Length() > primary->GetSystemBody()->GetRadius());

@@ -11,7 +11,8 @@
 #include "Json.h"
 #include "JsonUtils.h"
 #include "ModelBody.h"
-#include "Pi.h"
+#include "Random.h"
+#include "RandomSingleton.h"
 #include "StringF.h"
 #include "graphics/Drawables.h"
 #include "graphics/Graphics.h"
@@ -178,7 +179,7 @@ void SfxManager::Add(const Body *b, SFX_TYPE t)
 	assert(t != TYPE_NONE);
 	SfxManager *sfxman = AllocSfxInFrame(b->GetFrame());
 	if (!sfxman) return;
-	vector3d vel(b->GetVelocity() + 200.0 * vector3d(Pi::rng.Double() - 0.5, Pi::rng.Double() - 0.5, Pi::rng.Double() - 0.5));
+	vector3d vel(b->GetVelocity() + 200.0 * vector3d(RandomSingleton::getInstance().Double() - 0.5, RandomSingleton::getInstance().Double() - 0.5, RandomSingleton::getInstance().Double() - 0.5));
 	Sfx sfx(b->GetPosition(), vel, 200, t);
 	sfxman->AddInstance(sfx);
 }

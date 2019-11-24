@@ -65,6 +65,8 @@
 #include "StringF.h"
 #include "SystemInfoView.h"
 #include "SystemView.h"
+#include "Random.h"
+#include "RandomSingleton.h"
 #include "Tombstone.h"
 #include "UIView.h"
 #include "WorldView.h"
@@ -119,7 +121,6 @@ View *Pi::currentView;
 TransferPlanner *Pi::planner;
 LuaConsole *Pi::luaConsole;
 Game *Pi::game;
-Random Pi::rng;
 float Pi::frameTime;
 bool Pi::doingMouseGrab;
 #if WITH_DEVKEYS
@@ -486,8 +487,7 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 	Pi::renderer = Graphics::Init(videoSettings);
 
 	Pi::CreateRenderTarget(videoSettings.width, videoSettings.height);
-	Pi::rng.IncRefCount(); // so nothing tries to free it
-	Pi::rng.seed(time(0));
+	RandomSingleton::Init(time(0));
 
 	input.Init();
 	input.onKeyPress.connect(sigc::ptr_fun(&Pi::HandleKeyDown));

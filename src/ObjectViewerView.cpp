@@ -11,6 +11,8 @@
 #include "Pi.h"
 #include "Planet.h"
 #include "Player.h"
+#include "Random.h"
+#include "RandomSingleton.h"
 #include "Space.h"
 #include "StringF.h"
 #include "WorldView.h"
@@ -250,7 +252,7 @@ void ObjectViewerView::OnChangeTerrain()
 
 void ObjectViewerView::OnRandomSeed()
 {
-	m_sbodySeed->SetText(stringf("%0{i}", int(Pi::rng.Int32())));
+	m_sbodySeed->SetText(stringf("%0{i}", int(RandomSingleton::getInstance().Int32())));
 	OnChangeTerrain();
 }
 

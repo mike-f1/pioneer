@@ -7,7 +7,7 @@
 #include "Easing.h"
 #include "Lang.h"
 #include "ModelCache.h"
-#include "Pi.h"
+#include "RandomSingleton.h"
 #include "ShipType.h"
 #include "graphics/Drawables.h"
 #include "graphics/Graphics.h"
@@ -20,7 +20,7 @@
 struct PiRngWrapper {
 	unsigned int operator()(unsigned int n)
 	{
-		return Pi::rng.Int32(n);
+		return RandomSingleton::getInstance().Int32(n);
 	}
 };
 
@@ -29,7 +29,7 @@ Intro::Intro(Graphics::Renderer *r, int width, int height, float amountOfBackgro
 {
 	using Graphics::Light;
 
-	m_background.reset(new Background::Container(r, Pi::rng, amountOfBackgroundStars));
+	m_background.reset(new Background::Container(r, RandomSingleton::getInstance(), amountOfBackgroundStars));
 	m_ambientColor = Color::BLANK;
 
 	const Color one = Color::WHITE;
@@ -92,10 +92,10 @@ void Intro::Reset(float _time)
 {
 	m_model = m_models[m_modelIndex++];
 	if (m_modelIndex == m_models.size()) m_modelIndex = 0;
-	m_skin.SetRandomColors(Pi::rng);
+	m_skin.SetRandomColors(RandomSingleton::getInstance());
 	m_skin.Apply(m_model);
 	if (m_model->SupportsPatterns())
-		m_model->SetPattern(Pi::rng.Int32(0, m_model->GetNumPatterns() - 1));
+		m_model->SetPattern(RandomSingleton::getInstance().Int32(0, m_model->GetNumPatterns() - 1));
 	m_zoomBegin = -10000.0f;
 	m_zoomEnd = -m_model->GetDrawClipRadius() * 1.7f;
 	m_dist = m_zoomBegin;

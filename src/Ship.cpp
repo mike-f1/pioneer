@@ -21,6 +21,8 @@
 #include "Pi.h"
 #include "Planet.h"
 #include "Player.h" // <-- Here only for 1 occurence of "Pi::player" in Ship::Explode
+#include "Random.h"
+#include "RandomSingleton.h"
 #include "Sensors.h"
 #include "Sfx.h"
 #include "Shields.h"
@@ -105,11 +107,11 @@ Ship::Ship(const ShipType::Id &shipId) :
 		GetModel()->SetThrusterColor(dir, m_type->directionThrusterColor[i]);
 	}
 	SetLabel("UNLABELED_SHIP");
-	m_skin.SetRandomColors(Pi::rng);
+	m_skin.SetRandomColors(RandomSingleton::getInstance());
 	m_skin.SetDecal(m_type->manufacturer);
 	m_skin.Apply(GetModel());
 	if (GetModel()->SupportsPatterns())
-		GetModel()->SetPattern(Pi::rng.Int32(0, GetModel()->GetNumPatterns() - 1));
+		GetModel()->SetPattern(RandomSingleton::getInstance().Int32(0, GetModel()->GetNumPatterns() - 1));
 
 	Init();
 	SetController(new ShipController());
@@ -501,7 +503,7 @@ bool Ship::OnDamage(Object *attacker, float kgDamage, const CollisionContact &co
 
 			Explode();
 		} else {
-			if (Pi::rng.Double() < kgDamage)
+			if (RandomSingleton::getInstance().Double() < kgDamage)
 				SfxManager::Add(this, TYPE_DAMAGE);
 
 			if (dam > float(GetShipType()->hullMass / 1000.)) {
@@ -619,7 +621,7 @@ bool Ship::DoDamage(float kgDamage)
 		if (m_stats.hull_mass_left < 0) {
 			Explode();
 		} else {
-			if (Pi::rng.Double() < dam)
+			if (RandomSingleton::getInstance().Double() < dam)
 				SfxManager::Add(this, TYPE_DAMAGE);
 		}
 	}
@@ -766,7 +768,7 @@ Ship::ECMResult Ship::UseECM()
 			double dist = (body->GetPosition() - GetPosition()).Length();
 			if (dist < ECM_RADIUS) {
 				// increasing chance of destroying it with proximity
-				if (Pi::rng.Double() > (dist / ECM_RADIUS)) {
+				if (RandomSingleton::getInstance().Double() > (dist / ECM_RADIUS)) {
 					static_cast<Missile *>(body)->ECMAttack(ecm_power_cap);
 				}
 			}
@@ -1205,7 +1207,7 @@ void Ship::StaticUpdate(const float timeStep)
 				const double dot = vdir.Dot(pdir);
 				if ((m_stats.free_capacity) && (dot > 0.90) && (speed > 1000.0) && (density > 0.5)) {
 					const double rate = speed * density * 0.00000333 * double(capacity);
-					if (Pi::rng.Double() < rate) {
+					if (RandomSingleton::getInstance().Double() < rate) {
 						lua_State *l = Lua::manager->GetLuaState();
 						pi_lua_import(l, "Equipment");
 						LuaTable hydrogen = LuaTable(l, -1).Sub("cargo").Sub("hydrogen");
@@ -1230,8 +1232,8 @@ void Ship::StaticUpdate(const float timeStep)
 		// temperature regulation and breathable atmosphere
 
 		// kill stuff roughly every 5 seconds
-		if ((!m_dockedWith) && (5.0 * Pi::rng.Double() < timeStep)) {
-			std::string t(Pi::rng.Int32(2) ? "live_animals" : "slaves");
+		if ((!m_dockedWith) && (5.0 * RandomSingleton::getInstance().Double() < timeStep)) {
+			std::string t(RandomSingleton::getInstance().Int32(2) ? "live_animals" : "slaves");
 
 			lua_State *l = Lua::manager->GetLuaState();
 			pi_lua_import(l, "Equipment");
@@ -1404,9 +1406,9 @@ void Ship::Render(Graphics::Renderer *renderer, const Camera *camera, const vect
 		// ECM effect: a cloud of particles for a sparkly effect
 		vector3f v[100];
 		for (int i = 0; i < 100; i++) {
-			const double r1 = Pi::rng.Double() - 0.5;
-			const double r2 = Pi::rng.Double() - 0.5;
-			const double r3 = Pi::rng.Double() - 0.5;
+			const double r1 = RandomSingleton::getInstance().Double() - 0.5;
+			const double r2 = RandomSingleton::getInstance().Double() - 0.5;
+			const double r3 = RandomSingleton::getInstance().Double() - 0.5;
 			v[i] = vector3f(GetPhysRadius() * vector3d(r1, r2, r3).NormalizedSafe());
 		}
 		Color c(128, 128, 255, 255);

@@ -6,6 +6,8 @@
 #include "Frame.h"
 #include "Game.h"
 #include "Pi.h"
+#include "Random.h"
+#include "RandomSingleton.h"
 #include "Ship.h"
 #include "Space.h"
 #include "SpaceStation.h"
@@ -105,14 +107,14 @@ bool AICmdKill::TimeStepUpdate()
 	tdir1 = tdir1.Normalized();
 	vector3d tdir2 = targdir.Cross(tdir1);
 
-	double d1 = Pi::rng.Double() - 0.5;
-	double d2 = Pi::rng.Double() - 0.5;
+	double d1 = RandomSingleton::getInstance().Double() - 0.5;
+	double d2 = RandomSingleton::getInstance().Double() - 0.5;
 
 	m_curDir = (targdir + d1*tdir1 + d2*tdir2).Normalized();
 	m_ship->AIFaceDirection(m_curDir);
 
 	m_ship->SetThrusterState(ShipType::THRUSTER_FORWARD, 0.66);		// give player a chance
-	switch(Pi::rng.Int32() & 0x3)
+	switch(RandomSingleton::getInstance().Int32() & 0x3)
 	{
 		case 0x0: m_ship->SetThrusterState(ShipType::THRUSTER_LEFT, 0.7); break;
 		case 0x1: m_ship->SetThrusterState(ShipType::THRUSTER_RIGHT, 0.7); break;
@@ -121,7 +123,7 @@ bool AICmdKill::TimeStepUpdate()
 	}
 
 	m_timeSinceChange = 0.0f;
-	m_changeTime = (float)Pi::rng.Double() * 10.0f;
+	m_changeTime = (float)RandomSingleton::getInstance().Double() * 10.0f;
 	return false;
 }
 */
@@ -409,18 +411,18 @@ bool AICmdKill::TimeStepUpdate()
 
 		double headdiff = (leaddir - heading).Length();
 		double leaddiff = (leaddir - targdir).Length();
-		m_leadTime = Pi::game->GetTime() + headdiff + (1.0 * Pi::rng.Double() * skillShoot);
+		m_leadTime = Pi::game->GetTime() + headdiff + (1.0 * RandomSingleton::getInstance().Double() * skillShoot);
 
 		// lead inaccuracy based on diff between heading and leaddir
-		vector3d r(Pi::rng.Double() - 0.5, Pi::rng.Double() - 0.5, Pi::rng.Double() - 0.5);
-		vector3d newoffset = r * (0.02 + 2.0 * leaddiff + 2.0 * headdiff) * Pi::rng.Double() * skillShoot;
+		vector3d r(RandomSingleton::getInstance().Double() - 0.5, RandomSingleton::getInstance().Double() - 0.5, RandomSingleton::getInstance().Double() - 0.5);
+		vector3d newoffset = r * (0.02 + 2.0 * leaddiff + 2.0 * headdiff) * RandomSingleton::getInstance().Double() * skillShoot;
 		m_leadOffset = (heading - leaddir); // should be already...
 		m_leadDrift = (newoffset - m_leadOffset) / (m_leadTime - Pi::game->GetTime());
 
 		// Shoot only when close to target
 
 		double vissize = 1.3 * m_dBody->GetPhysRadius() / targpos.Length();
-		vissize += (0.05 + 0.5 * leaddiff) * Pi::rng.Double() * skillShoot;
+		vissize += (0.05 + 0.5 * leaddiff) * RandomSingleton::getInstance().Double() * skillShoot;
 		if (vissize > headdiff)
 			m_fguns->SetGunsFiringState(GunDir::GUN_FRONT, 1);
 		else
@@ -438,9 +440,9 @@ bool AICmdKill::TimeStepUpdate()
 	if (m_evadeTime < Pi::game->GetTime()) // evasion time!
 	{
 		double skillEvade = 0.5; // todo: should come from AI stats
-		m_evadeTime = Pi::game->GetTime() + Pi::rng.Double(3.0, 10.0) * skillEvade;
+		m_evadeTime = Pi::game->GetTime() + RandomSingleton::getInstance().Double(3.0, 10.0) * skillEvade;
 		if (heading.Dot(targdir) < 0.7) skillEvade += 0.5; // not in view
-		skillEvade += Pi::rng.Double(-0.5, 0.5);
+		skillEvade += RandomSingleton::getInstance().Double(-0.5, 0.5);
 
 		vector3d targhead = -m_target->GetOrient().VectorZ() * rot; // obj space
 		vector3d targav = m_target->GetAngVelocity();
@@ -458,13 +460,13 @@ bool AICmdKill::TimeStepUpdate()
 				evadethrust.x = targhead.x < 0.0 ? 1.0 : -1.0;
 				evadethrust.y = targhead.y < 0.0 ? 1.0 : -1.0;
 			} else if (skillEvade < 1.3) { // random two-thruster evade
-				evadethrust.x = (Pi::rng.Int32() & 8) ? 1.0 : -1.0;
-				evadethrust.y = (Pi::rng.Int32() & 4) ? 1.0 : -1.0;
+				evadethrust.x = (RandomSingleton::getInstance().Int32() & 8) ? 1.0 : -1.0;
+				evadethrust.y = (RandomSingleton::getInstance().Int32() & 4) ? 1.0 : -1.0;
 			} else if (skillEvade < 1.6) { // one thruster only
-				if (Pi::rng.Int32() & 8)
-					evadethrust.x = (Pi::rng.Int32() & 4) ? 1.0 : -1.0;
+				if (RandomSingleton::getInstance().Int32() & 8)
+					evadethrust.x = (RandomSingleton::getInstance().Int32() & 4) ? 1.0 : -1.0;
 				else
-					evadethrust.y = (Pi::rng.Int32() & 4) ? 1.0 : -1.0;
+					evadethrust.y = (RandomSingleton::getInstance().Int32() & 4) ? 1.0 : -1.0;
 			}
 			// else no evade thrust
 		}
@@ -476,9 +478,9 @@ bool AICmdKill::TimeStepUpdate()
 		double skillEvade = 0.5;
 		if (heading.Dot(targdir) < 0.7) skillEvade += 0.5; // not in view
 
-		m_closeTime = Pi::game->GetTime() + skillEvade * Pi::rng.Double(1.0, 5.0);
+		m_closeTime = Pi::game->GetTime() + skillEvade * RandomSingleton::getInstance().Double(1.0, 5.0);
 
-		double reqdist = 500.0 + skillEvade * Pi::rng.Double(-500.0, 250);
+		double reqdist = 500.0 + skillEvade * RandomSingleton::getInstance().Double(-500.0, 250);
 		double dist = targpos.Length(), ispeed;
 		double rearaccel = m_prop->GetAccelRev();
 		rearaccel += targaccel.Dot(targdir);
@@ -490,7 +492,7 @@ bool AICmdKill::TimeStepUpdate()
 			ispeed = -sqrt(-as2);
 		double vdiff = ispeed + targvel.Dot(targdir);
 
-		if (skillEvade + Pi::rng.Double() > 1.5)
+		if (skillEvade + RandomSingleton::getInstance().Double() > 1.5)
 			evadethrust.z = 0.0;
 		else if (vdiff * vdiff < 400.0)
 			evadethrust.z = 0.0;

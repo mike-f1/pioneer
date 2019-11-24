@@ -23,6 +23,7 @@
 #include "PiGui.h"
 #include "Player.h"
 #include "Random.h"
+#include "RandomSingleton.h"
 #include "SectorView.h"
 #include "WorldView.h"
 #include "buildopts.h"
@@ -58,7 +59,7 @@
  */
 static int l_engine_attr_rand(lua_State *l)
 {
-	LuaObject<Random>::PushToLua(&Pi::rng);
+	LuaObject<Random>::PushToLua(&RandomSingleton::getInstance());
 	return 1;
 }
 

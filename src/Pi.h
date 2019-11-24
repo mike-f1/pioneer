@@ -6,7 +6,6 @@
 
 #include "Input.h"
 #include "JobQueue.h"
-#include "Random.h"
 #include "gameconsts.h"
 
 #include <map>
@@ -119,7 +118,6 @@ public:
 	static RefCountedPtr<UI::Context> ui;
 	static RefCountedPtr<PiGui> pigui;
 
-	static Random rng;
 	static int statSceneTris;
 	static int statNumPatches;
 

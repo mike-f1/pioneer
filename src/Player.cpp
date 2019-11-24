@@ -14,6 +14,8 @@
 #include "ModelCache.h"
 #include "Orbit.h"
 #include "Pi.h"
+#include "Random.h"
+#include "RandomSingleton.h"
 #include "SectorView.h"
 #include "Sfx.h"
 #include "ship/PlayerShipController.h"
@@ -110,7 +112,7 @@ bool Player::DoDamage(float kgDamage)
 
 	// Don't fire audio on EVERY iteration (aka every 16ms, or 60fps), only when exceeds a value randomly
 	const float dam = kgDamage * 0.01f;
-	if (Pi::rng.Double() < dam) {
+	if (RandomSingleton::getInstance().Double() < dam) {
 		if (!IsDead() && (GetPercentHull() < 25.0f)) {
 			Sound::BodyMakeNoise(this, "warning", .5f);
 		}

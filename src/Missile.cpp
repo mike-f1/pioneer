@@ -7,6 +7,8 @@
 #include "Lang.h"
 #include "LuaEvent.h"
 #include "Pi.h"
+#include "Random.h"
+#include "RandomSingleton.h"
 #include "Sfx.h"
 #include "Ship.h"
 #include "ShipAICmd.h"
@@ -123,7 +125,7 @@ void Missile::StaticUpdate(const float timeStep)
 	//Add smoke trails for missiles on thruster state
 	static double s_timeAccum = 0.0;
 	s_timeAccum += timeStep;
-	if (!is_equal_exact(GetPropulsion()->GetLinThrusterState().LengthSqr(), 0.0) && (s_timeAccum > 4 || 0.1 * Pi::rng.Double() < timeStep)) {
+	if (!is_equal_exact(GetPropulsion()->GetLinThrusterState().LengthSqr(), 0.0) && (s_timeAccum > 4 || 0.1 * RandomSingleton::getInstance().Double() < timeStep)) {
 		s_timeAccum = 0.0;
 		const vector3d pos = GetOrient() * vector3d(0, 0, 5);
 		const float speed = std::min(10.0 * GetVelocity().Length() * std::max(1.0, fabs(GetPropulsion()->GetLinThrusterState().z)), 100.0);

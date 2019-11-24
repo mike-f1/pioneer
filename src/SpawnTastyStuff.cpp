@@ -10,6 +10,8 @@
 #include "Lua.h"
 #include "LuaObject.h"
 #include "Pi.h"
+#include "Random.h"
+#include "RandomSingleton.h"
 #include "Space.h"
 #include "galaxy/Galaxy.h"
 #include "galaxy/StarSystem.h"
@@ -41,9 +43,9 @@ void MiningLaserSpawnTastyStuff(FrameId fId, Body *shooter, const SystemBody *as
 
 	cargo->SetFrame(fId);
 	cargo->SetPosition(pos);
-	const double x = Pi::rng.Double();
+	const double x = RandomSingleton::getInstance().Double();
 	vector3d dir = pos.Normalized();
-	dir.ArbRotate(vector3d(x, 1 - x, 0), Pi::rng.Double() - .5);
-	cargo->SetVelocity(Pi::rng.Double(100.0, 200.0) * dir);
+	dir.ArbRotate(vector3d(x, 1 - x, 0), RandomSingleton::getInstance().Double() - .5);
+	cargo->SetVelocity(RandomSingleton::getInstance().Double(100.0, 200.0) * dir);
 	Pi::game->GetSpace()->AddBody(cargo);
 }

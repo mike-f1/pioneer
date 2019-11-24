@@ -6,6 +6,7 @@
 #include "FileSystem.h"
 #include "Game.h"
 #include "GameConfig.h"
+#include "GameConfSingleton.h"
 #include "Pi.h"
 #include "galaxy/AtmosphereParameters.h"
 #include "galaxy/SystemBody.h"
@@ -314,7 +315,7 @@ GasGiant::GasGiant(const SystemBody *body) :
 
 	Random rng(GetSystemBodySeed() + 4609837);
 
-	const bool bEnableGPUJobs = (Pi::config->Int("EnableGPUJobs") == 1);
+	const bool bEnableGPUJobs = (GameConfSingleton::getInstance().Int("EnableGPUJobs") == 1);
 	if (bEnableGPUJobs)
 		m_timeDelay = s_initialGPUDelayTime + (rng.Double() * (s_initialGPUDelayTime * 0.5));
 
@@ -529,7 +530,7 @@ void GasGiant::GenerateTexture()
 			return;
 	}
 
-	const bool bEnableGPUJobs = (Pi::config->Int("EnableGPUJobs") == 1);
+	const bool bEnableGPUJobs = (GameConfSingleton::getInstance().Int("EnableGPUJobs") == 1);
 
 	// scope the small texture generation
 	{
@@ -615,7 +616,7 @@ void GasGiant::GenerateTexture()
 		} else if (ColorFracName == GGUranus) {
 			GasGiantType = Graphics::OGL::GEN_URANUS_TEXTURE;
 		}
-		const Uint32 octaves = (Pi::config->Int("AMD_MESA_HACKS") == 0) ? s_noiseOctaves[Pi::detail.planets] : std::min(5U, s_noiseOctaves[Pi::detail.planets]);
+		const Uint32 octaves = (GameConfSingleton::getInstance().Int("AMD_MESA_HACKS") == 0) ? s_noiseOctaves[Pi::detail.planets] : std::min(5U, s_noiseOctaves[Pi::detail.planets]);
 		GasGiantType = (octaves << 16) | GasGiantType;
 
 		assert(!m_hasGpuJobRequest);

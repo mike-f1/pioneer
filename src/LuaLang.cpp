@@ -3,10 +3,10 @@
 
 #include "LuaLang.h"
 #include "GameConfig.h"
+#include "GameConfSingleton.h"
 #include "Lang.h"
 #include "LuaObject.h"
 #include "LuaUtils.h"
-#include "Pi.h"
 #include <algorithm>
 
 static int _resource_index(lua_State *l)
@@ -133,8 +133,8 @@ static int l_lang_set_current_language(lua_State *l)
 	pi_lua_generic_pull(l, 1, lang);
 	if (std::find(langs.begin(), langs.end(), lang) == langs.end())
 		return luaL_error(l, "The language '%s' is not known.", lang.c_str());
-	Pi::config->SetString("Lang", lang);
-	Pi::config->Save();
+	GameConfSingleton::getInstance().SetString("Lang", lang);
+	GameConfSingleton::getInstance().Save();
 	// XXX change it!
 	return 0;
 }
@@ -143,7 +143,7 @@ static int l_lang_attr_current_language(lua_State *l)
 {
 	LUA_DEBUG_START(l);
 
-	std::string lang = Pi::config->String("Lang");
+	std::string lang = GameConfSingleton::getInstance().String("Lang");
 	assert(!lang.empty()); // there should always be a Lang config value set
 
 	lua_pushlstring(l, lang.c_str(), lang.size());

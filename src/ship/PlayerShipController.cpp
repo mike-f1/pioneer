@@ -5,6 +5,7 @@
 #include "Frame.h"
 #include "Game.h"
 #include "GameConfig.h"
+#include "GameConfSingleton.h"
 #include "GameSaveError.h"
 #include "KeyBindings.h"
 #include "LuaObject.h"
@@ -34,10 +35,10 @@ PlayerShipController::PlayerShipController() :
 	m_lowThrustPower(0.25), // note: overridden by the default value in GameConfig.cpp (DefaultLowThrustPower setting)
 	m_mouseDir(0.0)
 {
-	const float deadzone = Pi::config->Float("JoystickDeadzone");
+	const float deadzone = GameConfSingleton::getInstance().Float("JoystickDeadzone");
 	m_joystickDeadzone = Clamp(deadzone, 0.01f, 1.0f); // do not use (deadzone * deadzone) as values are 0<>1 range, aka: 0.1 * 0.1 = 0.01 or 1% deadzone!!! Not what player asked for!
-	m_fovY = Pi::config->Float("FOVVertical");
-	m_lowThrustPower = Pi::config->Float("DefaultLowThrustPower");
+	m_fovY = GameConfSingleton::getInstance().Float("FOVVertical");
+	m_lowThrustPower = GameConfSingleton::getInstance().Float("DefaultLowThrustPower");
 
 	if (!InputBindings.primaryFire) {
 		Error("PlayerShipController was not properly initialized!\n"

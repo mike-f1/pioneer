@@ -14,6 +14,7 @@
 #include "Frame.h"
 #include "Game.h"
 #include "GameConfig.h"
+#include "GameConfSingleton.h"
 #include "GameLog.h"
 #include "GameSaveError.h"
 #include "Intro.h"
@@ -133,7 +134,6 @@ bool Pi::doProfileOne = false;
 #endif
 int Pi::statSceneTris = 0;
 int Pi::statNumPatches = 0;
-GameConfig *Pi::config;
 DetailLevel Pi::detail;
 bool Pi::navTunnelDisplayed = false;
 bool Pi::speedLinesDisplayed = false;
@@ -353,7 +353,7 @@ std::string Pi::GetSaveDir()
 
 void TestGPUJobsSupport()
 {
-	bool supportsGPUJobs = (Pi::config->Int("EnableGPUJobs") == 1);
+	bool supportsGPUJobs = (GameConfSingleton::getInstance().Int("EnableGPUJobs") == 1);
 	if (supportsGPUJobs) {
 		Uint32 octaves = 8;
 		for (Uint32 i = 0; i < 6; i++) {
@@ -386,8 +386,8 @@ void TestGPUJobsSupport()
 			if (!supportsGPUJobs) {
 				// failed
 				Warning("EnableGPUJobs DISABLED");
-				Pi::config->SetInt("EnableGPUJobs", 0); // disable GPU Jobs
-				Pi::config->Save();
+				GameConfSingleton::getInstance().SetInt("EnableGPUJobs", 0); // disable GPU Jobs
+				GameConfSingleton::getInstance().Save();
 			}
 		}
 	}
@@ -423,9 +423,10 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 #endif
 	PROFILE_SCOPED()
 
-	Pi::config = new GameConfig(options);
+	GameConfSingleton::Init(options);
+	//Pi::config = new GameConfig(options);
 
-	if (config->Int("RedirectStdio"))
+	if (GameConfSingleton::getInstance().Int("RedirectStdio"))
 		OS::RedirectStdio();
 
 	std::string version(PIONEER_VERSION);
@@ -440,12 +441,12 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 
 	ModManager::Init();
 
-	Lang::Resource res(Lang::GetResource("core", config->String("Lang")));
+	Lang::Resource res(Lang::GetResource("core", GameConfSingleton::getInstance().String("Lang")));
 	Lang::MakeCore(res);
 
-	Pi::SetAmountBackgroundStars(config->Float("AmountOfBackgroundStars"));
-	Pi::detail.planets = config->Int("DetailPlanets");
-	Pi::detail.cities = config->Int("DetailCities");
+	Pi::SetAmountBackgroundStars(GameConfSingleton::getInstance().Float("AmountOfBackgroundStars"));
+	Pi::detail.planets = GameConfSingleton::getInstance().Int("DetailPlanets");
+	Pi::detail.cities = GameConfSingleton::getInstance().Int("DetailCities");
 
 	// Initialize SDL
 	Uint32 sdlInitFlags = SDL_INIT_VIDEO | SDL_INIT_JOYSTICK;
@@ -461,7 +462,7 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 	Graphics::RendererOGL::RegisterRenderer();
 
 	// determine what renderer we should use, default to Opengl 3.x
-	const std::string rendererName = config->String("RendererName", Graphics::RendererNameFromType(Graphics::RENDERER_OPENGL_3x));
+	const std::string rendererName = GameConfSingleton::getInstance().String("RendererName", Graphics::RendererNameFromType(Graphics::RENDERER_OPENGL_3x));
 	Graphics::RendererType rType = Graphics::RENDERER_OPENGL_3x;
 	//if(rendererName == Graphics::RendererNameFromType(Graphics::RENDERER_OPENGL_3x))
 	//{
@@ -471,16 +472,16 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 	// Do rest of SDL video initialization and create Renderer
 	Graphics::Settings videoSettings = {};
 	videoSettings.rendererType = rType;
-	videoSettings.width = config->Int("ScrWidth");
-	videoSettings.height = config->Int("ScrHeight");
-	videoSettings.fullscreen = (config->Int("StartFullscreen") != 0);
+	videoSettings.width = GameConfSingleton::getInstance().Int("ScrWidth");
+	videoSettings.height = GameConfSingleton::getInstance().Int("ScrHeight");
+	videoSettings.fullscreen = (GameConfSingleton::getInstance().Int("StartFullscreen") != 0);
 	videoSettings.hidden = no_gui;
-	videoSettings.requestedSamples = config->Int("AntiAliasingMode");
-	videoSettings.vsync = (config->Int("VSync") != 0);
-	videoSettings.useTextureCompression = (config->Int("UseTextureCompression") != 0);
-	videoSettings.useAnisotropicFiltering = (config->Int("UseAnisotropicFiltering") != 0);
-	videoSettings.enableDebugMessages = (config->Int("EnableGLDebug") != 0);
-	videoSettings.gl3ForwardCompatible = (config->Int("GL3ForwardCompatible") != 0);
+	videoSettings.requestedSamples = GameConfSingleton::getInstance().Int("AntiAliasingMode");
+	videoSettings.vsync = (GameConfSingleton::getInstance().Int("VSync") != 0);
+	videoSettings.useTextureCompression = (GameConfSingleton::getInstance().Int("UseTextureCompression") != 0);
+	videoSettings.useAnisotropicFiltering = (GameConfSingleton::getInstance().Int("UseAnisotropicFiltering") != 0);
+	videoSettings.enableDebugMessages = (GameConfSingleton::getInstance().Int("EnableGLDebug") != 0);
+	videoSettings.gl3ForwardCompatible = (GameConfSingleton::getInstance().Int("GL3ForwardCompatible") != 0);
 	videoSettings.iconFile = OS::GetIconFilename();
 	videoSettings.title = "Pioneer";
 
@@ -498,16 +499,16 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 
 	RegisterInputBindings();
 
-	navTunnelDisplayed = (config->Int("DisplayNavTunnel")) ? true : false;
-	speedLinesDisplayed = (config->Int("SpeedLines")) ? true : false;
-	hudTrailsDisplayed = (config->Int("HudTrails")) ? true : false;
+	navTunnelDisplayed = (GameConfSingleton::getInstance().Int("DisplayNavTunnel")) ? true : false;
+	speedLinesDisplayed = (GameConfSingleton::getInstance().Int("SpeedLines")) ? true : false;
+	hudTrailsDisplayed = (GameConfSingleton::getInstance().Int("HudTrails")) ? true : false;
 
 	TestGPUJobsSupport();
 
 	EnumStrings::Init();
 
 	// get threads up
-	Uint32 numThreads = config->Int("WorkerThreads");
+	Uint32 numThreads = GameConfSingleton::getInstance().Int("WorkerThreads");
 	const int numCores = OS::GetNumCores();
 	assert(numCores > 0);
 	if (numThreads == 0) numThreads = std::max(Uint32(numCores) - 1, 1U);
@@ -527,7 +528,7 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 	Pi::pigui.Reset(new PiGui);
 	Pi::pigui->Init(Pi::renderer->GetSDLWindow());
 
-	float ui_scale = config->Float("UIScaleFactor", 1.0f);
+	float ui_scale = GameConfSingleton::getInstance().Float("UIScaleFactor", 1.0f);
 	if (Graphics::GetScreenHeight() < 768) {
 		ui_scale = float(Graphics::GetScreenHeight()) / 768.0f;
 	}
@@ -563,9 +564,9 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 	draw_progress(0.01f);
 
 	Output("GalaxyGenerator::Init()\n");
-	if (config->HasEntry("GalaxyGenerator"))
-		GalaxyGenerator::Init(config->String("GalaxyGenerator"),
-			config->Int("GalaxyGeneratorVersion", GalaxyGenerator::LAST_VERSION));
+	if (GameConfSingleton::getInstance().HasEntry("GalaxyGenerator"))
+		GalaxyGenerator::Init(GameConfSingleton::getInstance().String("GalaxyGenerator"),
+			GameConfSingleton::getInstance().Int("GalaxyGeneratorVersion", GalaxyGenerator::LAST_VERSION));
 	else
 		GalaxyGenerator::Init();
 
@@ -608,17 +609,17 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 	SfxManager::Init(Pi::renderer);
 	draw_progress(0.8f);
 
-	if (!no_gui && !config->Int("DisableSound")) {
+	if (!no_gui && !GameConfSingleton::getInstance().Int("DisableSound")) {
 		Output("Sound::Init\n");
 		Sound::Init();
-		Sound::SetMasterVolume(config->Float("MasterVolume"));
-		Sound::SetSfxVolume(config->Float("SfxVolume"));
-		GetMusicPlayer().SetVolume(config->Float("MusicVolume"));
+		Sound::SetMasterVolume(GameConfSingleton::getInstance().Float("MasterVolume"));
+		Sound::SetSfxVolume(GameConfSingleton::getInstance().Float("SfxVolume"));
+		GetMusicPlayer().SetVolume(GameConfSingleton::getInstance().Float("MusicVolume"));
 
 		Sound::Pause(0);
-		if (config->Int("MasterMuted")) Sound::Pause(1);
-		if (config->Int("SfxMuted")) Sound::SetSfxVolume(0.f);
-		if (config->Int("MusicMuted")) GetMusicPlayer().SetEnabled(false);
+		if (GameConfSingleton::getInstance().Int("MasterMuted")) Sound::Pause(1);
+		if (GameConfSingleton::getInstance().Int("SfxMuted")) Sound::SetSfxVolume(0.f);
+		if (GameConfSingleton::getInstance().Int("MusicMuted")) GetMusicPlayer().SetEnabled(false);
 	}
 	draw_progress(0.9f);
 
@@ -715,7 +716,6 @@ void Pi::Quit()
 	LuaUninit();
 	Gui::Uninit();
 	delete Pi::renderer;
-	delete Pi::config;
 	GalaxyGenerator::Uninit();
 	delete Pi::planner;
 	SDL_Quit();
@@ -782,7 +782,11 @@ void Pi::HandleKeyDown(SDL_Keysym *key)
 				// -i - tells it to read frames from stdin
 				// if given no frame rate (-r 60), it will just use vfr
 				char cmd[256] = { 0 };
-				snprintf(cmd, sizeof(cmd), "ffmpeg -f rawvideo -pix_fmt rgba -s %dx%d -i - -threads 0 -preset fast -y -pix_fmt yuv420p -crf 21 -vf vflip %s.mp4", config->Int("ScrWidth"), config->Int("ScrHeight"), fname.c_str());
+				snprintf(cmd, sizeof(cmd), "ffmpeg -f rawvideo -pix_fmt rgba -s %dx%d -i - -threads 0 -preset fast -y -pix_fmt yuv420p -crf 21 -vf vflip %s.mp4",
+					GameConfSingleton::getInstance().Int("ScrWidth"),
+					GameConfSingleton::getInstance().Int("ScrHeight"),
+					fname.c_str()
+					);
 
 				// open pipe to ffmpeg's stdin in binary write mode
 #if defined(_MSC_VER) || defined(__MINGW32__)
@@ -1059,7 +1063,7 @@ void Pi::InitGame()
 
 	input.InitGame();
 
-	if (!config->Int("DisableSound")) AmbientSounds::Init();
+	if (!GameConfSingleton::getInstance().Int("DisableSound")) AmbientSounds::Init();
 
 	LuaInitGame();
 }
@@ -1230,7 +1234,7 @@ void Pi::EndGame()
 
 	Lua::manager->CollectGarbage();
 
-	if (!config->Int("DisableSound")) AmbientSounds::Uninit();
+	if (!GameConfSingleton::getInstance().Int("DisableSound")) AmbientSounds::Uninit();
 	Sound::DestroyAllEvents();
 
 	assert(game);
@@ -1255,7 +1259,7 @@ void Pi::MainLoop()
 	memset(fps_readout, 0, sizeof(fps_readout));
 #endif
 
-	int MAX_PHYSICS_TICKS = Pi::config->Int("MaxPhysicsCyclesPerRender");
+	int MAX_PHYSICS_TICKS = GameConfSingleton::getInstance().Int("MaxPhysicsCyclesPerRender");
 	if (MAX_PHYSICS_TICKS <= 0)
 		MAX_PHYSICS_TICKS = 4;
 
@@ -1411,7 +1415,7 @@ void Pi::MainLoop()
 		if (!Pi::player->IsDead()) {
 			// XXX should this really be limited to while the player is alive?
 			// this is something we need not do every turn...
-			if (!config->Int("DisableSound")) AmbientSounds::Update();
+			if (!GameConfSingleton::getInstance().Int("DisableSound")) AmbientSounds::Update();
 		}
 		Pi::game->GetCpan()->Update();
 		musicPlayer.Update();

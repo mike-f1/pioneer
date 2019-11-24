@@ -8,6 +8,7 @@
 #include "FloatComparison.h"
 #include "Game.h"
 #include "GameConfig.h"
+#include "GameConfSingleton.h"
 #include "Intro.h"
 #include "KeyBindings.h"
 #include "Lang.h"
@@ -251,8 +252,8 @@ static int l_engine_get_maximum_aa_samples(lua_State *l)
 
 static int l_engine_get_video_resolution(lua_State *l)
 {
-	lua_pushinteger(l, Pi::config->Int("ScrWidth"));
-	lua_pushinteger(l, Pi::config->Int("ScrHeight"));
+	lua_pushinteger(l, GameConfSingleton::getInstance().Int("ScrWidth"));
+	lua_pushinteger(l, GameConfSingleton::getInstance().Int("ScrHeight"));
 	return 2;
 }
 
@@ -281,9 +282,9 @@ static int l_engine_set_video_resolution(lua_State *l)
 {
 	const int width = luaL_checkinteger(l, 1);
 	const int height = luaL_checkinteger(l, 2);
-	Pi::config->SetInt("ScrWidth", width);
-	Pi::config->SetInt("ScrHeight", height);
-	Pi::config->Save();
+	GameConfSingleton::getInstance().SetInt("ScrWidth", width);
+	GameConfSingleton::getInstance().SetInt("ScrHeight", height);
+	GameConfSingleton::getInstance().Save();
 	return 0;
 }
 
@@ -305,7 +306,7 @@ static int l_engine_set_video_resolution(lua_State *l)
 
 static int l_engine_get_fullscreen(lua_State *l)
 {
-	lua_pushboolean(l, Pi::config->Int("StartFullscreen") != 0);
+	lua_pushboolean(l, GameConfSingleton::getInstance().Int("StartFullscreen") != 0);
 	return 1;
 }
 
@@ -334,14 +335,14 @@ static int l_engine_set_fullscreen(lua_State *l)
 	if (lua_isnone(l, 1))
 		return luaL_error(l, "SetFullscreen takes one boolean argument");
 	const bool fullscreen = lua_toboolean(l, 1);
-	Pi::config->SetInt("StartFullscreen", (fullscreen ? 1 : 0));
-	Pi::config->Save();
+	GameConfSingleton::getInstance().SetInt("StartFullscreen", (fullscreen ? 1 : 0));
+	GameConfSingleton::getInstance().Save();
 	return 0;
 }
 
 static int l_engine_get_disable_screenshot_info(lua_State *l)
 {
-	LuaPush<bool>(l, Pi::config->Int("DisableScreenshotInfo") != 0);
+	LuaPush<bool>(l, GameConfSingleton::getInstance().Int("DisableScreenshotInfo") != 0);
 	return 1;
 }
 
@@ -350,13 +351,13 @@ static int l_engine_set_disable_screenshot_info(lua_State *l)
 	if (lua_isnone(l, 1))
 		return luaL_error(l, "SetDisableScreenshotInfo takes one boolean argument");
 	const bool disable = LuaPull<bool>(l, 1);
-	Pi::config->SetInt("DisableScreenshotInfo", (disable ? 1 : 0));
-	Pi::config->Save();
+	GameConfSingleton::getInstance().SetInt("DisableScreenshotInfo", (disable ? 1 : 0));
+	GameConfSingleton::getInstance().Save();
 	return 0;
 }
 static int l_engine_get_vsync_enabled(lua_State *l)
 {
-	lua_pushboolean(l, Pi::config->Int("VSync") != 0);
+	lua_pushboolean(l, GameConfSingleton::getInstance().Int("VSync") != 0);
 	return 1;
 }
 
@@ -365,14 +366,14 @@ static int l_engine_set_vsync_enabled(lua_State *l)
 	if (lua_isnone(l, 1))
 		return luaL_error(l, "SetVSyncEnabled takes one boolean argument");
 	const bool vsync = lua_toboolean(l, 1);
-	Pi::config->SetInt("VSync", (vsync ? 1 : 0));
-	Pi::config->Save();
+	GameConfSingleton::getInstance().SetInt("VSync", (vsync ? 1 : 0));
+	GameConfSingleton::getInstance().Save();
 	return 0;
 }
 
 static int l_engine_get_texture_compression_enabled(lua_State *l)
 {
-	lua_pushboolean(l, Pi::config->Int("UseTextureCompression") != 0);
+	lua_pushboolean(l, GameConfSingleton::getInstance().Int("UseTextureCompression") != 0);
 	return 1;
 }
 
@@ -381,22 +382,22 @@ static int l_engine_set_texture_compression_enabled(lua_State *l)
 	if (lua_isnone(l, 1))
 		return luaL_error(l, "SetTextureCompressionEnabled takes one boolean argument");
 	const bool enabled = lua_toboolean(l, 1);
-	Pi::config->SetInt("UseTextureCompression", (enabled ? 1 : 0));
-	Pi::config->Save();
+	GameConfSingleton::getInstance().SetInt("UseTextureCompression", (enabled ? 1 : 0));
+	GameConfSingleton::getInstance().Save();
 	return 0;
 }
 
 static int l_engine_get_multisampling(lua_State *l)
 {
-	lua_pushinteger(l, Pi::config->Int("AntiAliasingMode"));
+	lua_pushinteger(l, GameConfSingleton::getInstance().Int("AntiAliasingMode"));
 	return 1;
 }
 
 static int l_engine_set_multisampling(lua_State *l)
 {
 	const int samples = luaL_checkinteger(l, 1);
-	Pi::config->SetInt("AntiAliasingMode", samples);
-	Pi::config->Save();
+	GameConfSingleton::getInstance().SetInt("AntiAliasingMode", samples);
+	GameConfSingleton::getInstance().Save();
 	return 0;
 }
 
@@ -411,8 +412,8 @@ static int l_engine_set_planet_detail_level(lua_State *l)
 	const int level = LuaConstants::GetConstantFromArg(l, "DetailLevel", 1);
 	if (level != Pi::detail.planets) {
 		Pi::detail.planets = level;
-		Pi::config->SetInt("DetailPlanets", level);
-		Pi::config->Save();
+		GameConfSingleton::getInstance().SetInt("DetailPlanets", level);
+		GameConfSingleton::getInstance().Save();
 		Pi::OnChangeDetailLevel();
 	}
 	return 0;
@@ -429,8 +430,8 @@ static int l_engine_set_city_detail_level(lua_State *l)
 	const int level = LuaConstants::GetConstantFromArg(l, "DetailLevel", 1);
 	if (level != Pi::detail.cities) {
 		Pi::detail.cities = level;
-		Pi::config->SetInt("DetailCities", level);
-		Pi::config->Save();
+		GameConfSingleton::getInstance().SetInt("DetailCities", level);
+		GameConfSingleton::getInstance().Save();
 		Pi::OnChangeDetailLevel();
 	}
 	return 0;
@@ -438,7 +439,7 @@ static int l_engine_set_city_detail_level(lua_State *l)
 
 static int l_engine_get_display_nav_tunnels(lua_State *l)
 {
-	lua_pushboolean(l, Pi::config->Int("DisplayNavTunnel") != 0);
+	lua_pushboolean(l, GameConfSingleton::getInstance().Int("DisplayNavTunnel") != 0);
 	return 1;
 }
 
@@ -447,15 +448,15 @@ static int l_engine_set_display_nav_tunnels(lua_State *l)
 	if (lua_isnone(l, 1))
 		return luaL_error(l, "SetDisplayNavTunnels takes one boolean argument");
 	const bool enabled = lua_toboolean(l, 1);
-	Pi::config->SetInt("DisplayNavTunnel", (enabled ? 1 : 0));
-	Pi::config->Save();
+	GameConfSingleton::getInstance().SetInt("DisplayNavTunnel", (enabled ? 1 : 0));
+	GameConfSingleton::getInstance().Save();
 	Pi::SetNavTunnelDisplayed(enabled);
 	return 0;
 }
 
 static int l_engine_get_display_speed_lines(lua_State *l)
 {
-	lua_pushboolean(l, Pi::config->Int("SpeedLines") != 0);
+	lua_pushboolean(l, GameConfSingleton::getInstance().Int("SpeedLines") != 0);
 	return 1;
 }
 
@@ -464,15 +465,15 @@ static int l_engine_set_display_speed_lines(lua_State *l)
 	if (lua_isnone(l, 1))
 		return luaL_error(l, "SetDisplaySpeedLines takes one boolean argument");
 	const bool enabled = lua_toboolean(l, 1);
-	Pi::config->SetInt("SpeedLines", (enabled ? 1 : 0));
-	Pi::config->Save();
+	GameConfSingleton::getInstance().SetInt("SpeedLines", (enabled ? 1 : 0));
+	GameConfSingleton::getInstance().Save();
 	Pi::SetSpeedLinesDisplayed(enabled);
 	return 0;
 }
 
 static int l_engine_get_cockpit_enabled(lua_State *l)
 {
-	lua_pushboolean(l, Pi::config->Int("EnableCockpit") != 0);
+	lua_pushboolean(l, GameConfSingleton::getInstance().Int("EnableCockpit") != 0);
 	return 1;
 }
 
@@ -481,8 +482,8 @@ static int l_engine_set_cockpit_enabled(lua_State *l)
 	if (lua_isnone(l, 1))
 		return luaL_error(l, "SetCockpitEnabled takes one boolean argument");
 	const bool enabled = lua_toboolean(l, 1);
-	Pi::config->SetInt("EnableCockpit", (enabled ? 1 : 0));
-	Pi::config->Save();
+	GameConfSingleton::getInstance().SetInt("EnableCockpit", (enabled ? 1 : 0));
+	GameConfSingleton::getInstance().Save();
 	if (Pi::player) {
 		Pi::player->InitCockpit();
 		if (enabled) Pi::player->OnCockpitActivated();
@@ -492,7 +493,7 @@ static int l_engine_set_cockpit_enabled(lua_State *l)
 
 static int l_engine_get_aniso_enabled(lua_State *l)
 {
-	lua_pushboolean(l, Pi::config->Int("UseAnisotropicFiltering") != 0);
+	lua_pushboolean(l, GameConfSingleton::getInstance().Int("UseAnisotropicFiltering") != 0);
 	return 1;
 }
 
@@ -501,14 +502,14 @@ static int l_engine_set_aniso_enabled(lua_State *l)
 	if (lua_isnone(l, 1))
 		return luaL_error(l, "SetAnisoEnabled takes one boolean argument");
 	const bool enabled = lua_toboolean(l, 1);
-	Pi::config->SetInt("UseAnisotropicFiltering", (enabled ? 1 : 0));
-	Pi::config->Save();
+	GameConfSingleton::getInstance().SetInt("UseAnisotropicFiltering", (enabled ? 1 : 0));
+	GameConfSingleton::getInstance().Save();
 	return 0;
 }
 
 static int l_engine_get_autosave_enabled(lua_State *l)
 {
-	lua_pushboolean(l, Pi::config->Int("EnableAutosave") != 0);
+	lua_pushboolean(l, GameConfSingleton::getInstance().Int("EnableAutosave") != 0);
 	return 1;
 }
 
@@ -517,14 +518,14 @@ static int l_engine_set_autosave_enabled(lua_State *l)
 	if (lua_isnone(l, 1))
 		return luaL_error(l, "SetAutopilotEnabled takes one boolean argument");
 	const bool enabled = lua_toboolean(l, 1);
-	Pi::config->SetInt("EnableAutosave", (enabled ? 1 : 0));
-	Pi::config->Save();
+	GameConfSingleton::getInstance().SetInt("EnableAutosave", (enabled ? 1 : 0));
+	GameConfSingleton::getInstance().Save();
 	return 0;
 }
 
 static int l_engine_get_display_hud_trails(lua_State *l)
 {
-	lua_pushboolean(l, Pi::config->Int("HudTrails") != 0);
+	lua_pushboolean(l, GameConfSingleton::getInstance().Int("HudTrails") != 0);
 	return 1;
 }
 
@@ -533,8 +534,8 @@ static int l_engine_set_display_hud_trails(lua_State *l)
 	if (lua_isnone(l, 1))
 		return luaL_error(l, "SetDisplayHudTrails takes one boolean argument");
 	const bool enabled = lua_toboolean(l, 1);
-	Pi::config->SetInt("HudTrails", (enabled ? 1 : 0));
-	Pi::config->Save();
+	GameConfSingleton::getInstance().SetInt("HudTrails", (enabled ? 1 : 0));
+	GameConfSingleton::getInstance().Save();
 	Pi::SetHudTrailsDisplayed(enabled);
 	return 0;
 }
@@ -542,15 +543,15 @@ static int l_engine_set_display_hud_trails(lua_State *l)
 static int l_engine_set_amount_stars(lua_State *l)
 {
 	const float amount = Clamp(luaL_checknumber(l, 1), 0.01, 1.0);
-	Pi::config->SetFloat("AmountOfBackgroundStars", amount);
-	Pi::config->Save();
+	GameConfSingleton::getInstance().SetFloat("AmountOfBackgroundStars", amount);
+	GameConfSingleton::getInstance().Save();
 	Pi::SetAmountBackgroundStars(amount);
 	return 0;
 }
 
 static int l_engine_get_amount_stars(lua_State *l)
 {
-	lua_pushnumber(l, Pi::config->Float("AmountOfBackgroundStars"));
+	lua_pushnumber(l, GameConfSingleton::getInstance().Float("AmountOfBackgroundStars"));
 	return 1;
 }
 
@@ -558,31 +559,31 @@ static void set_master_volume(const bool muted, const float volume)
 {
 	Sound::Pause(muted || is_zero_exact(volume));
 	Sound::SetMasterVolume(volume);
-	Pi::config->SetFloat("MasterVolume", volume);
-	Pi::config->SetInt("MasterMuted", muted ? 1 : 0);
-	Pi::config->Save();
+	GameConfSingleton::getInstance().SetFloat("MasterVolume", volume);
+	GameConfSingleton::getInstance().SetInt("MasterMuted", muted ? 1 : 0);
+	GameConfSingleton::getInstance().Save();
 }
 
 static void set_effects_volume(const bool muted, const float volume)
 {
 	Sound::SetSfxVolume(muted ? 0.0f : volume);
-	Pi::config->SetFloat("SfxVolume", volume);
-	Pi::config->SetInt("SfxMuted", muted ? 1 : 0);
-	Pi::config->Save();
+	GameConfSingleton::getInstance().SetFloat("SfxVolume", volume);
+	GameConfSingleton::getInstance().SetInt("SfxMuted", muted ? 1 : 0);
+	GameConfSingleton::getInstance().Save();
 }
 
 static void set_music_volume(const bool muted, const float volume)
 {
 	Pi::GetMusicPlayer().SetEnabled(!(muted || is_zero_exact(volume)));
 	Pi::GetMusicPlayer().SetVolume(volume);
-	Pi::config->SetFloat("MusicVolume", volume);
-	Pi::config->SetInt("MusicMuted", muted ? 1 : 0);
-	Pi::config->Save();
+	GameConfSingleton::getInstance().SetFloat("MusicVolume", volume);
+	GameConfSingleton::getInstance().SetInt("MusicMuted", muted ? 1 : 0);
+	GameConfSingleton::getInstance().Save();
 }
 
 static int l_engine_get_master_muted(lua_State *l)
 {
-	lua_pushboolean(l, Pi::config->Int("MasterMuted") != 0);
+	lua_pushboolean(l, GameConfSingleton::getInstance().Int("MasterMuted") != 0);
 	return 1;
 }
 
@@ -597,20 +598,20 @@ static int l_engine_set_master_muted(lua_State *l)
 
 static int l_engine_get_master_volume(lua_State *l)
 {
-	lua_pushnumber(l, Pi::config->Float("MasterVolume"));
+	lua_pushnumber(l, GameConfSingleton::getInstance().Float("MasterVolume"));
 	return 1;
 }
 
 static int l_engine_set_master_volume(lua_State *l)
 {
 	const float volume = Clamp(luaL_checknumber(l, 1), 0.0, 1.0);
-	set_master_volume(Pi::config->Int("MasterMuted") != 0, volume);
+	set_master_volume(GameConfSingleton::getInstance().Int("MasterMuted") != 0, volume);
 	return 0;
 }
 
 static int l_engine_get_effects_muted(lua_State *l)
 {
-	lua_pushboolean(l, Pi::config->Int("SfxMuted") != 0);
+	lua_pushboolean(l, GameConfSingleton::getInstance().Int("SfxMuted") != 0);
 	return 1;
 }
 
@@ -625,20 +626,20 @@ static int l_engine_set_effects_muted(lua_State *l)
 
 static int l_engine_get_effects_volume(lua_State *l)
 {
-	lua_pushnumber(l, Pi::config->Float("SfxVolume"));
+	lua_pushnumber(l, GameConfSingleton::getInstance().Float("SfxVolume"));
 	return 1;
 }
 
 static int l_engine_set_effects_volume(lua_State *l)
 {
 	const float volume = Clamp(luaL_checknumber(l, 1), 0.0, 1.0);
-	set_effects_volume(Pi::config->Int("SfxMuted") != 0, volume);
+	set_effects_volume(GameConfSingleton::getInstance().Int("SfxMuted") != 0, volume);
 	return 0;
 }
 
 static int l_engine_get_music_muted(lua_State *l)
 {
-	lua_pushboolean(l, Pi::config->Int("MusicMuted") != 0);
+	lua_pushboolean(l, GameConfSingleton::getInstance().Int("MusicMuted") != 0);
 	return 1;
 }
 
@@ -653,20 +654,20 @@ static int l_engine_set_music_muted(lua_State *l)
 
 static int l_engine_get_music_volume(lua_State *l)
 {
-	lua_pushnumber(l, Pi::config->Float("MusicVolume"));
+	lua_pushnumber(l, GameConfSingleton::getInstance().Float("MusicVolume"));
 	return 1;
 }
 
 static int l_engine_set_music_volume(lua_State *l)
 {
 	const float volume = Clamp(luaL_checknumber(l, 1), 0.0, 1.0);
-	set_music_volume(Pi::config->Int("MusicMuted") != 0, volume);
+	set_music_volume(GameConfSingleton::getInstance().Int("MusicMuted") != 0, volume);
 	return 0;
 }
 
 static int l_engine_get_gpu_jobs_enabled(lua_State *l)
 {
-	lua_pushboolean(l, Pi::config->Int("EnableGPUJobs") != 0);
+	lua_pushboolean(l, GameConfSingleton::getInstance().Int("EnableGPUJobs") != 0);
 	return 1;
 }
 
@@ -675,8 +676,8 @@ static int l_engine_set_gpu_jobs_enabled(lua_State *l)
 	if (lua_isnone(l, 1))
 		return luaL_error(l, "SetGpuJobsEnabled takes one boolean argument");
 	const bool enabled = lua_toboolean(l, 1);
-	Pi::config->SetInt("EnableGPUJobs", (enabled ? 1 : 0));
-	Pi::config->Save();
+	GameConfSingleton::getInstance().SetInt("EnableGPUJobs", (enabled ? 1 : 0));
+	GameConfSingleton::getInstance().Save();
 	return 0;
 }
 
@@ -807,7 +808,7 @@ static int l_engine_world_space_to_ship_space(lua_State *l)
 
 static int l_engine_get_confirm_quit(lua_State *l)
 {
-	lua_pushboolean(l, Pi::config->Int("ConfirmQuit") != 0);
+	lua_pushboolean(l, GameConfSingleton::getInstance().Int("ConfirmQuit") != 0);
 	return 1;
 }
 
@@ -816,8 +817,8 @@ static int l_engine_set_confirm_quit(lua_State *l)
 	if (lua_isnone(l, 1))
 		return luaL_error(l, "ConfirmQuit takes one boolean argument");
 	const bool confirm = lua_toboolean(l, 1);
-	Pi::config->SetInt("ConfirmQuit", (confirm ? 1 : 0));
-	Pi::config->Save();
+	GameConfSingleton::getInstance().SetInt("ConfirmQuit", (confirm ? 1 : 0));
+	GameConfSingleton::getInstance().Save();
 	return 0;
 }
 

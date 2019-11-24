@@ -3,17 +3,17 @@
 
 #include "Input.h"
 #include "GameConfig.h"
-#include "Pi.h"
+#include "GameConfSingleton.h"
 #include "ui/Context.h"
 
 #include <array>
 
 void Input::Init()
 {
-	GameConfig *config = Pi::config;
+	GameConfig &config = GameConfSingleton::getInstance();
 
-	joystickEnabled = (config->Int("EnableJoystick")) ? true : false;
-	mouseYInvert = (config->Int("InvertMouseY")) ? true : false;
+	joystickEnabled = (config.Int("EnableJoystick")) ? true : false;
+	mouseYInvert = (config.Int("InvertMouseY")) ? true : false;
 
 	InitJoysticks();
 }
@@ -96,7 +96,7 @@ KeyBindings::ActionBinding *Input::AddActionBinding(std::string id, BindingGroup
 	group->bindings[id] = BindingGroup::ENTRY_ACTION;
 
 	// Load from the config
-	std::string config_str = Pi::config->String(id.c_str());
+	std::string config_str = GameConfSingleton::getInstance().String(id.c_str());
 	if (config_str.length() > 0) binding.SetFromString(config_str);
 
 	return &(actionBindings[id] = binding);
@@ -111,7 +111,7 @@ KeyBindings::AxisBinding *Input::AddAxisBinding(std::string id, BindingGroup *gr
 	group->bindings[id] = BindingGroup::ENTRY_AXIS;
 
 	// Load from the config
-	std::string config_str = Pi::config->String(id.c_str());
+	std::string config_str = GameConfSingleton::getInstance().String(id.c_str());
 	if (config_str.length() > 0) binding.SetFromString(config_str);
 
 	return &(axisBindings[id] = binding);

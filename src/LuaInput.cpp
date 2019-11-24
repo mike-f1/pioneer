@@ -3,6 +3,7 @@
 
 #include "LuaInput.h"
 #include "GameConfig.h"
+#include "GameConfSingleton.h"
 #include "Input.h"
 #include "KeyBindings.h"
 #include "Lang.h"
@@ -178,8 +179,8 @@ static int l_input_set_action_binding(lua_State *l)
 		kb2.Clear();
 	action->binding1 = kb1;
 	action->binding2 = kb2;
-	Pi::config->SetString(binding_id, action->ToString());
-	Pi::config->Save();
+	GameConfSingleton::getInstance().SetString(binding_id, action->ToString());
+	GameConfSingleton::getInstance().Save();
 	return 0;
 }
 
@@ -213,14 +214,14 @@ static int l_input_set_axis_binding(lua_State *l)
 	binding->axis = ab;
 	binding->positive = kb1;
 	binding->negative = kb2;
-	Pi::config->SetString(binding_id, binding->ToString());
-	Pi::config->Save();
+	GameConfSingleton::getInstance().SetString(binding_id, binding->ToString());
+	GameConfSingleton::getInstance().Save();
 	return 0;
 }
 
 static int l_input_get_mouse_y_inverted(lua_State *l)
 {
-	lua_pushboolean(l, Pi::config->Int("InvertMouseY") != 0);
+	lua_pushboolean(l, GameConfSingleton::getInstance().Int("InvertMouseY") != 0);
 	return 1;
 }
 
@@ -229,15 +230,15 @@ static int l_input_set_mouse_y_inverted(lua_State *l)
 	if (lua_isnone(l, 1))
 		return luaL_error(l, "SetMouseYInverted takes one boolean argument");
 	const bool inverted = lua_toboolean(l, 1);
-	Pi::config->SetInt("InvertMouseY", (inverted ? 1 : 0));
-	Pi::config->Save();
+	GameConfSingleton::getInstance().SetInt("InvertMouseY", (inverted ? 1 : 0));
+	GameConfSingleton::getInstance().Save();
 	Pi::input.SetMouseYInvert(inverted);
 	return 0;
 }
 
 static int l_input_get_joystick_enabled(lua_State *l)
 {
-	lua_pushboolean(l, Pi::config->Int("EnableJoystick") != 0);
+	lua_pushboolean(l, GameConfSingleton::getInstance().Int("EnableJoystick") != 0);
 	return 1;
 }
 
@@ -246,8 +247,8 @@ static int l_input_set_joystick_enabled(lua_State *l)
 	if (lua_isnone(l, 1))
 		return luaL_error(l, "SetJoystickEnabled takes one boolean argument");
 	const bool enabled = lua_toboolean(l, 1);
-	Pi::config->SetInt("EnableJoystick", (enabled ? 1 : 0));
-	Pi::config->Save();
+	GameConfSingleton::getInstance().SetInt("EnableJoystick", (enabled ? 1 : 0));
+	GameConfSingleton::getInstance().Save();
 	Pi::input.SetJoystickEnabled(enabled);
 	return 0;
 }

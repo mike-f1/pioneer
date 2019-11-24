@@ -3,6 +3,7 @@
 
 #include "KeyBindings.h"
 #include "GameConfig.h"
+#include "GameConfSingleton.h"
 #include "Lang.h"
 #include "Pi.h"
 #include "StringF.h"
@@ -653,7 +654,7 @@ namespace KeyBindings {
 
 	void InitKeyBinding(ActionBinding &kb, const std::string &bindName, Uint32 defaultKey1, Uint32 defaultKey2)
 	{
-		std::string keyName = Pi::config->String(bindName.c_str());
+		std::string keyName = GameConfSingleton::getInstance().String(bindName.c_str());
 		if (keyName.length() == 0) {
 			if (defaultKey1 && defaultKey2) {
 				keyName = stringf("Key%0{u},Key%1{u}", defaultKey1, defaultKey2);
@@ -661,7 +662,7 @@ namespace KeyBindings {
 				Uint32 k = (defaultKey1 | defaultKey2); // only one of them is non-zero, so this gets the non-zero value
 				keyName = stringf("Key%0{u}", k);
 			}
-			Pi::config->SetString(bindName.c_str(), keyName.c_str());
+			GameConfSingleton::getInstance().SetString(bindName.c_str(), keyName.c_str());
 		}
 
 		// set the binding from the configured or default value
@@ -670,10 +671,10 @@ namespace KeyBindings {
 
 	void InitAxisBinding(JoyAxisBinding &ab, const std::string &bindName, const std::string &defaultAxis)
 	{
-		std::string axisName = Pi::config->String(bindName.c_str());
+		std::string axisName = GameConfSingleton::getInstance().String(bindName.c_str());
 		if (axisName.length() == 0) {
 			axisName = defaultAxis;
-			Pi::config->SetString(bindName.c_str(), axisName.c_str());
+			GameConfSingleton::getInstance().SetString(bindName.c_str(), axisName.c_str());
 		}
 
 		// set the binding from the configured or default value
@@ -695,7 +696,7 @@ namespace KeyBindings {
 	void InitBindings()
 	{
 		UpdateBindings();
-		Pi::config->Save();
+		GameConfSingleton::getInstance().Save();
 	}
 
 	void EnableBindings()

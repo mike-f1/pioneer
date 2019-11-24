@@ -14,7 +14,6 @@
 
 class Game;
 
-class GameConfig;
 class Intro;
 class LuaConsole;
 class LuaNameGen;
@@ -159,7 +158,6 @@ public:
 	static Game *game;
 
 	static DetailLevel detail;
-	static GameConfig *config;
 
 	static JobQueue *GetAsyncJobQueue() { return asyncJobQueue.get(); }
 	static JobQueue *GetSyncJobQueue() { return syncJobQueue.get(); }

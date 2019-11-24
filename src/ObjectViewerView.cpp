@@ -7,6 +7,7 @@
 
 #include "Frame.h"
 #include "GameConfig.h"
+#include "GameConfSingleton.h"
 #include "ObjectViewerView.h"
 #include "Pi.h"
 #include "Planet.h"
@@ -40,7 +41,7 @@ ObjectViewerView::ObjectViewerView() :
 	float zfar;
 	Pi::renderer->GetNearFarRange(znear, zfar);
 
-	const float fovY = Pi::config->Float("FOVVertical");
+	const float fovY = GameConfSingleton::getInstance().Float("FOVVertical");
 	m_cameraContext.Reset(new CameraContext(Graphics::GetScreenWidth(), Graphics::GetScreenHeight(), fovY, znear, zfar));
 	m_camera.reset(new Camera(m_cameraContext, Pi::renderer));
 

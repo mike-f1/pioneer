@@ -6,6 +6,7 @@
 #include "Frame.h"
 #include "Game.h"
 #include "GameConfig.h"
+#include "GameConfSingleton.h"
 #include "GameSaveError.h"
 #include "HudTrail.h"
 #include "HyperspaceCloud.h"
@@ -138,7 +139,7 @@ void WorldView::InitObject()
 	float zfar;
 	Pi::renderer->GetNearFarRange(znear, zfar);
 
-	const float fovY = Pi::config->Float("FOVVertical");
+	const float fovY = GameConfSingleton::getInstance().Float("FOVVertical");
 
 	m_cameraContext.Reset(new CameraContext(Graphics::GetScreenWidth(), Graphics::GetScreenHeight(), fovY, znear, zfar));
 	m_camera.reset(new Camera(m_cameraContext, Pi::renderer));

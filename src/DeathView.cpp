@@ -6,6 +6,7 @@
 #include "Camera.h"
 #include "Game.h"
 #include "GameConfig.h"
+#include "GameConfSingleton.h"
 #include "Pi.h"
 #include "Player.h"
 #include "ShipCpanel.h"
@@ -27,7 +28,7 @@ DeathView::DeathView(Game *game, Graphics::Renderer *r) :
 	float zfar;
 	m_renderer->GetNearFarRange(znear, zfar);
 
-	const float fovY = Pi::config->Float("FOVVertical");
+	const float fovY = GameConfSingleton::getInstance().Float("FOVVertical");
 	m_cameraContext.Reset(new CameraContext(Graphics::GetScreenWidth(), Graphics::GetScreenHeight(), fovY, znear, zfar));
 	m_camera.reset(new Camera(m_cameraContext, m_renderer));
 }

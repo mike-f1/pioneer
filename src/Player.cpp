@@ -6,6 +6,7 @@
 #include "Frame.h"
 #include "Game.h"
 #include "GameConfig.h"
+#include "GameConfSingleton.h"
 #include "GameLog.h"
 #include "HyperspaceCloud.h"
 #include "KeyBindings.h"
@@ -81,7 +82,7 @@ void Player::SaveToJson(Json &jsonObj, Space *space)
 void Player::InitCockpit()
 {
 	m_cockpit.release();
-	if (!Pi::config->Int("EnableCockpit"))
+	if (!GameConfSingleton::getInstance().Int("EnableCockpit"))
 		return;
 
 	// XXX select a cockpit model. this is all quite skanky because we want a

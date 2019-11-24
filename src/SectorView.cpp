@@ -5,6 +5,7 @@
 
 #include "Game.h"
 #include "GameConfig.h"
+#include "GameConfSingleton.h"
 #include "GameSaveError.h"
 #include "KeyBindings.h"
 #include "LuaConstants.h"
@@ -114,9 +115,9 @@ SectorView::SectorView(const Json &jsonObj, RefCountedPtr<Galaxy> galaxy, RefCou
 
 void SectorView::InitDefaults()
 {
-	m_rotXDefault = Pi::config->Float("SectorViewXRotation");
-	m_rotZDefault = Pi::config->Float("SectorViewZRotation");
-	m_zoomDefault = Pi::config->Float("SectorViewZoom");
+	m_rotXDefault = GameConfSingleton::getInstance().Float("SectorViewXRotation");
+	m_rotZDefault = GameConfSingleton::getInstance().Float("SectorViewZRotation");
+	m_zoomDefault = GameConfSingleton::getInstance().Float("SectorViewZoom");
 	m_rotXDefault = Clamp(m_rotXDefault, -170.0f, -10.0f);
 	m_zoomDefault = Clamp(m_zoomDefault, 0.1f, 5.0f);
 	m_previousSearch = "";

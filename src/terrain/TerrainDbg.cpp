@@ -4,14 +4,18 @@
 #include "Terrain.h"
 
 #include "GameConfig.h"
-#include "Pi.h"
+#include "GameConfSingleton.h"
+#include "utils.h"
 
 void Terrain::DebugDump() const
 {
 	Output("Terrain state dump:\n");
 	Output("  Height fractal: %s\n", GetHeightFractalName());
 	Output("  Color fractal: %s\n", GetColorFractalName());
-	Output("  Config: DetailPlanets %d   FractalMultiple %d  Textures  %d\n", Pi::config->Int("DetailPlanets"), Pi::config->Int("FractalMultiple"), Pi::config->Int("Textures"));
+	Output("  Config: DetailPlanets %d   FractalMultiple %d  Textures  %d\n",
+		GameConfSingleton::getInstance().Int("DetailPlanets"),
+		GameConfSingleton::getInstance().Int("FractalMultiple"),
+		GameConfSingleton::getInstance().Int("Textures"));
 	Output("  Seed: %d\n", m_seed);
 	Output("  Body: %s [%d,%d,%d,%u,%u]\n", m_minBody.m_name.c_str(), m_minBody.m_path.sectorX, m_minBody.m_path.sectorY, m_minBody.m_path.sectorZ, m_minBody.m_path.systemIndex, m_minBody.m_path.bodyIndex);
 	Output("  Aspect Ratio: %g\n", m_minBody.m_aspectRatio);

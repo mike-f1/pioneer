@@ -28,7 +28,7 @@ public:
 
 	static DetailLevel &getDetail() { return m_detail; };
 
-	static void SetAmountBackgroundStars(const float pc);
+	static void SetAmountBackgroundStars(const float amount);
 
 	static float GetAmountBackgroundStars() { return amountOfBackgroundStarsDisplayed; }
 	static bool MustRefreshBackgroundClearFlag()

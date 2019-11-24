@@ -248,7 +248,7 @@ void ObjectViewerView::OnChangeTerrain()
 	sbody->m_life = life;
 
 	// force reload
-	TerrainBody::OnChangeDetailLevel();
+	TerrainBody::OnChangeDetailLevel(GameConfSingleton::getDetail().planets);
 }
 
 void ObjectViewerView::OnRandomSeed()

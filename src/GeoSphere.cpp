@@ -3,8 +3,6 @@
 
 #include "GeoSphere.h"
 
-#include "GameConfig.h"
-#include "GameConfSingleton.h"
 #include "GeoPatch.h"
 #include "GeoPatchContext.h"
 #include "GeoPatchJobs.h"
@@ -39,9 +37,9 @@ static const int detail_edgeLen[5] = {
 static const double gs_targetPatchTriLength(100.0);
 static std::vector<GeoSphere *> s_allGeospheres;
 
-void GeoSphere::Init()
+void GeoSphere::Init(int detail)
 {
-	s_patchContext.Reset(new GeoPatchContext(detail_edgeLen[GameConfSingleton::getDetail().planets > 4 ? 4 : GameConfSingleton::getDetail().planets]));
+	s_patchContext.Reset(new GeoPatchContext(detail_edgeLen[detail > 4 ? 4 : detail]));
 }
 
 void GeoSphere::Uninit()
@@ -70,9 +68,9 @@ void GeoSphere::UpdateAllGeoSpheres()
 }
 
 // static
-void GeoSphere::OnChangeDetailLevel()
+void GeoSphere::OnChangeDetailLevel(int new_detail)
 {
-	s_patchContext.Reset(new GeoPatchContext(detail_edgeLen[GameConfSingleton::getDetail().planets > 4 ? 4 : GameConfSingleton::getDetail().planets]));
+	s_patchContext.Reset(new GeoPatchContext(detail_edgeLen[new_detail > 4 ? 4 : new_detail]));
 
 	// reinit the geosphere terrain data
 	for (std::vector<GeoSphere *>::iterator i = s_allGeospheres.begin(); i != s_allGeospheres.end(); ++i) {

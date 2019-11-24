@@ -48,10 +48,10 @@ public:
 
 	static bool OnAddTextureFaceResult(const SystemPath &path, GasGiantJobs::STextureFaceResult *res);
 	static bool OnAddGPUGenResult(const SystemPath &path, GasGiantJobs::SGPUGenResult *res);
-	static void Init();
+	static void Init(int detail);
 	static void Uninit();
 	static void UpdateAllGasGiants();
-	static void OnChangeDetailLevel();
+	static void OnChangeDetailLevel(int new_details);
 
 	static void CreateRenderTarget(const Uint16 width, const Uint16 height);
 	static void SetRenderTargetCubemap(const Uint32, Graphics::Texture *, const bool unBind = true);
@@ -59,6 +59,7 @@ public:
 	static void EndRenderTarget();
 
 private:
+	static void SetDetail(int detail) { m_detail = detail; };
 	void BuildFirstPatches();
 	void GenerateTexture();
 	bool AddTextureFaceResult(GasGiantJobs::STextureFaceResult *res);
@@ -87,6 +88,8 @@ private:
 	bool m_hasGpuJobRequest;
 
 	float m_timeDelay;
+
+	static int m_detail;
 };
 
 #endif /* _GASGIANT_H */

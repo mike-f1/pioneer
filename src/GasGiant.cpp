@@ -22,6 +22,7 @@
 #include "vcacheopt/vcacheopt.h"
 
 RefCountedPtr<GasPatchContext> GasGiant::s_patchContext;
+int GasGiant::m_detail = 0;
 
 namespace {
 	static Uint32 s_texture_size_small = 16;
@@ -286,8 +287,10 @@ void GasGiant::UpdateAllGasGiants()
 }
 
 // static
-void GasGiant::OnChangeDetailLevel()
+void GasGiant::OnChangeDetailLevel(int detail)
 {
+	SetDetail(detail);
+
 	s_patchContext.Reset(new GasPatchContext(127));
 
 	// reinit the geosphere terrain data
@@ -587,14 +590,14 @@ void GasGiant::GenerateTexture()
 			assert(!m_hasJobRequest[i]);
 			assert(!m_job[i].HasJob());
 			m_hasJobRequest[i] = true;
-			GasGiantJobs::STextureFaceRequest *ssrd = new GasGiantJobs::STextureFaceRequest(&GetPatchFaces(i, 0), GetSystemBodyPath(), i, s_texture_size_cpu[GameConfSingleton::getDetail().planets], GetTerrain());
+			GasGiantJobs::STextureFaceRequest *ssrd = new GasGiantJobs::STextureFaceRequest(&GetPatchFaces(i, 0), GetSystemBodyPath(), i, s_texture_size_cpu[m_detail], GetTerrain());
 			m_job[i] = Pi::GetAsyncJobQueue()->Queue(new GasGiantJobs::SingleTextureFaceJob(ssrd));
 		}
 	} else {
 		// use m_surfaceTexture texture?
 		// create texture
 		const vector2f texSize(1.0f, 1.0f);
-		const vector2f dataSize(s_texture_size_gpu[GameConfSingleton::getDetail().planets], s_texture_size_gpu[GameConfSingleton::getDetail().planets]);
+		const vector2f dataSize(s_texture_size_gpu[m_detail], s_texture_size_gpu[m_detail]);
 		const Graphics::TextureDescriptor texDesc(
 			Graphics::TEXTURE_RGBA_8888,
 			dataSize, texSize, Graphics::LINEAR_CLAMP,
@@ -616,7 +619,7 @@ void GasGiant::GenerateTexture()
 		} else if (ColorFracName == GGUranus) {
 			GasGiantType = Graphics::OGL::GEN_URANUS_TEXTURE;
 		}
-		const Uint32 octaves = (GameConfSingleton::getInstance().Int("AMD_MESA_HACKS") == 0) ? s_noiseOctaves[GameConfSingleton::getDetail().planets] : std::min(5U, s_noiseOctaves[GameConfSingleton::getDetail().planets]);
+		const Uint32 octaves = (GameConfSingleton::getInstance().Int("AMD_MESA_HACKS") == 0) ? s_noiseOctaves[m_detail] : std::min(5U, s_noiseOctaves[m_detail]);
 		GasGiantType = (octaves << 16) | GasGiantType;
 
 		assert(!m_hasGpuJobRequest);
@@ -627,9 +630,9 @@ void GasGiant::GenerateTexture()
 		const std::string parentname = GetSystemBody()->GetParent()->GetName();
 		const float hueShift = (parentname == "Sol") ? 0.0f : float(((rng.Double() * 2.0) - 1.0) * 0.9);
 
-		GasGiantJobs::GenFaceQuad *pQuad = new GasGiantJobs::GenFaceQuad(Pi::renderer, vector2f(s_texture_size_gpu[GameConfSingleton::getDetail().planets], s_texture_size_gpu[GameConfSingleton::getDetail().planets]), s_quadRenderState, GasGiantType);
+		GasGiantJobs::GenFaceQuad *pQuad = new GasGiantJobs::GenFaceQuad(Pi::renderer, vector2f(s_texture_size_gpu[m_detail], s_texture_size_gpu[m_detail]), s_quadRenderState, GasGiantType);
 
-		GasGiantJobs::SGPUGenRequest *pGPUReq = new GasGiantJobs::SGPUGenRequest(GetSystemBodyPath(), s_texture_size_gpu[GameConfSingleton::getDetail().planets], GetTerrain(), GetSystemBodyRadius(), hueShift, pQuad, m_builtTexture.Get());
+		GasGiantJobs::SGPUGenRequest *pGPUReq = new GasGiantJobs::SGPUGenRequest(GetSystemBodyPath(), s_texture_size_gpu[m_detail], GetTerrain(), GetSystemBodyRadius(), hueShift, pQuad, m_builtTexture.Get());
 		m_gpuJob = Pi::GetSyncJobQueue()->Queue(new GasGiantJobs::SingleGPUGenJob(pGPUReq));
 		m_hasGpuJobRequest = true;
 	}
@@ -793,8 +796,11 @@ void GasGiant::BuildFirstPatches()
 	GenerateTexture();
 }
 
-void GasGiant::Init()
+// static
+void GasGiant::Init(int detail)
 {
+	SetDetail(detail);
+
 	IniConfig cfg;
 	cfg.Read(FileSystem::gameDataFiles, "configs/GasGiants.ini");
 	// NB: limit the ranges of all values loaded from the file
@@ -813,9 +819,10 @@ void GasGiant::Init()
 	if (s_patchContext.Get() == nullptr) {
 		s_patchContext.Reset(new GasPatchContext(127));
 	}
-	CreateRenderTarget(s_texture_size_gpu[GameConfSingleton::getDetail().planets], s_texture_size_gpu[GameConfSingleton::getDetail().planets]);
+	CreateRenderTarget(s_texture_size_gpu[detail], s_texture_size_gpu[detail]);
 }
 
+// static
 void GasGiant::Uninit()
 {
 	s_patchContext.Reset();

@@ -50,10 +50,10 @@ public:
 		return h;
 	}
 
-	static void Init();
+	static void Init(int detail);
 	static void Uninit();
 	static void UpdateAllGeoSpheres();
-	static void OnChangeDetailLevel();
+	static void OnChangeDetailLevel(int new_detail);
 	static bool OnAddQuadSplitResult(const SystemPath &path, SQuadSplitResult *res);
 	static bool OnAddSingleSplitResult(const SystemPath &path, SSingleSplitResult *res);
 	// in sbody radii

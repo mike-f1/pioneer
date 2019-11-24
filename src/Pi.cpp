@@ -575,7 +575,7 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 	//double fpexcept = Pi::timeAccelRates[1] / Pi::timeAccelRates[0];
 
 	Output("BaseSphere::Init\n");
-	BaseSphere::Init();
+	BaseSphere::Init(GameConfSingleton::getDetail().planets);
 	draw_progress(0.5f);
 
 	Output("CityOnPlanet::Init\n");
@@ -719,7 +719,7 @@ void Pi::SetView(View *v)
 
 void Pi::OnChangeDetailLevel()
 {
-	BaseSphere::OnChangeDetailLevel();
+	BaseSphere::OnChangeDetailLevel(GameConfSingleton::getDetail().planets);
 }
 
 void Pi::HandleKeyDown(SDL_Keysym *key)

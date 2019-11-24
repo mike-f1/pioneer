@@ -16,10 +16,10 @@ BaseSphere::BaseSphere(const SystemBody *body) :
 BaseSphere::~BaseSphere() {}
 
 //static
-void BaseSphere::Init()
+void BaseSphere::Init(int detail)
 {
-	GeoSphere::Init();
-	GasGiant::Init();
+	GeoSphere::Init(detail);
+	GasGiant::Init(detail);
 }
 
 //static
@@ -37,9 +37,10 @@ void BaseSphere::UpdateAllBaseSphereDerivatives()
 }
 
 //static
-void BaseSphere::OnChangeDetailLevel()
+void BaseSphere::OnChangeDetailLevel(int new_detail)
 {
-	GeoSphere::OnChangeDetailLevel();
+	GeoSphere::OnChangeDetailLevel(new_detail);
+	GasGiant::OnChangeDetailLevel(new_detail);
 }
 
 void BaseSphere::DrawAtmosphereSurface(Graphics::Renderer *renderer,

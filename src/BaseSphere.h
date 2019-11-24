@@ -29,10 +29,10 @@ public:
 
 	virtual double GetHeight(const vector3d &p) const { return 0.0; }
 
-	static void Init();
+	static void Init(int detail);
 	static void Uninit();
 	static void UpdateAllBaseSphereDerivatives();
-	static void OnChangeDetailLevel();
+	static void OnChangeDetailLevel(int new_detail);
 
 	void DrawAtmosphereSurface(Graphics::Renderer *renderer,
 		const matrix4x4d &modelView, const vector3d &campos, float rad,

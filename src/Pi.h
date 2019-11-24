@@ -53,15 +53,6 @@ namespace UI {
 	class Context;
 }
 
-class DetailLevel {
-public:
-	DetailLevel() :
-		planets(0),
-		cities(0) {}
-	int planets;
-	int cities;
-};
-
 class Pi {
 public:
 	static void Init(const std::map<std::string, std::string> &options, bool no_gui = false);
@@ -78,13 +69,6 @@ public:
 	static float GetGameTickAlpha() { return gameTickAlpha; }
 
 	static bool IsConsoleActive();
-
-	static bool IsNavTunnelDisplayed() { return navTunnelDisplayed; }
-	static void SetNavTunnelDisplayed(bool state) { navTunnelDisplayed = state; }
-	static bool AreSpeedLinesDisplayed() { return speedLinesDisplayed; }
-	static void SetSpeedLinesDisplayed(bool state) { speedLinesDisplayed = state; }
-	static bool AreHudTrailsDisplayed() { return hudTrailsDisplayed; }
-	static void SetHudTrailsDisplayed(bool state) { hudTrailsDisplayed = state; }
 
 	static void SetMouseGrab(bool on);
 	static bool DoingMouseGrab() { return doingMouseGrab; }
@@ -124,19 +108,6 @@ public:
 	static void SetView(View *v);
 	static View *GetView() { return currentView; }
 
-	static void SetAmountBackgroundStars(const float pc)
-	{
-		amountOfBackgroundStarsDisplayed = Clamp(pc, 0.01f, 1.0f);
-		bRefreshBackgroundStars = true;
-	}
-	static float GetAmountBackgroundStars() { return amountOfBackgroundStarsDisplayed; }
-	static bool MustRefreshBackgroundClearFlag()
-	{
-		const bool bRet = bRefreshBackgroundStars;
-		bRefreshBackgroundStars = false;
-		return bRet;
-	}
-
 	/* Only use #if WITH_DEVKEYS */
 	static bool showDebugInfo;
 
@@ -156,8 +127,6 @@ public:
 	static SDLGraphics *sdl;
 
 	static Game *game;
-
-	static DetailLevel detail;
 
 	static JobQueue *GetAsyncJobQueue() { return asyncJobQueue.get(); }
 	static JobQueue *GetSyncJobQueue() { return syncJobQueue.get(); }
@@ -194,12 +163,6 @@ private:
 	static float frameTime;
 
 	static Sound::MusicPlayer musicPlayer;
-
-	static bool navTunnelDisplayed;
-	static bool speedLinesDisplayed;
-	static bool hudTrailsDisplayed;
-	static bool bRefreshBackgroundStars;
-	static float amountOfBackgroundStarsDisplayed;
 
 	static Graphics::RenderTarget *renderTarget;
 	static RefCountedPtr<Graphics::Texture> renderTexture;

@@ -6,6 +6,7 @@
 #include "FileSystem.h"
 #include "Frame.h"
 #include "Game.h"
+#include "GameConfSingleton.h"
 #include "ModelCache.h"
 #include "Pi.h"
 #include "Planet.h"
@@ -44,7 +45,7 @@ void CityOnPlanet::AddStaticGeomsToCollisionSpace()
 
 	// Generate the new building list
 	int skipMask;
-	switch (Pi::detail.cities) {
+	switch (GameConfSingleton::getDetail().cities) {
 	case 0: skipMask = 0xf; break;
 	case 1: skipMask = 0x7; break;
 	case 2: skipMask = 0x3; break;
@@ -74,7 +75,7 @@ void CityOnPlanet::AddStaticGeomsToCollisionSpace()
 	}
 
 	// reset the reset flag
-	m_detailLevel = Pi::detail.cities;
+	m_detailLevel = GameConfSingleton::getDetail().cities;
 }
 
 void CityOnPlanet::RemoveStaticGeomsFromCollisionSpace()
@@ -204,7 +205,7 @@ CityOnPlanet::CityOnPlanet(Planet *planet, SpaceStation *station, const Uint32 s
 	// beware, these are not used in this function, but are used in subroutines!
 	m_planet = planet;
 	m_frame = planet->GetFrame();
-	m_detailLevel = Pi::detail.cities;
+	m_detailLevel = GameConfSingleton::getDetail().cities;
 
 	m_buildings.clear();
 	m_buildings.reserve(DEFAULT_NUM_BUILDINGS);
@@ -327,7 +328,7 @@ void CityOnPlanet::Render(Graphics::Renderer *r, const Graphics::Frustum &frustu
 	rot[0] = station->GetOrient();
 
 	// change detail level if necessary
-	const bool bDetailChanged = m_detailLevel != Pi::detail.cities;
+	const bool bDetailChanged = m_detailLevel != GameConfSingleton::getDetail().cities;
 	if (bDetailChanged) {
 		RemoveStaticGeomsFromCollisionSpace();
 		AddStaticGeomsToCollisionSpace();

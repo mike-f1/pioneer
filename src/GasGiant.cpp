@@ -587,14 +587,14 @@ void GasGiant::GenerateTexture()
 			assert(!m_hasJobRequest[i]);
 			assert(!m_job[i].HasJob());
 			m_hasJobRequest[i] = true;
-			GasGiantJobs::STextureFaceRequest *ssrd = new GasGiantJobs::STextureFaceRequest(&GetPatchFaces(i, 0), GetSystemBodyPath(), i, s_texture_size_cpu[Pi::detail.planets], GetTerrain());
+			GasGiantJobs::STextureFaceRequest *ssrd = new GasGiantJobs::STextureFaceRequest(&GetPatchFaces(i, 0), GetSystemBodyPath(), i, s_texture_size_cpu[GameConfSingleton::getDetail().planets], GetTerrain());
 			m_job[i] = Pi::GetAsyncJobQueue()->Queue(new GasGiantJobs::SingleTextureFaceJob(ssrd));
 		}
 	} else {
 		// use m_surfaceTexture texture?
 		// create texture
 		const vector2f texSize(1.0f, 1.0f);
-		const vector2f dataSize(s_texture_size_gpu[Pi::detail.planets], s_texture_size_gpu[Pi::detail.planets]);
+		const vector2f dataSize(s_texture_size_gpu[GameConfSingleton::getDetail().planets], s_texture_size_gpu[GameConfSingleton::getDetail().planets]);
 		const Graphics::TextureDescriptor texDesc(
 			Graphics::TEXTURE_RGBA_8888,
 			dataSize, texSize, Graphics::LINEAR_CLAMP,
@@ -616,7 +616,7 @@ void GasGiant::GenerateTexture()
 		} else if (ColorFracName == GGUranus) {
 			GasGiantType = Graphics::OGL::GEN_URANUS_TEXTURE;
 		}
-		const Uint32 octaves = (GameConfSingleton::getInstance().Int("AMD_MESA_HACKS") == 0) ? s_noiseOctaves[Pi::detail.planets] : std::min(5U, s_noiseOctaves[Pi::detail.planets]);
+		const Uint32 octaves = (GameConfSingleton::getInstance().Int("AMD_MESA_HACKS") == 0) ? s_noiseOctaves[GameConfSingleton::getDetail().planets] : std::min(5U, s_noiseOctaves[GameConfSingleton::getDetail().planets]);
 		GasGiantType = (octaves << 16) | GasGiantType;
 
 		assert(!m_hasGpuJobRequest);
@@ -627,9 +627,9 @@ void GasGiant::GenerateTexture()
 		const std::string parentname = GetSystemBody()->GetParent()->GetName();
 		const float hueShift = (parentname == "Sol") ? 0.0f : float(((rng.Double() * 2.0) - 1.0) * 0.9);
 
-		GasGiantJobs::GenFaceQuad *pQuad = new GasGiantJobs::GenFaceQuad(Pi::renderer, vector2f(s_texture_size_gpu[Pi::detail.planets], s_texture_size_gpu[Pi::detail.planets]), s_quadRenderState, GasGiantType);
+		GasGiantJobs::GenFaceQuad *pQuad = new GasGiantJobs::GenFaceQuad(Pi::renderer, vector2f(s_texture_size_gpu[GameConfSingleton::getDetail().planets], s_texture_size_gpu[GameConfSingleton::getDetail().planets]), s_quadRenderState, GasGiantType);
 
-		GasGiantJobs::SGPUGenRequest *pGPUReq = new GasGiantJobs::SGPUGenRequest(GetSystemBodyPath(), s_texture_size_gpu[Pi::detail.planets], GetTerrain(), GetSystemBodyRadius(), hueShift, pQuad, m_builtTexture.Get());
+		GasGiantJobs::SGPUGenRequest *pGPUReq = new GasGiantJobs::SGPUGenRequest(GetSystemBodyPath(), s_texture_size_gpu[GameConfSingleton::getDetail().planets], GetTerrain(), GetSystemBodyRadius(), hueShift, pQuad, m_builtTexture.Get());
 		m_gpuJob = Pi::GetSyncJobQueue()->Queue(new GasGiantJobs::SingleGPUGenJob(pGPUReq));
 		m_hasGpuJobRequest = true;
 	}
@@ -813,7 +813,7 @@ void GasGiant::Init()
 	if (s_patchContext.Get() == nullptr) {
 		s_patchContext.Reset(new GasPatchContext(127));
 	}
-	CreateRenderTarget(s_texture_size_gpu[Pi::detail.planets], s_texture_size_gpu[Pi::detail.planets]);
+	CreateRenderTarget(s_texture_size_gpu[GameConfSingleton::getDetail().planets], s_texture_size_gpu[GameConfSingleton::getDetail().planets]);
 }
 
 void GasGiant::Uninit()

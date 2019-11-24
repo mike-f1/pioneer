@@ -134,12 +134,6 @@ bool Pi::doProfileOne = false;
 #endif
 int Pi::statSceneTris = 0;
 int Pi::statNumPatches = 0;
-DetailLevel Pi::detail;
-bool Pi::navTunnelDisplayed = false;
-bool Pi::speedLinesDisplayed = false;
-bool Pi::hudTrailsDisplayed = false;
-bool Pi::bRefreshBackgroundStars = true;
-float Pi::amountOfBackgroundStarsDisplayed = 1.0f;
 bool Pi::DrawGUI = true;
 Graphics::Renderer *Pi::renderer;
 RefCountedPtr<UI::Context> Pi::ui;
@@ -424,7 +418,6 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 	PROFILE_SCOPED()
 
 	GameConfSingleton::Init(options);
-	//Pi::config = new GameConfig(options);
 
 	if (GameConfSingleton::getInstance().Int("RedirectStdio"))
 		OS::RedirectStdio();
@@ -443,10 +436,6 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 
 	Lang::Resource res(Lang::GetResource("core", GameConfSingleton::getInstance().String("Lang")));
 	Lang::MakeCore(res);
-
-	Pi::SetAmountBackgroundStars(GameConfSingleton::getInstance().Float("AmountOfBackgroundStars"));
-	Pi::detail.planets = GameConfSingleton::getInstance().Int("DetailPlanets");
-	Pi::detail.cities = GameConfSingleton::getInstance().Int("DetailCities");
 
 	// Initialize SDL
 	Uint32 sdlInitFlags = SDL_INIT_VIDEO | SDL_INIT_JOYSTICK;
@@ -498,10 +487,6 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 		KeyBindings::InitBindings();
 
 	RegisterInputBindings();
-
-	navTunnelDisplayed = (GameConfSingleton::getInstance().Int("DisplayNavTunnel")) ? true : false;
-	speedLinesDisplayed = (GameConfSingleton::getInstance().Int("SpeedLines")) ? true : false;
-	hudTrailsDisplayed = (GameConfSingleton::getInstance().Int("HudTrails")) ? true : false;
 
 	TestGPUJobsSupport();
 
@@ -1097,7 +1082,11 @@ void Pi::StartGame()
 
 void Pi::Start(const SystemPath &startPath)
 {
-	Pi::intro = new Intro(Pi::renderer, Graphics::GetScreenWidth(), Graphics::GetScreenHeight(), GetAmountBackgroundStars());
+	Pi::intro = new Intro(Pi::renderer,
+		Graphics::GetScreenWidth(),
+		Graphics::GetScreenHeight(),
+		GameConfSingleton::GetAmountBackgroundStars()
+		);
 	if (startPath != SystemPath(0, 0, 0, 0, 0)) {
 		Pi::game = new Game(startPath, 0.0);
 	}

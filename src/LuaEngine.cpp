@@ -403,15 +403,15 @@ static int l_engine_set_multisampling(lua_State *l)
 
 static int l_engine_get_planet_detail_level(lua_State *l)
 {
-	lua_pushstring(l, EnumStrings::GetString("DetailLevel", Pi::detail.planets));
+	lua_pushstring(l, EnumStrings::GetString("DetailLevel", GameConfSingleton::getDetail().planets));
 	return 1;
 }
 
 static int l_engine_set_planet_detail_level(lua_State *l)
 {
 	const int level = LuaConstants::GetConstantFromArg(l, "DetailLevel", 1);
-	if (level != Pi::detail.planets) {
-		Pi::detail.planets = level;
+	if (level != GameConfSingleton::getDetail().planets) {
+		GameConfSingleton::getDetail().planets = level;
 		GameConfSingleton::getInstance().SetInt("DetailPlanets", level);
 		GameConfSingleton::getInstance().Save();
 		Pi::OnChangeDetailLevel();
@@ -421,15 +421,15 @@ static int l_engine_set_planet_detail_level(lua_State *l)
 
 static int l_engine_get_city_detail_level(lua_State *l)
 {
-	lua_pushstring(l, EnumStrings::GetString("DetailLevel", Pi::detail.cities));
+	lua_pushstring(l, EnumStrings::GetString("DetailLevel", GameConfSingleton::getDetail().cities));
 	return 1;
 }
 
 static int l_engine_set_city_detail_level(lua_State *l)
 {
 	const int level = LuaConstants::GetConstantFromArg(l, "DetailLevel", 1);
-	if (level != Pi::detail.cities) {
-		Pi::detail.cities = level;
+	if (level != GameConfSingleton::getDetail().cities) {
+		GameConfSingleton::getDetail().cities = level;
 		GameConfSingleton::getInstance().SetInt("DetailCities", level);
 		GameConfSingleton::getInstance().Save();
 		Pi::OnChangeDetailLevel();
@@ -448,9 +448,7 @@ static int l_engine_set_display_nav_tunnels(lua_State *l)
 	if (lua_isnone(l, 1))
 		return luaL_error(l, "SetDisplayNavTunnels takes one boolean argument");
 	const bool enabled = lua_toboolean(l, 1);
-	GameConfSingleton::getInstance().SetInt("DisplayNavTunnel", (enabled ? 1 : 0));
-	GameConfSingleton::getInstance().Save();
-	Pi::SetNavTunnelDisplayed(enabled);
+	GameConfSingleton::SetNavTunnelDisplayed(enabled);
 	return 0;
 }
 
@@ -465,9 +463,7 @@ static int l_engine_set_display_speed_lines(lua_State *l)
 	if (lua_isnone(l, 1))
 		return luaL_error(l, "SetDisplaySpeedLines takes one boolean argument");
 	const bool enabled = lua_toboolean(l, 1);
-	GameConfSingleton::getInstance().SetInt("SpeedLines", (enabled ? 1 : 0));
-	GameConfSingleton::getInstance().Save();
-	Pi::SetSpeedLinesDisplayed(enabled);
+	GameConfSingleton::SetSpeedLinesDisplayed(enabled);
 	return 0;
 }
 
@@ -534,18 +530,14 @@ static int l_engine_set_display_hud_trails(lua_State *l)
 	if (lua_isnone(l, 1))
 		return luaL_error(l, "SetDisplayHudTrails takes one boolean argument");
 	const bool enabled = lua_toboolean(l, 1);
-	GameConfSingleton::getInstance().SetInt("HudTrails", (enabled ? 1 : 0));
-	GameConfSingleton::getInstance().Save();
-	Pi::SetHudTrailsDisplayed(enabled);
+	GameConfSingleton::SetHudTrailsDisplayed(enabled);
 	return 0;
 }
 
 static int l_engine_set_amount_stars(lua_State *l)
 {
 	const float amount = Clamp(luaL_checknumber(l, 1), 0.01, 1.0);
-	GameConfSingleton::getInstance().SetFloat("AmountOfBackgroundStars", amount);
-	GameConfSingleton::getInstance().Save();
-	Pi::SetAmountBackgroundStars(amount);
+	GameConfSingleton::SetAmountBackgroundStars(amount);
 	return 0;
 }
 

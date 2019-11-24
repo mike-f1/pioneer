@@ -8,6 +8,7 @@
 #include "CityOnPlanet.h"
 #include "Frame.h"
 #include "GameSaveError.h"
+#include "GameConfSingleton.h"
 #include "HyperspaceCloud.h"
 #include "Json.h"
 #include "Lang.h"
@@ -71,7 +72,7 @@ Space::Space() :
 	m_processingFinalizationQueue(false)
 #endif
 {
-	m_background.reset(new Background::Container(Pi::renderer, RandomSingleton::getInstance(), Pi::GetAmountBackgroundStars()));
+	m_background.reset(new Background::Container(Pi::renderer, RandomSingleton::getInstance(), GameConfSingleton::GetAmountBackgroundStars()));
 
 	m_rootFrameId = Frame::CreateFrame(noFrameId, Lang::SYSTEM, Frame::FLAG_DEFAULT, FLT_MAX);
 }
@@ -88,7 +89,7 @@ Space::Space(double total_time, float time_step, RefCountedPtr<StarSystem> stars
 {
 	Uint32 _init[5] = { path.systemIndex, Uint32(path.sectorX), Uint32(path.sectorY), Uint32(path.sectorZ), UNIVERSE_SEED };
 	Random rand(_init, 5);
-	m_background.reset(new Background::Container(Pi::renderer, rand, Pi::GetAmountBackgroundStars()));
+	m_background.reset(new Background::Container(Pi::renderer, rand, GameConfSingleton::GetAmountBackgroundStars()));
 
 	CityOnPlanet::SetCityModelPatterns(m_starSystem->GetPath());
 
@@ -114,7 +115,7 @@ Space::Space(RefCountedPtr<StarSystem> starsystem, const Json &jsonObj, double a
 	const SystemPath &path = m_starSystem->GetPath();
 	Uint32 _init[5] = { path.systemIndex, Uint32(path.sectorX), Uint32(path.sectorY), Uint32(path.sectorZ), UNIVERSE_SEED };
 	Random rand(_init, 5);
-	m_background.reset(new Background::Container(Pi::renderer, rand, Pi::GetAmountBackgroundStars()));
+	m_background.reset(new Background::Container(Pi::renderer, rand, GameConfSingleton::GetAmountBackgroundStars()));
 
 	RebuildSystemBodyIndex();
 
@@ -178,7 +179,7 @@ void Space::RefreshBackground()
 	const SystemPath &path = m_starSystem->GetPath();
 	Uint32 _init[5] = { path.systemIndex, Uint32(path.sectorX), Uint32(path.sectorY), Uint32(path.sectorZ), UNIVERSE_SEED };
 	Random rand(_init, 5);
-	m_background.reset(new Background::Container(Pi::renderer, rand, Pi::GetAmountBackgroundStars()));
+	m_background.reset(new Background::Container(Pi::renderer, rand, GameConfSingleton::GetAmountBackgroundStars()));
 }
 
 RefCountedPtr<StarSystem> Space::GetStarSystem() const
@@ -808,7 +809,7 @@ void Space::TimeStep(float step, double total_time)
 {
 	PROFILE_SCOPED()
 
-	if (Pi::MustRefreshBackgroundClearFlag())
+	if (GameConfSingleton::MustRefreshBackgroundClearFlag())
 		RefreshBackground();
 
 	m_bodyIndexValid = m_sbodyIndexValid = false;

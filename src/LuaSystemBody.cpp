@@ -4,9 +4,9 @@
 #include "Body.h"
 #include "EnumStrings.h"
 #include "Game.h"
+#include "GameLocator.h"
 #include "LuaObject.h"
 #include "LuaUtils.h"
-#include "Pi.h"
 #include "Space.h"
 #include "galaxy/Galaxy.h"
 #include "galaxy/StarSystem.h"
@@ -148,7 +148,7 @@ static int l_sbody_attr_parent(lua_State *l)
 
 	// sbody->parent is 0 as it was cleared by the acquirer. we need to go
 	// back to the starsystem proper to get what we need.
-	RefCountedPtr<StarSystem> s = Pi::game->GetGalaxy()->GetStarSystem(sbody->GetPath());
+	RefCountedPtr<StarSystem> s = GameLocator::getGame()->GetGalaxy()->GetStarSystem(sbody->GetPath());
 	SystemBody *live_sbody = s->GetBodyByPath(sbody->GetPath());
 
 	if (!live_sbody->GetParent())
@@ -625,8 +625,8 @@ static int l_sbody_attr_astro_description(lua_State *l)
 static int l_sbody_attr_body(lua_State *l)
 {
 	SystemBody *sbody = LuaObject<SystemBody>::CheckFromLua(1);
-	if (Pi::game) {
-		Space *space = Pi::game->GetSpace();
+	if (GameLocator::getGame()) {
+		Space *space = GameLocator::getGame()->GetSpace();
 		if (space) {
 			const SystemPath &path = sbody->GetPath();
 			Body *body = space->FindBodyForPath(&path);

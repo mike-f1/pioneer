@@ -9,6 +9,8 @@
 #include "KeyBindings.h"
 #include "utils.h"
 
+class Player;
+
 class ShipViewController : public InteractionController {
 public:
 	ShipViewController(WorldView *v) :
@@ -51,9 +53,12 @@ private:
 	void MouseWheel(bool up);
 
 public:
-	void Init();
+	void Init(Player *player);
 	void LoadFromJson(const Json &jsonObj);
 	void SaveToJson(Json &jsonObj);
+
+	// Here temporarely because of initialization order
+	void SetCamType(Player *player, enum CamType c);
 
 	static struct InputBinding : public Input::InputFrame {
 		using Action = KeyBindings::ActionBinding;

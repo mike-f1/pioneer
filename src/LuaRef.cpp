@@ -143,6 +143,7 @@ void LuaRef::LoadFromJson(const Json &jsonObj)
 	}
 
 	if (jsonObj.count("lua_ref_json")) {
+		// TODO: Why use a "static"? (given above *serializer...)
 		LuaSerializer::unpickle_json(m_lua, jsonObj["lua_ref_json"]);
 	} else if (jsonObj.count("lua_ref")) {
 		std::string pickled = jsonObj["lua_ref"];

@@ -2,10 +2,12 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "PlayerShipController.h"
+
 #include "Frame.h"
 #include "Game.h"
 #include "GameConfig.h"
 #include "GameConfSingleton.h"
+#include "GameLocator.h"
 #include "GameSaveError.h"
 #include "KeyBindings.h"
 #include "LuaObject.h"
@@ -181,7 +183,7 @@ void PlayerShipController::StaticUpdate(const float timeStep)
 			break;
 		case CONTROL_AUTOPILOT:
 			if (m_ship->AIIsActive()) break;
-			Pi::game->RequestTimeAccel(Game::TIMEACCEL_1X);
+			GameLocator::getGame()->RequestTimeAccel(Game::TIMEACCEL_1X);
 			//			AIMatchVel(vector3d(0.0));			// just in case autopilot doesn't...
 			// actually this breaks last timestep slightly in non-relative target cases
 			m_ship->AIMatchAngVelObjSpace(vector3d(0.0));
@@ -204,7 +206,7 @@ void PlayerShipController::StaticUpdate(const float timeStep)
 
 void PlayerShipController::CheckControlsLock()
 {
-	m_controlsLocked = (Pi::game->IsPaused() || Pi::player->IsDead() || (m_ship->GetFlightState() != Ship::FLYING) || Pi::IsConsoleActive() || (Pi::GetView() != Pi::game->GetWorldView())); //to prevent moving the ship in starmap etc.
+	m_controlsLocked = (GameLocator::getGame()->IsPaused() || GameLocator::getGame()->GetPlayer()->IsDead() || (m_ship->GetFlightState() != Ship::FLYING) || Pi::IsConsoleActive() || (Pi::GetView() != GameLocator::getGame()->GetWorldView())); //to prevent moving the ship in starmap etc.
 }
 
 vector3d PlayerShipController::GetMouseDir() const
@@ -298,7 +300,7 @@ void PlayerShipController::PollControls(const float timeStep, const bool force_r
 
 		if (InputBindings.primaryFire->IsActive() || (Pi::input.MouseButtonState(SDL_BUTTON_LEFT) && Pi::input.MouseButtonState(SDL_BUTTON_RIGHT))) {
 			//XXX worldview? madness, ask from ship instead
-			GunDir dir = Pi::game->GetWorldView()->GetActiveWeapon() ? GunDir::GUN_REAR : GunDir::GUN_FRONT;
+			GunDir dir = GameLocator::getGame()->GetWorldView()->GetActiveWeapon() ? GunDir::GUN_REAR : GunDir::GUN_FRONT;
 			m_ship->SetGunsState(dir, 1);
 		} else {
 			m_ship->SetGunsState(GunDir::GUN_FRONT, 0);
@@ -316,9 +318,9 @@ void PlayerShipController::PollControls(const float timeStep, const bool force_r
 			angThrustSoftness = 50.0;
 
 		if (wantAngVel.Length() >= 0.001 || force_rotation_damping || m_rotationDamping) {
-			if (Pi::game->GetTimeAccel() != Game::TIMEACCEL_1X) {
+			if (GameLocator::getGame()->GetTimeAccel() != Game::TIMEACCEL_1X) {
 				for (int axis = 0; axis < 3; axis++)
-					wantAngVel[axis] = wantAngVel[axis] * Pi::game->GetInvTimeAccelRate();
+					wantAngVel[axis] = wantAngVel[axis] * GameLocator::getGame()->GetInvTimeAccelRate();
 			}
 
 			m_ship->AIModelCoordsMatchAngVel(wantAngVel, angThrustSoftness);
@@ -382,9 +384,9 @@ void PlayerShipController::ToggleRotationDamping()
 
 void PlayerShipController::FireMissile()
 {
-	if (!Pi::player->GetCombatTarget())
+	if (!GameLocator::getGame()->GetPlayer()->GetCombatTarget())
 		return;
-	LuaObject<Ship>::CallMethod(Pi::player, "FireMissileAt", "any", static_cast<Ship *>(Pi::player->GetCombatTarget()));
+	LuaObject<Ship>::CallMethod(GameLocator::getGame()->GetPlayer(), "FireMissileAt", "any", static_cast<Ship *>(GameLocator::getGame()->GetPlayer()->GetCombatTarget()));
 }
 
 void PlayerShipController::ToggleSetSpeedMode()

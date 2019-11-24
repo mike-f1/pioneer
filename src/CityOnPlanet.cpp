@@ -7,8 +7,8 @@
 #include "Frame.h"
 #include "Game.h"
 #include "GameConfSingleton.h"
+#include "GameLocator.h"
 #include "ModelCache.h"
-#include "Pi.h"
 #include "Planet.h"
 #include "SpaceStation.h"
 #include "collider/Geom.h"
@@ -348,7 +348,7 @@ void CityOnPlanet::Render(Graphics::Renderer *r, const Graphics::Frustum &frustu
 	for (Uint32 i = 0; i < s_buildingList.numBuildings; i++) {
 		SceneGraph::Animation *pAnim = s_buildingList.buildings[i].idle;
 		if (pAnim) {
-			pAnim->SetProgress(fmod(pAnim->GetProgress() + (Pi::game->GetTimeStep() / pAnim->GetDuration()), 1.0));
+			pAnim->SetProgress(fmod(pAnim->GetProgress() + (GameLocator::getGame()->GetTimeStep() / pAnim->GetDuration()), 1.0));
 			pAnim->Interpolate();
 		}
 	}

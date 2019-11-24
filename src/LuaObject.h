@@ -14,6 +14,8 @@
 #include <tuple>
 #include <typeinfo>
 
+class Space;
+
 //
 // LuaObject provides proxy objects and tracking facilities to safely get
 // objects in and out of lua. the basic idea is that for every class you want

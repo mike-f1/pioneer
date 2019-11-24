@@ -5,11 +5,11 @@
 #include "EnumStrings.h"
 #include "Frame.h"
 #include "Game.h"
+#include "GameLocator.h"
 #include "HyperspaceCloud.h"
 #include "LuaObject.h"
 #include "LuaVector.h"
 #include "Missile.h"
-#include "Pi.h"
 #include "Ship.h"
 #include "ShipAICmd.h"
 #include "ShipType.h"
@@ -1190,7 +1190,7 @@ static int l_ship_get_hyperspace_destination(lua_State *l)
 {
 	Ship *ship = LuaObject<Ship>::CheckFromLua(1);
 	const SystemPath &dest = ship->GetHyperspaceDest();
-	RefCountedPtr<const Sector> s = Pi::game->GetGalaxy()->GetSector(dest);
+	RefCountedPtr<const Sector> s = GameLocator::getGame()->GetGalaxy()->GetSector(dest);
 	LuaObject<SystemPath>::PushToLua(dest);
 	LuaPush(l, s->m_systems[dest.systemIndex].GetName());
 	return 2;

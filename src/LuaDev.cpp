@@ -2,9 +2,10 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "LuaDev.h"
+
 #include "Game.h"
+#include "GameLocator.h"
 #include "LuaObject.h"
-#include "Pi.h"
 #include "WorldView.h"
 
 /*
@@ -20,9 +21,9 @@
  */
 static int l_dev_set_camera_offset(lua_State *l)
 {
-	if (!Pi::game || !Pi::game->GetWorldView())
+	if (!GameLocator::getGame() || !GameLocator::getGame()->GetWorldView())
 		return luaL_error(l, "Dev.SetCameraOffset only works when there is a game running");
-	CameraController *cam = Pi::game->GetWorldView()->shipView.GetCameraController();
+	CameraController *cam = GameLocator::getGame()->GetWorldView()->shipView.GetCameraController();
 	const float x = luaL_checknumber(l, 1);
 	const float y = luaL_checknumber(l, 2);
 	const float z = luaL_checknumber(l, 3);

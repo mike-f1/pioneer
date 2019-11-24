@@ -7,8 +7,10 @@
 #include "Body.h"
 #include "CityOnPlanet.h"
 #include "Frame.h"
+#include "Game.h"
 #include "GameSaveError.h"
 #include "GameConfSingleton.h"
+#include "GameLocator.h"
 #include "HyperspaceCloud.h"
 #include "Json.h"
 #include "Lang.h"
@@ -284,7 +286,7 @@ void Space::KillBody(Body *b)
 		// XXX this seems like the wrong way to do it. since its still "alive"
 		// it still collides, moves, etc. better to just snapshot its position
 		// elsewhere
-		if (b != Pi::player)
+		if (b != GameLocator::getGame()->GetPlayer())
 			m_killBodies.push_back(b);
 	}
 }

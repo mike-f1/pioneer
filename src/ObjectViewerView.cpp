@@ -5,9 +5,12 @@
 
 #if WITH_OBJECTVIEWER
 
+#include "Camera.h"
 #include "Frame.h"
+#include "Game.h"
 #include "GameConfig.h"
 #include "GameConfSingleton.h"
+#include "GameLocator.h"
 #include "ObjectViewerView.h"
 #include "Pi.h"
 #include "Planet.h"
@@ -25,7 +28,7 @@
 
 #include <sstream>
 
-ObjectViewerView::ObjectViewerView() :
+ObjectViewerView::ObjectViewerView(Game *game) :
 	UIView()
 {
 	SetTransparency(true);
@@ -45,8 +48,8 @@ ObjectViewerView::ObjectViewerView() :
 	m_cameraContext.Reset(new CameraContext(Graphics::GetScreenWidth(), Graphics::GetScreenHeight(), fovY, znear, zfar));
 	m_camera.reset(new Camera(m_cameraContext, Pi::renderer));
 
-	m_cameraContext->SetCameraFrame(Pi::player->GetFrame());
-	m_cameraContext->SetCameraPosition(Pi::player->GetInterpPosition() + vector3d(0, 0, viewingDist));
+	m_cameraContext->SetCameraFrame(game->GetPlayer()->GetFrame());
+	m_cameraContext->SetCameraPosition(game->GetPlayer()->GetInterpPosition() + vector3d(0, 0, viewingDist));
 	m_cameraContext->SetCameraOrient(matrix3x3d::Identity());
 
 	m_infoLabel = new Gui::Label("");
@@ -130,12 +133,12 @@ void ObjectViewerView::Draw3D()
 		Pi::input.GetMouseMotion(m);
 		m_camRot = matrix4x4d::RotateXMatrix(-0.002 * m[1]) *
 			matrix4x4d::RotateYMatrix(-0.002 * m[0]) * m_camRot;
-		m_cameraContext->SetCameraPosition(Pi::player->GetInterpPosition() + vector3d(0, 0, viewingDist));
+		m_cameraContext->SetCameraPosition(GameLocator::getGame()->GetPlayer()->GetInterpPosition() + vector3d(0, 0, viewingDist));
 		m_cameraContext->BeginFrame();
 		m_camera->Update();
 	}
 
-	Body *body = Pi::player->GetNavTarget();
+	Body *body = GameLocator::getGame()->GetPlayer()->GetNavTarget();
 	if (body) {
 		if (body->IsType(Object::STAR))
 			light.SetPosition(vector3f(0.f));
@@ -172,7 +175,7 @@ void ObjectViewerView::Update()
 	viewingDist = Clamp(viewingDist, 10.0f, 1e12f);
 
 	char buf[128];
-	Body *body = Pi::player->GetNavTarget();
+	Body *body = GameLocator::getGame()->GetPlayer()->GetNavTarget();
 	if (body && (body != lastTarget)) {
 		// Reset view distance for new target.
 		viewingDist = body->GetClipRadius() * 2.0f;
@@ -234,7 +237,7 @@ void ObjectViewerView::OnChangeTerrain()
 	// terrain, whatever else holds a const pointer to the same toplevel
 	// sbody. one day objectviewer should be far more contained and not
 	// actually modify the space
-	Body *body = Pi::player->GetNavTarget();
+	Body *body = GameLocator::getGame()->GetPlayer()->GetNavTarget();
 	SystemBody *sbody = const_cast<SystemBody *>(body->GetSystemBody());
 
 	sbody->m_seed = atoi(m_sbodySeed->GetText().c_str());

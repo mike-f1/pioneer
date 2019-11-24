@@ -145,6 +145,8 @@ public:
 
 	GameLog *log;
 
+	static void EmitPauseState(bool paused);
+
 private:
 	void GenCaches(const SystemPath *here, int cacheRadius,
 		StarSystemCache::CacheFilledCallback callback = StarSystemCache::CacheFilledCallback());
@@ -179,8 +181,6 @@ private:
 	void CreateViews(const SystemPath &path);
 	void LoadViewsFromJson(const Json &jsonObj, const SystemPath &path);
 	void DestroyViews();
-
-	static void EmitPauseState(bool paused);
 
 	void SwitchToHyperspace();
 	void SwitchToNormalSpace();

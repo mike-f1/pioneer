@@ -4,9 +4,9 @@
 #include "CargoBody.h"
 
 #include "Game.h"
+#include "GameLocator.h"
 #include "GameSaveError.h"
 #include "Json.h"
-#include "Pi.h"
 #include "Sfx.h"
 #include "Space.h"
 #include "scenegraph/Model.h"
@@ -91,7 +91,7 @@ void CargoBody::TimeStepUpdate(const float timeStep)
 	if (m_hasSelfdestruct) {
 		m_selfdestructTimer -= timeStep;
 		if (m_selfdestructTimer <= 0) {
-			Pi::game->GetSpace()->KillBody(this);
+			GameLocator::getGame()->GetSpace()->KillBody(this);
 			SfxManager::Add(this, TYPE_EXPLOSION);
 		}
 	}
@@ -102,7 +102,7 @@ bool CargoBody::OnDamage(Object *attacker, float kgDamage, const CollisionContac
 {
 	m_hitpoints -= kgDamage * 0.001f;
 	if (m_hitpoints < 0) {
-		Pi::game->GetSpace()->KillBody(this);
+		GameLocator::getGame()->GetSpace()->KillBody(this);
 		SfxManager::Add(this, TYPE_EXPLOSION);
 	}
 	return true;

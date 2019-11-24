@@ -7,6 +7,7 @@
 
 #include "Frame.h"
 #include "Game.h"
+#include "GameLocator.h"
 #include "GameSaveError.h"
 #include "Json.h"
 #include "LuaEvent.h"
@@ -191,7 +192,7 @@ void Projectile::PostLoadFixup(Space *space)
 void Projectile::UpdateInterpTransform(double alpha)
 {
 	m_interpOrient = GetOrient();
-	const vector3d oldPos = GetPosition() - (m_baseVel + m_dirVel) * Pi::game->GetTimeStep();
+	const vector3d oldPos = GetPosition() - (m_baseVel + m_dirVel) * GameLocator::getGame()->GetTimeStep();
 	m_interpPos = alpha * GetPosition() + (1.0 - alpha) * oldPos;
 }
 
@@ -204,7 +205,7 @@ void Projectile::TimeStepUpdate(const float timeStep)
 {
 	m_age += timeStep;
 	SetPosition(GetPosition() + (m_baseVel + m_dirVel) * double(timeStep));
-	if (m_age > m_lifespan) Pi::game->GetSpace()->KillBody(this);
+	if (m_age > m_lifespan) GameLocator::getGame()->GetSpace()->KillBody(this);
 }
 
 /* In hull kg */
@@ -233,12 +234,12 @@ void Projectile::StaticUpdate(const float timeStep)
 		Object *o = static_cast<Object *>(c.userData1);
 
 		if (o->IsType(Object::CITYONPLANET)) {
-			Pi::game->GetSpace()->KillBody(this);
+			GameLocator::getGame()->GetSpace()->KillBody(this);
 		} else if (o->IsType(Object::BODY)) {
 			Body *hit = static_cast<Body *>(o);
 			if (hit != m_parent) {
 				hit->OnDamage(m_parent, GetDamage(), c);
-				Pi::game->GetSpace()->KillBody(this);
+				GameLocator::getGame()->GetSpace()->KillBody(this);
 				if (hit->IsType(Object::SHIP))
 					LuaEvent::Queue("onShipHit", dynamic_cast<Ship *>(hit), dynamic_cast<Body *>(m_parent));
 			}
@@ -259,7 +260,7 @@ void Projectile::StaticUpdate(const float timeStep)
 						MiningLaserSpawnTastyStuff(planet->GetFrame(), m_parent, planet->GetSystemBody(), n * terrainHeight + 5.0 * n);
 						SfxManager::Add(this, TYPE_EXPLOSION);
 					}
-					Pi::game->GetSpace()->KillBody(this);
+					GameLocator::getGame()->GetSpace()->KillBody(this);
 				}
 			}
 		}
@@ -331,5 +332,5 @@ void Projectile::Render(Graphics::Renderer *renderer, const Camera *camera, cons
 void Projectile::Add(Body *parent, const ProjectileData &prData, const vector3d &pos, const vector3d &baseVel, const vector3d &dirVel)
 {
 	Projectile *p = new Projectile(parent, prData, pos, baseVel, dirVel);
-	Pi::game->GetSpace()->AddBody(p);
+	GameLocator::getGame()->GetSpace()->AddBody(p);
 }

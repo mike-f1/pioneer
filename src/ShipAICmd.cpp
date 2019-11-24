@@ -5,7 +5,7 @@
 
 #include "Frame.h"
 #include "Game.h"
-#include "Pi.h"
+#include "GameLocator.h"
 #include "Random.h"
 #include "RandomSingleton.h"
 #include "Ship.h"
@@ -50,7 +50,7 @@ void AICommand::SaveToJson(Json &jsonObj)
 	// (2) the common ai command object (created and added in this base class function).
 	// The command name (enum CmdName) and a child ai command (if this ai command has one) are added to the common ai command object.
 	// No longer need to save CMD_NONE when a child ai command does not exist (just don't add a child ai command object).
-	Space *space = Pi::game->GetSpace();
+	Space *space = GameLocator::getGame()->GetSpace();
 	Json commonAiCommandObj({}); // Create JSON object to contain common ai command data.
 	commonAiCommandObj["command_name"] = m_cmdName;
 	commonAiCommandObj["index_for_body"] = space->GetIndexForBody(m_dBody);
@@ -93,7 +93,7 @@ bool AICommand::ProcessChild()
 // temporary evasion-test version
 bool AICmdKill::TimeStepUpdate()
 {
-	m_timeSinceChange += Pi::game->GetTimeStep();
+	m_timeSinceChange += GameLocator::getGame()->GetTimeStep();
 	if (m_timeSinceChange < m_changeTime) {
 		m_ship->AIFaceDirection(m_curDir);
 		return false;
@@ -246,7 +246,7 @@ AICmdKamikaze::AICmdKamikaze(const Json &jsonObj) :
 
 void AICmdKamikaze::SaveToJson(Json &jsonObj)
 {
-	Space *space = Pi::game->GetSpace();
+	Space *space = GameLocator::getGame()->GetSpace();
 	Json aiCommandObj({}); // Create JSON object to contain ai command data.
 	AICommand::SaveToJson(aiCommandObj);
 	aiCommandObj["index_for_target"] = space->GetIndexForBody(m_target);
@@ -340,7 +340,7 @@ AICmdKill::AICmdKill(const Json &jsonObj) :
 
 void AICmdKill::SaveToJson(Json &jsonObj)
 {
-	Space *space = Pi::game->GetSpace();
+	Space *space = GameLocator::getGame()->GetSpace();
 	Json aiCommandObj({}); // Create JSON object to contain ai command data.
 	AICommand::SaveToJson(aiCommandObj);
 	aiCommandObj["index_for_target"] = space->GetIndexForBody(m_target);
@@ -392,7 +392,7 @@ bool AICmdKill::TimeStepUpdate()
 	vector3d targdir = targpos.NormalizedSafe();
 	vector3d heading = -rot.VectorZ();
 	// Accel will be wrong for a frame on timestep changes, but it doesn't matter
-	vector3d targaccel = (m_target->GetVelocity() - m_lastVel) / Pi::game->GetTimeStep();
+	vector3d targaccel = (m_target->GetVelocity() - m_lastVel) / GameLocator::getGame()->GetTimeStep();
 	m_lastVel = m_target->GetVelocity(); // may need next frame
 	vector3d leaddir = m_prop->AIGetLeadDir(m_target, targaccel, m_fguns->GetProjSpeed(0));
 
@@ -406,18 +406,18 @@ bool AICmdKill::TimeStepUpdate()
 	// turn towards target lead direction, add inaccuracy
 	// trigger recheck when angular velocity reaches zero or after certain time
 
-	if (m_leadTime < Pi::game->GetTime()) {
+	if (m_leadTime < GameLocator::getGame()->GetTime()) {
 		double skillShoot = 0.5; // todo: should come from AI stats
 
 		double headdiff = (leaddir - heading).Length();
 		double leaddiff = (leaddir - targdir).Length();
-		m_leadTime = Pi::game->GetTime() + headdiff + (1.0 * RandomSingleton::getInstance().Double() * skillShoot);
+		m_leadTime = GameLocator::getGame()->GetTime() + headdiff + (1.0 * RandomSingleton::getInstance().Double() * skillShoot);
 
 		// lead inaccuracy based on diff between heading and leaddir
 		vector3d r(RandomSingleton::getInstance().Double() - 0.5, RandomSingleton::getInstance().Double() - 0.5, RandomSingleton::getInstance().Double() - 0.5);
 		vector3d newoffset = r * (0.02 + 2.0 * leaddiff + 2.0 * headdiff) * RandomSingleton::getInstance().Double() * skillShoot;
 		m_leadOffset = (heading - leaddir); // should be already...
-		m_leadDrift = (newoffset - m_leadOffset) / (m_leadTime - Pi::game->GetTime());
+		m_leadDrift = (newoffset - m_leadOffset) / (m_leadTime - GameLocator::getGame()->GetTime());
 
 		// Shoot only when close to target
 
@@ -432,15 +432,15 @@ bool AICmdKill::TimeStepUpdate()
 		max_fire_dist *= max_fire_dist;
 		if (targpos.LengthSqr() > max_fire_dist) m_fguns->SetGunsFiringState(GunDir::GUN_FRONT, 0); // temp
 	}
-	m_leadOffset += m_leadDrift * Pi::game->GetTimeStep();
+	m_leadOffset += m_leadDrift * GameLocator::getGame()->GetTimeStep();
 	double leadAV = (leaddir - targdir).Dot((leaddir - heading).NormalizedSafe()); // leaddir angvel
 	m_prop->AIFaceDirection((leaddir + m_leadOffset).Normalized(), leadAV);
 
 	vector3d evadethrust(0, 0, 0);
-	if (m_evadeTime < Pi::game->GetTime()) // evasion time!
+	if (m_evadeTime < GameLocator::getGame()->GetTime()) // evasion time!
 	{
 		double skillEvade = 0.5; // todo: should come from AI stats
-		m_evadeTime = Pi::game->GetTime() + RandomSingleton::getInstance().Double(3.0, 10.0) * skillEvade;
+		m_evadeTime = GameLocator::getGame()->GetTime() + RandomSingleton::getInstance().Double(3.0, 10.0) * skillEvade;
 		if (heading.Dot(targdir) < 0.7) skillEvade += 0.5; // not in view
 		skillEvade += RandomSingleton::getInstance().Double(-0.5, 0.5);
 
@@ -474,11 +474,11 @@ bool AICmdKill::TimeStepUpdate()
 		evadethrust = m_prop->GetLinThrusterState();
 
 	// todo: some logic behind desired range? pass from higher level
-	if (m_closeTime < Pi::game->GetTime()) {
+	if (m_closeTime < GameLocator::getGame()->GetTime()) {
 		double skillEvade = 0.5;
 		if (heading.Dot(targdir) < 0.7) skillEvade += 0.5; // not in view
 
-		m_closeTime = Pi::game->GetTime() + skillEvade * RandomSingleton::getInstance().Double(1.0, 5.0);
+		m_closeTime = GameLocator::getGame()->GetTime() + skillEvade * RandomSingleton::getInstance().Double(1.0, 5.0);
 
 		double reqdist = 500.0 + skillEvade * RandomSingleton::getInstance().Double(-500.0, 250);
 		double dist = targpos.Length(), ispeed;
@@ -691,9 +691,9 @@ static vector3d GetVelInFrame(FrameId frameId, FrameId targetId, const vector3d 
 	vector3d vel = vector3d(0.0);
 	Frame* target = Frame::GetFrame(targetId);
 	if (targetId != frameId && target->IsRotFrame()) {
-		//		double ang = Pi::game->GetTimeStep() * target->GetAngSpeed();
+		//		double ang = GameLocator::getGame()->GetTimeStep() * target->GetAngSpeed();
 		//		vector3d newpos = offset * matrix3x3d::RotateYMatrix(ang);
-		//		vel = (newpos - offset) / Pi::game->GetTimeStep();
+		//		vel = (newpos - offset) / GameLocator::getGame()->GetTimeStep();
 		vel = -target->GetStasisVelocity(offset); // stasis velocity not accurate enough
 	}
 	return target->GetOrientRelTo(frameId) * vel + target->GetVelocityRelTo(frameId);
@@ -936,7 +936,7 @@ void AICmdFlyTo::SaveToJson(Json &jsonObj)
 	}
 	Json aiCommandObj({}); // Create JSON object to contain ai command data.
 	AICommand::SaveToJson(aiCommandObj);
-	aiCommandObj["index_for_target"] = Pi::game->GetSpace()->GetIndexForBody(m_target);
+	aiCommandObj["index_for_target"] = GameLocator::getGame()->GetSpace()->GetIndexForBody(m_target);
 	aiCommandObj["dist"] = m_dist;
 	aiCommandObj["target_frame"] = m_targframeId;
 	aiCommandObj["pos_off"] = m_posoff;
@@ -970,7 +970,7 @@ bool AICmdFlyTo::TimeStepUpdate()
 	if (!m_target && !IsIdValid(m_targframeId)) return true; // deleted object
 
 	// generate base target pos (with vicinity adjustment) & vel
-	double timestep = Pi::game->GetTimeStep();
+	double timestep = GameLocator::getGame()->GetTimeStep();
 	vector3d targpos, targvel;
 	if (m_target) {
 		targpos = m_target->GetPositionRelTo(m_dBody->GetFrame());
@@ -1113,7 +1113,7 @@ bool AICmdFlyTo::TimeStepUpdate()
 
 	// face appropriate direction
 	if (m_state >= 3) {
-		if (Pi::game->GetTimeAccelRate() <= 100.0 && m_is_flyto) {
+		if (GameLocator::getGame()->GetTimeAccelRate() <= 100.0 && m_is_flyto) {
 			vector3d pos;
 			if (m_target) {
 				pos = m_target->GetPositionRelTo(m_dBody).NormalizedSafe();
@@ -1199,7 +1199,7 @@ AICmdDock::AICmdDock(const Json &jsonObj) :
 
 void AICmdDock::SaveToJson(Json &jsonObj)
 {
-	Space *space = Pi::game->GetSpace();
+	Space *space = GameLocator::getGame()->GetSpace();
 	Json aiCommandObj({}); // Create JSON object to contain ai command data.
 	AICommand::SaveToJson(aiCommandObj);
 	aiCommandObj["index_for_target"] = space->GetIndexForBody(m_target);
@@ -1316,7 +1316,7 @@ bool AICmdDock::TimeStepUpdate()
 	// get rotation of station for next frame
 	matrix3x3d trot = m_target->GetOrientRelTo(m_dBody->GetFrame());
 	double av = m_target->GetAngVelocity().Length();
-	double ang = av * Pi::game->GetTimeStep();
+	double ang = av * GameLocator::getGame()->GetTimeStep();
 	if (ang > 1e-16) {
 		vector3d axis = m_target->GetAngVelocity().Normalized();
 		trot = trot * matrix3x3d::Rotate(ang, axis);
@@ -1448,7 +1448,7 @@ void AICmdFlyAround::SaveToJson(Json &jsonObj)
 	}
 	Json aiCommandObj({}); // Create JSON object to contain ai command data.
 	AICommand::SaveToJson(aiCommandObj);
-	aiCommandObj["index_for_obstructor"] = Pi::game->GetSpace()->GetIndexForBody(m_obstructor);
+	aiCommandObj["index_for_obstructor"] = GameLocator::getGame()->GetSpace()->GetIndexForBody(m_obstructor);
 	aiCommandObj["vel"] = m_vel;
 	aiCommandObj["alt"] = m_alt;
 	aiCommandObj["targ_mode"] = m_targmode;
@@ -1464,7 +1464,7 @@ double AICmdFlyAround::MaxVel(double targdist, double targalt)
 	double t = sqrt(2.0 * targdist / prop->GetAccelFwd());
 	double vmaxprox = prop->GetAccelMin() * t; // limit by target proximity
 	double vmaxstep = std::max(m_alt * 0.05, m_alt - targalt);
-	vmaxstep /= Pi::game->GetTimeStep(); // limit by distance covered per timestep
+	vmaxstep /= GameLocator::getGame()->GetTimeStep(); // limit by distance covered per timestep
 	return std::min(m_vel, std::min(vmaxprox, vmaxstep));
 }
 
@@ -1489,7 +1489,7 @@ bool AICmdFlyAround::TimeStepUpdate()
 	} else
 		; // return false;
 
-	double timestep = Pi::game->GetTimeStep();
+	double timestep = GameLocator::getGame()->GetTimeStep();
 	vector3d targpos = (!m_targmode) ? m_targpos :
 									   m_dBody->GetVelocity().NormalizedSafe() * m_dBody->GetPosition().LengthSqr();
 	vector3d obspos = m_obstructor->GetPositionRelTo(m_dBody);
@@ -1600,7 +1600,7 @@ void AICmdFormation::SaveToJson(Json &jsonObj)
 	}
 	Json aiCommandObj({}); // Create JSON object to contain ai command data.
 	AICommand::SaveToJson(aiCommandObj);
-	aiCommandObj["index_for_target"] = Pi::game->GetSpace()->GetIndexForBody(m_target);
+	aiCommandObj["index_for_target"] = GameLocator::getGame()->GetSpace()->GetIndexForBody(m_target);
 	aiCommandObj["pos_off"] = m_posoff;
 	jsonObj["ai_command"] = aiCommandObj; // Add ai command object to supplied object.
 }
@@ -1648,7 +1648,7 @@ bool AICmdFormation::TimeStepUpdate()
 	// adjust for target acceleration
 	matrix3x3d forient = Frame::GetFrame(m_target->GetFrame())->GetOrientRelTo(m_dBody->GetFrame());
 	vector3d targaccel = forient * m_target->GetLastForce() / m_target->GetMass();
-	relvel -= targaccel * Pi::game->GetTimeStep();
+	relvel -= targaccel * GameLocator::getGame()->GetTimeStep();
 	double maxdecel = m_prop->GetAccelFwd() + targaccel.Dot(reldir);
 	if (maxdecel < 0.0) maxdecel = 0.0;
 

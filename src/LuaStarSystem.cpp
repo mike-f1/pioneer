@@ -4,12 +4,12 @@
 #include "EnumStrings.h"
 #include "FileSystem.h"
 #include "Game.h"
+#include "GameLocator.h"
 #include "GameSaveError.h"
 #include "LuaConstants.h"
 #include "LuaObject.h"
 #include "LuaTable.h"
 #include "LuaUtils.h"
-#include "Pi.h"
 #include "galaxy/Economy.h"
 #include "galaxy/Faction.h"
 #include "galaxy/Galaxy.h"
@@ -414,7 +414,7 @@ static int l_starsystem_explore(lua_State *l)
 	if (lua_isnumber(l, 2))
 		time = luaL_checknumber(l, 2);
 	else
-		time = Pi::game->GetTime();
+		time = GameLocator::getGame()->GetTime();
 
 	StarSystemWriter sswrt(s);
 	sswrt.ExploreSystem(time);

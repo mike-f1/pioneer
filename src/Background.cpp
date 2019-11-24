@@ -5,6 +5,7 @@
 
 #include "FileSystem.h"
 #include "Game.h"
+#include "GameLocator.h"
 #include "IniConfig.h"
 #include "Pi.h"
 #include "Player.h"
@@ -252,8 +253,8 @@ namespace Background {
 		std::unique_ptr<float[]> sizes(new float[NUM_BG_STARS]);
 		//fill the array
 		Uint32 num = 0;
-		if (Pi::game != nullptr && Pi::game->GetSpace() != nullptr && Pi::game->GetSpace()->GetStarSystem() != nullptr) {
-			const SystemPath current = Pi::game->GetSpace()->GetStarSystem()->GetPath();
+		if (GameLocator::getGame() != nullptr && GameLocator::getGame()->GetSpace() != nullptr && GameLocator::getGame()->GetSpace()->GetStarSystem() != nullptr) {
+			const SystemPath current = GameLocator::getGame()->GetSpace()->GetStarSystem()->GetPath();
 
 			const double size = 1.0;
 			const Sint32 visibleRadius = 100; // lyrs
@@ -268,7 +269,7 @@ namespace Background {
 							continue; // early out
 
 						// this is fairly expensive
-						RefCountedPtr<const Sector> sec = Pi::game->GetGalaxy()->GetSector(sys);
+						RefCountedPtr<const Sector> sec = GameLocator::getGame()->GetGalaxy()->GetSector(sys);
 
 						// add as many systems as we can
 						const size_t numSystems = std::min(sec->m_systems.size(), (size_t)(NUM_BG_STARS - num));
@@ -349,7 +350,7 @@ namespace Background {
 	void Starfield::Draw(Graphics::RenderState *rs)
 	{
 		// XXX would be nice to get rid of the Pi:: stuff here
-		if (!Pi::game || Pi::player->GetFlightState() != Ship::HYPERSPACE) {
+		if (!GameLocator::getGame() || GameLocator::getGame()->GetPlayer()->GetFlightState() != Ship::HYPERSPACE) {
 			m_pointSprites->Draw(m_renderer, m_renderState);
 		} else {
 			assert(sizeof(StarVert) == 16);
@@ -359,13 +360,13 @@ namespace Background {
 			// roughly, the multiplier gets smaller as the duration gets larger.
 			// the time-looking bits in this are completely arbitrary - I figured
 			// it out by tweaking the numbers until it looked sort of right
-			const double mult = 0.0015 / (Pi::player->GetHyperspaceDuration() / (60.0 * 60.0 * 24.0 * 7.0));
+			const double mult = 0.0015 / (GameLocator::getGame()->GetPlayer()->GetHyperspaceDuration() / (60.0 * 60.0 * 24.0 * 7.0));
 
-			const double hyperspaceProgress = Pi::game->GetHyperspaceProgress();
+			const double hyperspaceProgress = GameLocator::getGame()->GetHyperspaceProgress();
 
 			const Sint32 NUM_STARS = m_animBuffer->GetDesc().numVertices / 2;
 
-			const vector3d pz = Pi::player->GetOrient().VectorZ(); //back vector
+			const vector3d pz = GameLocator::getGame()->GetPlayer()->GetOrient().VectorZ(); //back vector
 			for (int i = 0; i < NUM_STARS; i++) {
 				vector3f v = m_hyperVtx[NUM_STARS * 2 + i] + vector3f(pz * hyperspaceProgress * mult);
 				const Color &c = m_hyperCol[NUM_STARS * 2 + i];

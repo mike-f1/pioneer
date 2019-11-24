@@ -12,15 +12,12 @@
 #include <string>
 #include <vector>
 
-class Game;
-
 class Intro;
 class LuaConsole;
 class LuaNameGen;
 class LuaTimer;
 class ObjectViewerView;
 class PiGui;
-class Player;
 class SystemPath;
 class TransferPlanner;
 class View;
@@ -118,15 +115,12 @@ public:
 #endif
 
 	static Input input;
-	static Player *player;
 	static TransferPlanner *planner;
 	static LuaConsole *luaConsole;
 	static Sound::MusicPlayer &GetMusicPlayer() { return musicPlayer; }
 	static Graphics::Renderer *renderer;
 	static Intro *intro;
 	static SDLGraphics *sdl;
-
-	static Game *game;
 
 	static JobQueue *GetAsyncJobQueue() { return asyncJobQueue.get(); }
 	static JobQueue *GetSyncJobQueue() { return syncJobQueue.get(); }

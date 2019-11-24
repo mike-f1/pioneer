@@ -11,6 +11,7 @@
 #include "FileSystem.h"
 #include "Frame.h"
 #include "GZipFormat.h"
+#include "GameLocator.h"
 #include "GameLog.h"
 #include "GameSaveError.h"
 #include "HyperspaceCloud.h"
@@ -102,7 +103,6 @@ Game::Game(const SystemPath &path, const double startDateTime) :
 
 	CreateViews(path);
 
-	EmitPauseState(IsPaused());
 #ifdef PIONEER_PROFILER
 	Profiler::dumphtml(profilerPath.c_str());
 #endif
@@ -196,12 +196,15 @@ Game::Game(const Json &jsonObj) :
 	// views
 	LoadViewsFromJson(jsonObj, path);
 
+	/// HACK!
+	// Lua needs Space up and running (see LuaBody::_body_deserializer
+	// thus the needs for the following call:
+    GameLocator::provideGame(this);
 	// lua
 	Pi::luaSerializer->FromJson(jsonObj);
 
 	Pi::luaSerializer->UninitTableRefs();
 
-	EmitPauseState(IsPaused());
 }
 
 void Game::ToJson(Json &jsonObj)
@@ -309,7 +312,7 @@ void Game::TimeStep(float step)
 {
 	PROFILE_SCOPED()
 	m_time += step; // otherwise planets lag time accel changes by a frame
-	if (m_state == State::HYPERSPACE && Pi::game->GetTime() >= m_hyperspaceEndTime)
+	if (m_state == State::HYPERSPACE && GetTime() >= m_hyperspaceEndTime)
 		m_time = m_hyperspaceEndTime;
 
 	m_space->TimeStep(step, GetTime());
@@ -319,7 +322,7 @@ void Game::TimeStep(float step)
 	SfxManager::TimeStepAll(step, Frame::GetRootFrameId());
 
 	if (m_state == State::HYPERSPACE) {
-		if (Pi::game->GetTime() >= m_hyperspaceEndTime) {
+		if (GetTime() >= m_hyperspaceEndTime) {
 			SwitchToNormalSpace();
 			m_player->EnterSystem();
 			RequestTimeAccel(TIMEACCEL_1X);
@@ -835,7 +838,7 @@ void Game::Views::Init(Game *game, const SystemPath &path)
 	RefCountedPtr<SectorCache::Slave> sectorCache = game->m_galaxy->NewSectorSlaveCache();
     size_t filled = game->m_galaxy->FillSectorCache(sectorCache, path, cacheRadius + 2);
     Output("SectorView cache pre-filled with %lu entries\n", filled);
-	m_sectorView = new SectorView(game->m_galaxy, sectorCache);
+	m_sectorView = new SectorView(path, game->m_galaxy, sectorCache);
 	m_worldView = new WorldView(game);
 	m_galacticView = new UIView("GalacticView");
 	m_systemView = new SystemView(game);
@@ -845,7 +848,7 @@ void Game::Views::Init(Game *game, const SystemPath &path)
 	m_deathView = new DeathView(game, Pi::renderer);
 
 #if WITH_OBJECTVIEWER
-	m_objectViewerView = new ObjectViewerView();
+	m_objectViewerView = new ObjectViewerView(game);
 #endif
 
 	SetRenderer(Pi::renderer);
@@ -867,7 +870,7 @@ void Game::Views::LoadFromJson(const Json &jsonObj, Game *game, const SystemPath
 	m_deathView = new DeathView(game, Pi::renderer);
 
 #if WITH_OBJECTVIEWER
-	m_objectViewerView = new ObjectViewerView();
+	m_objectViewerView = new ObjectViewerView(game);
 #endif
 
 	SetRenderer(Pi::renderer);
@@ -900,10 +903,8 @@ void Game::CreateViews(const SystemPath &path)
 {
 	Pi::SetView(nullptr);
 
-	// XXX views expect Pi::game and Pi::player to exist
-	Pi::game = this;
-	Pi::player = m_player.get();
-
+	// XXX views expect Game and Player to exist
+	//Output("Pi::game %p; Pi::player %p; StarSystem %p\n", this, GetPlayer(), m_space->GetStarSystem().Get());
 	m_gameViews.reset(new Views);
 	m_gameViews->Init(this, path);
 
@@ -914,10 +915,6 @@ void Game::CreateViews(const SystemPath &path)
 void Game::LoadViewsFromJson(const Json &jsonObj, const SystemPath &path)
 {
 	Pi::SetView(nullptr);
-
-	// XXX views expect Pi::game and Pi::player to exist
-	Pi::game = this;
-	Pi::player = m_player.get();
 
 	m_gameViews.reset(new Views);
 	m_gameViews->LoadFromJson(jsonObj, this, path);

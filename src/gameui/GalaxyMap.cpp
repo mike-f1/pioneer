@@ -2,7 +2,9 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "GalaxyMap.h"
+
 #include "Game.h"
+#include "GameLocator.h"
 #include "LabelOverlay.h"
 #include "Pi.h"
 #include "galaxy/Galaxy.h"
@@ -45,7 +47,7 @@ namespace GameUI {
 
 	void GalaxyMap::Update()
 	{
-		const Galaxy *galaxy = Pi::game->GetGalaxy().Get();
+		const Galaxy *galaxy = GameLocator::getGame()->GetGalaxy().Get();
 		const float inv_sector_size = 1.0 / Sector::SIZE;
 		const float radius_sectors = galaxy->GALAXY_RADIUS * inv_sector_size;
 

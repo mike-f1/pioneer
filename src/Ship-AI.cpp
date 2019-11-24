@@ -1,18 +1,19 @@
 // Copyright © 2008-2019 Pioneer Developers. See AUTHORS.txt for details
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
+#include "Ship.h"
+
 #include "EnumStrings.h"
 #include "Frame.h"
-#include "LuaConstants.h"
+#include "Game.h"
+#include "GameLocator.h"
 #include "LuaEvent.h"
 #include "Pi.h"
 #include "Planet.h"
 #include "Player.h"
-#include "Ship.h"
 #include "ShipAICmd.h"
 #include "Space.h"
 #include "SpaceStation.h"
-#include "libs.h"
 #include "perlin.h"
 #include "ship/Propulsion.h"
 
@@ -24,7 +25,7 @@ bool Ship::AITimeStep(float timeStep)
 
 	m_decelerating = false;
 	if (!m_curAICmd) {
-		if (this == Pi::player) return true;
+		if (this == GameLocator::getGame()->GetPlayer()) return true;
 
 		// just in case the AI left it on
 		ClearThrusterState();

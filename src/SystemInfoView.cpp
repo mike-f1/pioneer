@@ -5,7 +5,6 @@
 
 #include "Game.h"
 #include "Lang.h"
-#include "Pi.h"
 #include "Player.h"
 #include "SectorView.h"
 #include "Space.h"
@@ -33,7 +32,7 @@ SystemInfoView::SystemInfoView(Game *game) :
 	m_refresh = REFRESH_NONE;
 	m_unexplored = true;
 	int trade_computer = 0;
-	Pi::player->Properties().Get("trade_computer_cap", trade_computer);
+	m_game->GetPlayer()->Properties().Get("trade_computer_cap", trade_computer);
 	m_hasTradeComputer = bool(trade_computer);
 }
 
@@ -50,13 +49,13 @@ void SystemInfoView::OnBodySelected(SystemBody *b)
 
 	if (path == m_selectedBodyPath) {
 		if (isCurrentSystem) {
-			Pi::player->SetNavTarget(0);
+			m_game->GetPlayer()->SetNavTarget(0);
 		}
 	} else {
 		if (isCurrentSystem) {
 			Body *body = m_game->GetSpace()->FindBodyForPath(&path);
 			if (body != 0)
-				Pi::player->SetNavTarget(body);
+				m_game->GetPlayer()->SetNavTarget(body);
 		} else if (b->GetSuperType() == GalaxyEnums::BodySuperType::SUPERTYPE_STAR) { // We allow hyperjump to any star of the system
 			m_game->GetSectorView()->SetSelected(path);
 		}
@@ -162,7 +161,7 @@ void SystemInfoView::UpdateEconomyTab()
 
 	// check if trade analyzer is installed
 	int trade_computer = 0;
-	Pi::player->Properties().Get("trade_computer_cap", trade_computer);
+	m_game->GetPlayer()->Properties().Get("trade_computer_cap", trade_computer);
 
 	// we might be here because we changed equipment, update that as well:
 	m_hasTradeComputer = bool(trade_computer);
@@ -535,7 +534,7 @@ SystemInfoView::RefreshType SystemInfoView::NeedsRefresh()
 
 	// If we changed equipment since last refresh
 	int trade_computer = 0;
-	Pi::player->Properties().Get("trade_computer_cap", trade_computer);
+	m_game->GetPlayer()->Properties().Get("trade_computer_cap", trade_computer);
 	if (m_hasTradeComputer != (trade_computer != 0))
 		return REFRESH_ALL;
 
@@ -556,7 +555,7 @@ SystemInfoView::RefreshType SystemInfoView::NeedsRefresh()
 					// so no check for IsShownInInfoView() needed
 		}
 	} else {
-		Body *navTarget = Pi::player->GetNavTarget();
+		Body *navTarget = m_game->GetPlayer()->GetNavTarget();
 		if (navTarget && (navTarget->GetSystemBody() != nullptr) && IsShownInInfoView(navTarget->GetSystemBody())) {
 			// Navigation target is something we show in the info view
 			if (navTarget->GetSystemBody()->GetPath() != m_selectedBodyPath)
@@ -618,7 +617,7 @@ void SystemInfoView::UpdateIconSelections()
 		RefCountedPtr<StarSystem> currentSys = m_game->GetSpace()->GetStarSystem();
 		if (currentSys && currentSys->GetPath() == m_system->GetPath()) {
 			//navtarget can be only set in current system
-			Body *navtarget = Pi::player->GetNavTarget();
+			Body *navtarget = m_game->GetPlayer()->GetNavTarget();
 			if (navtarget &&
 				(navtarget->IsType(Body::STAR) ||
 					navtarget->IsType(Body::PLANET) ||

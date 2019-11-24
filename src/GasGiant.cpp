@@ -7,6 +7,7 @@
 #include "Game.h"
 #include "GameConfig.h"
 #include "GameConfSingleton.h"
+#include "GameLocator.h"
 #include "Pi.h"
 #include "galaxy/AtmosphereParameters.h"
 #include "galaxy/SystemBody.h"
@@ -643,7 +644,7 @@ void GasGiant::Update()
 	PROFILE_SCOPED()
 	// assuming that we haven't already generated the texture from the render call.
 	if (m_timeDelay > 0.0f) {
-		m_timeDelay -= Pi::game->GetTimeStep();
+		m_timeDelay -= GameLocator::getGame()->GetTimeStep();
 		if (m_timeDelay <= 0.0001f && !m_surfaceTexture.Valid()) {
 			// Use the fact that we have a patch as a latch to prevent repeat generation requests.
 			if (m_patches[0].get())

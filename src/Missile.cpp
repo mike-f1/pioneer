@@ -4,9 +4,9 @@
 #include "Missile.h"
 
 #include "Game.h"
+#include "GameLocator.h"
 #include "Lang.h"
 #include "LuaEvent.h"
-#include "Pi.h"
 #include "Random.h"
 #include "RandomSingleton.h"
 #include "Sfx.h"
@@ -147,7 +147,7 @@ void Missile::TimeStepUpdate(const float timeStep)
 	if (!m_owner) {
 		Explode();
 	} else if (m_armed) {
-		Space::BodyNearList nearby = Pi::game->GetSpace()->GetBodiesMaybeNear(this, MISSILE_DETECTION_RADIUS);
+		Space::BodyNearList nearby = GameLocator::getGame()->GetSpace()->GetBodiesMaybeNear(this, MISSILE_DETECTION_RADIUS);
 		for (Body *body : nearby) {
 			if (body == this) continue;
 			double dist = (body->GetPosition() - GetPosition()).Length();
@@ -177,13 +177,13 @@ bool Missile::OnDamage(Object *attacker, float kgDamage, const CollisionContact 
 
 void Missile::Explode()
 {
-	Pi::game->GetSpace()->KillBody(this);
+	GameLocator::getGame()->GetSpace()->KillBody(this);
 
 	const double damageRadius = 200.0;
 	const double kgDamage = 10000.0;
 
 	CollisionContact dummy;
-	Space::BodyNearList nearby = Pi::game->GetSpace()->GetBodiesMaybeNear(this, damageRadius);
+	Space::BodyNearList nearby = GameLocator::getGame()->GetSpace()->GetBodiesMaybeNear(this, damageRadius);
 	for (Body *body : nearby) {
 		if (body->GetFrame() != GetFrame()) continue;
 		double dist = (body->GetPosition() - GetPosition()).Length();

@@ -6,6 +6,8 @@
 #include "CameraController.h"
 #include "WorldView.h"
 
+#include "Game.h"
+#include "GameLocator.h"
 #include "Pi.h"
 #include "Player.h"
 #include "PlayerShipController.h"
@@ -77,14 +79,14 @@ void ShipViewController::SaveToJson(Json &jsonObj)
 	m_flybyCameraController->SaveToJson(jsonObj);
 }
 
-void ShipViewController::Init()
+void ShipViewController::Init(Player *player)
 {
 	RefCountedPtr<CameraContext> m_cameraContext = parentView->GetCameraContext();
-	m_internalCameraController.reset(new InternalCameraController(m_cameraContext, Pi::player));
-	m_externalCameraController.reset(new ExternalCameraController(m_cameraContext, Pi::player));
-	m_siderealCameraController.reset(new SiderealCameraController(m_cameraContext, Pi::player));
-	m_flybyCameraController.reset(new FlyByCameraController(m_cameraContext, Pi::player));
-	SetCamType(m_camType); //set the active camera
+	m_internalCameraController.reset(new InternalCameraController(m_cameraContext, player));
+	m_externalCameraController.reset(new ExternalCameraController(m_cameraContext, player));
+	m_siderealCameraController.reset(new SiderealCameraController(m_cameraContext, player));
+	m_flybyCameraController.reset(new FlyByCameraController(m_cameraContext,player));
+	SetCamType(player, m_camType); //set the active camera
 }
 
 void ShipViewController::Activated()
@@ -94,7 +96,7 @@ void ShipViewController::Activated()
 	m_onMouseWheelCon =
 		Pi::input.onMouseWheel.connect(sigc::mem_fun(this, &ShipViewController::MouseWheel));
 
-	Pi::player->GetPlayerController()->SetMouseForRearView(GetCamType() == CAM_INTERNAL && m_internalCameraController->GetMode() == InternalCameraController::MODE_REAR);
+	GameLocator::getGame()->GetPlayer()->GetPlayerController()->SetMouseForRearView(GetCamType() == CAM_INTERNAL && m_internalCameraController->GetMode() == InternalCameraController::MODE_REAR);
 }
 
 void ShipViewController::Deactivated()
@@ -104,17 +106,12 @@ void ShipViewController::Deactivated()
 	m_onMouseWheelCon.disconnect();
 }
 
-void ShipViewController::SetCamType(enum CamType c)
+void ShipViewController::SetCamType(Player *player, enum CamType c)
 {
-	// TODO: add collision testing for external cameras to avoid clipping through
-	// stations / spaceports the ship is docked to.
-
-	m_camType = c;
-
 	switch (m_camType) {
 	case CAM_INTERNAL:
 		m_activeCameraController = m_internalCameraController.get();
-		Pi::player->OnCockpitActivated();
+		player->OnCockpitActivated();
 		break;
 	case CAM_EXTERNAL:
 		m_activeCameraController = m_externalCameraController.get();
@@ -131,11 +128,20 @@ void ShipViewController::SetCamType(enum CamType c)
 		headtracker_input_priority = false;
 	}
 
-	Pi::player->GetPlayerController()->SetMouseForRearView(m_camType == CAM_INTERNAL && m_internalCameraController->GetMode() == InternalCameraController::MODE_REAR);
+	player->GetPlayerController()->SetMouseForRearView(m_camType == CAM_INTERNAL && m_internalCameraController->GetMode() == InternalCameraController::MODE_REAR);
 
 	m_activeCameraController->Reset();
 
 	onChangeCamType.emit();
+}
+
+void ShipViewController::SetCamType(enum CamType c)
+{
+	// TODO: add collision testing for external cameras to avoid clipping through
+	// stations / spaceports the ship is docked to.
+
+	// XXX During initialization, GameLocator is not reliable
+	SetCamType(GameLocator::getGame()->GetPlayer(), c);
 }
 
 void ShipViewController::ChangeInternalCameraMode(InternalCameraController::Mode m)
@@ -144,7 +150,7 @@ void ShipViewController::ChangeInternalCameraMode(InternalCameraController::Mode
 		// TODO: find a way around this, or move it to a dedicated system.
 		Sound::PlaySfx("Click", 0.3, 0.3, false);
 	m_internalCameraController->SetMode(m);
-	Pi::player->GetPlayerController()->SetMouseForRearView(m_camType == CAM_INTERNAL && m_internalCameraController->GetMode() == InternalCameraController::MODE_REAR);
+	GameLocator::getGame()->GetPlayer()->GetPlayerController()->SetMouseForRearView(m_camType == CAM_INTERNAL && m_internalCameraController->GetMode() == InternalCameraController::MODE_REAR);
 }
 
 void ShipViewController::Update()

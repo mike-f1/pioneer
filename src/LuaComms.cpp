@@ -4,9 +4,9 @@
 #include "LuaComms.h"
 
 #include "Game.h"
+#include "GameLocator.h"
 #include "GameLog.h"
 #include "LuaObject.h"
-#include "Pi.h"
 
 /*
  * Interface: Comms
@@ -41,7 +41,7 @@
  */
 static int l_comms_message(lua_State *l)
 {
-	if (!Pi::game || !Pi::game->log)
+	if (!GameLocator::getGame() || !GameLocator::getGame()->log)
 		luaL_error(l, "Control panel does not exist.");
 
 	std::string msg = luaL_checkstring(l, 1);
@@ -50,7 +50,7 @@ static int l_comms_message(lua_State *l)
 	if (lua_gettop(l) >= 2)
 		from = luaL_checkstring(l, 2);
 
-	Pi::game->log->Add(from, msg, GameLog::Priority::PRIORITY_NORMAL);
+	GameLocator::getGame()->log->Add(from, msg, GameLog::Priority::PRIORITY_NORMAL);
 	return 0;
 }
 
@@ -84,7 +84,7 @@ static int l_comms_message(lua_State *l)
  */
 static int l_comms_important_message(lua_State *l)
 {
-	if (!Pi::game || !Pi::game->log)
+	if (!GameLocator::getGame() || !GameLocator::getGame()->log)
 		luaL_error(l, "Control panel does not exist.");
 
 	std::string msg = luaL_checkstring(l, 1);
@@ -93,7 +93,7 @@ static int l_comms_important_message(lua_State *l)
 	if (lua_gettop(l) >= 2)
 		from = luaL_checkstring(l, 2);
 
-	Pi::game->log->Add(from, msg, GameLog::Priority::PRIORITY_ALERT);
+	GameLocator::getGame()->log->Add(from, msg, GameLog::Priority::PRIORITY_ALERT);
 	return 0;
 }
 

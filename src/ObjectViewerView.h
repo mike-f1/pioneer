@@ -4,16 +4,17 @@
 #ifndef _OBJECTVIEWERVIEW_H
 #define _OBJECTVIEWERVIEW_H
 
-#include "Camera.h"
 #include "UIView.h"
 #include "gui/Gui.h"
 #include "libs.h"
 
 class Body;
+class Camera;
+class Game;
 
 class ObjectViewerView : public UIView {
 public:
-	ObjectViewerView();
+	ObjectViewerView(Game *game);
 	virtual void Update();
 	virtual void Draw3D();
 

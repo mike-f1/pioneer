@@ -4,6 +4,7 @@
 #include "HyperspaceCloud.h"
 
 #include "Game.h"
+#include "GameLocator.h"
 #include "GameSaveError.h"
 #include "Json.h"
 #include "Lang.h"
@@ -30,7 +31,7 @@ HyperspaceCloud::HyperspaceCloud(Ship *s, double dueDate, bool isArrival) :
 	SetPhysRadius(0.0);
 	SetClipRadius(1200.0);
 	m_vel = (s ? s->GetVelocity() : vector3d(0.0));
-	m_birthdate = Pi::game->GetTime();
+	m_birthdate = GameLocator::getGame()->GetTime();
 	m_due = dueDate;
 	SetIsArrival(isArrival);
 	InitGraphics();
@@ -102,7 +103,7 @@ void HyperspaceCloud::TimeStepUpdate(const float timeStep)
 
 	SetPosition(GetPosition() + m_vel * timeStep);
 
-	if (m_isArrival && m_ship && (m_due < Pi::game->GetTime())) {
+	if (m_isArrival && m_ship && (m_due < GameLocator::getGame()->GetTime())) {
 		// spawn ship
 		// XXX some overlap with Space::DoHyperspaceTo(). should probably all
 		// be moved into EvictShip()
@@ -110,10 +111,13 @@ void HyperspaceCloud::TimeStepUpdate(const float timeStep)
 		m_ship->SetVelocity(m_vel);
 		m_ship->SetOrient(matrix3x3d::Identity());
 		m_ship->SetFrame(GetFrame());
-		Pi::game->GetSpace()->AddBody(m_ship);
+		GameLocator::getGame()->GetSpace()->AddBody(m_ship);
 
-		if (Pi::player->GetNavTarget() == this && !Pi::player->GetCombatTarget())
-			Pi::player->SetCombatTarget(m_ship, Pi::player->GetSetSpeedTarget() == this);
+		if (GameLocator::getGame()->GetPlayer()->GetNavTarget() == this &&
+			!GameLocator::getGame()->GetPlayer()->GetCombatTarget()) {
+			GameLocator::getGame()->GetPlayer()->SetCombatTarget(m_ship,
+				GameLocator::getGame()->GetPlayer()->GetSetSpeedTarget() == this);
+		}
 
 		m_ship->EnterSystem();
 
@@ -121,9 +125,9 @@ void HyperspaceCloud::TimeStepUpdate(const float timeStep)
 	}
 
 	// cloud expiration
-	if (m_birthdate + HYPERCLOUD_DURATION <= Pi::game->GetTime()) {
-		Pi::game->RemoveHyperspaceCloud(this);
-		Pi::game->GetSpace()->KillBody(this);
+	if (m_birthdate + HYPERCLOUD_DURATION <= GameLocator::getGame()->GetTime()) {
+		GameLocator::getGame()->RemoveHyperspaceCloud(this);
+		GameLocator::getGame()->GetSpace()->KillBody(this);
 		m_isBeingKilled = true;
 	}
 }
@@ -147,7 +151,7 @@ static void make_circle_thing(VertexArray &va, float radius, const Color &colCen
 void HyperspaceCloud::UpdateInterpTransform(double alpha)
 {
 	m_interpOrient = matrix3x3d::Identity();
-	const vector3d oldPos = GetPosition() - m_vel * Pi::game->GetTimeStep();
+	const vector3d oldPos = GetPosition() - m_vel * GameLocator::getGame()->GetTimeStep();
 	m_interpPos = alpha * GetPosition() + (1.0 - alpha) * oldPos;
 }
 
@@ -167,7 +171,7 @@ void HyperspaceCloud::Render(Renderer *renderer, const Camera *camera, const vec
 	renderer->SetTransform(trans * rot);
 
 	// precise to the rendered frame (better than PHYSICS_HZ granularity)
-	const double preciseTime = Pi::game->GetTime() + Pi::GetGameTickAlpha() * Pi::game->GetTimeStep();
+	const double preciseTime = GameLocator::getGame()->GetTime() + Pi::GetGameTickAlpha() * GameLocator::getGame()->GetTimeStep();
 
 	// Flickering gradient circle, departure clouds are red and arrival clouds blue
 	// XXX could just alter the scale instead of recreating the model

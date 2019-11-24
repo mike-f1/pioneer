@@ -5,11 +5,11 @@
 #include "EnumStrings.h"
 #include "Frame.h"
 #include "Game.h"
+#include "GameLocator.h"
 #include "LuaConstants.h"
 #include "LuaObject.h"
 #include "LuaUtils.h"
 #include "LuaVector.h"
-#include "Pi.h"
 #include "Space.h"
 #include "TerrainBody.h"
 #include "WorldView.h"
@@ -303,8 +303,9 @@ static int l_body_get_position_rel_to(lua_State *l)
 
 static int l_body_get_altitude_rel_to(lua_State *l)
 {
+	// XXX ??? Should it be used for every body or only for player?
 	const Body *other = LuaObject<Body>::CheckFromLua(2);
-	vector3d pos = Pi::player->GetPositionRelTo(other);
+	vector3d pos = GameLocator::getGame()->GetPlayer()->GetPositionRelTo(other);
 	double center_dist = pos.Length();
 	if (other && other->IsType(Object::TERRAINBODY)) {
 		const TerrainBody *terrain = static_cast<const TerrainBody *>(other);
@@ -606,7 +607,7 @@ static int l_body_find_nearest_to(lua_State *l)
 	Body *b = LuaObject<Body>::CheckFromLua(1);
 	Object::Type type = static_cast<Object::Type>(LuaConstants::GetConstantFromArg(l, "PhysicsObjectType", 2));
 
-	Body *nearest = Pi::game->GetSpace()->FindNearestTo(b, type);
+	Body *nearest = GameLocator::getGame()->GetSpace()->FindNearestTo(b, type);
 	LuaObject<Body>::PushToLua(nearest);
 
 	return 1;
@@ -654,7 +655,7 @@ static int l_body_get_phys_radius(lua_State *l)
 static int l_body_get_projected_screen_position(lua_State *l)
 {
 	Body *b = LuaObject<Body>::CheckFromLua(1);
-	WorldView *wv = Pi::game->GetWorldView();
+	WorldView *wv = GameLocator::getGame()->GetWorldView();
 	vector3d p = wv->WorldSpaceToScreenSpace(b);
 	return pushOnScreenPositionDirection(l, p);
 }
@@ -663,7 +664,7 @@ static int l_body_get_atmospheric_state(lua_State *l)
 {
 	Body *b = LuaObject<Body>::CheckFromLua(1);
 	//	const SystemBody *sb = b->GetSystemBody();
-	vector3d pos = Pi::player->GetPosition();
+	vector3d pos = GameLocator::getGame()->GetPlayer()->GetPosition();
 	double center_dist = pos.Length();
 	if (b->IsType(Object::PLANET)) {
 		double pressure, density;
@@ -686,7 +687,7 @@ static int l_body_get_label(lua_State *l)
 static int l_body_get_target_indicator_screen_position(lua_State *l)
 {
 	Body *b = LuaObject<Body>::CheckFromLua(1);
-	WorldView *wv = Pi::game->GetWorldView();
+	WorldView *wv = GameLocator::getGame()->GetWorldView();
 	vector3d p = wv->GetTargetIndicatorScreenPosition(b);
 	return pushOnScreenPositionDirection(l, p);
 }
@@ -735,7 +736,7 @@ static std::string _body_serializer(LuaWrappable *o)
 {
 	static char buf[256];
 	Body *b = static_cast<Body *>(o);
-	snprintf(buf, sizeof(buf), "%u\n", Pi::game->GetSpace()->GetIndexForBody(b));
+	snprintf(buf, sizeof(buf), "%u\n", GameLocator::getGame()->GetSpace()->GetIndexForBody(b));
 	return std::string(buf);
 }
 
@@ -745,20 +746,20 @@ static bool _body_deserializer(const char *pos, const char **next)
 	if (pos == *next) return false;
 	(*next)++; // skip newline
 
-	Body *body = Pi::game->GetSpace()->GetBodyByIndex(n);
+	Body *body = GameLocator::getGame()->GetSpace()->GetBodyByIndex(n);
 	return push_body_to_lua(body);
 }
 
 static void _body_to_json(Json &out, LuaWrappable *o)
 {
 	Body *b = static_cast<Body *>(o);
-	out = Json(Pi::game->GetSpace()->GetIndexForBody(b));
+	out = Json(GameLocator::getGame()->GetSpace()->GetIndexForBody(b));
 }
 
 static bool _body_from_json(const Json &obj)
 {
 	if (!obj.is_number_integer()) return false;
-	Body *body = Pi::game->GetSpace()->GetBodyByIndex(obj);
+	Body *body = GameLocator::getGame()->GetSpace()->GetBodyByIndex(obj);
 	return push_body_to_lua(body);
 }
 

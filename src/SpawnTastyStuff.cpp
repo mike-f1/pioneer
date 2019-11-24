@@ -7,6 +7,7 @@
 #include "CargoBody.h"
 #include "Frame.h"
 #include "Game.h"
+#include "GameLocator.h"
 #include "Lua.h"
 #include "LuaObject.h"
 #include "Pi.h"
@@ -22,7 +23,7 @@ void MiningLaserSpawnTastyStuff(FrameId fId, Body *shooter, const SystemBody *as
 	lua_State *l = Lua::manager->GetLuaState();
 
 	// lua cant push "const SystemBody", needs to convert to non-const
-	RefCountedPtr<StarSystem> s = Pi::game->GetGalaxy()->GetStarSystem(asteroid->GetPath());
+	RefCountedPtr<StarSystem> s = GameLocator::getGame()->GetGalaxy()->GetStarSystem(asteroid->GetPath());
 	SystemBody *liveasteroid = s->GetBodyByPath(asteroid->GetPath());
 
 	// this is an adapted version of "CallMethod", because;
@@ -47,5 +48,5 @@ void MiningLaserSpawnTastyStuff(FrameId fId, Body *shooter, const SystemBody *as
 	vector3d dir = pos.Normalized();
 	dir.ArbRotate(vector3d(x, 1 - x, 0), RandomSingleton::getInstance().Double() - .5);
 	cargo->SetVelocity(RandomSingleton::getInstance().Double(100.0, 200.0) * dir);
-	Pi::game->GetSpace()->AddBody(cargo);
+	GameLocator::getGame()->GetSpace()->AddBody(cargo);
 }

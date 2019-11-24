@@ -6,6 +6,7 @@
 #include "Game.h"
 #include "GameConfig.h"
 #include "GameConfSingleton.h"
+#include "GameLocator.h"
 #include "GameSaveError.h"
 #include "KeyBindings.h"
 #include "LuaConstants.h"
@@ -46,7 +47,7 @@ enum DetailSelection {
 static const float ZOOM_SPEED = 15;
 static const float WHEEL_SENSITIVITY = .03f; // Should be a variable in user settings.
 
-SectorView::SectorView(RefCountedPtr<Galaxy> galaxy, RefCountedPtr<SectorCache::Slave> sectorcache) :
+SectorView::SectorView(const SystemPath &path, RefCountedPtr<Galaxy> galaxy, RefCountedPtr<SectorCache::Slave> sectorcache) :
 	UIView(),
 	m_galaxy(galaxy),
 	m_sectorCache(sectorcache)
@@ -63,7 +64,8 @@ SectorView::SectorView(RefCountedPtr<Galaxy> galaxy, RefCountedPtr<SectorCache::
 
 	m_inSystem = true;
 
-	RefCountedPtr<StarSystem> system = Pi::game->GetSpace()->GetStarSystem();
+	// XXX Simplify?
+	RefCountedPtr<StarSystem> system = galaxy->GetStarSystem(path);
 	m_current = system->GetPath();
 	assert(!m_current.IsSectorPath());
 	m_current = m_current.SystemOnly();
@@ -598,9 +600,9 @@ void SectorView::AutoRoute(const SystemPath &start, const SystemPath &target, st
 	const RefCountedPtr<const Sector> target_sec = m_galaxy->GetSector(target);
 
 	// Get the player's hyperdrive from Lua, later used to calculate the duration between systems
-	const ScopedTable hyperdrive = ScopedTable(LuaObject<Player>::CallMethod<LuaRef>(Pi::player, "GetEquip", "engine", 1));
+	const ScopedTable hyperdrive = ScopedTable(LuaObject<Player>::CallMethod<LuaRef>(GameLocator::getGame()->GetPlayer(), "GetEquip", "engine", 1));
 	// Cache max range so it doesn't get recalculated every time we call GetDuration
-	const float max_range = hyperdrive.CallMethod<float>("GetMaximumRange", Pi::player);
+	const float max_range = hyperdrive.CallMethod<float>("GetMaximumRange", GameLocator::getGame()->GetPlayer());
 
 	const float dist = Sector::DistanceBetween(start_sec, start.systemIndex, target_sec, target.systemIndex);
 
@@ -686,7 +688,7 @@ void SectorView::AutoRoute(const SystemPath &start, const SystemPath &target, st
 			const float v_dist_ly = Sector::DistanceBetween(closest_sec, closest.systemIndex, v_sec, v.systemIndex);
 
 			// in this case, duration is used for the distance since that's what we are optimizing
-			float v_dist = hyperdrive.CallMethod<float>("GetDuration", Pi::player, v_dist_ly, max_range);
+			float v_dist = hyperdrive.CallMethod<float>("GetDuration", GameLocator::getGame()->GetPlayer(), v_dist_ly, max_range);
 
 			v_dist += path_dist[closest_i]; // we want the total duration from start to this node
 			if (v_dist < path_dist[it]) {
@@ -1063,12 +1065,12 @@ void SectorView::Update()
 	PROFILE_SCOPED()
 	SystemPath last_current = m_current;
 
-	if (Pi::game->IsNormalSpace()) {
+	if (GameLocator::getGame()->IsNormalSpace()) {
 		m_inSystem = true;
-		m_current = Pi::game->GetSpace()->GetStarSystem()->GetPath();
+		m_current = GameLocator::getGame()->GetSpace()->GetStarSystem()->GetPath();
 	} else {
 		m_inSystem = false;
-		m_current = Pi::player->GetHyperspaceDest();
+		m_current = GameLocator::getGame()->GetPlayer()->GetHyperspaceDest();
 	}
 
 	const float frameTime = Pi::GetFrameTime();
@@ -1175,7 +1177,7 @@ void SectorView::Update()
 
 	ShrinkCache();
 
-	m_playerHyperspaceRange = LuaObject<Player>::CallMethod<float>(Pi::player, "GetHyperspaceRange");
+	m_playerHyperspaceRange = LuaObject<Player>::CallMethod<float>(GameLocator::getGame()->GetPlayer(), "GetHyperspaceRange");
 
 	if (!m_jumpSphere) {
 		Graphics::RenderStateDesc rsd;

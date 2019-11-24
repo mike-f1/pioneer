@@ -4,12 +4,12 @@
 #include "EnumStrings.h"
 #include "Frame.h"
 #include "Game.h"
+#include "GameLocator.h"
 #include "LuaConstants.h"
 #include "LuaObject.h"
 #include "LuaPiGui.h"
 #include "LuaUtils.h"
 #include "LuaVector.h"
-#include "Pi.h"
 #include "Player.h"
 #include "SectorView.h"
 #include "TerrainBody.h"
@@ -180,8 +180,8 @@ static int l_get_hyperspace_target(lua_State *l)
 {
 	Player *player = LuaObject<Player>::CheckFromLua(1);
 	SystemPath target;
-	if (Pi::game->IsNormalSpace())
-		target = Pi::game->GetSectorView()->GetHyperspaceTarget();
+	if (GameLocator::getGame()->IsNormalSpace())
+		target = GameLocator::getGame()->GetSectorView()->GetHyperspaceTarget();
 	else
 		target = player->GetHyperspaceDest();
 	LuaObject<SystemPath>::PushToLua(target);
@@ -211,13 +211,13 @@ static int l_get_hyperspace_target(lua_State *l)
 static int l_set_hyperspace_target(lua_State *l)
 {
 	LuaObject<Player>::CheckFromLua(1);
-	if (Pi::game->IsNormalSpace()) {
+	if (GameLocator::getGame()->IsNormalSpace()) {
 		const SystemPath path = *LuaObject<SystemPath>::CheckFromLua(2);
 		if (!path.IsSystemPath()) {
 			if (!path.IsBodyPath()) {
 				return luaL_error(l, "Player:SetHyperspaceTarget() -- second parameter is not a system path or the path of a star");
 			}
-			RefCountedPtr<StarSystem> sys = Pi::game->GetGalaxy()->GetStarSystem(path);
+			RefCountedPtr<StarSystem> sys = GameLocator::getGame()->GetGalaxy()->GetStarSystem(path);
 			// Lua should never be able to get an invalid SystemPath
 			// (note: this may change if it becomes possible to remove systems during the game)
 			assert(path.bodyIndex < sys->GetNumBodies());
@@ -225,7 +225,7 @@ static int l_set_hyperspace_target(lua_State *l)
 			if (sbody->GetSuperType() != GalaxyEnums::BodySuperType::SUPERTYPE_STAR)
 				return luaL_error(l, "Player:SetHyperspaceTarget() -- second parameter is not a system path or the path of a star");
 		}
-		Pi::game->GetSectorView()->SetHyperspaceTarget(path);
+		GameLocator::getGame()->GetSectorView()->SetHyperspaceTarget(path);
 		return 0;
 	} else
 		return luaL_error(l, "Player:SetHyperspaceTarget() cannot be used while in hyperspace");
@@ -234,7 +234,7 @@ static int l_set_hyperspace_target(lua_State *l)
 static int l_get_mouse_direction(lua_State *l)
 {
 	//		Player *player = LuaObject<Player>::CheckFromLua(1);
-	LuaPush<vector3d>(l, Pi::game->GetWorldView()->GetMouseDirection());
+	LuaPush<vector3d>(l, GameLocator::getGame()->GetWorldView()->GetMouseDirection());
 	return 1;
 }
 
@@ -482,7 +482,7 @@ static int l_get_heading_pitch_roll(lua_State *l)
 		return 0;
 	}
 
-	std::tuple<double, double, double> res = Pi::game->GetWorldView()->CalculateHeadingPitchRoll(pt);
+	std::tuple<double, double, double> res = GameLocator::getGame()->GetWorldView()->CalculateHeadingPitchRoll(pt);
 	LuaPush(l, std::get<0>(res));
 	LuaPush(l, std::get<1>(res));
 	LuaPush(l, std::get<2>(res));
@@ -513,8 +513,9 @@ static int l_toggle_rotation_damping(lua_State *l)
 
 static int l_get_gps(lua_State *l)
 {
+	// XXX: Should be applied to every body?
 	Player *player = LuaObject<Player>::CheckFromLua(1);
-	vector3d pos = Pi::player->GetPosition();
+	vector3d pos = player->GetPosition();
 	double center_dist = pos.Length();
 	FrameId playerFrameId = player->GetFrame();
 	Frame *playerFrame = Frame::GetFrame(playerFrameId);

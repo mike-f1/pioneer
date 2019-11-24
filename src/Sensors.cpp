@@ -5,8 +5,8 @@
 
 #include "Body.h"
 #include "Game.h"
+#include "GameLocator.h"
 #include "HudTrail.h"
-#include "Pi.h"
 #include "Player.h"
 #include "Ship.h"
 #include "Space.h"
@@ -99,13 +99,13 @@ Sensors::IFF Sensors::CheckIFF(Body *other)
 void Sensors::Update(float time)
 {
 	PROFILE_SCOPED();
-	if (m_owner != Pi::player) return;
+	if (m_owner != GameLocator::getGame()->GetPlayer()) return;
 
 	PopulateStaticContacts(); //no need to do all the time
 
 	//Find nearby contacts, same range as radar scanner. It should use these
 	//contacts, worldview labels too.
-	Space::BodyNearList nearby = Pi::game->GetSpace()->GetBodiesMaybeNear(m_owner, 100000.0f);
+	Space::BodyNearList nearby = GameLocator::getGame()->GetSpace()->GetBodiesMaybeNear(m_owner, 100000.0f);
 	for (Body *body : nearby) {
 		if (body == m_owner || !body->IsType(Object::SHIP)) continue;
 		if (body->IsDead()) continue;
@@ -162,7 +162,7 @@ void Sensors::ResetTrails()
 {
 	PROFILE_SCOPED();
 	for (auto it = m_radarContacts.begin(); it != m_radarContacts.end(); ++it)
-		it->trail->Reset(Pi::player->GetFrame());
+		it->trail->Reset(GameLocator::getGame()->GetPlayer()->GetFrame());
 }
 
 void Sensors::PopulateStaticContacts()
@@ -170,7 +170,7 @@ void Sensors::PopulateStaticContacts()
 	PROFILE_SCOPED();
 	m_staticContacts.clear();
 
-	for (Body *b : Pi::game->GetSpace()->GetBodies()) {
+	for (Body *b : GameLocator::getGame()->GetSpace()->GetBodies()) {
 		switch (b->GetType()) {
 		case Object::STAR:
 		case Object::PLANET:

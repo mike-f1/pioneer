@@ -8,6 +8,7 @@
 #include "EnumStrings.h"
 #include "Frame.h"
 #include "Game.h"
+#include "GameLocator.h"
 #include "GameLog.h"
 #include "GameSaveError.h"
 #include "HeatGradientPar.h"
@@ -18,9 +19,9 @@
 #include "LuaUtils.h"
 #include "Missile.h"
 #include "NavLights.h"
-#include "Pi.h"
+#include "Pi.h" // <-- Only for 1 occurence of Pi::renderer
 #include "Planet.h"
-#include "Player.h" // <-- Here only for 1 occurence of "Pi::player" in Ship::Explode
+#include "Player.h" // <-- Here only for 1 occurence of "GameLocator::getGame()->GetPlayer()" in Ship::Explode
 #include "Random.h"
 #include "RandomSingleton.h"
 #include "Sensors.h"
@@ -456,7 +457,7 @@ vector3d Ship::CalcAtmoTorque() const
 	vector3d fAtmoTorque = vector3d(0.0);
 
 	if (GetVelocity().Length() > 100) { //don't apply torque at minimal speeds
-		fAtmoTorque = m_drag * m_torqueDir * ((m_topCrossSec + m_sideCrossSec) / (m_frontCrossSec * 4)) * 0.3 * m_aeroStabilityMultiplier * Pi::game->GetInvTimeAccelRate();
+		fAtmoTorque = m_drag * m_torqueDir * ((m_topCrossSec + m_sideCrossSec) / (m_frontCrossSec * 4)) * 0.3 * m_aeroStabilityMultiplier * GameLocator::getGame()->GetInvTimeAccelRate();
 	}
 
 	return fAtmoTorque;
@@ -536,15 +537,15 @@ bool Ship::OnCollision(Object *b, Uint32 flags, double relVel)
 	if (cargoscoop_cap > 0 && b->IsType(Object::CARGOBODY) && !dynamic_cast<Body *>(b)->IsDead()) {
 		LuaRef item = dynamic_cast<CargoBody *>(b)->GetCargoType();
 		if (LuaObject<Ship>::CallMethod<int>(this, "AddEquip", item) > 0) { // try to add it to the ship cargo.
-			Pi::game->GetSpace()->KillBody(dynamic_cast<Body *>(b));
+			GameLocator::getGame()->GetSpace()->KillBody(dynamic_cast<Body *>(b));
 			if (this->IsType(Object::PLAYER))
-				Pi::game->log->Add(stringf(Lang::CARGO_SCOOP_ACTIVE_1_TONNE_X_COLLECTED, formatarg("item", ScopedTable(item).CallMethod<std::string>("GetName"))));
+				GameLocator::getGame()->log->Add(stringf(Lang::CARGO_SCOOP_ACTIVE_1_TONNE_X_COLLECTED, formatarg("item", ScopedTable(item).CallMethod<std::string>("GetName"))));
 			// XXX SfxManager::Add(this, TYPE_SCOOP);
 			UpdateEquipStats();
 			return true;
 		}
 		if (this->IsType(Object::PLAYER))
-			Pi::game->log->Add(Lang::CARGO_SCOOP_ATTEMPTED);
+			GameLocator::getGame()->log->Add(Lang::CARGO_SCOOP_ATTEMPTED);
 	}
 
 	if (b->IsType(Object::PLANET)) {
@@ -578,8 +579,8 @@ void Ship::Explode()
 {
 	if (m_invulnerable) return;
 
-	Pi::game->GetSpace()->KillBody(this);
-	if (this->GetFrame() == Pi::player->GetFrame()) {
+	GameLocator::getGame()->GetSpace()->KillBody(this);
+	if (this->GetFrame() == GameLocator::getGame()->GetPlayer()->GetFrame()) {
 		SfxManager::AddExplosion(this);
 		Sound::BodyMakeNoise(this, "Explosion_1", 1.0f);
 	}
@@ -718,7 +719,7 @@ Ship::HyperjumpStatus Ship::InitiateHyperjumpTo(const SystemPath &dest, int warm
 {
 	if (!dest.HasValidSystem() || GetFlightState() != FLYING || warmup_time < 1)
 		return HYPERJUMP_SAFETY_LOCKOUT;
-	StarSystem *s = Pi::game->GetSpace()->GetStarSystem().Get();
+	StarSystem *s = GameLocator::getGame()->GetSpace()->GetStarSystem().Get();
 	if (s && s->GetPath().IsSameSystem(dest))
 		return HYPERJUMP_CURRENT_SYSTEM;
 
@@ -760,7 +761,7 @@ Ship::ECMResult Ship::UseECM()
 		// damage neaby missiles
 		const float ECM_RADIUS = 4000.0f;
 
-		Space::BodyNearList nearby = Pi::game->GetSpace()->GetBodiesMaybeNear(this, ECM_RADIUS);
+		Space::BodyNearList nearby = GameLocator::getGame()->GetSpace()->GetBodiesMaybeNear(this, ECM_RADIUS);
 		for (Body *body : nearby) {
 			if (body->GetFrame() != GetFrame()) continue;
 			if (!body->IsType(Object::MISSILE)) continue;
@@ -790,7 +791,7 @@ Missile *Ship::SpawnMissile(ShipType::Id missile_type, int power)
 	const vector3d vel = -40.0 * GetOrient().VectorZ();
 	missile->SetPosition(GetPosition() + pos);
 	missile->SetVelocity(GetVelocity() + vel);
-	Pi::game->GetSpace()->AddBody(missile);
+	GameLocator::getGame()->GetSpace()->AddBody(missile);
 	return missile;
 }
 
@@ -977,7 +978,7 @@ void Ship::DoThrusterSounds() const
 
 	// XXX sound logic could be part of a bigger class (ship internal sounds)
 	/* Ship engine noise. less loud inside */
-	float v_env = (Pi::game->GetWorldView()->shipView.GetCameraController()->IsExternal() ? 1.0f : 0.5f) * Sound::GetSfxVolume();
+	float v_env = (GameLocator::getGame()->GetWorldView()->shipView.GetCameraController()->IsExternal() ? 1.0f : 0.5f) * Sound::GetSfxVolume();
 	static Sound::Event sndev;
 	float volBoth = 0.0f;
 	volBoth += 0.5f * fabs(GetPropulsion()->GetLinThrusterState().y);
@@ -1057,18 +1058,18 @@ void Ship::UpdateAlertState()
 
 	// sanity check: m_lastAlertUpdate should not be in the future.
 	// reset and re-check if it is.
-	if (m_lastAlertUpdate > Pi::game->GetTime()) {
+	if (m_lastAlertUpdate > GameLocator::getGame()->GetTime()) {
 		m_lastAlertUpdate = 0;
 		m_shipNear = false;
 		m_shipFiring = false;
 	}
 
-	if (m_lastAlertUpdate + 1.0 <= Pi::game->GetTime()) {
+	if (m_lastAlertUpdate + 1.0 <= GameLocator::getGame()->GetTime()) {
 		// time to update the list again, once per second should suffice
-		m_lastAlertUpdate = Pi::game->GetTime();
+		m_lastAlertUpdate = GameLocator::getGame()->GetTime();
 
 		static const double ALERT_DISTANCE = 100000.0; // 100km
-		Space::BodyNearList nearbyBodies = Pi::game->GetSpace()->GetBodiesMaybeNear(this, ALERT_DISTANCE);
+		Space::BodyNearList nearbyBodies = GameLocator::getGame()->GetSpace()->GetBodiesMaybeNear(this, ALERT_DISTANCE);
 
 		// handle the results
 		for (auto i : nearbyBodies) {
@@ -1109,7 +1110,7 @@ void Ship::UpdateAlertState()
 			changed = true;
 		}
 		if (ship_is_firing) {
-			m_lastFiringAlert = Pi::game->GetTime();
+			m_lastFiringAlert = GameLocator::getGame()->GetTime();
 			SetAlertState(ALERT_SHIP_FIRING);
 			changed = true;
 		}
@@ -1120,7 +1121,7 @@ void Ship::UpdateAlertState()
 			SetAlertState(ALERT_NONE);
 			changed = true;
 		} else if (ship_is_firing) {
-			m_lastFiringAlert = Pi::game->GetTime();
+			m_lastFiringAlert = GameLocator::getGame()->GetTime();
 			SetAlertState(ALERT_SHIP_FIRING);
 			changed = true;
 		}
@@ -1131,8 +1132,8 @@ void Ship::UpdateAlertState()
 			SetAlertState(ALERT_NONE);
 			changed = true;
 		} else if (ship_is_firing) {
-			m_lastFiringAlert = Pi::game->GetTime();
-		} else if (m_lastFiringAlert + 60.0 <= Pi::game->GetTime()) {
+			m_lastFiringAlert = GameLocator::getGame()->GetTime();
+		} else if (m_lastFiringAlert + 60.0 <= GameLocator::getGame()->GetTime()) {
 			SetAlertState(ALERT_SHIP_NEARBY);
 			changed = true;
 		}
@@ -1214,7 +1215,7 @@ void Ship::StaticUpdate(const float timeStep)
 						LuaObject<Ship>::CallMethod(this, "AddEquip", hydrogen);
 						UpdateEquipStats();
 						if (this->IsType(Object::PLAYER)) {
-							Pi::game->log->Add(stringf(Lang::FUEL_SCOOP_ACTIVE_N_TONNES_H_COLLECTED,
+							GameLocator::getGame()->log->Add(stringf(Lang::FUEL_SCOOP_ACTIVE_N_TONNES_H_COLLECTED,
 								formatarg("quantity", LuaObject<Ship>::CallMethod<int>(this, "CountEquip", hydrogen))));
 						}
 						lua_pop(l, 3);
@@ -1241,7 +1242,7 @@ void Ship::StaticUpdate(const float timeStep)
 			if (LuaObject<Ship>::CallMethod<int>(this, "RemoveEquip", cargo.Sub(t))) {
 				LuaObject<Ship>::CallMethod<int>(this, "AddEquip", cargo.Sub("fertilizer"));
 				if (this->IsType(Object::PLAYER)) {
-					Pi::game->log->Add(Lang::CARGO_BAY_LIFE_SUPPORT_LOST);
+					GameLocator::getGame()->log->Add(Lang::CARGO_BAY_LIFE_SUPPORT_LOST);
 				}
 				lua_pop(l, 4);
 			} else
@@ -1439,7 +1440,7 @@ bool Ship::SpawnCargo(CargoBody *c_body) const
 	c_body->SetFrame(GetFrame());
 	c_body->SetPosition(GetPosition() + pos);
 	c_body->SetVelocity(GetVelocity() + GetOrient() * vector3d(0, -10, 0));
-	Pi::game->GetSpace()->AddBody(c_body);
+	GameLocator::getGame()->GetSpace()->AddBody(c_body);
 	return true;
 }
 
@@ -1464,11 +1465,11 @@ void Ship::EnterHyperspace()
 void Ship::OnEnterHyperspace()
 {
 	Sound::BodyMakeNoise(this, m_hyperspace.sounds.jump_sound.c_str(), 1.f);
-	m_hyperspaceCloud = new HyperspaceCloud(this, Pi::game->GetTime() + m_hyperspace.duration, false);
+	m_hyperspaceCloud = new HyperspaceCloud(this, GameLocator::getGame()->GetTime() + m_hyperspace.duration, false);
 	m_hyperspaceCloud->SetFrame(GetFrame());
 	m_hyperspaceCloud->SetPosition(GetPosition());
 
-	Space *space = Pi::game->GetSpace();
+	Space *space = GameLocator::getGame()->GetSpace();
 
 	space->RemoveBody(this);
 	space->AddBody(m_hyperspaceCloud);
@@ -1512,7 +1513,7 @@ void Ship::SetShipType(const ShipType::Id &shipId)
 	Init();
 	onFlavourChanged.emit();
 	if (IsType(Object::PLAYER))
-		Pi::game->GetWorldView()->shipView.GetCameraController()->Reset();
+		GameLocator::getGame()->GetWorldView()->shipView.GetCameraController()->Reset();
 	InitEquipSet();
 
 	LuaEvent::Queue("onShipTypeChanged", this);

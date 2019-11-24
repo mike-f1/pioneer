@@ -13,6 +13,7 @@
 #include "FileSystem.h"
 #include "Frame.h"
 #include "Game.h"
+#include "GameLocator.h"
 #include "GameConfig.h"
 #include "GameConfSingleton.h"
 #include "GameLog.h"
@@ -117,11 +118,9 @@ LuaNameGen *Pi::luaNameGen;
 ServerAgent *Pi::serverAgent;
 #endif
 Input Pi::input;
-Player *Pi::player;
 View *Pi::currentView;
 TransferPlanner *Pi::planner;
 LuaConsole *Pi::luaConsole;
-Game *Pi::game;
 float Pi::frameTime;
 bool Pi::doingMouseGrab;
 #if WITH_DEVKEYS
@@ -677,7 +676,7 @@ bool Pi::IsConsoleActive()
 
 void Pi::Quit()
 {
-	if (Pi::game) { // always end the game if there is one before quitting
+	if (GameLocator::getGame()) { // always end the game if there is one before quitting
 		Pi::EndGame();
 	}
 	if (Pi::ffmpegFile != nullptr) {
@@ -725,7 +724,7 @@ void Pi::OnChangeDetailLevel()
 void Pi::HandleKeyDown(SDL_Keysym *key)
 {
 	if (key->sym == SDLK_ESCAPE) {
-		if (Pi::game) {
+		if (GameLocator::getGame()) {
 			// only accessible once game started
 			HandleEscKey();
 		}
@@ -804,30 +803,30 @@ void Pi::HandleKeyDown(SDL_Keysym *key)
 #endif
 
 		case SDLK_F12: {
-			if (Pi::game) {
-				vector3d dir = -Pi::player->GetOrient().VectorZ();
+			if (GameLocator::getGame()) {
+				vector3d dir = -GameLocator::getGame()->GetPlayer()->GetOrient().VectorZ();
 				/* add test object */
 				if (input.KeyState(SDLK_RSHIFT)) {
 					Missile *missile =
-						new Missile(ShipType::MISSILE_GUIDED, Pi::player);
-					missile->SetOrient(Pi::player->GetOrient());
-					missile->SetFrame(Pi::player->GetFrame());
-					missile->SetPosition(Pi::player->GetPosition() + 50.0 * dir);
-					missile->SetVelocity(Pi::player->GetVelocity());
-					game->GetSpace()->AddBody(missile);
-					missile->AIKamikaze(Pi::player->GetCombatTarget());
+						new Missile(ShipType::MISSILE_GUIDED, GameLocator::getGame()->GetPlayer());
+					missile->SetOrient(GameLocator::getGame()->GetPlayer()->GetOrient());
+					missile->SetFrame(GameLocator::getGame()->GetPlayer()->GetFrame());
+					missile->SetPosition(GameLocator::getGame()->GetPlayer()->GetPosition() + 50.0 * dir);
+					missile->SetVelocity(GameLocator::getGame()->GetPlayer()->GetVelocity());
+					GameLocator::getGame()->GetSpace()->AddBody(missile);
+					missile->AIKamikaze(GameLocator::getGame()->GetPlayer()->GetCombatTarget());
 				} else if (input.KeyState(SDLK_LSHIFT)) {
-					SpaceStation *s = static_cast<SpaceStation *>(Pi::player->GetNavTarget());
+					SpaceStation *s = static_cast<SpaceStation *>(GameLocator::getGame()->GetPlayer()->GetNavTarget());
 					if (s) {
 						Ship *ship = new Ship(ShipType::POLICE);
 						int port = s->GetFreeDockingPort(ship);
 						if (port != -1) {
 							Output("Putting ship into station\n");
 							// Make police ship intent on killing the player
-							ship->AIKill(Pi::player);
-							ship->SetFrame(Pi::player->GetFrame());
+							ship->AIKill(GameLocator::getGame()->GetPlayer());
+							ship->SetFrame(GameLocator::getGame()->GetPlayer()->GetFrame());
 							ship->SetDockedWith(s, port);
-							game->GetSpace()->AddBody(ship);
+							GameLocator::getGame()->GetSpace()->AddBody(ship);
 						} else {
 							delete ship;
 							Output("No docking ports free dude\n");
@@ -839,9 +838,9 @@ void Pi::HandleKeyDown(SDL_Keysym *key)
 					Ship *ship = new Ship(ShipType::POLICE);
 					if (!input.KeyState(SDLK_LALT)) { //Left ALT = no AI
 						if (!input.KeyState(SDLK_LCTRL))
-							ship->AIFlyTo(Pi::player); // a less lethal option
+							ship->AIFlyTo(GameLocator::getGame()->GetPlayer()); // a less lethal option
 						else
-							ship->AIKill(Pi::player); // a really lethal option!
+							ship->AIKill(GameLocator::getGame()->GetPlayer()); // a really lethal option!
 					}
 					lua_State *l = Lua::manager->GetLuaState();
 					pi_lua_import(l, "Equipment");
@@ -850,11 +849,11 @@ void Pi::HandleKeyDown(SDL_Keysym *key)
 					LuaObject<Ship>::CallMethod<>(ship, "AddEquip", equip.Sub("misc").Sub("laser_cooling_booster"));
 					LuaObject<Ship>::CallMethod<>(ship, "AddEquip", equip.Sub("misc").Sub("atmospheric_shielding"));
 					lua_pop(l, 5);
-					ship->SetFrame(Pi::player->GetFrame());
-					ship->SetPosition(Pi::player->GetPosition() + 100.0 * dir);
-					ship->SetVelocity(Pi::player->GetVelocity());
+					ship->SetFrame(GameLocator::getGame()->GetPlayer()->GetFrame());
+					ship->SetPosition(GameLocator::getGame()->GetPlayer()->GetPosition() + 100.0 * dir);
+					ship->SetVelocity(GameLocator::getGame()->GetPlayer()->GetVelocity());
 					ship->UpdateEquipStats();
-					game->GetSpace()->AddBody(ship);
+					GameLocator::getGame()->GetSpace()->AddBody(ship);
 				}
 			}
 			break;
@@ -862,7 +861,7 @@ void Pi::HandleKeyDown(SDL_Keysym *key)
 #endif /* DEVKEYS */
 #if WITH_OBJECTVIEWER
 		case SDLK_F10:
-			Pi::SetView(Pi::game->GetObjectViewerView());
+			Pi::SetView(GameLocator::getGame()->GetObjectViewerView());
 			break;
 #endif
 		case SDLK_F11:
@@ -874,20 +873,20 @@ void Pi::HandleKeyDown(SDL_Keysym *key)
 			break;
 		case SDLK_F9: // Quicksave
 		{
-			if (Pi::game) {
-				if (Pi::game->IsHyperspace())
-					Pi::game->log->Add(Lang::CANT_SAVE_IN_HYPERSPACE);
+			if (GameLocator::getGame()) {
+				if (GameLocator::getGame()->IsHyperspace())
+					GameLocator::getGame()->log->Add(Lang::CANT_SAVE_IN_HYPERSPACE);
 
 				else {
 					const std::string name = "_quicksave";
 					const std::string path = FileSystem::JoinPath(GetSaveDir(), name);
 					try {
-						Game::SaveGame(name, Pi::game);
-						Pi::game->log->Add(Lang::GAME_SAVED_TO + path);
+						Game::SaveGame(name, GameLocator::getGame());
+						GameLocator::getGame()->log->Add(Lang::GAME_SAVED_TO + path);
 					} catch (CouldNotOpenFileException) {
-						Pi::game->log->Add(stringf(Lang::COULD_NOT_OPEN_FILENAME, formatarg("path", path)));
+						GameLocator::getGame()->log->Add(stringf(Lang::COULD_NOT_OPEN_FILENAME, formatarg("path", path)));
 					} catch (CouldNotWriteToFileException) {
-						Pi::game->log->Add(Lang::GAME_SAVE_CANNOT_WRITE);
+						GameLocator::getGame()->log->Add(Lang::GAME_SAVE_CANNOT_WRITE);
 					}
 				}
 			}
@@ -902,10 +901,10 @@ void Pi::HandleKeyDown(SDL_Keysym *key)
 void Pi::HandleEscKey()
 {
 	if (currentView != 0) {
-		if (currentView == Pi::game->GetSectorView()) {
-			SetView(Pi::game->GetWorldView());
-		} else if ((currentView == Pi::game->GetSystemView()) || (currentView == Pi::game->GetSystemInfoView())) {
-			SetView(Pi::game->GetSectorView());
+		if (currentView == GameLocator::getGame()->GetSectorView()) {
+			SetView(GameLocator::getGame()->GetWorldView());
+		} else if ((currentView == GameLocator::getGame()->GetSystemView()) || (currentView == GameLocator::getGame()->GetSystemInfoView())) {
+			SetView(GameLocator::getGame()->GetSectorView());
 		} else {
 			UIView *view = dynamic_cast<UIView *>(currentView);
 			if (view) {
@@ -913,9 +912,9 @@ void Pi::HandleEscKey()
 				const char *tname = view->GetTemplateName();
 				if (tname) {
 					if (!strcmp(tname, "GalacticView")) {
-						SetView(Pi::game->GetSectorView());
+						SetView(GameLocator::getGame()->GetSectorView());
 					} else if (!strcmp(tname, "InfoView") || !strcmp(tname, "StationView")) {
-						SetView(Pi::game->GetWorldView());
+						SetView(GameLocator::getGame()->GetWorldView());
 					}
 				}
 			}
@@ -1055,18 +1054,18 @@ void Pi::InitGame()
 
 static void OnPlayerDockOrUndock()
 {
-	Pi::game->RequestTimeAccel(Game::TIMEACCEL_1X);
-	Pi::game->SetTimeAccel(Game::TIMEACCEL_1X);
+	GameLocator::getGame()->RequestTimeAccel(Game::TIMEACCEL_1X);
+	GameLocator::getGame()->SetTimeAccel(Game::TIMEACCEL_1X);
 }
 
 void Pi::StartGame()
 {
-	Pi::player->onDock.connect(sigc::ptr_fun(&OnPlayerDockOrUndock));
-	Pi::player->onUndock.connect(sigc::ptr_fun(&OnPlayerDockOrUndock));
-	Pi::player->onLanded.connect(sigc::ptr_fun(&OnPlayerDockOrUndock));
-	Pi::game->GetCpan()->ShowAll();
+	GameLocator::getGame()->GetPlayer()->onDock.connect(sigc::ptr_fun(&OnPlayerDockOrUndock));
+	GameLocator::getGame()->GetPlayer()->onUndock.connect(sigc::ptr_fun(&OnPlayerDockOrUndock));
+	GameLocator::getGame()->GetPlayer()->onLanded.connect(sigc::ptr_fun(&OnPlayerDockOrUndock));
+	GameLocator::getGame()->GetCpan()->ShowAll();
 	DrawGUI = true;
-	SetView(game->GetWorldView());
+	SetView(GameLocator::getGame()->GetWorldView());
 
 #ifdef REMOTE_LUA_REPL
 #ifndef REMOTE_LUA_REPL_PORT
@@ -1088,7 +1087,7 @@ void Pi::Start(const SystemPath &startPath)
 		GameConfSingleton::GetAmountBackgroundStars()
 		);
 	if (startPath != SystemPath(0, 0, 0, 0, 0)) {
-		Pi::game = new Game(startPath, 0.0);
+		GameLocator::provideGame(new Game(startPath, 0.0));
 	}
 	//XXX global ambient colour hack to make explicit the old default ambient colour dependency
 	// for some models
@@ -1097,7 +1096,7 @@ void Pi::Start(const SystemPath &startPath)
 	Uint32 last_time = SDL_GetTicks();
 	float _time = 0;
 
-	while (!Pi::game) {
+	while (!GameLocator::getGame()) {
 		SDL_Event event;
 		while (SDL_PollEvent(&event)) {
 			if (event.type == SDL_QUIT)
@@ -1159,7 +1158,7 @@ void Pi::Start(const SystemPath &startPath)
 			// XXX hack
 			// if we hit our exit conditions then ignore further queued events
 			// protects against eg double-click during game generation
-			if (Pi::game)
+			if (GameLocator::getGame())
 				while (SDL_PollEvent(&event)) {
 				}
 		}
@@ -1226,10 +1225,9 @@ void Pi::EndGame()
 	if (!GameConfSingleton::getInstance().Int("DisableSound")) AmbientSounds::Uninit();
 	Sound::DestroyAllEvents();
 
-	assert(game);
-	delete game;
-	game = 0;
-	player = 0;
+	assert(GameLocator::getGame());
+	delete GameLocator::getGame();
+	GameLocator::provideGame(nullptr);
 }
 
 void Pi::MainLoop()
@@ -1253,14 +1251,14 @@ void Pi::MainLoop()
 		MAX_PHYSICS_TICKS = 4;
 
 	double currentTime = 0.001 * double(SDL_GetTicks());
-	double accumulator = Pi::game->GetTimeStep();
+	double accumulator = GameLocator::getGame()->GetTimeStep();
 	Pi::gameTickAlpha = 0;
 
 #ifdef PIONEER_PROFILER
 	Profiler::reset();
 #endif
 
-	while (Pi::game) {
+	while (GameLocator::getGame()) {
 		PROFILE_SCOPED()
 
 #ifdef ENABLE_SERVER_AGENT
@@ -1272,9 +1270,9 @@ void Pi::MainLoop()
 		Pi::frameTime = newTime - currentTime;
 		if (Pi::frameTime > 0.25) Pi::frameTime = 0.25;
 		currentTime = newTime;
-		accumulator += Pi::frameTime * Pi::game->GetTimeAccelRate();
+		accumulator += Pi::frameTime * GameLocator::getGame()->GetTimeAccelRate();
 
-		const float step = Pi::game->GetTimeStep();
+		const float step = GameLocator::getGame()->GetTimeStep();
 		if (step > 0.0f) {
 			PROFILE_SCOPED_RAW("unpaused")
 			int phys_ticks = 0;
@@ -1283,13 +1281,13 @@ void Pi::MainLoop()
 					accumulator = 0.0;
 					break;
 				}
-				game->TimeStep(step);
+				GameLocator::getGame()->TimeStep(step);
 				BaseSphere::UpdateAllBaseSphereDerivatives();
 
 				accumulator -= step;
 			}
 			// rendering interpolation between frames: don't use when docked
-			int pstate = Pi::game->GetPlayer()->GetFlightState();
+			int pstate = GameLocator::getGame()->GetPlayer()->GetFlightState();
 			if (pstate == Ship::DOCKED || pstate == Ship::DOCKING || pstate == Ship::UNDOCKING)
 				Pi::gameTickAlpha = 1.0;
 			else
@@ -1308,19 +1306,19 @@ void Pi::MainLoop()
 #endif
 
 		// did the player die?
-		if (Pi::player->IsDead()) {
+		if (GameLocator::getGame()->GetPlayer()->IsDead()) {
 			if (time_player_died > 0.0) {
-				if (Pi::game->GetTime() - time_player_died > 8.0) {
+				if (GameLocator::getGame()->GetTime() - time_player_died > 8.0) {
 					Pi::SetView(0);
 					Pi::TombStoneLoop();
 					Pi::EndGame();
 					break;
 				}
 			} else {
-				Pi::game->SetTimeAccel(Game::TIMEACCEL_1X);
-				Pi::game->GetDeathView()->Init();
-				Pi::SetView(Pi::game->GetDeathView());
-				time_player_died = Pi::game->GetTime();
+				GameLocator::getGame()->SetTimeAccel(Game::TIMEACCEL_1X);
+				GameLocator::getGame()->GetDeathView()->Init();
+				Pi::SetView(GameLocator::getGame()->GetDeathView());
+				time_player_died = GameLocator::getGame()->GetTime();
 			}
 		}
 
@@ -1331,7 +1329,7 @@ void Pi::MainLoop()
 
 		/* Calculate position for this rendered frame (interpolated between two physics ticks */
 		// XXX should this be here? what is this anyway?
-		for (Body *b : game->GetSpace()->GetBodies()) {
+		for (Body *b : GameLocator::getGame()->GetSpace()->GetBodies()) {
 			b->UpdateInterpTransform(Pi::GetGameTickAlpha());
 		}
 
@@ -1363,20 +1361,20 @@ void Pi::MainLoop()
 		// wrong, because we shouldn't this when the HUD is disabled, but
 		// probably sure draw it if they switch to eg infoview while the HUD is
 		// disabled so we need much smarter control for all this rubbish
-		if ((!Pi::game || Pi::GetView() != Pi::game->GetDeathView()) && DrawGUI) {
+		if ((!GameLocator::getGame() || Pi::GetView() != GameLocator::getGame()->GetDeathView()) && DrawGUI) {
 			Pi::ui->Update();
 			Pi::ui->Draw();
 		}
 
 		Pi::EndRenderTarget();
 		Pi::DrawRenderTarget();
-		if (Pi::game && !Pi::player->IsDead()) {
+		if (GameLocator::getGame() && !GameLocator::getGame()->GetPlayer()->IsDead()) {
 			// FIXME: Always begin a camera frame because WorldSpaceToScreenSpace
 			// requires it and is exposed to pigui.
-			Pi::game->GetWorldView()->BeginCameraFrame();
+			GameLocator::getGame()->GetWorldView()->BeginCameraFrame();
 			PiGui::NewFrame(Pi::renderer->GetSDLWindow());
 			DrawPiGui(Pi::frameTime, "GAME");
-			Pi::game->GetWorldView()->EndCameraFrame();
+			GameLocator::getGame()->GetWorldView()->EndCameraFrame();
 		}
 
 #if WITH_DEVKEYS
@@ -1394,19 +1392,19 @@ void Pi::MainLoop()
 
 		Pi::renderer->SwapBuffers();
 
-		// game exit will have cleared Pi::game. we can't continue.
-		if (!Pi::game)
+		// game exit will have cleared GameLocator::getGame(). we can't continue.
+		if (!GameLocator::getGame())
 			return;
 
-		if (Pi::game->UpdateTimeAccel())
+		if (GameLocator::getGame()->UpdateTimeAccel())
 			accumulator = 0; // fix for huge pauses 10000x -> 1x
 
-		if (!Pi::player->IsDead()) {
+		if (!GameLocator::getGame()->GetPlayer()->IsDead()) {
 			// XXX should this really be limited to while the player is alive?
 			// this is something we need not do every turn...
 			if (!GameConfSingleton::getInstance().Int("DisableSound")) AmbientSounds::Update();
 		}
-		Pi::game->GetCpan()->Update();
+		GameLocator::getGame()->GetCpan()->Update();
 		musicPlayer.Update();
 
 		syncJobQueue->RunJobs(SYNC_JOBS_PER_LOOP);

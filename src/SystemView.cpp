@@ -6,6 +6,7 @@
 #include "AnimationCurves.h"
 #include "Frame.h"
 #include "Game.h"
+#include "GameLocator.h"
 #include "GameLog.h"
 #include "Lang.h"
 #include "LuaObject.h"
@@ -66,14 +67,14 @@ vector3d TransferPlanner::GetOffsetVel() const
 void TransferPlanner::AddStartTime(double timeStep)
 {
 	if (std::fabs(m_startTime) < 1.)
-		m_startTime = Pi::game->GetTime();
+		m_startTime = GameLocator::getGame()->GetTime();
 
 	m_startTime += m_factor * timeStep;
-	double deltaT = m_startTime - Pi::game->GetTime();
+	double deltaT = m_startTime - GameLocator::getGame()->GetTime();
 	if (deltaT > 0.) {
-		FrameId frameId = Frame::GetFrame(Pi::player->GetFrame())->GetNonRotFrame();
+		FrameId frameId = Frame::GetFrame(GameLocator::getGame()->GetPlayer()->GetFrame())->GetNonRotFrame();
 		Frame *frame = Frame::GetFrame(frameId);
-		Orbit playerOrbit = Orbit::FromBodyState(Pi::player->GetPositionRelTo(frameId), Pi::player->GetVelocityRelTo(frameId), frame->GetSystemBody()->GetMass());
+		Orbit playerOrbit = Orbit::FromBodyState(GameLocator::getGame()->GetPlayer()->GetPositionRelTo(frameId), GameLocator::getGame()->GetPlayer()->GetVelocityRelTo(frameId), frame->GetSystemBody()->GetMass());
 
 		m_position = playerOrbit.OrbitalPosAtTime(deltaT);
 		m_velocity = playerOrbit.OrbitalVelocityAtTime(frame->GetSystemBody()->GetMass(), deltaT);
@@ -84,14 +85,14 @@ void TransferPlanner::AddStartTime(double timeStep)
 void TransferPlanner::ResetStartTime()
 {
 	m_startTime = 0;
-	Frame *frame = Frame::GetFrame(Pi::player->GetFrame());
+	Frame *frame = Frame::GetFrame(GameLocator::getGame()->GetPlayer()->GetFrame());
 	if (!frame || GetOffsetVel().ExactlyEqual(vector3d(0., 0., 0.))) {
 		m_position = vector3d(0., 0., 0.);
 		m_velocity = vector3d(0., 0., 0.);
 	} else {
 		frame = Frame::GetFrame(frame->GetNonRotFrame());
-		m_position = Pi::player->GetPositionRelTo(frame->GetId());
-		m_velocity = Pi::player->GetVelocityRelTo(frame->GetId());
+		m_position = GameLocator::getGame()->GetPlayer()->GetPositionRelTo(frame->GetId());
+		m_velocity = GameLocator::getGame()->GetPlayer()->GetVelocityRelTo(frame->GetId());
 	}
 }
 
@@ -122,7 +123,7 @@ std::string TransferPlanner::printDeltaTime()
 {
 	std::stringstream out;
 	out << std::setw(9);
-	double deltaT = m_startTime - Pi::game->GetTime();
+	double deltaT = m_startTime - GameLocator::getGame()->GetTime();
 	if (std::fabs(m_startTime) < 1.)
 		out << Lang::NOW;
 	else
@@ -134,10 +135,10 @@ std::string TransferPlanner::printDeltaTime()
 void TransferPlanner::AddDv(BurnDirection d, double dv)
 {
 	if (m_position.ExactlyEqual(vector3d(0., 0., 0.))) {
-		FrameId frame = Frame::GetFrame(Pi::player->GetFrame())->GetNonRotFrame();
-		m_position = Pi::player->GetPositionRelTo(frame);
-		m_velocity = Pi::player->GetVelocityRelTo(frame);
-		m_startTime = Pi::game->GetTime();
+		FrameId frame = Frame::GetFrame(GameLocator::getGame()->GetPlayer()->GetFrame())->GetNonRotFrame();
+		m_position = GameLocator::getGame()->GetPlayer()->GetPositionRelTo(frame);
+		m_velocity = GameLocator::getGame()->GetPlayer()->GetVelocityRelTo(frame);
+		m_startTime = GameLocator::getGame()->GetTime();
 	}
 
 	switch (d) {
@@ -636,12 +637,12 @@ void SystemView::OnClickObject(const SystemBody *b)
 	if (m_game->GetSpace()->GetStarSystem()->GetPath() == m_system->GetPath()) {
 		Body *body = m_game->GetSpace()->FindBodyForPath(&path);
 		if (body != 0) {
-			if (Pi::player->GetNavTarget() == body) {
-				Pi::player->SetNavTarget(body);
-				Pi::player->SetNavTarget(0);
+			if (GameLocator::getGame()->GetPlayer()->GetNavTarget() == body) {
+				GameLocator::getGame()->GetPlayer()->SetNavTarget(body);
+				GameLocator::getGame()->GetPlayer()->SetNavTarget(0);
 				m_game->log->Add(Lang::UNSET_NAVTARGET);
 			} else {
-				Pi::player->SetNavTarget(body);
+				GameLocator::getGame()->GetPlayer()->SetNavTarget(body);
 				m_game->log->Add(Lang::SET_NAVTARGET_TO + body->GetLabel());
 			}
 		}
@@ -683,13 +684,13 @@ void SystemView::OnClickShip(Ship *s)
 		printf("clicked on ship label but ship wasn't there\n");
 		return;
 	}
-	if (Pi::player->GetNavTarget() == s) { //un-select ship if already selected
-		Pi::player->SetNavTarget(0); // remove current
+	if (GameLocator::getGame()->GetPlayer()->GetNavTarget() == s) { //un-select ship if already selected
+		GameLocator::getGame()->GetPlayer()->SetNavTarget(0); // remove current
 		m_game->log->Add(Lang::UNSET_NAVTARGET);
 		m_infoLabel->SetText(""); // remove lingering text
 		m_infoText->SetText("");
 	} else {
-		Pi::player->SetNavTarget(s);
+		GameLocator::getGame()->GetPlayer()->SetNavTarget(s);
 		m_game->log->Add(Lang::SET_NAVTARGET_TO + s->GetLabel());
 
 		// always show label of selected ship...
@@ -699,7 +700,7 @@ void SystemView::OnClickShip(Ship *s)
 
 		// ...if we have advanced target scanner equipment, show some extra info on selected ship
 		int prop_var = 0;
-		Pi::player->Properties().Get("target_scanner_level_cap", prop_var);
+		GameLocator::getGame()->GetPlayer()->Properties().Get("target_scanner_level_cap", prop_var);
 		if (prop_var > 1) { // advanced target scanner
 			const shipstats_t &stats = s->GetStats();
 
@@ -759,14 +760,14 @@ void SystemView::PutBody(const SystemBody *b, const vector3d &offset, const matr
 		PutLabel(b, offset);
 	}
 
-	Frame *frame = Frame::GetFrame(Pi::player->GetFrame());
+	Frame *frame = Frame::GetFrame(GameLocator::getGame()->GetPlayer()->GetFrame());
 	if (frame->IsRotFrame())
 		frame = Frame::GetFrame(frame->GetNonRotFrame());
 
 	// display the players orbit(?)
 	if (frame->GetSystemBody() == b && frame->GetSystemBody()->GetMass() > 0) {
 		const double t0 = m_game->GetTime();
-		Orbit playerOrbit = Pi::player->ComputeOrbit();
+		Orbit playerOrbit = GameLocator::getGame()->GetPlayer()->ComputeOrbit();
 
 		PutOrbit(&playerOrbit, offset, Color::RED, b->GetRadius());
 
@@ -900,7 +901,7 @@ void SystemView::Draw3D()
 		if (m_system->GetRootBody()) {
 			PutBody(m_system->GetRootBody().Get(), pos, trans);
 			if (m_game->GetSpace()->GetStarSystem() == m_system) {
-				const Body *navTarget = Pi::player->GetNavTarget();
+				const Body *navTarget = GameLocator::getGame()->GetPlayer()->GetNavTarget();
 				const SystemBody *navTargetSystemBody = navTarget ? navTarget->GetSystemBody() : 0;
 				if (navTargetSystemBody)
 					PutSelectionBox(navTargetSystemBody, pos, Color::GREEN);
@@ -1015,7 +1016,7 @@ void SystemView::RefreshShips(void)
 
 	auto bs = m_game->GetSpace()->GetBodies();
 	for (auto s = bs.begin(); s != bs.end(); s++) {
-		if ((*s) != Pi::player &&
+		if ((*s) != m_game->GetPlayer() &&
 			(*s)->GetType() == Object::SHIP) {
 
 			const auto c = static_cast<Ship *>(*s);
@@ -1047,7 +1048,7 @@ void SystemView::DrawShips(const double t, const vector3d &offset)
 	m_shipLabels->Clear();
 	for (auto s = m_contacts.begin(); s != m_contacts.end(); s++) {
 		vector3d pos = offset + GetShipPositionAtTime(*s, t) * m_zoom;
-		const bool isNavTarget = Pi::player->GetNavTarget() == (*s).first;
+		const bool isNavTarget = GameLocator::getGame()->GetPlayer()->GetNavTarget() == (*s).first;
 		PutSelectionBox(pos, isNavTarget ? Color::GREEN : Color::BLUE);
 		LabelShip((*s).first, pos);
 		if (m_shipDrawing == ORBITS && (*s).first->GetFlightState() == Ship::FlightState::FLYING)
@@ -1103,7 +1104,7 @@ void SystemView::DrawGrid()
 
 	if (contact_num != 0) {
 		for (auto &s: m_contacts) {
-			const bool isNavTarget = Pi::player->GetNavTarget() == s.first;
+			const bool isNavTarget = GameLocator::getGame()->GetPlayer()->GetNavTarget() == s.first;
 			vector3d offset = GetShipPositionAtTime(s, m_time - m_game->GetTime()) * zoom / float(AU);
 			m_lineVerts->Add(vector3f(pos + offset), (isNavTarget ? Color::GREEN : Color::GRAY) * 0.5);
 			offset.y = 0.0;

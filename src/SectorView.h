@@ -26,7 +26,7 @@ namespace Graphics {
 
 class SectorView : public UIView {
 public:
-	SectorView(RefCountedPtr<Galaxy> galaxy, RefCountedPtr<SectorCache::Slave>);
+	SectorView(const SystemPath &path, RefCountedPtr<Galaxy> galaxy, RefCountedPtr<SectorCache::Slave>);
 	SectorView(const Json &jsonObj, RefCountedPtr<Galaxy> galaxy, RefCountedPtr<SectorCache::Slave>);
 	virtual ~SectorView();
 

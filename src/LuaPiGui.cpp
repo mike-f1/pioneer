@@ -5,6 +5,7 @@
 
 #include "EnumStrings.h"
 #include "Game.h"
+#include "GameLocator.h"
 #include "LuaColor.h"
 #include "LuaConstants.h"
 #include "LuaUtils.h"
@@ -1351,7 +1352,7 @@ static int l_pigui_get_mouse_clicked_pos(lua_State *l)
 TScreenSpace lua_world_space_to_screen_space(const vector3d &pos)
 {
 	PROFILE_SCOPED()
-	const WorldView *wv = Pi::game->GetWorldView();
+	const WorldView *wv = GameLocator::getGame()->GetWorldView();
 	const vector3d p = wv->WorldSpaceToScreenSpace(pos);
 	const int width = Graphics::GetScreenWidth();
 	const int height = Graphics::GetScreenHeight();
@@ -1366,7 +1367,7 @@ TScreenSpace lua_world_space_to_screen_space(const vector3d &pos)
 TScreenSpace lua_world_space_to_screen_space(const Body *body)
 {
 	PROFILE_SCOPED()
-	const WorldView *wv = Pi::game->GetWorldView();
+	const WorldView *wv = GameLocator::getGame()->GetWorldView();
 	const vector3d p = wv->WorldSpaceToScreenSpace(body);
 	const int width = Graphics::GetScreenWidth();
 	const int height = Graphics::GetScreenHeight();
@@ -1471,10 +1472,10 @@ static int l_pigui_get_projected_bodies_grouped(lua_State *l)
 	const vector2d gap = LuaPull<vector2d>(l, 1);
 
 	TSS_vector filtered;
-	filtered.reserve(Pi::game->GetSpace()->GetNumBodies());
+	filtered.reserve(GameLocator::getGame()->GetSpace()->GetNumBodies());
 
-	for (Body *body : Pi::game->GetSpace()->GetBodies()) {
-		if (body == Pi::game->GetPlayer()) continue;
+	for (Body *body : GameLocator::getGame()->GetSpace()->GetBodies()) {
+		if (body == GameLocator::getGame()->GetPlayer()) continue;
 		if (body->GetType() == Object::PROJECTILE) continue;
 		const TScreenSpace res = lua_world_space_to_screen_space(body); // defined in LuaPiGui.cpp
 		if (!res._onScreen) continue;
@@ -1518,7 +1519,7 @@ static int l_pigui_get_projected_bodies_grouped(lua_State *l)
 			// recalc group (starting with second element because first is the center itself)
 			vector3d media = std::accumulate(group.begin() + 1, group.end(), vector3d(0.0), [](const vector3d &a, const TScreenSpace &ss) {
 				//printf("      Third level with '%s'\n", ss._body->GetLabel().c_str());
-				return a + ss._body->GetPositionRelTo(Pi::player);
+				return a + ss._body->GetPositionRelTo(GameLocator::getGame()->GetPlayer());
 			});
 			media /= double(group.size() - 1);
 			group.front() = lua_world_space_to_screen_space(media);
@@ -1562,9 +1563,9 @@ static int l_pigui_get_projected_bodies(lua_State *l)
 {
 	PROFILE_SCOPED()
 	TSS_vector filtered;
-	filtered.reserve(Pi::game->GetSpace()->GetNumBodies());
-	for (Body *body : Pi::game->GetSpace()->GetBodies()) {
-		if (body == Pi::game->GetPlayer()) continue;
+	filtered.reserve(GameLocator::getGame()->GetSpace()->GetNumBodies());
+	for (Body *body : GameLocator::getGame()->GetSpace()->GetBodies()) {
+		if (body == GameLocator::getGame()->GetPlayer()) continue;
 		if (body->GetType() == Object::PROJECTILE) continue;
 		const TScreenSpace res = lua_world_space_to_screen_space(body); // defined in LuaPiGui.cpp
 		if (!res._onScreen) continue;
@@ -1591,12 +1592,13 @@ static int l_pigui_get_targets_nearby(lua_State *l)
 {
 	PROFILE_SCOPED()
 	int range_max = LuaPull<double>(l, 1);
-	Space::BodyNearList nearby = Pi::game->GetSpace()->GetBodiesMaybeNear(Pi::player, range_max);
+	Player *player = GameLocator::getGame()->GetPlayer();
+	Space::BodyNearList nearby = GameLocator::getGame()->GetSpace()->GetBodiesMaybeNear(player, range_max);
 
 	std::vector<Body *> filtered;
 	filtered.reserve(nearby.size());
 	for (Body *body : nearby) {
-		if (body == Pi::player) continue;
+		if (body == player) continue;
 		if (body->GetType() == Object::PROJECTILE) continue;
 		filtered.push_back(body);
 	};
@@ -1604,9 +1606,9 @@ static int l_pigui_get_targets_nearby(lua_State *l)
 	LuaTable result(l, 0, filtered.size());
 	int index = 1;
 	for (Body *body : filtered) {
-		vector3d position = body->GetPositionRelTo(Pi::player);
+		vector3d position = body->GetPositionRelTo(player);
 		float distance = float(position.Length());
-		vector3d shipSpacePosition = position * Pi::player->GetOrient();
+		vector3d shipSpacePosition = position * player->GetOrient();
 		// convert to polar https://en.wikipedia.org/wiki/Spherical_coordinate_system
 		vector3d polarPosition( // don't calculate X, it is not used
 			// sqrt(shipSpacePosition.x*shipSpacePosition.x
@@ -1644,7 +1646,7 @@ static int l_pigui_disable_mouse_facing(lua_State *l)
 {
 	PROFILE_SCOPED()
 	bool b = LuaPull<bool>(l, 1);
-	auto *p = Pi::player->GetPlayerController();
+	auto *p = GameLocator::getGame()->GetPlayer()->GetPlayerController();
 	p->SetDisableMouseFacing(b);
 	return 0;
 }
@@ -1668,7 +1670,7 @@ static int l_pigui_set_mouse_button_state(lua_State *l)
 static int l_pigui_should_show_labels(lua_State *l)
 {
 	PROFILE_SCOPED()
-	bool show_labels = Pi::game->GetWorldView()->ShouldShowLabels();
+	bool show_labels = GameLocator::getGame()->GetWorldView()->ShouldShowLabels();
 	LuaPush(l, show_labels);
 	return 1;
 }
@@ -1862,7 +1864,7 @@ static int l_pigui_is_window_hovered(lua_State *l)
 static int l_pigui_system_info_view_next_page(lua_State *l)
 {
 	PROFILE_SCOPED()
-	Pi::game->GetSystemInfoView()->NextPage();
+	GameLocator::getGame()->GetSystemInfoView()->NextPage();
 	return 0;
 }
 

@@ -4,11 +4,11 @@
 #include "ShipCpanelMultiFuncDisplays.h"
 
 #include "Game.h"
+#include "GameLocator.h"
 #include "GameSaveError.h"
 #include "KeyBindings.h"
 #include "Lang.h"
 #include "Missile.h"
-#include "Pi.h"
 #include "Player.h"
 #include "Space.h"
 #include "graphics/Renderer.h"
@@ -94,7 +94,7 @@ void RadarWidget::GetSizeRequested(float size[2])
 
 void RadarWidget::ToggleMode()
 {
-	if (IsVisible() && Pi::game->GetTimeAccel() != Game::TIMEACCEL_PAUSED) {
+	if (IsVisible() && GameLocator::getGame()->GetTimeAccel() != Game::TIMEACCEL_PAUSED) {
 		if (m_mode == RADAR_MODE_AUTO)
 			m_mode = RADAR_MODE_MANUAL;
 		else
@@ -105,10 +105,10 @@ void RadarWidget::ToggleMode()
 void RadarWidget::Draw()
 {
 	int radar_cap = 0;
-	Pi::player->Properties().Get("radar_cap", radar_cap);
+	GameLocator::getGame()->GetPlayer()->Properties().Get("radar_cap", radar_cap);
 	if (radar_cap <= 0) return;
 
-	if (Pi::player->GetFlightState() == Ship::HYPERSPACE)
+	if (GameLocator::getGame()->GetPlayer()->GetFlightState() == Ship::HYPERSPACE)
 		return;
 
 	float size[2];
@@ -166,7 +166,7 @@ void RadarWidget::Update()
 	m_contacts.clear();
 
 	int radar_cap = 0;
-	Pi::player->Properties().Get("radar_cap", radar_cap);
+	GameLocator::getGame()->GetPlayer()->Properties().Get("radar_cap", radar_cap);
 	if (radar_cap <= 0) {
 		m_mode = RADAR_MODE_AUTO;
 		m_currentRange = m_manualRange = m_targetRange = RADAR_RANGE_MIN;
@@ -182,22 +182,22 @@ void RadarWidget::Update()
 	float combat_dist = 0, far_ship_dist = 0, nav_dist = 0, far_other_dist = 0;
 
 	// collect the bodies to be displayed, and if AUTO, distances
-	Space::BodyNearList nearby = Pi::game->GetSpace()->GetBodiesMaybeNear(Pi::player, RADAR_RANGE_MAX);
+	Space::BodyNearList nearby = GameLocator::getGame()->GetSpace()->GetBodiesMaybeNear(GameLocator::getGame()->GetPlayer(), RADAR_RANGE_MAX);
 	for (Body *body : nearby) {
-		if (body == Pi::player) continue;
+		if (body == GameLocator::getGame()->GetPlayer()) continue;
 
-		float dist = float(body->GetPositionRelTo(Pi::player).Length());
+		float dist = float(body->GetPositionRelTo(GameLocator::getGame()->GetPlayer()).Length());
 
 		Contact c;
 		c.type = body->GetType();
-		c.pos = body->GetPositionRelTo(Pi::player);
+		c.pos = body->GetPositionRelTo(GameLocator::getGame()->GetPlayer());
 		c.isSpecial = false;
 
 		switch (body->GetType()) {
 
 		case Object::MISSILE:
 			// player's own missiles are ignored for range calc but still shown
-			if (static_cast<const Missile *>(body)->GetOwner() == Pi::player) {
+			if (static_cast<const Missile *>(body)->GetOwner() == GameLocator::getGame()->GetPlayer()) {
 				c.isSpecial = true;
 				break;
 			}
@@ -209,7 +209,7 @@ void RadarWidget::Update()
 			if (s->GetFlightState() != Ship::FLYING && s->GetFlightState() != Ship::LANDED)
 				continue;
 
-			if ((body) == Pi::player->GetCombatTarget()) c.isSpecial = true;
+			if ((body) == GameLocator::getGame()->GetPlayer()->GetCombatTarget()) c.isSpecial = true;
 
 			if (m_mode == RADAR_MODE_AUTO && range_type != RANGE_COMBAT) {
 				if (c.isSpecial == true) {
@@ -227,7 +227,7 @@ void RadarWidget::Update()
 		case Object::CARGOBODY:
 		case Object::HYPERSPACECLOUD:
 
-			if ((body) == Pi::player->GetNavTarget()) c.isSpecial = true;
+			if ((body) == GameLocator::getGame()->GetPlayer()->GetNavTarget()) c.isSpecial = true;
 
 			if (m_mode == RADAR_MODE_AUTO && range_type < RANGE_NAV) {
 				if (c.isSpecial == true) {
@@ -345,7 +345,7 @@ void RadarWidget::DrawBlobs(bool below)
 			continue;
 		}
 
-		vector3d pos = i->pos * Pi::player->GetOrient();
+		vector3d pos = i->pos * GameLocator::getGame()->GetPlayer()->GetOrient();
 		if ((pos.y > 0) && (below)) continue;
 		if ((pos.y < 0) && (!below)) continue;
 

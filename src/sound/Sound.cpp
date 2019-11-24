@@ -6,9 +6,11 @@
  */
 
 #include "Sound.h"
+
 #include "Body.h"
 #include "FileSystem.h"
-#include "Pi.h"
+#include "Game.h"
+#include "GameLocator.h"
 #include "Player.h"
 #include "SDL_audio.h"
 #include "SDL_events.h"
@@ -149,9 +151,9 @@ namespace Sound {
 	{
 		vector3d pos(0.0);
 
-		if (b != Pi::player) {
-			pos = b->GetPositionRelTo(Pi::player);
-			pos = pos * Pi::player->GetOrient();
+		if (b != GameLocator::getGame()->GetPlayer()) {
+			pos = b->GetPositionRelTo(GameLocator::getGame()->GetPlayer());
+			pos = pos * GameLocator::getGame()->GetPlayer()->GetOrient();
 		}
 
 		const float len = pos.Length();

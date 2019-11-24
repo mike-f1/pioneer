@@ -7,7 +7,7 @@
 #include "Body.h"
 #include "Frame.h"
 #include "Game.h"
-#include "Pi.h"
+#include "GameLocator.h"
 #include "Planet.h"
 #include "Player.h"
 #include "Sfx.h"
@@ -54,7 +54,7 @@ void CameraContext::BeginFrame()
 
 	Frame *camFrame = Frame::GetFrame(m_camFrame);
 	// move and orient it to the camera position
-	camFrame->SetOrient(m_orient, Pi::game ? Pi::game->GetTime() : 0.0);
+	camFrame->SetOrient(m_orient, GameLocator::getGame() ? GameLocator::getGame()->GetTime() : 0.0);
 	camFrame->SetPosition(m_pos);
 
 	// make sure old orient and interpolated orient (rendering orient) are not rubbish
@@ -140,7 +140,7 @@ void Camera::Update()
 
 	// evaluate each body and determine if/where/how to draw it
 	m_sortedBodies.clear();
-	for (Body *b : Pi::game->GetSpace()->GetBodies()) {
+	for (Body *b : GameLocator::getGame()->GetSpace()->GetBodies()) {
 		BodyAttrs attrs;
 		attrs.body = b;
 		attrs.billboard = false; // false by default
@@ -246,7 +246,7 @@ void Camera::Draw(const Body *excludeBody, ShipCockpit *cockpit)
 			if (pressure >= 0.001) {
 				//go through all lights to calculate something resembling light intensity
 				float intensity = 0.f;
-				const Body *pBody = Pi::game->GetPlayer();
+				const Body *pBody = GameLocator::getGame()->GetPlayer();
 				for (Uint32 i = 0; i < m_lightSources.size(); i++) {
 					// Set up data for eclipses. All bodies are assumed to be spheres.
 					const LightSource &it = m_lightSources[i];
@@ -261,8 +261,8 @@ void Camera::Draw(const Body *excludeBody, ShipCockpit *cockpit)
 		}
 	}
 
-	Pi::game->GetSpace()->GetBackground()->SetIntensity(bgIntensity);
-	Pi::game->GetSpace()->GetBackground()->Draw(trans2bg);
+	GameLocator::getGame()->GetSpace()->GetBackground()->SetIntensity(bgIntensity);
+	GameLocator::getGame()->GetSpace()->GetBackground()->Draw(trans2bg);
 
 	{
 		std::vector<Graphics::Light> rendererLights;
@@ -319,7 +319,7 @@ void Camera::CalcShadows(const int lightNum, const Body *b, std::vector<Shadow> 
 		bRadius = b->GetPhysRadius();
 
 	// Look for eclipsing third bodies:
-	for (const Body *b2 : Pi::game->GetSpace()->GetBodies()) {
+	for (const Body *b2 : GameLocator::getGame()->GetSpace()->GetBodies()) {
 		if (b2 == b || b2 == lightBody || !(b2->IsType(Object::PLANET) || b2->IsType(Object::STAR)))
 			continue;
 

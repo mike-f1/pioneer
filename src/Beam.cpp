@@ -7,6 +7,7 @@
 
 #include "Frame.h"
 #include "Game.h"
+#include "GameLocator.h"
 #include "GameSaveError.h"
 #include "Json.h"
 #include "LuaEvent.h"
@@ -189,7 +190,7 @@ void Beam::PostLoadFixup(Space *space)
 void Beam::UpdateInterpTransform(double alpha)
 {
 	m_interpOrient = GetOrient();
-	const vector3d oldPos = GetPosition() - (m_baseVel * Pi::game->GetTimeStep());
+	const vector3d oldPos = GetPosition() - (m_baseVel * GameLocator::getGame()->GetTimeStep());
 	m_interpPos = alpha * GetPosition() + (1.0 - alpha) * oldPos;
 }
 
@@ -204,7 +205,7 @@ void Beam::TimeStepUpdate(const float timeStep)
 	// Laser pulse's do not age well!
 	m_age += timeStep;
 	if (m_age > lifetime)
-		Pi::game->GetSpace()->KillBody(this);
+		GameLocator::getGame()->GetSpace()->KillBody(this);
 	SetPosition(GetPosition() + (m_baseVel * double(timeStep)));
 }
 
@@ -234,7 +235,7 @@ void Beam::StaticUpdate(const float timeStep)
 		Object *o = static_cast<Object *>(c.userData1);
 
 		if (o->IsType(Object::CITYONPLANET)) {
-			Pi::game->GetSpace()->KillBody(this);
+			GameLocator::getGame()->GetSpace()->KillBody(this);
 		} else if (o->IsType(Object::BODY)) {
 			Body *hit = static_cast<Body *>(o);
 			if (hit != m_parent) {
@@ -331,5 +332,5 @@ void Beam::Render(Graphics::Renderer *renderer, const Camera *camera, const vect
 void Beam::Add(Body *parent, const ProjectileData &prData, const vector3d &pos, const vector3d &baseVel, const vector3d &dir)
 {
 	Beam *p = new Beam(parent, prData, pos, baseVel, dir);
-	Pi::game->GetSpace()->AddBody(p);
+	GameLocator::getGame()->GetSpace()->AddBody(p);
 }

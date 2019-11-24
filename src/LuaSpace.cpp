@@ -5,13 +5,13 @@
 
 #include "Frame.h"
 #include "Game.h"
+#include "GameLocator.h"
 #include "HyperspaceCloud.h"
 #include "LuaManager.h"
 #include "LuaObject.h"
 #include "LuaUtils.h"
 #include "LuaVector.h"
 #include "MathUtil.h"
-#include "Pi.h"
 #include "Planet.h"
 #include "Ship.h"
 #include "Space.h"
@@ -112,7 +112,7 @@ static Body *_maybe_wrap_ship_with_cloud(Ship *ship, SystemPath *path, double du
  */
 static int l_space_spawn_ship(lua_State *l)
 {
-	if (!Pi::game)
+	if (!GameLocator::getGame())
 		luaL_error(l, "Game is not started");
 
 	LUA_DEBUG_START(l);
@@ -145,11 +145,11 @@ static int l_space_spawn_ship(lua_State *l)
 		// for an orbit around a star as for player, but this branch of "if"
 		// is working on clouds...
 		vector3d pos(0.0), vel(0.0);
-		Pi::game->GetHyperspaceExitParams(*path, pos, vel);
+		GameLocator::getGame()->GetHyperspaceExitParams(*path, pos, vel);
 		thing->SetPosition(pos);
 		thing->SetVelocity(vector3d(0, 0, 0));
 	}
-	Pi::game->GetSpace()->AddBody(thing);
+	GameLocator::getGame()->GetSpace()->AddBody(thing);
 
 	LuaObject<Ship>::PushToLua(ship);
 
@@ -207,7 +207,7 @@ static int l_space_spawn_ship(lua_State *l)
  */
 static int l_space_spawn_ship_near(lua_State *l)
 {
-	if (!Pi::game)
+	if (!GameLocator::getGame())
 		luaL_error(l, "Game is not started");
 
 	LUA_DEBUG_START(l);
@@ -251,7 +251,7 @@ static int l_space_spawn_ship_near(lua_State *l)
 	;
 	thing->SetPosition(newPosition);
 	thing->SetVelocity(newVelocity);
-	Pi::game->GetSpace()->AddBody(thing);
+	GameLocator::getGame()->GetSpace()->AddBody(thing);
 
 	LuaObject<Ship>::PushToLua(ship);
 
@@ -288,7 +288,7 @@ static int l_space_spawn_ship_near(lua_State *l)
  */
 static int l_space_spawn_ship_docked(lua_State *l)
 {
-	if (!Pi::game)
+	if (!GameLocator::getGame())
 		luaL_error(l, "Game is not started");
 
 	LUA_DEBUG_START(l);
@@ -309,7 +309,7 @@ static int l_space_spawn_ship_docked(lua_State *l)
 	}
 
 	ship->SetFrame(station->GetFrame());
-	Pi::game->GetSpace()->AddBody(ship);
+	GameLocator::getGame()->GetSpace()->AddBody(ship);
 	ship->SetDockedWith(station, port);
 
 	LuaObject<Ship>::PushToLua(ship);
@@ -351,7 +351,7 @@ static int l_space_spawn_ship_docked(lua_State *l)
  */
 static int l_space_spawn_ship_parked(lua_State *l)
 {
-	if (!Pi::game)
+	if (!GameLocator::getGame())
 		luaL_error(l, "Game is not started");
 
 	LUA_DEBUG_START(l);
@@ -384,7 +384,7 @@ static int l_space_spawn_ship_parked(lua_State *l)
 	ship->SetPosition(parkPos);
 	ship->SetOrient(rot);
 
-	Pi::game->GetSpace()->AddBody(ship);
+	GameLocator::getGame()->GetSpace()->AddBody(ship);
 
 	ship->AIHoldPosition();
 
@@ -432,7 +432,7 @@ static int l_space_spawn_ship_parked(lua_State *l)
  */
 static int l_space_spawn_ship_landed(lua_State *l)
 {
-	if (!Pi::game)
+	if (!GameLocator::getGame())
 		luaL_error(l, "Game is not started");
 
 	LUA_DEBUG_START(l);
@@ -450,7 +450,7 @@ static int l_space_spawn_ship_landed(lua_State *l)
 	Ship *ship = new Ship(type);
 	assert(ship);
 
-	Pi::game->GetSpace()->AddBody(ship);
+	GameLocator::getGame()->GetSpace()->AddBody(ship);
 	ship->SetLandedOn(planet, latitude, longitude);
 
 	LuaObject<Ship>::PushToLua(ship);
@@ -497,7 +497,7 @@ static int l_space_spawn_ship_landed(lua_State *l)
  */
 static int l_space_spawn_ship_landed_near(lua_State *l)
 {
-	if (!Pi::game)
+	if (!GameLocator::getGame())
 		luaL_error(l, "Game is not started");
 
 	LUA_DEBUG_START(l);
@@ -549,7 +549,7 @@ static int l_space_spawn_ship_landed_near(lua_State *l)
 	float latitude = atan2(pos.y, sqrt(pos.x * pos.x + pos.z * pos.z));
 	float longitude = atan2(pos.x, pos.z);
 
-	Pi::game->GetSpace()->AddBody(ship);
+	GameLocator::getGame()->GetSpace()->AddBody(ship);
 	ship->SetLandedOn(planet, latitude, longitude);
 
 	LuaObject<Ship>::PushToLua(ship);
@@ -585,17 +585,17 @@ static int l_space_spawn_ship_landed_near(lua_State *l)
  */
 static int l_space_get_body(lua_State *l)
 {
-	if (!Pi::game) {
+	if (!GameLocator::getGame()) {
 		luaL_error(l, "Game is not started");
 		return 0;
 	}
 
 	int id = luaL_checkinteger(l, 1);
 
-	SystemPath path = Pi::game->GetSpace()->GetStarSystem()->GetPath();
+	SystemPath path = GameLocator::getGame()->GetSpace()->GetStarSystem()->GetPath();
 	path.bodyIndex = id;
 
-	Body *b = Pi::game->GetSpace()->FindBodyForPath(&path);
+	Body *b = GameLocator::getGame()->GetSpace()->FindBodyForPath(&path);
 	if (!b) return 0;
 
 	LuaObject<Body>::PushToLua(b);
@@ -640,7 +640,7 @@ static int l_space_get_body(lua_State *l)
  */
 static int l_space_get_bodies(lua_State *l)
 {
-	if (!Pi::game) {
+	if (!GameLocator::getGame()) {
 		luaL_error(l, "Game is not started");
 		return 0;
 	}
@@ -655,7 +655,7 @@ static int l_space_get_bodies(lua_State *l)
 
 	lua_newtable(l);
 
-	for (Body *b : Pi::game->GetSpace()->GetBodies()) {
+	for (Body *b : GameLocator::getGame()->GetSpace()->GetBodies()) {
 		if (filter) {
 			lua_pushvalue(l, 1);
 			LuaObject<Body>::PushToLua(b);
@@ -688,19 +688,19 @@ static int l_space_get_bodies(lua_State *l)
 
 static int l_space_dump_frames(lua_State *l)
 {
-	if (!Pi::game) {
+	if (!GameLocator::getGame()) {
 		luaL_error(l, "Game is not started");
 		return 0;
 	}
 
 	bool details = (lua_gettop(l) >= 1) ? true : false;
-	Pi::game->GetSpace()->DebugDumpFrames(details);
+	GameLocator::getGame()->GetSpace()->DebugDumpFrames(details);
 	return 0;
 }
 
 static int l_space_attr_root_system_body(lua_State *l)
 {
-	if (!Pi::game) {
+	if (!GameLocator::getGame()) {
 		luaL_error(l, "Game is not started");
 		return 0;
 	}

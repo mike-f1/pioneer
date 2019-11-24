@@ -7,6 +7,7 @@
 #include "Game.h"
 #include "GameConfig.h"
 #include "GameConfSingleton.h"
+#include "GameLocator.h"
 #include "GameSaveError.h"
 #include "HudTrail.h"
 #include "HyperspaceCloud.h"
@@ -131,7 +132,7 @@ void WorldView::InitObject()
 	Add(m_combatTargetIndicator.label, 0, 0);
 	Add(m_targetLeadIndicator.label, 0, 0);
 
-	m_speedLines.reset(new SpeedLines(Pi::player));
+	m_speedLines.reset(new SpeedLines(m_game->GetPlayer()));
 
 	//get near & far clipping distances
 	//XXX m_renderer not set yet
@@ -143,7 +144,7 @@ void WorldView::InitObject()
 
 	m_cameraContext.Reset(new CameraContext(Graphics::GetScreenWidth(), Graphics::GetScreenHeight(), fovY, znear, zfar));
 	m_camera.reset(new Camera(m_cameraContext, Pi::renderer));
-	shipView.Init();
+	shipView.Init(m_game->GetPlayer());
 
 	m_onPlayerChangeTargetCon =
 		Pi::onPlayerChangeTarget.connect(sigc::mem_fun(this, &WorldView::OnPlayerChangeTarget));
@@ -173,30 +174,30 @@ void WorldView::SaveToJson(Json &jsonObj)
 void WorldView::OnRequestTimeAccelInc()
 {
 	// requests an increase in time acceleration
-	Pi::game->RequestTimeAccelInc();
+	GameLocator::getGame()->RequestTimeAccelInc();
 }
 
 void WorldView::OnRequestTimeAccelDec()
 {
 	// requests a decrease in time acceleration
-	Pi::game->RequestTimeAccelDec();
+	GameLocator::getGame()->RequestTimeAccelDec();
 }
 
 void WorldView::Draw3D()
 {
 	PROFILE_SCOPED()
 	assert(m_game);
-	assert(Pi::player);
-	assert(!Pi::player->IsDead());
+	assert(GameLocator::getGame()->GetPlayer());
+	assert(!GameLocator::getGame()->GetPlayer()->IsDead());
 
 	m_cameraContext->ApplyDrawTransforms(m_renderer);
 
 	Body *excludeBody = nullptr;
 	ShipCockpit *cockpit = nullptr;
 	if (shipView.GetCamType() == ShipViewController::CAM_INTERNAL) {
-		excludeBody = Pi::player;
+		excludeBody = GameLocator::getGame()->GetPlayer();
 		if (shipView.m_internalCameraController->GetMode() == InternalCameraController::MODE_FRONT)
-			cockpit = Pi::player->GetCockpit();
+			cockpit = GameLocator::getGame()->GetPlayer()->GetCockpit();
 	}
 	m_camera->Draw(excludeBody, cockpit);
 
@@ -207,7 +208,7 @@ void WorldView::Draw3D()
 
 	// Contact trails
 	if (GameConfSingleton::AreHudTrailsDisplayed()) {
-		for (auto it = Pi::player->GetSensors()->GetContacts().begin(); it != Pi::player->GetSensors()->GetContacts().end(); ++it)
+		for (auto it = GameLocator::getGame()->GetPlayer()->GetSensors()->GetContacts().begin(); it != GameLocator::getGame()->GetPlayer()->GetSensors()->GetContacts().end(); ++it)
 			it->trail->Render(m_renderer);
 	}
 
@@ -239,8 +240,8 @@ void WorldView::ShowAll()
 void WorldView::RefreshButtonStateAndVisibility()
 {
 	assert(m_game);
-	assert(Pi::player);
-	assert(!Pi::player->IsDead());
+	assert(GameLocator::getGame()->GetPlayer());
+	assert(!GameLocator::getGame()->GetPlayer()->IsDead());
 
 	if (m_game->IsPaused())
 		m_pauseText->Show();
@@ -251,11 +252,11 @@ void WorldView::RefreshButtonStateAndVisibility()
 	if (Pi::showDebugInfo) {
 		std::ostringstream ss;
 
-		if (Pi::player->GetFlightState() != Ship::HYPERSPACE) {
-			vector3d pos = Pi::player->GetPosition();
-			vector3d abs_pos = Pi::player->GetPositionRelTo(m_game->GetSpace()->GetRootFrame());
+		if (GameLocator::getGame()->GetPlayer()->GetFlightState() != Ship::HYPERSPACE) {
+			vector3d pos = GameLocator::getGame()->GetPlayer()->GetPosition();
+			vector3d abs_pos = GameLocator::getGame()->GetPlayer()->GetPositionRelTo(m_game->GetSpace()->GetRootFrame());
 
-			const Frame *playerFrame = Pi::player->GetFrame();
+			const Frame *playerFrame = GameLocator::getGame()->GetPlayer()->GetFrame();
 
 			ss << stringf("Pos: %0{f.2}, %1{f.2}, %2{f.2}\n", pos.x, pos.y, pos.z);
 			ss << stringf("AbsPos: %0{f.2}, %1{f.2}, %2{f.2}\n", abs_pos.x, abs_pos.y, abs_pos.z);
@@ -276,7 +277,7 @@ void WorldView::RefreshButtonStateAndVisibility()
 		}
 
 		char aibuf[256];
-		Pi::player->AIGetStatusText(aibuf);
+		GameLocator::getGame()->GetPlayer()->AIGetStatusText(aibuf);
 		aibuf[255] = 0;
 		ss << aibuf << std::endl;
 
@@ -292,8 +293,8 @@ void WorldView::Update()
 {
 	PROFILE_SCOPED()
 	assert(m_game);
-	assert(Pi::player);
-	assert(!Pi::player->IsDead());
+	assert(GameLocator::getGame()->GetPlayer());
+	assert(!GameLocator::getGame()->GetPlayer()->IsDead());
 
 	// show state-appropriate buttons
 	RefreshButtonStateAndVisibility();
@@ -305,7 +306,7 @@ void WorldView::Update()
 
 	UpdateProjectedObjects();
 
-	FrameId playerFrameId = Pi::player->GetFrame();
+	FrameId playerFrameId = GameLocator::getGame()->GetPlayer()->GetFrame();
 	FrameId camFrameId = m_cameraContext->GetCamFrame();
 
 	const Frame *playerFrame = Frame::GetFrame(playerFrameId);
@@ -332,10 +333,10 @@ void WorldView::Update()
 		matrix4x4d trans;
 		Frame::GetFrameTransform(playerFrameId, camFrameId, trans);
 
-		for (auto it = Pi::player->GetSensors()->GetContacts().begin(); it != Pi::player->GetSensors()->GetContacts().end(); ++it)
+		for (auto it = GameLocator::getGame()->GetPlayer()->GetSensors()->GetContacts().begin(); it != GameLocator::getGame()->GetPlayer()->GetSensors()->GetContacts().end(); ++it)
 			it->trail->SetTransform(trans);
 	} else {
-		for (auto it = Pi::player->GetSensors()->GetContacts().begin(); it != Pi::player->GetSensors()->GetContacts().end(); ++it)
+		for (auto it = GameLocator::getGame()->GetPlayer()->GetSensors()->GetContacts().begin(); it != GameLocator::getGame()->GetPlayer()->GetSensors()->GetContacts().end(); ++it)
 			it->trail->Reset(playerFrameId);
 	}
 
@@ -367,18 +368,18 @@ static void PlayerPayFine()
 {
 	Sint64 crime, fine;
 	Polit::GetCrime(&crime, &fine);
-	if (Pi::player->GetMoney() == 0) {
+	if (GameLocator::getGame()->GetPlayer()->GetMoney() == 0) {
 		m_game->log->Add(Lang::YOU_NO_MONEY);
-	} else if (fine > Pi::player->GetMoney()) {
-		Polit::AddCrime(0, -Pi::player->GetMoney());
+	} else if (fine > GameLocator::getGame()->GetPlayer()->GetMoney()) {
+		Polit::AddCrime(0, -GameLocator::getGame()->GetPlayer()->GetMoney());
 		Polit::GetCrime(&crime, &fine);
 		m_game->log->Add(stringf(
 			Lang::FINE_PAID_N_BUT_N_REMAINING,
-				formatarg("paid", format_money(Pi::player->GetMoney())),
+				formatarg("paid", format_money(GameLocator::getGame()->GetPlayer()->GetMoney())),
 				formatarg("fine", format_money(fine))));
-		Pi::player->SetMoney(0);
+		GameLocator::getGame()->GetPlayer()->SetMoney(0);
 	} else {
-		Pi::player->SetMoney(Pi::player->GetMoney() - fine);
+		GameLocator::getGame()->GetPlayer()->SetMoney(GameLocator::getGame()->GetPlayer()->GetMoney() - fine);
 		m_game->log->Add(stringf(Lang::FINE_PAID_N,
 				formatarg("fine", format_money(fine))));
 		Polit::AddCrime(0, -fine);
@@ -388,7 +389,7 @@ static void PlayerPayFine()
 
 void WorldView::OnPlayerChangeTarget()
 {
-	Body *b = Pi::player->GetNavTarget();
+	Body *b = GameLocator::getGame()->GetPlayer()->GetNavTarget();
 	if (b) {
 		Sound::PlaySfx("OK");
 		Ship *s = b->IsType(Object::HYPERSPACECLOUD) ? static_cast<HyperspaceCloud *>(b)->GetShip() : 0;
@@ -426,12 +427,12 @@ void WorldView::UpdateProjectedObjects()
 	matrix3x3d cam_rot = cam_frame->GetOrient();
 
 	// later we might want non-ship enemies (e.g., for assaults on military bases)
-	assert(!Pi::player->GetCombatTarget() || Pi::player->GetCombatTarget()->IsType(Object::SHIP));
+	assert(!GameLocator::getGame()->GetPlayer()->GetCombatTarget() || GameLocator::getGame()->GetPlayer()->GetCombatTarget()->IsType(Object::SHIP));
 
 	// update combat HUD
-	Ship *enemy = static_cast<Ship *>(Pi::player->GetCombatTarget());
+	Ship *enemy = static_cast<Ship *>(GameLocator::getGame()->GetPlayer()->GetCombatTarget());
 	if (enemy) {
-		const vector3d targpos = enemy->GetInterpPositionRelTo(Pi::player) * cam_rot;
+		const vector3d targpos = enemy->GetInterpPositionRelTo(GameLocator::getGame()->GetPlayer()) * cam_rot;
 		const double dist = targpos.Length();
 		const vector3d targScreenPos = enemy->GetInterpPositionRelTo(cam_frame->GetId());
 
@@ -448,19 +449,19 @@ void WorldView::UpdateProjectedObjects()
 			}
 		}
 
-		for (int i = 0; i < Pi::player->GetMountedGunsNum(); i++) {
+		for (int i = 0; i < GameLocator::getGame()->GetPlayer()->GetMountedGunsNum(); i++) {
 			// Pick speed of first gun
-			if (Pi::player->GetActivationStateOfGun(i) == false) continue;
-			if (laser == 0 && Pi::player->IsFront(i) == GunDir::GUN_FRONT) {
-				projspeed = Pi::player->GetProjSpeed(i);
+			if (GameLocator::getGame()->GetPlayer()->GetActivationStateOfGun(i) == false) continue;
+			if (laser == 0 && GameLocator::getGame()->GetPlayer()->IsFront(i) == GunDir::GUN_FRONT) {
+				projspeed = GameLocator::getGame()->GetPlayer()->GetProjSpeed(i);
 				break;
-			} else if (laser == 1 && Pi::player->IsFront(i) == GunDir::GUN_REAR) {
-				projspeed = Pi::player->GetProjSpeed(i);
+			} else if (laser == 1 && GameLocator::getGame()->GetPlayer()->IsFront(i) == GunDir::GUN_REAR) {
+				projspeed = GameLocator::getGame()->GetPlayer()->GetProjSpeed(i);
 				break;
 			}
 		}
 		if (projspeed > 0) { // only display target lead position on views with lasers
-			const vector3d targvel = enemy->GetVelocityRelTo(Pi::player) * cam_rot;
+			const vector3d targvel = enemy->GetVelocityRelTo(GameLocator::getGame()->GetPlayer()) * cam_rot;
 			vector3d leadpos = targpos + targvel * (targpos.Length() / projspeed);
 			leadpos = targpos + targvel * (leadpos.Length() / projspeed); // second order approx
 
@@ -469,7 +470,7 @@ void WorldView::UpdateProjectedObjects()
 
 			double vel = targvel.Dot(targpos.NormalizedSafe()); // position should be towards
 			double raccel =
-				Pi::player->GetShipType()->linThrust[Thruster::THRUSTER_REVERSE] / Pi::player->GetMass();
+				GameLocator::getGame()->GetPlayer()->GetShipType()->linThrust[Thruster::THRUSTER_REVERSE] / GameLocator::getGame()->GetPlayer()->GetMass();
 
 			double c = Clamp(vel / sqrt(2.0 * raccel * dist), -1.0, 1.0);
 			float r = float(0.2 + (c + 1.0) * 0.4);
@@ -680,14 +681,14 @@ double getSquareHeight(double distance, double angle)
 void WorldView::Draw()
 {
 	assert(m_game);
-	assert(Pi::player);
+	assert(GameLocator::getGame()->GetPlayer());
 
 	m_renderer->ClearDepthBuffer();
 
 	View::Draw();
 
 	// don't draw crosshairs etc in hyperspace
-	if (Pi::player->GetFlightState() == Ship::HYPERSPACE) return;
+	if (GameLocator::getGame()->GetPlayer()->GetFlightState() == Ship::HYPERSPACE) return;
 
 	// glLineWidth(2.0f);
 
@@ -781,14 +782,14 @@ void NavTunnelWidget::Draw()
 {
 	if (!GameConfSingleton::IsNavTunnelDisplayed()) return;
 
-	Body *navtarget = Pi::player->GetNavTarget();
+	Body *navtarget = GameLocator::getGame()->GetPlayer()->GetNavTarget();
 	if (navtarget) {
-		const vector3d navpos = navtarget->GetPositionRelTo(Pi::player);
-		const matrix3x3d &rotmat = Pi::player->GetOrient();
+		const vector3d navpos = navtarget->GetPositionRelTo(GameLocator::getGame()->GetPlayer());
+		const matrix3x3d &rotmat = GameLocator::getGame()->GetPlayer()->GetOrient();
 		const vector3d eyevec = rotmat * m_worldView->shipView.GetCameraController()->GetOrient().VectorZ();
 		if (eyevec.Dot(navpos) >= 0.0) return;
 
-		const double distToDest = Pi::player->GetPositionRelTo(navtarget).Length();
+		const double distToDest = GameLocator::getGame()->GetPlayer()->GetPositionRelTo(navtarget).Length();
 
 		const int maxSquareHeight = std::max(Gui::Screen::GetWidth(), Gui::Screen::GetHeight()) / 2;
 		const double angle = atan(maxSquareHeight / distToDest);
@@ -889,7 +890,7 @@ static double wrapAngleToPositive(const double theta)
 */
 std::tuple<double, double, double> WorldView::CalculateHeadingPitchRoll(PlaneType pt)
 {
-	FrameId frameId = Pi::player->GetFrame();
+	FrameId frameId = GameLocator::getGame()->GetPlayer()->GetFrame();
 
 	if (pt == ROTATIONAL)
 		frameId = Frame::GetFrame(frameId)->GetRotFrame();
@@ -898,12 +899,12 @@ std::tuple<double, double, double> WorldView::CalculateHeadingPitchRoll(PlaneTyp
 
 	// construct a frame of reference aligned with the ground plane
 	// and with lines of longitude and latitude
-	const vector3d up = Pi::player->GetPositionRelTo(frameId).NormalizedSafe();
+	const vector3d up = GameLocator::getGame()->GetPlayer()->GetPositionRelTo(frameId).NormalizedSafe();
 	const vector3d north = projectVecOntoPlane(vector3d(0, 1, 0), up).NormalizedSafe();
 	const vector3d east = north.Cross(up);
 
 	// find the direction that the ship is facing
-	const auto shpRot = Pi::player->GetOrientRelTo(frameId);
+	const auto shpRot = GameLocator::getGame()->GetPlayer()->GetOrientRelTo(frameId);
 	const vector3d hed = -shpRot.VectorZ();
 	const vector3d right = shpRot.VectorX();
 	const vector3d groundHed = projectVecOntoPlane(hed, up).NormalizedSafe();
@@ -960,7 +961,7 @@ vector3d WorldView::WorldSpaceToScreenSpace(const vector3d &position) const
 // needs to run inside m_cameraContext->Begin/EndFrame();
 vector3d WorldView::ShipSpaceToScreenSpace(const vector3d &pos) const
 {
-	matrix3x3d orient = Pi::player->GetInterpOrient();
+	matrix3x3d orient = GameLocator::getGame()->GetPlayer()->GetInterpOrient();
 	const Frame *cam_frame = Frame::GetFrame(m_cameraContext->GetCamFrame());
 	matrix3x3d cam_rot = cam_frame->GetInterpOrient();
 	vector3d camspace = orient * pos * cam_rot;
@@ -989,10 +990,10 @@ vector3d WorldView::GetMouseDirection() const
 	// orientation according to mouse
 	const Frame *cam_frame = Frame::GetFrame(m_cameraContext->GetCamFrame());
 	matrix3x3d cam_rot = cam_frame->GetInterpOrient();
-	vector3d mouseDir = Pi::player->GetPlayerController()->GetMouseDir() * cam_rot;
+	vector3d mouseDir = GameLocator::getGame()->GetPlayer()->GetPlayerController()->GetMouseDir() * cam_rot;
 	if (shipView.GetCamType() == ShipViewController::CAM_INTERNAL && shipView.m_internalCameraController->GetMode() == InternalCameraController::MODE_REAR)
 		mouseDir = -mouseDir;
-	return (Pi::player->GetPhysRadius() * 1.5) * mouseDir;
+	return (GameLocator::getGame()->GetPlayer()->GetPhysRadius() * 1.5) * mouseDir;
 }
 
 void WorldView::HandleSDLEvent(SDL_Event &event)

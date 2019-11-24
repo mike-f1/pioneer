@@ -2,11 +2,12 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "LuaTimer.h"
+
 #include "Game.h"
+#include "GameLocator.h"
 #include "Lua.h"
 #include "LuaObject.h"
 #include "LuaUtils.h"
-#include "Pi.h"
 
 void LuaTimer::RemoveAll()
 {
@@ -18,7 +19,7 @@ void LuaTimer::RemoveAll()
 
 void LuaTimer::Tick()
 {
-	assert(Pi::game);
+	assert(GameLocator::getGame());
 	lua_State *l = Lua::manager->GetLuaState();
 
 	LUA_DEBUG_START(l);
@@ -31,7 +32,7 @@ void LuaTimer::Tick()
 	}
 	assert(lua_istable(l, -1));
 
-	double now = Pi::game->GetTime();
+	double now = GameLocator::getGame()->GetTime();
 
 	lua_pushnil(l);
 	while (lua_next(l, -2)) {
@@ -58,7 +59,7 @@ void LuaTimer::Tick()
 				double every = lua_tonumber(l, -1);
 				lua_pop(l, 1);
 
-				pi_lua_settable(l, "at", Pi::game->GetTime() + every);
+				pi_lua_settable(l, "at", GameLocator::getGame()->GetTime() + every);
 			}
 		}
 
@@ -160,7 +161,7 @@ static void _finish_timer_create(lua_State *l)
  */
 static int l_timer_call_at(lua_State *l)
 {
-	if (!Pi::game) {
+	if (!GameLocator::getGame()) {
 		luaL_error(l, "Game is not started");
 		return 0;
 	}
@@ -168,7 +169,7 @@ static int l_timer_call_at(lua_State *l)
 	double at = luaL_checknumber(l, 2);
 	luaL_checktype(l, 3, LUA_TFUNCTION); // any type of function
 
-	if (at <= Pi::game->GetTime())
+	if (at <= GameLocator::getGame()->GetTime())
 		luaL_error(l, "Specified time is in the past");
 
 	LUA_DEBUG_START(l);
@@ -225,7 +226,7 @@ static int l_timer_call_at(lua_State *l)
  */
 static int l_timer_call_every(lua_State *l)
 {
-	if (!Pi::game) {
+	if (!GameLocator::getGame()) {
 		luaL_error(l, "Game is not started");
 		return 0;
 	}
@@ -240,7 +241,7 @@ static int l_timer_call_every(lua_State *l)
 
 	lua_newtable(l);
 	pi_lua_settable(l, "every", every);
-	pi_lua_settable(l, "at", Pi::game->GetTime() + every);
+	pi_lua_settable(l, "at", GameLocator::getGame()->GetTime() + every);
 
 	_finish_timer_create(l);
 

@@ -7,6 +7,7 @@
 #include "CityOnPlanet.h"
 #include "Frame.h"
 #include "Game.h"
+#include "GameLocator.h"
 #include "GameLog.h"
 #include "GameSaveError.h"
 #include "Json.h"
@@ -524,8 +525,8 @@ void SpaceStation::DockingUpdate(const double timeStep)
 			m_doorAnimationStep = 0.3; // open door
 
 			if (dt.stagePos >= 1.0) {
-				if (dt.ship == Pi::player)
-					Pi::game->log->Add(GetLabel(), Lang::DOCKING_CLEARANCE_EXPIRED, GameLog::PRIORITY_IMPORTANT);
+				if (dt.ship == GameLocator::getGame()->GetPlayer())
+					GameLocator::getGame()->log->Add(GetLabel(), Lang::DOCKING_CLEARANCE_EXPIRED, GameLog::PRIORITY_IMPORTANT);
 				dt.ship = 0;
 				dt.stage = 0;
 				m_doorAnimationStep = -0.3; // close door
@@ -787,7 +788,7 @@ vector3d SpaceStation::GetTargetIndicatorPosition(FrameId relToId) const
 	// and the docking point's position once the docking anim starts
 	for (Uint32 i = 0; i < m_shipDocking.size(); i++) {
 		if (i >= m_type->NumDockingPorts()) break;
-		if ((m_shipDocking[i].ship == Pi::player) && (m_shipDocking[i].stage > 0) && (m_shipDocking[i].stage != m_type->NumDockingStages() + 1)) { // last part is "not currently docked"
+		if ((m_shipDocking[i].ship == GameLocator::getGame()->GetPlayer()) && (m_shipDocking[i].stage > 0) && (m_shipDocking[i].stage != m_type->NumDockingStages() + 1)) { // last part is "not currently docked"
 
 			SpaceStationType::positionOrient_t dport;
 			if (!m_type->GetShipApproachWaypoints(i, m_shipDocking[i].stage + 1, dport))

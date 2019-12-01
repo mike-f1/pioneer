@@ -2,10 +2,10 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "LuaFileSystem.h"
+
 #include "FileSystem.h"
 #include "LuaConstants.h"
 #include "LuaObject.h"
-#include "Pi.h"
 
 /*
  * Interface: FileSystem

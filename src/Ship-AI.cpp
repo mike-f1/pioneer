@@ -4,18 +4,16 @@
 #include "Ship.h"
 
 #include "EnumStrings.h"
-#include "Frame.h"
 #include "Game.h"
 #include "GameLocator.h"
 #include "LuaEvent.h"
-#include "Pi.h"
-#include "Planet.h"
 #include "Player.h"
 #include "ShipAICmd.h"
 #include "Space.h"
-#include "SpaceStation.h"
 #include "perlin.h"
 #include "ship/Propulsion.h"
+
+class SpaceStation;
 
 // returns true if command is complete
 bool Ship::AITimeStep(float timeStep)

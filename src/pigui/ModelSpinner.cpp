@@ -6,6 +6,9 @@
 #include "PiGui.h"
 #include "graphics/RenderTarget.h"
 #include "graphics/Renderer.h"
+#include "Shields.h"
+#include "scenegraph/Model.h"
+#include "scenegraph/ModelSkin.h"
 
 #include <algorithm>
 
@@ -20,6 +23,9 @@ ModelSpinner::ModelSpinner() :
 	m_light.SetPosition(vector3f(0.f, 1.f, 1.f));
 	m_light.SetType(Graphics::Light::LIGHT_DIRECTIONAL);
 }
+
+ModelSpinner::~ModelSpinner()
+{}
 
 void ModelSpinner::CreateRenderTarget()
 {

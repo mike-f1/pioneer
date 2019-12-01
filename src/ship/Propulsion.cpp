@@ -7,7 +7,6 @@
 #include "GameLocator.h"
 #include "GameSaveError.h"
 #include "Object.h" // <- here only for comment in AIFaceDirection (line 320)
-#include "Pi.h"
 #include "PlayerShipController.h"
 
 void Propulsion::SaveToJson(Json &jsonObj, Space *space)

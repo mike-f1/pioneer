@@ -10,7 +10,6 @@
 #include "GameLocator.h"
 #include "Lua.h"
 #include "LuaObject.h"
-#include "Pi.h"
 #include "Random.h"
 #include "RandomSingleton.h"
 #include "Space.h"

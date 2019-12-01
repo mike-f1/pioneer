@@ -5,17 +5,22 @@
 
 #include "RefCounted.h"
 #include "graphics/Light.h"
+#include "scenegraph/ModelSkin.h"
+
+#include <memory>
+
+// Forward declare this type from imgui.h
+using ImTextureID = void *;
 
 namespace Graphics {
 	class RenderTarget;
 }
 
-// Forward declare this type from imgui.h
-using ImTextureID = void *;
+namespace SceneGraph {
+	class Model;
+}
 
-#include "Shields.h"
-#include "scenegraph/Model.h"
-#include "scenegraph/ModelSkin.h"
+class Shields;
 
 // TODO:
 // - make this code reusable across multiple usecases (camera, rear-view mirror, UI preview, etc.)
@@ -28,6 +33,7 @@ namespace PiGUI {
 	class ModelSpinner : public RefCounted {
 	public:
 		ModelSpinner();
+		~ModelSpinner();
 
 		// Set the ship we should be looking at.
 		void SetModel(SceneGraph::Model *model, const SceneGraph::ModelSkin &skin, unsigned int pattern);

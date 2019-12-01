@@ -201,15 +201,14 @@ void WorldView::Draw3D()
 	}
 	m_camera->Draw(excludeBody, cockpit);
 
-	// Draw 3D HUD
 	// Speed lines
 	if (GameConfSingleton::AreSpeedLinesDisplayed())
 		m_speedLines->Render(m_renderer);
 
 	// Contact trails
 	if (GameConfSingleton::AreHudTrailsDisplayed()) {
-		for (auto it = GameLocator::getGame()->GetPlayer()->GetSensors()->GetContacts().begin(); it != GameLocator::getGame()->GetPlayer()->GetSensors()->GetContacts().end(); ++it)
-			it->trail->Render(m_renderer);
+		for (auto &contact : GameLocator::getGame()->GetPlayer()->GetSensors()->GetContacts())
+			contact.trail->Render(m_renderer);
 	}
 
 	m_cameraContext->EndFrame();
@@ -333,11 +332,11 @@ void WorldView::Update()
 		matrix4x4d trans;
 		Frame::GetFrameTransform(playerFrameId, camFrameId, trans);
 
-		for (auto it = GameLocator::getGame()->GetPlayer()->GetSensors()->GetContacts().begin(); it != GameLocator::getGame()->GetPlayer()->GetSensors()->GetContacts().end(); ++it)
-			it->trail->SetTransform(trans);
+		for (auto &item : GameLocator::getGame()->GetPlayer()->GetSensors()->GetContacts())
+			item.trail->SetTransform(trans);
 	} else {
-		for (auto it = GameLocator::getGame()->GetPlayer()->GetSensors()->GetContacts().begin(); it != GameLocator::getGame()->GetPlayer()->GetSensors()->GetContacts().end(); ++it)
-			it->trail->Reset(playerFrameId);
+		for (auto &item : GameLocator::getGame()->GetPlayer()->GetSensors()->GetContacts())
+			item.trail->Reset(playerFrameId);
 	}
 
 	UIView::Update();

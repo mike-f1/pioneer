@@ -206,7 +206,11 @@ void PlayerShipController::StaticUpdate(const float timeStep)
 
 void PlayerShipController::CheckControlsLock()
 {
-	m_controlsLocked = (GameLocator::getGame()->IsPaused() || GameLocator::getGame()->GetPlayer()->IsDead() || (m_ship->GetFlightState() != Ship::FLYING) || Pi::IsConsoleActive() || (Pi::GetView() != GameLocator::getGame()->GetWorldView())); //to prevent moving the ship in starmap etc.
+	m_controlsLocked = (GameLocator::getGame()->IsPaused() ||
+		GameLocator::getGame()->GetPlayer()->IsDead() ||
+		(m_ship->GetFlightState() != Ship::FLYING) ||
+		Pi::IsConsoleActive() ||
+		!GameLocator::getGame()->IsWorldView()); //to prevent moving the ship in starmap etc.
 }
 
 vector3d PlayerShipController::GetMouseDir() const

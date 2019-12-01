@@ -1000,7 +1000,7 @@ void SystemView::Update()
 
 void SystemView::MouseWheel(bool up)
 {
-	if (this == Pi::GetView()) {
+	if (GameLocator::getGame()->IsSystemView()) {
 		if (!up)
 			m_zoomTo *= ((ZOOM_OUT_SPEED - 1) * WHEEL_SENSITIVITY + 1) / Pi::GetMoveSpeedShiftModifier();
 		else

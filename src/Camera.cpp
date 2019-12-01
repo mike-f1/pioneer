@@ -12,6 +12,7 @@
 #include "Player.h"
 #include "Sfx.h"
 #include "Space.h"
+#include "ShipCockpit.h"
 #include "galaxy/GalaxyEnums.h"
 #include "galaxy/SystemBody.h"
 #include "graphics/TextureBuilder.h"

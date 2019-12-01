@@ -218,7 +218,7 @@ void WorldView::Draw3D()
 
 void WorldView::OnToggleLabels()
 {
-	if (Pi::GetView() == this) {
+	if (GameLocator::getGame()->IsWorldView()) {
 		if (Pi::DrawGUI && m_labelsOn) {
 			m_labelsOn = false;
 		} else if (Pi::DrawGUI && !m_labelsOn) {

@@ -5,7 +5,6 @@
 #define _PI_H
 
 #include "Input.h"
-#include "JobQueue.h"
 #include "gameconsts.h"
 
 #include <map>
@@ -24,6 +23,10 @@ class View;
 class SDLGraphics;
 class LuaSerializer;
 
+class AsyncJobQueue;
+class SyncJobQueue;
+class JobQueue;
+
 #if ENABLE_SERVER_AGENT
 class ServerAgent;
 #endif
@@ -37,10 +40,6 @@ namespace Graphics {
 		class TexturedQuad;
 	}
 } // namespace Graphics
-
-namespace SceneGraph {
-	class Model;
-}
 
 namespace Sound {
 	class MusicPlayer;
@@ -98,8 +97,6 @@ public:
 	static int statNumPatches;
 
 	static void DrawPiGui(double delta, std::string handler);
-	static void SetView(View *v);
-	static View *GetView() { return currentView; }
 
 	/* Only use #if WITH_DEVKEYS */
 	static bool showDebugInfo;
@@ -118,8 +115,8 @@ public:
 	static Intro *intro;
 	static SDLGraphics *sdl;
 
-	static JobQueue *GetAsyncJobQueue() { return asyncJobQueue.get(); }
-	static JobQueue *GetSyncJobQueue() { return syncJobQueue.get(); }
+	static JobQueue *GetAsyncJobQueue();
+	static JobQueue *GetSyncJobQueue();
 
 	static bool DrawGUI;
 
@@ -142,8 +139,6 @@ private:
 	static std::unique_ptr<SyncJobQueue> syncJobQueue;
 
 	static bool menuDone;
-
-	static View *currentView;
 
 	/** So, the game physics rate (50Hz) can run slower
 	  * than the frame rate. gameTickAlpha is the interpolation

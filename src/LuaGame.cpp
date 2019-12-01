@@ -2,8 +2,8 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "LuaGame.h"
+
 #include "DateTime.h"
-#include "DeathView.h"
 #include "FileSystem.h"
 #include "Game.h"
 #include "GameConfSingleton.h"
@@ -14,12 +14,9 @@
 #include "LuaUtils.h"
 #include "Pi.h"
 #include "Player.h"
-#include "SectorView.h"
 #include "ShipCpanel.h"
 #include "Space.h"
 #include "StringF.h"
-#include "SystemInfoView.h"
-#include "SystemView.h"
 #include "WorldView.h"
 #include "galaxy/StarSystem.h"
 
@@ -458,25 +455,25 @@ static int l_game_set_radar_visible(lua_State *l)
 
 static int l_game_current_view(lua_State *l)
 {
-	const View *view = Pi::GetView();
-	if (view == GameLocator::getGame()->GetWorldView())
+	if (GameLocator::getGame()->IsWorldView()) {
 		LuaPush(l, "world");
-	else if (view == GameLocator::getGame()->GetSpaceStationView())
+	} else if (GameLocator::getGame()->IsSpaceStationView()) {
 		LuaPush(l, "space_station");
-	else if (view == GameLocator::getGame()->GetInfoView())
+	} else if (GameLocator::getGame()->IsInfoView()) {
 		LuaPush(l, "info");
-	else if (view == GameLocator::getGame()->GetSectorView())
+	} else if (GameLocator::getGame()->IsSectorView()) {
 		LuaPush(l, "sector");
-	else if (view == GameLocator::getGame()->GetSystemView())
+	} else if (GameLocator::getGame()->IsSystemView()) {
 		LuaPush(l, "system");
-	else if (view == GameLocator::getGame()->GetSystemInfoView())
+	} else if (GameLocator::getGame()->IsSystemInfoView()) {
 		LuaPush(l, "system_info");
-	else if (view == GameLocator::getGame()->GetDeathView())
+	} else if (GameLocator::getGame()->IsDeathView()) {
 		LuaPush(l, "death");
-	else if (view == GameLocator::getGame()->GetGalacticView())
+	} else if (GameLocator::getGame()->IsGalacticView()) {
 		LuaPush(l, "galaxy");
-	else
+	} else {
 		lua_pushnil(l);
+	}
 	return 1;
 }
 
@@ -487,9 +484,9 @@ static int l_game_switch_view(lua_State *l)
 	if (!GameLocator::getGame())
 		return luaL_error(l, "can't switch view when no game is running");
 	if (GameLocator::getGame()->GetPlayer()->IsDead())
-		Pi::SetView(GameLocator::getGame()->GetDeathView());
+		GameLocator::getGame()->SetView(Game::ViewType::DEATH);
 	else
-		Pi::SetView(GameLocator::getGame()->GetWorldView());
+		GameLocator::getGame()->SetView(Game::ViewType::WORLD);
 	return 0;
 }
 
@@ -566,21 +563,21 @@ static int l_game_set_view(lua_State *l)
 		return luaL_error(l, "can't set view when no game is running");
 	std::string target = luaL_checkstring(l, 1);
 	if (!target.compare("world")) {
-		Pi::SetView(GameLocator::getGame()->GetWorldView());
+		GameLocator::getGame()->SetView(Game::ViewType::WORLD);
 	} else if (!target.compare("space_station")) {
-		Pi::SetView(GameLocator::getGame()->GetSpaceStationView());
+		GameLocator::getGame()->SetView(Game::ViewType::SPACESTATION);
 	} else if (!target.compare("info")) {
-		Pi::SetView(GameLocator::getGame()->GetInfoView());
+		GameLocator::getGame()->SetView(Game::ViewType::INFO);
 	} else if (!target.compare("death")) {
-		Pi::SetView(GameLocator::getGame()->GetDeathView());
+		GameLocator::getGame()->SetView(Game::ViewType::DEATH);
 	} else if (!target.compare("sector")) {
-		Pi::SetView(GameLocator::getGame()->GetSectorView());
+		GameLocator::getGame()->SetView(Game::ViewType::SECTOR);
 	} else if (!target.compare("galaxy")) {
-		Pi::SetView(GameLocator::getGame()->GetGalacticView());
+		GameLocator::getGame()->SetView(Game::ViewType::GALACTIC);
 	} else if (!target.compare("system")) {
-		Pi::SetView(GameLocator::getGame()->GetSystemView());
+		GameLocator::getGame()->SetView(Game::ViewType::SYSTEM);
 	} else if (!target.compare("system_info")) {
-		Pi::SetView(GameLocator::getGame()->GetSystemInfoView());
+		GameLocator::getGame()->SetView(Game::ViewType::SYSTEMINFO);
 	} else {
 		// TODO else error
 	}

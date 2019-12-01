@@ -19,6 +19,7 @@
 #include "GameLog.h"
 #include "GameSaveError.h"
 #include "Intro.h"
+#include "JobQueue.h"
 #include "KeyBindings.h"
 #include "Lang.h"
 #include "LuaColor.h"
@@ -118,7 +119,6 @@ LuaNameGen *Pi::luaNameGen;
 ServerAgent *Pi::serverAgent;
 #endif
 Input Pi::input;
-View *Pi::currentView;
 TransferPlanner *Pi::planner;
 LuaConsole *Pi::luaConsole;
 float Pi::frameTime;
@@ -153,6 +153,12 @@ std::unique_ptr<SyncJobQueue> Pi::syncJobQueue;
 
 // Leaving define in place in case of future rendering problems.
 #define USE_RTT 0
+
+// static
+JobQueue *Pi::GetAsyncJobQueue() { return asyncJobQueue.get(); }
+// static
+JobQueue *Pi::GetSyncJobQueue() { return syncJobQueue.get(); }
+
 
 //static
 void Pi::CreateRenderTarget(const Uint16 width, const Uint16 height)
@@ -702,13 +708,6 @@ void Pi::Quit()
 	exit(0);
 }
 
-void Pi::SetView(View *v)
-{
-	if (currentView) currentView->Detach();
-	currentView = v;
-	if (currentView) currentView->Attach();
-}
-
 void Pi::OnChangeDetailLevel()
 {
 	BaseSphere::OnChangeDetailLevel(GameConfSingleton::getDetail().planets);
@@ -854,7 +853,7 @@ void Pi::HandleKeyDown(SDL_Keysym *key)
 #endif /* DEVKEYS */
 #if WITH_OBJECTVIEWER
 		case SDLK_F10:
-			Pi::SetView(GameLocator::getGame()->GetObjectViewerView());
+			GameLocator::getGame()->SetView(Game::ViewType::OBJECT);
 			break;
 #endif
 		case SDLK_F11:
@@ -893,21 +892,21 @@ void Pi::HandleKeyDown(SDL_Keysym *key)
 
 void Pi::HandleEscKey()
 {
-	if (currentView != 0) {
-		if (currentView == GameLocator::getGame()->GetSectorView()) {
-			SetView(GameLocator::getGame()->GetWorldView());
-		} else if ((currentView == GameLocator::getGame()->GetSystemView()) || (currentView == GameLocator::getGame()->GetSystemInfoView())) {
-			SetView(GameLocator::getGame()->GetSectorView());
+	if (!GameLocator::getGame()->IsEmptyView()) {
+		if (GameLocator::getGame()->IsSectorView()) {
+			GameLocator::getGame()->SetView(Game::ViewType::WORLD);
+		} else if ((GameLocator::getGame()->IsSystemView()) || (GameLocator::getGame()->IsSystemInfoView())) {
+			GameLocator::getGame()->SetView(Game::ViewType::SECTOR);
 		} else {
-			UIView *view = dynamic_cast<UIView *>(currentView);
+			UIView *view = dynamic_cast<UIView *>(GameLocator::getGame()->GetView());
 			if (view) {
 				// checks the template name
 				const char *tname = view->GetTemplateName();
 				if (tname) {
 					if (!strcmp(tname, "GalacticView")) {
-						SetView(GameLocator::getGame()->GetSectorView());
+						GameLocator::getGame()->SetView(Game::ViewType::SECTOR);
 					} else if (!strcmp(tname, "InfoView") || !strcmp(tname, "StationView")) {
-						SetView(GameLocator::getGame()->GetWorldView());
+						GameLocator::getGame()->SetView(Game::ViewType::WORLD);
 					}
 				}
 			}
@@ -970,8 +969,7 @@ void Pi::HandleEvents()
 		bool consoleActive = Pi::IsConsoleActive();
 		if (!consoleActive) {
 			KeyBindings::DispatchSDLEvent(&event);
-			if (currentView)
-				currentView->HandleSDLEvent(event);
+			GameLocator::getGame()->HandleSDLEvent(event);
 		} else
 			KeyBindings::toggleLuaConsole.CheckSDLEventAndDispatch(&event);
 		if (consoleActive != Pi::IsConsoleActive()) {
@@ -1058,7 +1056,7 @@ void Pi::StartGame()
 	GameLocator::getGame()->GetPlayer()->onLanded.connect(sigc::ptr_fun(&OnPlayerDockOrUndock));
 	GameLocator::getGame()->GetCpan()->ShowAll();
 	DrawGUI = true;
-	SetView(GameLocator::getGame()->GetWorldView());
+	GameLocator::getGame()->SetView(Game::ViewType::WORLD);
 
 #ifdef REMOTE_LUA_REPL
 #ifndef REMOTE_LUA_REPL_PORT
@@ -1302,7 +1300,7 @@ void Pi::MainLoop()
 		if (GameLocator::getGame()->GetPlayer()->IsDead()) {
 			if (time_player_died > 0.0) {
 				if (GameLocator::getGame()->GetTime() - time_player_died > 8.0) {
-					Pi::SetView(0);
+					GameLocator::getGame()->SetView(Game::ViewType::NONE);
 					Pi::TombStoneLoop();
 					Pi::EndGame();
 					break;
@@ -1310,7 +1308,7 @@ void Pi::MainLoop()
 			} else {
 				GameLocator::getGame()->SetTimeAccel(Game::TIMEACCEL_1X);
 				GameLocator::getGame()->GetDeathView()->Init();
-				Pi::SetView(GameLocator::getGame()->GetDeathView());
+				GameLocator::getGame()->SetView(Game::ViewType::DEATH);
 				time_player_died = GameLocator::getGame()->GetTime();
 			}
 		}
@@ -1328,8 +1326,8 @@ void Pi::MainLoop()
 
 		Frame::GetRootFrame()->UpdateInterpTransform(Pi::GetGameTickAlpha());
 
-		currentView->Update();
-		currentView->Draw3D();
+		GameLocator::getGame()->UpdateView();
+		GameLocator::getGame()->Draw3DView();
 
 		// hide cursor for ship control. Do this before imgui runs, to prevent the mouse pointer from jumping
 		Pi::SetMouseGrab(input.MouseButtonState(SDL_BUTTON_RIGHT) | input.MouseButtonState(SDL_BUTTON_MIDDLE));
@@ -1354,7 +1352,7 @@ void Pi::MainLoop()
 		// wrong, because we shouldn't this when the HUD is disabled, but
 		// probably sure draw it if they switch to eg infoview while the HUD is
 		// disabled so we need much smarter control for all this rubbish
-		if ((!GameLocator::getGame() || Pi::GetView() != GameLocator::getGame()->GetDeathView()) && DrawGUI) {
+		if ((!GameLocator::getGame() || !GameLocator::getGame()->IsDeathView()) && DrawGUI) {
 			Pi::ui->Update();
 			Pi::ui->Draw();
 		}

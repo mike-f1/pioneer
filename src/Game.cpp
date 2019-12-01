@@ -51,7 +51,9 @@ Game::Game(const SystemPath &path, const double startDateTime) :
 	m_wantHyperspace(false),
 	m_timeAccel(TIMEACCEL_1X),
 	m_requestedTimeAccel(TIMEACCEL_1X),
-	m_forceTimeAccel(false)
+	m_forceTimeAccel(false),
+	m_currentView(nullptr),
+	m_currentViewType(ViewType::NONE)
 {
 #ifdef PIONEER_PROFILER
 	std::string profilerPath;
@@ -138,7 +140,9 @@ Game::~Game()
 Game::Game(const Json &jsonObj) :
 	m_timeAccel(TIMEACCEL_PAUSED),
 	m_requestedTimeAccel(TIMEACCEL_PAUSED),
-	m_forceTimeAccel(false)
+	m_forceTimeAccel(false),
+	m_currentView(nullptr),
+	m_currentViewType(ViewType::NONE)
 {
 	try {
 		int version = jsonObj["version"];
@@ -902,7 +906,7 @@ Game::Views::~Views()
 // manage creation and destruction here to get the timing and order right
 void Game::CreateViews(const SystemPath &path)
 {
-	Pi::SetView(nullptr);
+	SetView(ViewType::NONE);
 
 	// XXX views expect Game and Player to exist
 	//Output("Pi::game %p; Pi::player %p; StarSystem %p\n", this, GetPlayer(), m_space->GetStarSystem().Get());
@@ -915,7 +919,7 @@ void Game::CreateViews(const SystemPath &path)
 // XXX mostly a copy of CreateViews
 void Game::LoadViewsFromJson(const Json &jsonObj, const SystemPath &path)
 {
-	Pi::SetView(nullptr);
+	SetView(ViewType::NONE);
 
 	m_gameViews.reset(new Views);
 	m_gameViews->LoadFromJson(jsonObj, this, path);
@@ -925,12 +929,46 @@ void Game::LoadViewsFromJson(const Json &jsonObj, const SystemPath &path)
 
 void Game::DestroyViews()
 {
-	Pi::SetView(nullptr);
+	SetView(ViewType::NONE);
 
 	m_gameViews.reset();
 
 	delete log;
 	log = 0;
+}
+
+void Game::SetView(ViewType vt)
+{
+	if (m_currentViewType == vt) return;
+
+	if (m_currentView) m_currentView->Detach();
+	switch (vt) {
+	case ViewType::NONE: m_currentViewType = ViewType::NONE;  m_currentView = nullptr; break;
+	case ViewType::SECTOR: m_currentViewType = ViewType::SECTOR;  m_currentView = GetSectorView(); break;
+	case ViewType::GALACTIC: m_currentViewType = ViewType::GALACTIC;  m_currentView = GetGalacticView(); break;
+	case ViewType::SYSTEMINFO: m_currentViewType = ViewType::SYSTEMINFO;  m_currentView = GetSystemInfoView(); break;
+	case ViewType::SYSTEM: m_currentViewType = ViewType::SYSTEM;  m_currentView = GetSystemView(); break;
+	case ViewType::WORLD: m_currentViewType = ViewType::WORLD;  m_currentView = GetWorldView(); break;
+	case ViewType::DEATH: m_currentViewType = ViewType::DEATH;  m_currentView = GetDeathView(); break;
+	case ViewType::SPACESTATION: m_currentViewType = ViewType::SPACESTATION;  m_currentView = GetSpaceStationView(); break;
+	case ViewType::INFO: m_currentViewType = ViewType::INFO;  m_currentView = GetInfoView(); break;
+#if WITH_OBJECTVIEWER
+	case ViewType::OBJECT: m_currentViewType = ViewType::OBJECT;  m_currentView = GetObjectViewerView(); break;
+#endif // WITH_OBJECTVIEWER
+	}
+	if (m_currentView) m_currentView->Attach();
+}
+
+void Game::HandleSDLEvent(SDL_Event event) {
+	if (m_currentView != nullptr) m_currentView->HandleSDLEvent(event);
+}
+
+void Game::UpdateView() {
+	if (m_currentView != nullptr) m_currentView->Update();
+}
+
+void Game::Draw3DView() {
+	if (m_currentView != nullptr) m_currentView->Draw3D();
 }
 
 void Game::EmitPauseState(bool paused)

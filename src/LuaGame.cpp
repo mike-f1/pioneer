@@ -6,6 +6,7 @@
 #include "DeathView.h"
 #include "FileSystem.h"
 #include "Game.h"
+#include "GameConfSingleton.h"
 #include "GameLocator.h"
 #include "GameSaveError.h"
 #include "Lang.h"
@@ -254,7 +255,7 @@ static int l_game_save_game(lua_State *l)
 	}
 
 	const std::string filename(luaL_checkstring(l, 1));
-	const std::string path = FileSystem::JoinPathBelow(Pi::GetSaveDir(), filename);
+	const std::string path = FileSystem::JoinPathBelow(GameConfSingleton::GetSaveDir(), filename);
 
 	try {
 		Game::SaveGame(filename, GameLocator::getGame());

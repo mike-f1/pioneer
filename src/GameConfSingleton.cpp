@@ -3,6 +3,9 @@
 
 #include "GameConfSingleton.h"
 
+#include "FileSystem.h"
+#include "utils.h"
+
 std::unique_ptr<GameConfig> GameConfSingleton::m_gConfig = nullptr;
 DetailLevel GameConfSingleton::m_detail;
 
@@ -12,8 +15,14 @@ bool GameConfSingleton::hudTrailsDisplayed = false;
 bool GameConfSingleton::bRefreshBackgroundStars = true;
 float GameConfSingleton::amountOfBackgroundStarsDisplayed = 1.0f;
 
+const char GameConfSingleton::SAVE_DIR_NAME[] = "savefiles";
+
 void GameConfSingleton::Init(const GameConfig::map_string &override_)
 {
+	if (!m_gConfig) {
+		Output("Warning: GameConfig already initialised!!!\n");
+	}
+
 	m_gConfig.reset(new GameConfig(override_));
 	m_detail.planets = m_gConfig->Int("DetailPlanets");
 	m_detail.cities = m_gConfig->Int("DetailCities");
@@ -56,3 +65,14 @@ void GameConfSingleton::SetHudTrailsDisplayed(bool state)
 
 	hudTrailsDisplayed = state;
 }
+
+std::string GameConfSingleton::GetSaveDir()
+{
+	return SAVE_DIR_NAME;
+}
+
+std::string GameConfSingleton::GetSaveDirFull()
+{
+	return FileSystem::JoinPath(FileSystem::GetUserDir(), GameConfSingleton::SAVE_DIR_NAME);
+}
+

@@ -337,13 +337,6 @@ static void LuaInitGame()
 	LuaEvent::Clear();
 }
 
-const char Pi::SAVE_DIR_NAME[] = "savefiles";
-
-std::string Pi::GetSaveDir()
-{
-	return FileSystem::JoinPath(FileSystem::GetUserDir(), Pi::SAVE_DIR_NAME);
-}
-
 void TestGPUJobsSupport()
 {
 	bool supportsGPUJobs = (GameConfSingleton::getInstance().Int("EnableGPUJobs") == 1);
@@ -879,7 +872,7 @@ void Pi::HandleKeyDown(SDL_Keysym *key)
 
 				else {
 					const std::string name = "_quicksave";
-					const std::string path = FileSystem::JoinPath(GetSaveDir(), name);
+					const std::string path = FileSystem::JoinPath(GameConfSingleton::GetSaveDirFull(), name);
 					try {
 						Game::SaveGame(name, GameLocator::getGame());
 						GameLocator::getGame()->log->Add(Lang::GAME_SAVED_TO + path);

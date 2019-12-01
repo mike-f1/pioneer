@@ -74,14 +74,10 @@ public:
 	// This is a default value only, centralized here to promote uniform user expericience.
 	static float GetMoveSpeedShiftModifier();
 
-	static std::string GetSaveDir();
-
 	static void CreateRenderTarget(const Uint16 width, const Uint16 height);
 	static void DrawRenderTarget();
 	static void BeginRenderTarget();
 	static void EndRenderTarget();
-
-	static const char SAVE_DIR_NAME[];
 
 	static sigc::signal<void> onPlayerChangeTarget; // navigation or combat
 	static sigc::signal<void> onPlayerChangeFlightControlState;

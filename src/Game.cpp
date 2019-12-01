@@ -11,6 +11,7 @@
 #include "FileSystem.h"
 #include "Frame.h"
 #include "GZipFormat.h"
+#include "GameConfSingleton.h" // <- Here only for save/load path
 #include "GameLocator.h"
 #include "GameLog.h"
 #include "GameSaveError.h"
@@ -946,7 +947,7 @@ void Game::EmitPauseState(bool paused)
 
 Json Game::LoadGameToJson(const std::string &filename)
 {
-	Json rootNode = JsonUtils::LoadJsonSaveFile(FileSystem::JoinPathBelow(Pi::SAVE_DIR_NAME, filename), FileSystem::userFiles);
+	Json rootNode = JsonUtils::LoadJsonSaveFile(FileSystem::JoinPathBelow(GameConfSingleton::GetSaveDir(), filename), FileSystem::userFiles);
 	if (!rootNode.is_object()) {
 		Output("Loading saved game '%s' failed.\n", filename.c_str());
 		throw SavedGameCorruptException();
@@ -975,7 +976,7 @@ Game *Game::LoadGame(const std::string &filename)
 
 bool Game::CanLoadGame(const std::string &filename)
 {
-	auto file = FileSystem::userFiles.ReadFile(FileSystem::JoinPathBelow(Pi::SAVE_DIR_NAME, filename));
+	auto file = FileSystem::userFiles.ReadFile(FileSystem::JoinPathBelow(GameConfSingleton::GetSaveDir(), filename));
 	if (!file)
 		return false;
 
@@ -994,7 +995,7 @@ void Game::SaveGame(const std::string &filename, Game *game)
 	if (game->GetPlayer()->IsDead())
 		throw CannotSaveDeadPlayer();
 
-	if (!FileSystem::userFiles.MakeDirectory(Pi::SAVE_DIR_NAME)) {
+	if (!FileSystem::userFiles.MakeDirectory(GameConfSingleton::GetSaveDir())) {
 		throw CouldNotOpenFileException();
 	}
 
@@ -1014,7 +1015,7 @@ void Game::SaveGame(const std::string &filename, Game *game)
 		jsonData = Json::to_cbor(rootNode); // Convert the JSON data to CBOR.
 	}
 
-	FILE *f = FileSystem::userFiles.OpenWriteStream(FileSystem::JoinPathBelow(Pi::SAVE_DIR_NAME, filename));
+	FILE *f = FileSystem::userFiles.OpenWriteStream(FileSystem::JoinPathBelow(GameConfSingleton::GetSaveDir(), filename));
 	if (!f) throw CouldNotOpenFileException();
 
 	try {

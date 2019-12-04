@@ -112,10 +112,6 @@ void WorldView::InitObject()
 
 	// --
 
-	m_hudSensorGaugeStack = new Gui::VBox();
-	m_hudSensorGaugeStack->SetSpacing(2.0f);
-	Add(m_hudSensorGaugeStack, 5.0f, 5.0f);
-
 	Gui::Screen::PushFont("OverlayFont");
 
 	{

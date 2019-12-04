@@ -62,9 +62,9 @@ public:
 
 	static Frame *GetFrame(FrameId fId)
 	{
-		if (IsIdValid(fId)) {
-			if (fId < s_frames.size()) return &s_frames[fId];
-			Error("In '%s': fId is valid but out of range (%i)...\n",__func__, fId);
+		if (fId.valid()) {
+			if (fId.id() < s_frames.size()) return &s_frames[fId];
+			Error("In '%s': fId is valid but out of range (%i)...\n",__func__, fId.id());
 			return nullptr;
 		}
 		return nullptr;

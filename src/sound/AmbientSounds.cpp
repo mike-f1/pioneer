@@ -232,7 +232,8 @@ void AmbientSounds::Update()
 
 		Frame *playerFrame = Frame::GetFrame(GameLocator::getGame()->GetPlayer()->GetFrame());
 		const Body *astro = playerFrame->GetBody();
-		if (astro && playerFrame->IsRotFrame() != noFrameId && (astro->IsType(Object::PLANET))) {
+
+		if (astro && playerFrame->IsRotFrame() && (astro->IsType(Object::PLANET))) {
 			double dist = GameLocator::getGame()->GetPlayer()->GetPosition().Length();
 			double pressure, density;
 			static_cast<const Planet *>(astro)->GetAtmosphericState(dist, &pressure, &density);

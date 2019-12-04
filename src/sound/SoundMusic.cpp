@@ -7,6 +7,14 @@
 #include "libs.h" //for clamp
 #include <map>
 
+float Sound::MusicPlayer::m_volume = 0.0;
+Sound::MusicEvent Sound::MusicPlayer::m_eventOne;
+Sound::MusicEvent Sound::MusicPlayer::m_eventTwo;
+bool Sound::MusicPlayer::m_playing = false;
+bool Sound::MusicPlayer::m_eventOnePlaying = false;
+std::string Sound::MusicPlayer::m_currentSongName = "";
+bool Sound::MusicPlayer::m_enabled = false;
+
 namespace Sound {
 
 	MusicEvent::MusicEvent() :
@@ -23,20 +31,16 @@ namespace Sound {
 		eid = PlayMusic(fx, volume_left, volume_right, op);
 	}
 
-	MusicPlayer::MusicPlayer() :
-		m_volume(0.8f),
-		m_playing(false),
-		m_eventOnePlaying(false),
-		m_currentSongName(""),
-		m_enabled(true)
+	void MusicPlayer::Init()
 	{
+		m_volume = 0.8f;
+		m_playing = false;
+		m_eventOnePlaying = false;
+		m_currentSongName = "";
+		m_enabled = true;
 	}
 
-	MusicPlayer::~MusicPlayer()
-	{
-	}
-
-	float MusicPlayer::GetVolume() const
+	float MusicPlayer::GetVolume()
 	{
 		return m_volume;
 	}
@@ -103,12 +107,12 @@ namespace Sound {
 		}
 	}
 
-	const std::string MusicPlayer::GetCurrentSongName() const
+	const std::string MusicPlayer::GetCurrentSongName()
 	{
 		return m_currentSongName;
 	}
 
-	const std::vector<std::string> MusicPlayer::GetSongList() const
+	const std::vector<std::string> MusicPlayer::GetSongList()
 	{
 		using std::pair;
 		using std::string;
@@ -123,7 +127,7 @@ namespace Sound {
 		return songs;
 	}
 
-	bool MusicPlayer::IsPlaying() const
+	bool MusicPlayer::IsPlaying()
 	{
 		return (m_eventOne.IsPlaying() || m_eventTwo.IsPlaying());
 	}

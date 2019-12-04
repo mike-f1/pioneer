@@ -110,7 +110,6 @@ public:
 	static Input input;
 	static TransferPlanner *planner;
 	static LuaConsole *luaConsole;
-	static Sound::MusicPlayer &GetMusicPlayer() { return musicPlayer; }
 	static Graphics::Renderer *renderer;
 	static Intro *intro;
 	static SDLGraphics *sdl;
@@ -146,8 +145,6 @@ private:
 	  */
 	static float gameTickAlpha;
 	static float frameTime;
-
-	static Sound::MusicPlayer musicPlayer;
 
 	static Graphics::RenderTarget *renderTarget;
 	static RefCountedPtr<Graphics::Texture> renderTexture;

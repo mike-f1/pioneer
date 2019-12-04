@@ -2,9 +2,9 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "LuaMusic.h"
+
 #include "LuaObject.h"
 #include "LuaUtils.h"
-#include "Pi.h"
 #include "sound/SoundMusic.h"
 
 /*
@@ -49,7 +49,7 @@
  */
 static int l_music_get_song(lua_State *l)
 {
-	lua_pushstring(l, Pi::GetMusicPlayer().GetCurrentSongName().c_str());
+	lua_pushstring(l, Sound::MusicPlayer::GetCurrentSongName().c_str());
 	return 1;
 }
 
@@ -81,7 +81,7 @@ static int l_music_play(lua_State *l)
 	bool repeat = true;
 	if (lua_isboolean(l, 2))
 		repeat = lua_toboolean(l, 2) != 0;
-	Pi::GetMusicPlayer().Play(song, repeat);
+	Sound::MusicPlayer::Play(song, repeat);
 	return 0;
 }
 
@@ -104,7 +104,7 @@ static int l_music_play(lua_State *l)
  */
 static int l_music_stop(lua_State *l)
 {
-	Pi::GetMusicPlayer().Stop();
+	Sound::MusicPlayer::Stop();
 	return 0;
 }
 
@@ -138,7 +138,7 @@ static int l_music_fade_in(lua_State *l)
 	bool repeat = true;
 	if (lua_isboolean(l, 3))
 		repeat = lua_toboolean(l, 3) != 0;
-	Pi::GetMusicPlayer().Play(song, repeat, fadedelta);
+	Sound::MusicPlayer::Play(song, repeat, fadedelta);
 	return 0;
 }
 
@@ -166,7 +166,7 @@ static int l_music_fade_in(lua_State *l)
 static int l_music_fade_out(lua_State *l)
 {
 	const float fadedelta = luaL_checknumber(l, 1);
-	Pi::GetMusicPlayer().FadeOut(fadedelta);
+	Sound::MusicPlayer::FadeOut(fadedelta);
 	return 0;
 }
 
@@ -197,7 +197,7 @@ static int l_music_get_song_list(lua_State *l)
 {
 	using std::string;
 	using std::vector;
-	const vector<string> vec = Pi::GetMusicPlayer().GetSongList();
+	const vector<string> vec = Sound::MusicPlayer::GetSongList();
 	lua_newtable(l);
 	int idx = 1;
 	for (vector<string>::const_iterator it = vec.begin(); it != vec.end(); ++it) {
@@ -228,7 +228,7 @@ static int l_music_get_song_list(lua_State *l)
  */
 static int l_music_is_playing(lua_State *l)
 {
-	const bool playing = Pi::GetMusicPlayer().IsPlaying();
+	const bool playing = Sound::MusicPlayer::IsPlaying();
 	lua_pushboolean(l, playing);
 	return 1;
 }

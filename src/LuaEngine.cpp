@@ -567,8 +567,8 @@ static void set_effects_volume(const bool muted, const float volume)
 
 static void set_music_volume(const bool muted, const float volume)
 {
-	Pi::GetMusicPlayer().SetEnabled(!(muted || is_zero_exact(volume)));
-	Pi::GetMusicPlayer().SetVolume(volume);
+	Sound::MusicPlayer::SetEnabled(!(muted || is_zero_exact(volume)));
+	Sound::MusicPlayer::SetVolume(volume);
 	GameConfSingleton::getInstance().SetFloat("MusicVolume", volume);
 	GameConfSingleton::getInstance().SetInt("MusicMuted", muted ? 1 : 0);
 	GameConfSingleton::getInstance().Save();
@@ -641,7 +641,7 @@ static int l_engine_set_music_muted(lua_State *l)
 	if (lua_isnone(l, 1))
 		return luaL_error(l, "SetMusicMuted takes one boolean argument");
 	const bool muted = lua_toboolean(l, 1);
-	set_music_volume(muted, Pi::GetMusicPlayer().GetVolume());
+	set_music_volume(muted, Sound::MusicPlayer::GetVolume());
 	return 0;
 }
 

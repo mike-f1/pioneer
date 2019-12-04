@@ -147,7 +147,6 @@ std::vector<Pi::InternalRequests> Pi::internalRequests;
 bool Pi::isRecordingVideo = false;
 FILE *Pi::ffmpegFile = nullptr;
 
-Sound::MusicPlayer Pi::musicPlayer;
 std::unique_ptr<AsyncJobQueue> Pi::asyncJobQueue;
 std::unique_ptr<SyncJobQueue> Pi::syncJobQueue;
 
@@ -597,12 +596,14 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 		Sound::Init();
 		Sound::SetMasterVolume(GameConfSingleton::getInstance().Float("MasterVolume"));
 		Sound::SetSfxVolume(GameConfSingleton::getInstance().Float("SfxVolume"));
-		GetMusicPlayer().SetVolume(GameConfSingleton::getInstance().Float("MusicVolume"));
+
+		Sound::MusicPlayer::Init();
+		Sound::MusicPlayer::SetVolume(GameConfSingleton::getInstance().Float("MusicVolume"));
 
 		Sound::Pause(0);
 		if (GameConfSingleton::getInstance().Int("MasterMuted")) Sound::Pause(1);
 		if (GameConfSingleton::getInstance().Int("SfxMuted")) Sound::SetSfxVolume(0.f);
-		if (GameConfSingleton::getInstance().Int("MusicMuted")) GetMusicPlayer().SetEnabled(false);
+		if (GameConfSingleton::getInstance().Int("MusicMuted")) Sound::MusicPlayer::SetEnabled(false);
 	}
 	draw_progress(0.9f);
 
@@ -1202,7 +1203,7 @@ void Pi::EndGame()
 {
 	Pi::SetMouseGrab(false);
 
-	Pi::musicPlayer.Stop();
+	Sound::MusicPlayer::Stop();
 	Sound::DestroyAllEvents();
 
 	// final event
@@ -1396,7 +1397,7 @@ void Pi::MainLoop()
 			if (!GameConfSingleton::getInstance().Int("DisableSound")) AmbientSounds::Update();
 		}
 		GameLocator::getGame()->GetCpan()->Update();
-		musicPlayer.Update();
+		Sound::MusicPlayer::Update();
 
 		syncJobQueue->RunJobs(SYNC_JOBS_PER_LOOP);
 		asyncJobQueue->FinishJobs();

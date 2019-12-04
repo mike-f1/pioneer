@@ -76,7 +76,7 @@ Space::Space() :
 {
 	m_background.reset(new Background::Container(Pi::renderer, RandomSingleton::getInstance(), GameConfSingleton::GetAmountBackgroundStars()));
 
-	m_rootFrameId = Frame::CreateFrame(noFrameId, Lang::SYSTEM, Frame::FLAG_DEFAULT, FLT_MAX);
+	m_rootFrameId = Frame::CreateFrame(FrameId::Invalid, Lang::SYSTEM, Frame::FLAG_DEFAULT, FLT_MAX);
 }
 
 Space::Space(double total_time, float time_step, RefCountedPtr<StarSystem> starsystem, const SystemPath &path) :
@@ -95,7 +95,7 @@ Space::Space(double total_time, float time_step, RefCountedPtr<StarSystem> stars
 
 	CityOnPlanet::SetCityModelPatterns(m_starSystem->GetPath());
 
-	m_rootFrameId = Frame::CreateFrame(noFrameId, Lang::SYSTEM, Frame::FLAG_DEFAULT, FLT_MAX);
+	m_rootFrameId = Frame::CreateFrame(FrameId::Invalid, Lang::SYSTEM, Frame::FLAG_DEFAULT, FLT_MAX);
 
 	std::vector<vector3d> positionAccumulator;
 	GenBody(total_time, m_starSystem->GetRootBody().Get(), m_rootFrameId, positionAccumulator);
@@ -124,7 +124,7 @@ Space::Space(RefCountedPtr<StarSystem> starsystem, const Json &jsonObj, double a
 	CityOnPlanet::SetCityModelPatterns(m_starSystem->GetPath());
 
 	if (!spaceObj.count("frame")) throw SavedGameCorruptException();
-	m_rootFrameId = Frame::FromJson(spaceObj["frame"], this, noFrameId, at_time);
+	m_rootFrameId = Frame::FromJson(spaceObj["frame"], this, FrameId::Invalid, at_time);
 
 	try {
 		Json bodyArray = spaceObj["bodies"].get<Json::array_t>();
@@ -512,10 +512,9 @@ static FrameId MakeFramesFor(const double at_time, SystemBody *sbody, Body *b, F
 
 	if (sbody->GetType() == GalaxyEnums::BodyType::TYPE_GRAVPOINT) {
 		FrameId orbFrameId = Frame::CreateFrame(fId,
-							sbody->GetName().c_str(),
-							Frame::FLAG_DEFAULT,
-							sbody->GetMaxChildOrbitalDistance() * 1.1
-							);
+			sbody->GetName().c_str(),
+			Frame::FLAG_DEFAULT,
+			sbody->GetMaxChildOrbitalDistance() * 1.1);
 		Frame *orbFrame = Frame::GetFrame(orbFrameId);
 		orbFrame->SetBodies(sbody, b);
 		return orbFrameId;
@@ -529,10 +528,9 @@ static FrameId MakeFramesFor(const double at_time, SystemBody *sbody, Body *b, F
 		// and a rotating frame with no radius to contain attached objects
 		double frameRadius = std::max(4.0 * sbody->GetRadius(), sbody->GetMaxChildOrbitalDistance() * 1.05);
 		FrameId orbFrameId = Frame::CreateFrame(fId,
-							sbody->GetName().c_str(),
-							Frame::FLAG_HAS_ROT,
-							frameRadius
-							);
+			sbody->GetName().c_str(),
+			Frame::FLAG_HAS_ROT,
+			frameRadius);
 		Frame *orbFrame = Frame::GetFrame(orbFrameId);
 		orbFrame->SetBodies(sbody, b);
 		//Output("\t\t\t%s has frame size %.0fkm, body radius %.0fkm\n", sbody->name.c_str(),
@@ -542,10 +540,9 @@ static FrameId MakeFramesFor(const double at_time, SystemBody *sbody, Body *b, F
 		assert(sbody->IsRotating() != 0);
 		// rotating frame has atmosphere radius or feature height, whichever is larger
 		FrameId rotFrameId = Frame::CreateFrame(orbFrameId,
-							sbody->GetName().c_str(),
-							Frame::FLAG_ROTATING,
-							b->GetPhysRadius()
-							);
+			sbody->GetName().c_str(),
+			Frame::FLAG_ROTATING,
+			b->GetPhysRadius());
 		Frame *rotFrame = Frame::GetFrame(rotFrameId);
 		rotFrame->SetBodies(sbody, b);
 
@@ -578,10 +575,9 @@ static FrameId MakeFramesFor(const double at_time, SystemBody *sbody, Body *b, F
 	} else if (sbody->GetType() == GalaxyEnums::TYPE_STARPORT_ORBITAL) {
 		// space stations want non-rotating frame to some distance
 		FrameId orbFrameId = Frame::CreateFrame(fId,
-							sbody->GetName().c_str(),
-							Frame::FLAG_DEFAULT,
-							20000.0
-							);
+			sbody->GetName().c_str(),
+			Frame::FLAG_DEFAULT,
+			20000.0);
 		Frame *orbFrame = Frame::GetFrame(orbFrameId);
 		orbFrame->SetBodies(sbody, b);
 		b->SetFrame(orbFrameId);
@@ -849,7 +845,7 @@ void Space::UpdateBodies()
 #endif
 
 	for (Body *rmb : m_removeBodies) {
-		rmb->SetFrame(noFrameId);
+		rmb->SetFrame(FrameId::Invalid);
 		for (Body *b : m_bodies)
 			b->NotifyRemoved(rmb);
 		m_bodies.remove(rmb);
@@ -876,8 +872,8 @@ static void DebugDumpFrame(FrameId fId, bool details, unsigned int indent)
 	Frame *f = Frame::GetFrame(fId);
 	Frame *parent = Frame::GetFrame(f->GetParent());
 
-	Output("%.*s%2i) %p (%s)%s\n", indent, space, fId, static_cast<void *>(f), f->GetLabel().c_str(), f->IsRotFrame() ? " [rotating]" : " [non rotating]");
-	if (IsIdValid(f->GetParent()))
+	Output("%.*s%2i) %p (%s)%s\n", indent, space, fId.id(), static_cast<void *>(f), f->GetLabel().c_str(), f->IsRotFrame() ? " [rotating]" : " [non rotating]");
+	if (f->GetParent().valid())
 		Output("%.*s parent %p (%s)\n", indent + 3, space, static_cast<void *>(parent), parent->GetLabel().c_str());
 	if (f->GetBody())
 		Output("%.*s body %p (%s)\n", indent + 3, space, static_cast<void *>(f->GetBody()), f->GetBody()->GetLabel().c_str());
@@ -893,7 +889,9 @@ void Space::DebugDumpFrames(bool details)
 {
 	memset(space, ' ', sizeof(space));
 
-	if (m_starSystem ) Output("Frame structure for '%s':\n", m_starSystem->GetName().c_str());
-	else Output("Frame structure while in hyperspace:\n");
+	if (m_starSystem)
+		Output("Frame structure for '%s':\n", m_starSystem->GetName().c_str());
+	else
+		Output("Frame structure while in hyperspace:\n");
 	DebugDumpFrame(m_rootFrameId, details, 3);
 }

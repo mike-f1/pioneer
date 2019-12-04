@@ -139,7 +139,7 @@ void Sensors::Update(float time)
 				it->distance = m_owner->GetPositionRelTo(it->body).Length();
 				it->trail->Update(time);
 			} else {
-				it->trail->Reset(noFrameId);
+				it->trail->Reset(FrameId::Invalid);
 			}
 			it->fresh = false;
 			++it;

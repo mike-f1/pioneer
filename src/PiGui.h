@@ -103,7 +103,7 @@ public:
 
 	static ImTextureID RenderSVG(std::string svgFilename, int width, int height);
 
-	static void NewFrame(SDL_Window *window);
+	static void NewFrame(SDL_Window *window, bool skip = true);
 
 	static void EndFrame();
 

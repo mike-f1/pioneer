@@ -89,6 +89,7 @@ void WorldView::InitObject()
 	GetSizeRequested(size);
 
 	m_labelsOn = true;
+	m_guiOn = true;
 	SetTransparency(true);
 
 	Graphics::RenderStateDesc rsd;
@@ -219,12 +220,12 @@ void WorldView::Draw3D()
 void WorldView::OnToggleLabels()
 {
 	if (GameLocator::getGame()->IsWorldView()) {
-		if (Pi::DrawGUI && m_labelsOn) {
+		if (m_guiOn && m_labelsOn) {
 			m_labelsOn = false;
-		} else if (Pi::DrawGUI && !m_labelsOn) {
-			Pi::DrawGUI = false;
-		} else if (!Pi::DrawGUI) {
-			Pi::DrawGUI = true;
+		} else if (m_guiOn && !m_labelsOn) {
+			m_guiOn = false;
+		} else if (!m_guiOn) {
+			m_guiOn = true;
 			m_labelsOn = true;
 		}
 	}
@@ -356,7 +357,7 @@ void WorldView::OnSwitchTo()
 void WorldView::OnSwitchFrom()
 {
 	shipView.Deactivated();
-	Pi::DrawGUI = true;
+	m_guiOn = true;
 }
 
 // XXX paying fine remotely can't really be done until crime and

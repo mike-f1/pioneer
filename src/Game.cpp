@@ -959,6 +959,10 @@ void Game::SetView(ViewType vt)
 	if (m_currentView) m_currentView->Attach();
 }
 
+bool Game::DrawGui() {
+	return (!IsWorldView() ? true : m_gameViews->m_worldView->DrawGui());
+}
+
 void Game::HandleSDLEvent(SDL_Event event) {
 	if (m_currentView != nullptr) m_currentView->HandleSDLEvent(event);
 }

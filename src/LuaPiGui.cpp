@@ -1827,7 +1827,7 @@ static int l_pigui_radial_menu(lua_State *l)
 static int l_pigui_should_draw_ui(lua_State *l)
 {
 	PROFILE_SCOPED()
-	LuaPush(l, Pi::DrawGUI);
+	LuaPush(l, GameLocator::getGame()->DrawGui());
 	return 1;
 }
 

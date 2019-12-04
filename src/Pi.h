@@ -117,8 +117,6 @@ public:
 	static JobQueue *GetAsyncJobQueue();
 	static JobQueue *GetSyncJobQueue();
 
-	static bool DrawGUI;
-
 private:
 	// msgs/requests that can be posted which the game processes at the end of a game loop in HandleRequests
 	enum InternalRequests {

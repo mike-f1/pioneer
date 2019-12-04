@@ -77,6 +77,8 @@ public:
 	void EndCameraFrame() { m_cameraContext->EndFrame(); };
 
 	bool ShouldShowLabels() { return m_labelsOn; }
+	bool DrawGui() { return m_guiOn; };
+
 
 protected:
 	virtual void BuildUI(UI::Single *container);
@@ -133,6 +135,8 @@ private:
 
 	Gui::Label *m_pauseText;
 	bool m_labelsOn;
+	// General State for view (was Pi::DrawGUI)
+	bool m_guiOn;
 
 	/* Only use #if WITH_DEVKEYS */
 	Gui::Label *m_debugInfo;

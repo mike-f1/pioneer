@@ -148,6 +148,8 @@ public:
 	void SetView(ViewType vt);
 	View *GetView() { return m_currentView; } // <-- Only for a check on template name in Pi::
 
+	bool DrawGui();
+
 	bool IsEmptyView() const { return nullptr == m_currentView; }
 	bool IsSectorView() const { return ViewType::SECTOR == m_currentViewType; }
 	bool IsGalacticView() const { return ViewType::GALACTIC == m_currentViewType; }

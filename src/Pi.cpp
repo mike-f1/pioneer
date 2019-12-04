@@ -133,7 +133,6 @@ bool Pi::doProfileOne = false;
 #endif
 int Pi::statSceneTris = 0;
 int Pi::statNumPatches = 0;
-bool Pi::DrawGUI = true;
 Graphics::Renderer *Pi::renderer;
 RefCountedPtr<UI::Context> Pi::ui;
 RefCountedPtr<PiGui> Pi::pigui;
@@ -1056,7 +1055,6 @@ void Pi::StartGame()
 	GameLocator::getGame()->GetPlayer()->onUndock.connect(sigc::ptr_fun(&OnPlayerDockOrUndock));
 	GameLocator::getGame()->GetPlayer()->onLanded.connect(sigc::ptr_fun(&OnPlayerDockOrUndock));
 	GameLocator::getGame()->GetCpan()->ShowAll();
-	DrawGUI = true;
 	GameLocator::getGame()->SetView(Game::ViewType::WORLD);
 
 #ifdef REMOTE_LUA_REPL
@@ -1345,7 +1343,7 @@ void Pi::MainLoop()
 		Pi::renderer->EndFrame();
 
 		Pi::renderer->ClearDepthBuffer();
-		if (DrawGUI) {
+		if (GameLocator::getGame()->DrawGui()) {
 			Gui::Draw();
 		}
 
@@ -1353,7 +1351,7 @@ void Pi::MainLoop()
 		// wrong, because we shouldn't this when the HUD is disabled, but
 		// probably sure draw it if they switch to eg infoview while the HUD is
 		// disabled so we need much smarter control for all this rubbish
-		if ((!GameLocator::getGame() || !GameLocator::getGame()->IsDeathView()) && DrawGUI) {
+		if ((!GameLocator::getGame() || !GameLocator::getGame()->IsDeathView()) && GameLocator::getGame()->DrawGui()) {
 			Pi::ui->Update();
 			Pi::ui->Draw();
 		}
@@ -1364,7 +1362,7 @@ void Pi::MainLoop()
 			// FIXME: Always begin a camera frame because WorldSpaceToScreenSpace
 			// requires it and is exposed to pigui.
 			GameLocator::getGame()->GetWorldView()->BeginCameraFrame();
-			PiGui::NewFrame(Pi::renderer->GetSDLWindow());
+			PiGui::NewFrame(Pi::renderer->GetSDLWindow(), GameLocator::getGame()->DrawGui());
 			DrawPiGui(Pi::frameTime, "GAME");
 			GameLocator::getGame()->GetWorldView()->EndCameraFrame();
 		}

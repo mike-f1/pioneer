@@ -28,6 +28,10 @@ public:
 
 	static DetailLevel &getDetail() { return m_detail; };
 
+	static std::string GetSaveDirFull();
+
+	static std::string GetSaveDir();
+
 	static void SetAmountBackgroundStars(const float amount);
 
 	static float GetAmountBackgroundStars() { return amountOfBackgroundStarsDisplayed; }
@@ -47,6 +51,9 @@ public:
 
 private:
 	static std::unique_ptr<GameConfig> m_gConfig;
+
+	static const char SAVE_DIR_NAME[];
+
 	static DetailLevel m_detail;
 
 	static bool navTunnelDisplayed;

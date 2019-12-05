@@ -77,6 +77,7 @@ public:
 	void EndCameraFrame() { m_cameraContext->EndFrame(); };
 
 	bool ShouldShowLabels() { return m_labelsOn; }
+	bool DrawGui() { return m_guiOn; };
 
 protected:
 	virtual void BuildUI(UI::Single *container);
@@ -106,7 +107,7 @@ private:
 			pos(0.0f, 0.0f),
 			realpos(0.0f, 0.0f),
 			side(INDICATOR_HIDDEN),
-			label(0) {}
+			label(nullptr) {}
 	};
 
 	void UpdateProjectedObjects();
@@ -114,17 +115,16 @@ private:
 	void HideIndicator(Indicator &indicator);
 	void SeparateLabels(Gui::Label *a, Gui::Label *b);
 
-	void OnToggleLabels();
-
 	void DrawCombatTargetIndicator(const Indicator &target, const Indicator &lead, const Color &c);
 	void DrawEdgeMarker(const Indicator &marker, const Color &c);
+
+	void OnToggleLabels();
 
 	void OnPlayerChangeTarget();
 	/// Handler for "requestTimeAccelerationInc" event
 	void OnRequestTimeAccelInc();
 	/// Handler for "requestTimeAccelerationDec" event
 	void OnRequestTimeAccelDec();
-	void SelectBody(Body *, bool reselectIsDeselect);
 
 	Game *m_game;
 
@@ -133,15 +133,10 @@ private:
 
 	Gui::Label *m_pauseText;
 	bool m_labelsOn;
+	bool m_guiOn;
 
 	/* Only use #if WITH_DEVKEYS */
 	Gui::Label *m_debugInfo;
-
-	// useful docking locations for new-ui widgets in the HUD
-	RefCountedPtr<UI::Widget> m_hudRoot;
-	// new-ui HUD components
-
-	Gui::VBox *m_hudSensorGaugeStack;
 
 	sigc::connection m_onHyperspaceTargetChangedCon;
 	sigc::connection m_onPlayerChangeTargetCon;

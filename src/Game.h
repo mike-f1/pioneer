@@ -18,6 +18,8 @@ class GameLog;
 class HyperspaceCloud;
 class Player;
 class Space;
+class InGameViews;
+class ShipCpanel;
 
 namespace Graphics {
 	class Renderer;
@@ -31,15 +33,6 @@ struct InvalidGameStartLocation {
 	InvalidGameStartLocation(const std::string &error_) :
 		error(error_) {}
 };
-
-class SectorView;
-class UIView;
-class SystemInfoView;
-class SystemView;
-class WorldView;
-class DeathView;
-class ShipCpanel;
-class ObjectViewerView;
 
 class Game {
 public:
@@ -130,22 +123,11 @@ public:
 
 	float GetTimeStep() const { return s_timeAccelRates[m_timeAccel] * (1.0f / PHYSICS_HZ); }
 
-	SectorView *GetSectorView() const { return m_gameViews->m_sectorView; }
-	UIView *GetGalacticView() const { return m_gameViews->m_galacticView; }
-	SystemInfoView *GetSystemInfoView() const { return m_gameViews->m_systemInfoView; }
-	SystemView *GetSystemView() const { return m_gameViews->m_systemView; }
-	WorldView *GetWorldView() const { return m_gameViews->m_worldView; }
-	DeathView *GetDeathView() const { return m_gameViews->m_deathView; }
-	UIView *GetSpaceStationView() const { return m_gameViews->m_spaceStationView; }
-	UIView *GetInfoView() const { return m_gameViews->m_infoView; }
-	ShipCpanel *GetCpan() const { return m_gameViews->m_cpan; }
-
-	/* Only use #if WITH_OBJECTVIEWER */
-	ObjectViewerView *GetObjectViewerView() const;
-
 	GameLog *log;
 
 	static void EmitPauseState(bool paused);
+
+	InGameViews *GetInGameViews() { return m_inGameViews.get(); };
 
 private:
 	void GenCaches(const SystemPath *here, int cacheRadius,
@@ -155,38 +137,12 @@ private:
 	RefCountedPtr<SectorCache::Slave> m_sectorCache;
 	RefCountedPtr<StarSystemCache::Slave> m_starSystemCache;
 
-	class Views {
-	public:
-		Views();
-		void Init(Game *game, const SystemPath &path);
-		void LoadFromJson(const Json &jsonObj, Game *game, const SystemPath &path);
-		~Views();
-
-		void SetRenderer(Graphics::Renderer *r);
-
-		SectorView *m_sectorView;
-		UIView *m_galacticView;
-		SystemInfoView *m_systemInfoView;
-		SystemView *m_systemView;
-		WorldView *m_worldView;
-		DeathView *m_deathView;
-		UIView *m_spaceStationView;
-		UIView *m_infoView;
-		ShipCpanel *m_cpan;
-
-		/* Only use #if WITH_OBJECTVIEWER */
-		ObjectViewerView *m_objectViewerView;
-	};
-
-	void CreateViews(const SystemPath &path);
-	void LoadViewsFromJson(const Json &jsonObj, const SystemPath &path);
-	void DestroyViews();
-
 	void SwitchToHyperspace();
 	void SwitchToNormalSpace();
 
+	std::unique_ptr<InGameViews> m_inGameViews;
+
 	RefCountedPtr<Galaxy> m_galaxy;
-	std::unique_ptr<Views> m_gameViews;
 	std::unique_ptr<Space> m_space;
 	double m_time;
 

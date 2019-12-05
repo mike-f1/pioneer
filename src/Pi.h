@@ -5,7 +5,6 @@
 #define _PI_H
 
 #include "Input.h"
-#include "JobQueue.h"
 #include "gameconsts.h"
 
 #include <map>
@@ -24,6 +23,10 @@ class View;
 class SDLGraphics;
 class LuaSerializer;
 
+class AsyncJobQueue;
+class SyncJobQueue;
+class JobQueue;
+
 #if ENABLE_SERVER_AGENT
 class ServerAgent;
 #endif
@@ -37,10 +40,6 @@ namespace Graphics {
 		class TexturedQuad;
 	}
 } // namespace Graphics
-
-namespace SceneGraph {
-	class Model;
-}
 
 namespace Sound {
 	class MusicPlayer;
@@ -74,14 +73,10 @@ public:
 	// This is a default value only, centralized here to promote uniform user expericience.
 	static float GetMoveSpeedShiftModifier();
 
-	static std::string GetSaveDir();
-
 	static void CreateRenderTarget(const Uint16 width, const Uint16 height);
 	static void DrawRenderTarget();
 	static void BeginRenderTarget();
 	static void EndRenderTarget();
-
-	static const char SAVE_DIR_NAME[];
 
 	static sigc::signal<void> onPlayerChangeTarget; // navigation or combat
 	static sigc::signal<void> onPlayerChangeFlightControlState;
@@ -102,8 +97,6 @@ public:
 	static int statNumPatches;
 
 	static void DrawPiGui(double delta, std::string handler);
-	static void SetView(View *v);
-	static View *GetView() { return currentView; }
 
 	/* Only use #if WITH_DEVKEYS */
 	static bool showDebugInfo;
@@ -117,15 +110,12 @@ public:
 	static Input input;
 	static TransferPlanner *planner;
 	static LuaConsole *luaConsole;
-	static Sound::MusicPlayer &GetMusicPlayer() { return musicPlayer; }
 	static Graphics::Renderer *renderer;
 	static Intro *intro;
 	static SDLGraphics *sdl;
 
-	static JobQueue *GetAsyncJobQueue() { return asyncJobQueue.get(); }
-	static JobQueue *GetSyncJobQueue() { return syncJobQueue.get(); }
-
-	static bool DrawGUI;
+	static JobQueue *GetAsyncJobQueue();
+	static JobQueue *GetSyncJobQueue();
 
 private:
 	// msgs/requests that can be posted which the game processes at the end of a game loop in HandleRequests
@@ -147,16 +137,12 @@ private:
 
 	static bool menuDone;
 
-	static View *currentView;
-
 	/** So, the game physics rate (50Hz) can run slower
 	  * than the frame rate. gameTickAlpha is the interpolation
 	  * factor between one physics tick and another [0.0-1.0]
 	  */
 	static float gameTickAlpha;
 	static float frameTime;
-
-	static Sound::MusicPlayer musicPlayer;
 
 	static Graphics::RenderTarget *renderTarget;
 	static RefCountedPtr<Graphics::Texture> renderTexture;

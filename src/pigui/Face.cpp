@@ -2,8 +2,12 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "Face.h"
+
 #include "FileSystem.h"
 #include "SDLWrappers.h"
+#include "Pi.h"
+#include "graphics/Drawables.h"
+#include "graphics/Texture.h"
 #include "graphics/TextureBuilder.h"
 
 namespace PiGUI {
@@ -30,6 +34,9 @@ namespace PiGUI {
 			s_material.Reset(Pi::renderer->CreateMaterial(matDesc));
 		}
 	}
+
+	Face::~Face()
+	{}
 
 	Uint32 Face::GetTextureId()
 	{

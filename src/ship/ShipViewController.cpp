@@ -108,6 +108,8 @@ void ShipViewController::Deactivated()
 
 void ShipViewController::SetCamType(Player *player, enum CamType c)
 {
+	m_camType = c;
+
 	switch (m_camType) {
 	case CAM_INTERNAL:
 		m_activeCameraController = m_internalCameraController.get();

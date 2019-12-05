@@ -5,6 +5,7 @@
 #define _SYSTEMINFOVIEW_H
 
 #include "Color.h"
+#include "galaxy/StarSystem.h"
 #include "galaxy/SystemPath.h"
 
 #include "UIView.h"

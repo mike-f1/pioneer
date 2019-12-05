@@ -2,11 +2,11 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "LuaJson.h"
+
 #include "FileSystem.h"
 #include "JsonUtils.h"
 #include "LuaObject.h"
 #include "LuaUtils.h"
-#include "Pi.h"
 
 // Do a simple JSON->Lua translation.
 static void _push_json_to_lua(lua_State *l, Json &obj)

@@ -8,7 +8,6 @@
 #include "Game.h"
 #include "GameSaveError.h"
 #include "MathUtil.h"
-#include "Pi.h"
 #include "Ship.h"
 #include "scenegraph/MatrixTransform.h"
 

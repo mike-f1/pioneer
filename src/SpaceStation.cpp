@@ -14,7 +14,6 @@
 #include "Lang.h"
 #include "LuaEvent.h"
 #include "NavLights.h"
-#include "Pi.h"
 #include "Planet.h"
 #include "Player.h"
 #include "Ship.h"

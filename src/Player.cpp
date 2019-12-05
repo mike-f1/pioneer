@@ -10,6 +10,7 @@
 #include "GameLocator.h"
 #include "GameLog.h"
 #include "HyperspaceCloud.h"
+#include "InGameViews.h"
 #include "KeyBindings.h"
 #include "Lang.h"
 #include "LuaObject.h"
@@ -220,7 +221,7 @@ void Player::OnEnterSystem()
 {
 	m_controller->SetFlightControlState(CONTROL_MANUAL);
 	//XXX don't call sectorview from here, use signals instead
-	GameLocator::getGame()->GetSectorView()->ResetHyperspaceTarget();
+	GameLocator::getGame()->GetInGameViews()->GetSectorView()->ResetHyperspaceTarget();
 }
 
 //temporary targeting stuff

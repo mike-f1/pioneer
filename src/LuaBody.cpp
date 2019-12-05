@@ -6,6 +6,7 @@
 #include "Frame.h"
 #include "Game.h"
 #include "GameLocator.h"
+#include "InGameViews.h"
 #include "LuaConstants.h"
 #include "LuaObject.h"
 #include "LuaUtils.h"
@@ -655,7 +656,7 @@ static int l_body_get_phys_radius(lua_State *l)
 static int l_body_get_projected_screen_position(lua_State *l)
 {
 	Body *b = LuaObject<Body>::CheckFromLua(1);
-	WorldView *wv = GameLocator::getGame()->GetWorldView();
+	WorldView *wv = GameLocator::getGame()->GetInGameViews()->GetWorldView();
 	vector3d p = wv->WorldSpaceToScreenSpace(b);
 	return pushOnScreenPositionDirection(l, p);
 }
@@ -687,7 +688,7 @@ static int l_body_get_label(lua_State *l)
 static int l_body_get_target_indicator_screen_position(lua_State *l)
 {
 	Body *b = LuaObject<Body>::CheckFromLua(1);
-	WorldView *wv = GameLocator::getGame()->GetWorldView();
+	WorldView *wv = GameLocator::getGame()->GetInGameViews()->GetWorldView();
 	vector3d p = wv->GetTargetIndicatorScreenPosition(b);
 	return pushOnScreenPositionDirection(l, p);
 }

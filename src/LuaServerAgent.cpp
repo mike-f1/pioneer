@@ -4,6 +4,7 @@
 #ifdef ENABLE_SERVER_AGENT
 
 #include "LuaServerAgent.h"
+
 #include "LuaObject.h"
 #include "LuaRef.h"
 #include "Pi.h"

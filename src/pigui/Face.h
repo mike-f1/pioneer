@@ -5,16 +5,26 @@
 #define PIGUI_FACE_H
 
 #include "FaceParts.h"
-#include "SmartPtr.h"
-#include "Pi.h"
-#include "graphics/Drawables.h"
-#include "graphics/Texture.h"
+#include "RefCounted.h"
+
+#include "vector2.h"
+
+#include <memory>
+
+namespace Graphics {
+	class Material;
+	class Texture;
+	namespace Drawables {
+		class TexturedQuad;
+	}
+};
 
 namespace PiGUI {
 
 	class Face : public RefCounted {
 	public:
 		Face(FaceParts::FaceDescriptor& face, Uint32 seed = 0);
+		~Face();
 
 		Uint32 GetTextureId();
 		vector2f GetTextureSize();

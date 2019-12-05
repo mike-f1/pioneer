@@ -11,6 +11,7 @@
 #include "GameSaveError.h"
 #include "HudTrail.h"
 #include "HyperspaceCloud.h"
+#include "InGameViews.h"
 #include "Input.h"
 #include "Lang.h"
 #include "Pi.h"
@@ -89,6 +90,7 @@ void WorldView::InitObject()
 	GetSizeRequested(size);
 
 	m_labelsOn = true;
+	m_guiOn = true;
 	SetTransparency(true);
 
 	Graphics::RenderStateDesc rsd;
@@ -110,10 +112,6 @@ void WorldView::InitObject()
 	*/
 
 	// --
-
-	m_hudSensorGaugeStack = new Gui::VBox();
-	m_hudSensorGaugeStack->SetSpacing(2.0f);
-	Add(m_hudSensorGaugeStack, 5.0f, 5.0f);
 
 	Gui::Screen::PushFont("OverlayFont");
 
@@ -201,15 +199,14 @@ void WorldView::Draw3D()
 	}
 	m_camera->Draw(excludeBody, cockpit);
 
-	// Draw 3D HUD
 	// Speed lines
 	if (GameConfSingleton::AreSpeedLinesDisplayed())
 		m_speedLines->Render(m_renderer);
 
 	// Contact trails
 	if (GameConfSingleton::AreHudTrailsDisplayed()) {
-		for (auto it = GameLocator::getGame()->GetPlayer()->GetSensors()->GetContacts().begin(); it != GameLocator::getGame()->GetPlayer()->GetSensors()->GetContacts().end(); ++it)
-			it->trail->Render(m_renderer);
+		for (auto &contact : GameLocator::getGame()->GetPlayer()->GetSensors()->GetContacts())
+			contact.trail->Render(m_renderer);
 	}
 
 	m_cameraContext->EndFrame();
@@ -219,13 +216,13 @@ void WorldView::Draw3D()
 
 void WorldView::OnToggleLabels()
 {
-	if (Pi::GetView() == this) {
-		if (Pi::DrawGUI && m_labelsOn) {
+	if (GameLocator::getGame()->GetInGameViews()->IsWorldView()) {
+		if (m_guiOn && m_labelsOn) {
 			m_labelsOn = false;
-		} else if (Pi::DrawGUI && !m_labelsOn) {
-			Pi::DrawGUI = false;
-		} else if (!Pi::DrawGUI) {
-			Pi::DrawGUI = true;
+		} else if (m_guiOn && !m_labelsOn) {
+			m_guiOn = false;
+		} else if (!m_guiOn) {
+			m_guiOn = true;
 			m_labelsOn = true;
 		}
 	}
@@ -333,11 +330,11 @@ void WorldView::Update()
 		matrix4x4d trans;
 		Frame::GetFrameTransform(playerFrameId, camFrameId, trans);
 
-		for (auto it = GameLocator::getGame()->GetPlayer()->GetSensors()->GetContacts().begin(); it != GameLocator::getGame()->GetPlayer()->GetSensors()->GetContacts().end(); ++it)
-			it->trail->SetTransform(trans);
+		for (auto &item : GameLocator::getGame()->GetPlayer()->GetSensors()->GetContacts())
+			item.trail->SetTransform(trans);
 	} else {
-		for (auto it = GameLocator::getGame()->GetPlayer()->GetSensors()->GetContacts().begin(); it != GameLocator::getGame()->GetPlayer()->GetSensors()->GetContacts().end(); ++it)
-			it->trail->Reset(playerFrameId);
+		for (auto &item : GameLocator::getGame()->GetPlayer()->GetSensors()->GetContacts())
+			item.trail->Reset(playerFrameId);
 	}
 
 	UIView::Update();
@@ -357,7 +354,7 @@ void WorldView::OnSwitchTo()
 void WorldView::OnSwitchFrom()
 {
 	shipView.Deactivated();
-	Pi::DrawGUI = true;
+	m_guiOn = true;
 }
 
 // XXX paying fine remotely can't really be done until crime and
@@ -393,8 +390,8 @@ void WorldView::OnPlayerChangeTarget()
 	if (b) {
 		Sound::PlaySfx("OK");
 		Ship *s = b->IsType(Object::HYPERSPACECLOUD) ? static_cast<HyperspaceCloud *>(b)->GetShip() : 0;
-		if (!s || !m_game->GetSectorView()->GetHyperspaceTarget().IsSameSystem(s->GetHyperspaceDest()))
-			m_game->GetSectorView()->FloatHyperspaceTarget();
+		if (!s || !m_game->GetInGameViews()->GetSectorView()->GetHyperspaceTarget().IsSameSystem(s->GetHyperspaceDest()))
+			m_game->GetInGameViews()->GetSectorView()->FloatHyperspaceTarget();
 	}
 }
 

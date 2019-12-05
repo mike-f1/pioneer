@@ -20,28 +20,30 @@ namespace Sound {
 
 	class MusicPlayer {
 	public:
-		MusicPlayer();
-		~MusicPlayer();
-		float GetVolume() const;
-		void SetVolume(const float);
-		void Play(const std::string &, const bool repeat = false, const float fadeDelta = 1.f);
-		void Stop();
-		void FadeOut(const float fadeDelta);
-		void Update();
-		const std::string GetCurrentSongName() const;
-		const std::vector<std::string> GetSongList() const;
-		bool IsPlaying() const;
-		void SetEnabled(bool);
+		MusicPlayer() = delete;
+		~MusicPlayer() = delete;
+
+		static void Init();
+		static float GetVolume();
+		static void SetVolume(const float);
+		static void Play(const std::string &, const bool repeat = false, const float fadeDelta = 1.f);
+		static void Stop();
+		static void FadeOut(const float fadeDelta);
+		static void Update();
+		static const std::string GetCurrentSongName();
+		static const std::vector<std::string> GetSongList();
+		static bool IsPlaying();
+		static void SetEnabled(bool);
 
 	private:
-		float m_volume;
+		static float m_volume;
 		//two streams for crossfade
-		MusicEvent m_eventOne;
-		MusicEvent m_eventTwo;
-		bool m_playing;
-		bool m_eventOnePlaying;
-		std::string m_currentSongName;
-		bool m_enabled;
+		static MusicEvent m_eventOne;
+		static MusicEvent m_eventTwo;
+		static bool m_playing;
+		static bool m_eventOnePlaying;
+		static std::string m_currentSongName;
+		static bool m_enabled;
 	};
 } // namespace Sound
 

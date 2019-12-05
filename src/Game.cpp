@@ -7,14 +7,15 @@
 
 #include "Background.h"
 #include "Body.h"
-#include "DeathView.h"
 #include "FileSystem.h"
 #include "Frame.h"
 #include "GZipFormat.h"
+#include "GameConfSingleton.h" // <- Here only for save/load path
 #include "GameLocator.h"
 #include "GameLog.h"
 #include "GameSaveError.h"
 #include "HyperspaceCloud.h"
+#include "InGameViews.h"
 #include "LuaEvent.h"
 #include "LuaSerializer.h"
 #include "MathUtil.h"
@@ -24,18 +25,17 @@
 #endif
 #include "Pi.h"
 #include "Player.h"
-#include "SectorView.h"
 #include "Sfx.h"
-#include "ShipCpanel.h"
 #include "Space.h"
 #include "SpaceStation.h"
-#include "SystemInfoView.h"
-#include "SystemView.h"
-#include "UIView.h"
-#include "WorldView.h"
 #include "galaxy/Galaxy.h"
 #include "galaxy/GalaxyGenerator.h"
 #include "ship/PlayerShipController.h"
+
+#include "SystemView.h" // <- Here for planner...
+#include "ShipCpanel.h" // <- Here for UI updates (find GetCpan )
+#include "WorldView.h"  // <- Here for CameraContext
+
 
 static const int s_saveVersion = 87;
 
@@ -101,7 +101,13 @@ Game::Game(const SystemPath &path, const double startDateTime) :
 		m_player->SetVelocity(vector3d(0, 0, 0));
 	}
 
-	CreateViews(path);
+	RefCountedPtr<SectorCache::Slave> sectorCache = m_galaxy->NewSectorSlaveCache();
+    size_t filled = m_galaxy->FillSectorCache(sectorCache, path, cacheRadius + 2);
+    Output("SectorView cache pre-filled with %lu entries\n", filled);
+
+	m_inGameViews.reset(new InGameViews(this, path, sectorCache));
+
+	log = new GameLog();
 
 #ifdef PIONEER_PROFILER
 	Profiler::dumphtml(profilerPath.c_str());
@@ -110,8 +116,6 @@ Game::Game(const SystemPath &path, const double startDateTime) :
 
 Game::~Game()
 {
-	DestroyViews();
-
 	// XXX this shutdown sequence is critical:
 	// 1- RemoveBody marks the Player for removal from Space,
 	// 2- Space is destroyed, which actually goes through its removal list,
@@ -132,6 +136,8 @@ Game::~Game()
 	m_space.reset();
 	m_player.reset();
 	m_galaxy->FlushCaches();
+
+	delete log;
 }
 
 Game::Game(const Json &jsonObj) :
@@ -193,8 +199,12 @@ Game::Game(const Json &jsonObj) :
 	GenCaches(&path, cacheRadius + 2,
 			[this, path]() { UpdateStarSystemCache(&path, cacheRadius); });
 
+	RefCountedPtr<SectorCache::Slave> sectorCache = m_galaxy->NewSectorSlaveCache();
+    size_t filled = m_galaxy->FillSectorCache(sectorCache, path, cacheRadius + 2);
+    Output("SectorView cache pre-filled with %lu entries\n", filled);
+
 	// views
-	LoadViewsFromJson(jsonObj, path);
+	m_inGameViews.reset(new InGameViews(jsonObj, this, path, sectorCache));
 
 	/// HACK!
 	// Lua needs Space up and running (see LuaBody::_body_deserializer
@@ -205,6 +215,7 @@ Game::Game(const Json &jsonObj) :
 
 	Pi::luaSerializer->UninitTableRefs();
 
+	log = new GameLog();
 }
 
 void Game::ToJson(Json &jsonObj)
@@ -235,8 +246,8 @@ void Game::ToJson(Json &jsonObj)
 	jsonObj["hyperspace_end_time"] = m_hyperspaceEndTime;
 
 	// Delete camera frame from frame structure:
-	if (m_gameViews->m_worldView->GetCameraContext()->GetCamFrame())
-		m_gameViews->m_worldView->EndCameraFrame();
+	if (m_inGameViews->GetWorldView()->GetCameraContext()->GetCamFrame())
+		m_inGameViews->GetWorldView()->EndCameraFrame();
 
 	// space, all the bodies and things
 	m_space->ToJson(jsonObj);
@@ -251,10 +262,7 @@ void Game::ToJson(Json &jsonObj)
 	}
 	jsonObj["hyperspace_clouds"] = hyperspaceCloudArray; // Add hyperspace cloud array to supplied object.
 
-	// views. must be saved in init order
-	m_gameViews->m_cpan->SaveToJson(jsonObj);
-	m_gameViews->m_sectorView->SaveToJson(jsonObj);
-	m_gameViews->m_worldView->SaveToJson(jsonObj);
+	m_inGameViews->SaveToJson(jsonObj);
 
 	// lua
 	Pi::luaSerializer->ToJson(jsonObj);
@@ -303,7 +311,7 @@ void Game::ToJson(Json &jsonObj)
 	Pi::luaSerializer->UninitTableRefs();
 
 	// Bring back camera frame:
-	m_gameViews->m_worldView->BeginCameraFrame();
+	m_inGameViews->GetWorldView()->BeginCameraFrame();
 }
 
 RefCountedPtr<Galaxy> Game::GetGalaxy() const { return m_galaxy; }
@@ -318,7 +326,7 @@ void Game::TimeStep(float step)
 	m_space->TimeStep(step, GetTime());
 
 	// XXX ui updates, not sure if they belong here
-	m_gameViews->m_cpan->TimeStepUpdate(step);
+	m_inGameViews->GetCpan()->TimeStepUpdate(step);
 	SfxManager::TimeStepAll(step, Frame::GetRootFrameId());
 
 	if (m_state == State::HYPERSPACE) {
@@ -771,13 +779,6 @@ void Game::RequestTimeAccelDec(bool force)
 	m_forceTimeAccel = force;
 }
 
-#if WITH_OBJECTVIEWER
-ObjectViewerView *Game::GetObjectViewerView() const
-{
-	return m_gameViews->m_objectViewerView;
-}
-#endif
-
 void Game::GenCaches(const SystemPath *here, int sectorRadius,
 	StarSystemCache::CacheFilledCallback callback)
 {
@@ -805,133 +806,6 @@ void Game::UpdateStarSystemCache(const SystemPath *here, int sectorRadius)
 	m_galaxy->FillStarSystemCache(m_starSystemCache, *here, sectorRadius, m_sectorCache);
 }
 
-Game::Views::Views() :
-	m_sectorView(nullptr),
-	m_galacticView(nullptr),
-	m_systemInfoView(nullptr),
-	m_systemView(nullptr),
-	m_worldView(nullptr),
-	m_deathView(nullptr),
-	m_spaceStationView(nullptr),
-	m_infoView(nullptr),
-	m_cpan(nullptr)
-{}
-
-void Game::Views::SetRenderer(Graphics::Renderer *r)
-{
-	// view manager will handle setting this probably
-	m_infoView->SetRenderer(r);
-	m_sectorView->SetRenderer(r);
-	m_systemInfoView->SetRenderer(r);
-	m_systemView->SetRenderer(r);
-	m_worldView->SetRenderer(r);
-	m_deathView->SetRenderer(r);
-
-#if WITH_OBJECTVIEWER
-	m_objectViewerView->SetRenderer(r);
-#endif
-}
-
-void Game::Views::Init(Game *game, const SystemPath &path)
-{
-	m_cpan = new ShipCpanel(Pi::renderer);
-	RefCountedPtr<SectorCache::Slave> sectorCache = game->m_galaxy->NewSectorSlaveCache();
-    size_t filled = game->m_galaxy->FillSectorCache(sectorCache, path, cacheRadius + 2);
-    Output("SectorView cache pre-filled with %lu entries\n", filled);
-	m_sectorView = new SectorView(path, game->m_galaxy, sectorCache);
-	m_worldView = new WorldView(game);
-	m_galacticView = new UIView("GalacticView");
-	m_systemView = new SystemView(game);
-	m_systemInfoView = new SystemInfoView(game);
-	m_spaceStationView = new UIView("StationView");
-	m_infoView = new UIView("InfoView");
-	m_deathView = new DeathView(game, Pi::renderer);
-
-#if WITH_OBJECTVIEWER
-	m_objectViewerView = new ObjectViewerView(game);
-#endif
-
-	SetRenderer(Pi::renderer);
-}
-
-void Game::Views::LoadFromJson(const Json &jsonObj, Game *game, const SystemPath &path)
-{
-	m_cpan = new ShipCpanel(jsonObj, Pi::renderer);
-	RefCountedPtr<SectorCache::Slave> sectorCache = game->m_galaxy->NewSectorSlaveCache();
-    game->m_galaxy->FillSectorCache(sectorCache, path, cacheRadius + 2);
-	m_sectorView = new SectorView(jsonObj, game->m_galaxy, sectorCache);
-	m_worldView = new WorldView(jsonObj, game);
-
-	m_galacticView = new UIView("GalacticView");
-	m_systemView = new SystemView(game);
-	m_systemInfoView = new SystemInfoView(game);
-	m_spaceStationView = new UIView("StationView");
-	m_infoView = new UIView("InfoView");
-	m_deathView = new DeathView(game, Pi::renderer);
-
-#if WITH_OBJECTVIEWER
-	m_objectViewerView = new ObjectViewerView(game);
-#endif
-
-	SetRenderer(Pi::renderer);
-}
-
-Game::Views::~Views()
-{
-#if WITH_OBJECTVIEWER
-	delete m_objectViewerView;
-#endif
-
-	delete m_deathView;
-	delete m_infoView;
-	delete m_spaceStationView;
-	delete m_systemInfoView;
-	delete m_systemView;
-	delete m_galacticView;
-	delete m_worldView;
-	delete m_sectorView;
-	delete m_cpan;
-}
-
-// XXX this should be in some kind of central UI management class that
-// creates a set of UI views held by the game. right now though the views
-// are rather fundamentally tied to their global points and assume they
-// can all talk to each other. given the difficulty of disentangling all
-// that and the impending move to Rocket, its better right now to just
-// manage creation and destruction here to get the timing and order right
-void Game::CreateViews(const SystemPath &path)
-{
-	Pi::SetView(nullptr);
-
-	// XXX views expect Game and Player to exist
-	//Output("Pi::game %p; Pi::player %p; StarSystem %p\n", this, GetPlayer(), m_space->GetStarSystem().Get());
-	m_gameViews.reset(new Views);
-	m_gameViews->Init(this, path);
-
-	log = new GameLog();
-}
-
-// XXX mostly a copy of CreateViews
-void Game::LoadViewsFromJson(const Json &jsonObj, const SystemPath &path)
-{
-	Pi::SetView(nullptr);
-
-	m_gameViews.reset(new Views);
-	m_gameViews->LoadFromJson(jsonObj, this, path);
-
-	log = new GameLog();
-}
-
-void Game::DestroyViews()
-{
-	Pi::SetView(nullptr);
-
-	m_gameViews.reset();
-
-	delete log;
-	log = 0;
-}
-
 void Game::EmitPauseState(bool paused)
 {
 	if (paused) {
@@ -946,7 +820,7 @@ void Game::EmitPauseState(bool paused)
 
 Json Game::LoadGameToJson(const std::string &filename)
 {
-	Json rootNode = JsonUtils::LoadJsonSaveFile(FileSystem::JoinPathBelow(Pi::SAVE_DIR_NAME, filename), FileSystem::userFiles);
+	Json rootNode = JsonUtils::LoadJsonSaveFile(FileSystem::JoinPathBelow(GameConfSingleton::GetSaveDir(), filename), FileSystem::userFiles);
 	if (!rootNode.is_object()) {
 		Output("Loading saved game '%s' failed.\n", filename.c_str());
 		throw SavedGameCorruptException();
@@ -975,7 +849,7 @@ Game *Game::LoadGame(const std::string &filename)
 
 bool Game::CanLoadGame(const std::string &filename)
 {
-	auto file = FileSystem::userFiles.ReadFile(FileSystem::JoinPathBelow(Pi::SAVE_DIR_NAME, filename));
+	auto file = FileSystem::userFiles.ReadFile(FileSystem::JoinPathBelow(GameConfSingleton::GetSaveDir(), filename));
 	if (!file)
 		return false;
 
@@ -994,7 +868,7 @@ void Game::SaveGame(const std::string &filename, Game *game)
 	if (game->GetPlayer()->IsDead())
 		throw CannotSaveDeadPlayer();
 
-	if (!FileSystem::userFiles.MakeDirectory(Pi::SAVE_DIR_NAME)) {
+	if (!FileSystem::userFiles.MakeDirectory(GameConfSingleton::GetSaveDir())) {
 		throw CouldNotOpenFileException();
 	}
 
@@ -1014,7 +888,7 @@ void Game::SaveGame(const std::string &filename, Game *game)
 		jsonData = Json::to_cbor(rootNode); // Convert the JSON data to CBOR.
 	}
 
-	FILE *f = FileSystem::userFiles.OpenWriteStream(FileSystem::JoinPathBelow(Pi::SAVE_DIR_NAME, filename));
+	FILE *f = FileSystem::userFiles.OpenWriteStream(FileSystem::JoinPathBelow(GameConfSingleton::GetSaveDir(), filename));
 	if (!f) throw CouldNotOpenFileException();
 
 	try {

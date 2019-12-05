@@ -1,3 +1,5 @@
+#include "buildopts.h"
+
 #include "InGameViews.h"
 
 #include "DeathView.h"
@@ -20,8 +22,6 @@ InGameViews::InGameViews(Game *game, const SystemPath &path, RefCountedPtr<Secto
 	m_systemView(new SystemView(game)),
 	m_worldView(new WorldView(game)),
 	m_deathView(new DeathView(game, Pi::renderer)),
-	m_spaceStationView(new UIView("StationView")),
-	m_infoView(new UIView("InfoView")),
 	m_cpan(new ShipCpanel(Pi::renderer)),
 #if WITH_OBJECTVIEWER
 	m_objectViewerView(new ObjectViewerView(game)),
@@ -40,8 +40,6 @@ InGameViews::InGameViews(const Json &jsonObj, Game *game, const SystemPath &path
 	m_galacticView = new UIView("GalacticView");
 	m_systemView = new SystemView(game);
 	m_systemInfoView = new SystemInfoView(game);
-	m_spaceStationView = new UIView("StationView");
-	m_infoView = new UIView("InfoView");
 	m_deathView = new DeathView(game, Pi::renderer);
 
 #if WITH_OBJECTVIEWER
@@ -69,8 +67,6 @@ InGameViews::~InGameViews()
 #endif
 
 	delete m_deathView;
-	delete m_infoView;
-	delete m_spaceStationView;
 	delete m_systemInfoView;
 	delete m_systemView;
 	delete m_galacticView;
@@ -82,7 +78,6 @@ InGameViews::~InGameViews()
 void InGameViews::SetRenderer(Graphics::Renderer *r)
 {
 	// view manager will handle setting this probably
-	m_infoView->SetRenderer(r);
 	m_sectorView->SetRenderer(r);
 	m_systemInfoView->SetRenderer(r);
 	m_systemView->SetRenderer(r);
@@ -95,9 +90,9 @@ void InGameViews::SetRenderer(Graphics::Renderer *r)
 }
 
 #if WITH_OBJECTVIEWER
-ObjectViewerView *Game::GetObjectViewerView() const
+ObjectViewerView *InGameViews::GetObjectViewerView() const
 {
-	return m_inGameViews->m_objectViewerView;
+	return m_objectViewerView;
 }
 #endif
 
@@ -114,8 +109,6 @@ void InGameViews::SetView(ViewType vt)
 	case ViewType::SYSTEM: m_currentViewType = ViewType::SYSTEM; m_currentView = GetSystemView(); break;
 	case ViewType::WORLD: m_currentViewType = ViewType::WORLD; m_currentView = GetWorldView(); break;
 	case ViewType::DEATH: m_currentViewType = ViewType::DEATH; m_currentView = GetDeathView(); break;
-	case ViewType::SPACESTATION: m_currentViewType = ViewType::SPACESTATION; m_currentView = GetSpaceStationView(); break;
-	case ViewType::INFO: m_currentViewType = ViewType::INFO; m_currentView = GetInfoView(); break;
 #if WITH_OBJECTVIEWER
 	case ViewType::OBJECT: m_currentViewType = ViewType::OBJECT;  m_currentView = GetObjectViewerView(); break;
 #endif // WITH_OBJECTVIEWER

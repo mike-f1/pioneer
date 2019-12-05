@@ -458,10 +458,6 @@ static int l_game_current_view(lua_State *l)
 {
 	if (GameLocator::getGame()->GetInGameViews()->IsWorldView()) {
 		LuaPush(l, "world");
-	} else if (GameLocator::getGame()->GetInGameViews()->IsSpaceStationView()) {
-		LuaPush(l, "space_station");
-	} else if (GameLocator::getGame()->GetInGameViews()->IsInfoView()) {
-		LuaPush(l, "info");
 	} else if (GameLocator::getGame()->GetInGameViews()->IsSectorView()) {
 		LuaPush(l, "sector");
 	} else if (GameLocator::getGame()->GetInGameViews()->IsSystemView()) {
@@ -565,10 +561,6 @@ static int l_game_set_view(lua_State *l)
 	std::string target = luaL_checkstring(l, 1);
 	if (!target.compare("world")) {
 		GameLocator::getGame()->GetInGameViews()->SetView(ViewType::WORLD);
-	} else if (!target.compare("space_station")) {
-		GameLocator::getGame()->GetInGameViews()->SetView(ViewType::SPACESTATION);
-	} else if (!target.compare("info")) {
-		GameLocator::getGame()->GetInGameViews()->SetView(ViewType::INFO);
 	} else if (!target.compare("death")) {
 		GameLocator::getGame()->GetInGameViews()->SetView(ViewType::DEATH);
 	} else if (!target.compare("sector")) {

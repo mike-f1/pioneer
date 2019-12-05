@@ -18,6 +18,7 @@
 #include "GameConfSingleton.h"
 #include "GameLog.h"
 #include "GameSaveError.h"
+#include "InGameViews.h"
 #include "Intro.h"
 #include "JobQueue.h"
 #include "KeyBindings.h"
@@ -853,7 +854,7 @@ void Pi::HandleKeyDown(SDL_Keysym *key)
 #endif /* DEVKEYS */
 #if WITH_OBJECTVIEWER
 		case SDLK_F10:
-			GameLocator::getGame()->SetView(Game::ViewType::OBJECT);
+			GameLocator::getGame()->GetInGameViews()->SetView(ViewType::OBJECT);
 			break;
 #endif
 		case SDLK_F11:
@@ -892,21 +893,21 @@ void Pi::HandleKeyDown(SDL_Keysym *key)
 
 void Pi::HandleEscKey()
 {
-	if (!GameLocator::getGame()->IsEmptyView()) {
-		if (GameLocator::getGame()->IsSectorView()) {
-			GameLocator::getGame()->SetView(Game::ViewType::WORLD);
-		} else if ((GameLocator::getGame()->IsSystemView()) || (GameLocator::getGame()->IsSystemInfoView())) {
-			GameLocator::getGame()->SetView(Game::ViewType::SECTOR);
+	if (!GameLocator::getGame()->GetInGameViews()->IsEmptyView()) {
+		if (GameLocator::getGame()->GetInGameViews()->IsSectorView()) {
+			GameLocator::getGame()->GetInGameViews()->SetView(ViewType::WORLD);
+		} else if ((GameLocator::getGame()->GetInGameViews()->IsSystemView()) || (GameLocator::getGame()->GetInGameViews()->IsSystemInfoView())) {
+			GameLocator::getGame()->GetInGameViews()->SetView(ViewType::SECTOR);
 		} else {
-			UIView *view = dynamic_cast<UIView *>(GameLocator::getGame()->GetView());
+			UIView *view = dynamic_cast<UIView *>(GameLocator::getGame()->GetInGameViews()->GetView());
 			if (view) {
 				// checks the template name
 				const char *tname = view->GetTemplateName();
 				if (tname) {
 					if (!strcmp(tname, "GalacticView")) {
-						GameLocator::getGame()->SetView(Game::ViewType::SECTOR);
+						GameLocator::getGame()->GetInGameViews()->SetView(ViewType::SECTOR);
 					} else if (!strcmp(tname, "InfoView") || !strcmp(tname, "StationView")) {
-						GameLocator::getGame()->SetView(Game::ViewType::WORLD);
+						GameLocator::getGame()->GetInGameViews()->SetView(ViewType::WORLD);
 					}
 				}
 			}
@@ -969,7 +970,7 @@ void Pi::HandleEvents()
 		bool consoleActive = Pi::IsConsoleActive();
 		if (!consoleActive) {
 			KeyBindings::DispatchSDLEvent(&event);
-			GameLocator::getGame()->HandleSDLEvent(event);
+			GameLocator::getGame()->GetInGameViews()->HandleSDLEvent(event);
 		} else
 			KeyBindings::toggleLuaConsole.CheckSDLEventAndDispatch(&event);
 		if (consoleActive != Pi::IsConsoleActive()) {
@@ -1054,8 +1055,8 @@ void Pi::StartGame()
 	GameLocator::getGame()->GetPlayer()->onDock.connect(sigc::ptr_fun(&OnPlayerDockOrUndock));
 	GameLocator::getGame()->GetPlayer()->onUndock.connect(sigc::ptr_fun(&OnPlayerDockOrUndock));
 	GameLocator::getGame()->GetPlayer()->onLanded.connect(sigc::ptr_fun(&OnPlayerDockOrUndock));
-	GameLocator::getGame()->GetCpan()->ShowAll();
-	GameLocator::getGame()->SetView(Game::ViewType::WORLD);
+	GameLocator::getGame()->GetInGameViews()->GetCpan()->ShowAll();
+	GameLocator::getGame()->GetInGameViews()->SetView(ViewType::WORLD);
 
 #ifdef REMOTE_LUA_REPL
 #ifndef REMOTE_LUA_REPL_PORT
@@ -1299,15 +1300,15 @@ void Pi::MainLoop()
 		if (GameLocator::getGame()->GetPlayer()->IsDead()) {
 			if (time_player_died > 0.0) {
 				if (GameLocator::getGame()->GetTime() - time_player_died > 8.0) {
-					GameLocator::getGame()->SetView(Game::ViewType::NONE);
+					GameLocator::getGame()->GetInGameViews()->SetView(ViewType::NONE);
 					Pi::TombStoneLoop();
 					Pi::EndGame();
 					break;
 				}
 			} else {
 				GameLocator::getGame()->SetTimeAccel(Game::TIMEACCEL_1X);
-				GameLocator::getGame()->GetDeathView()->Init();
-				GameLocator::getGame()->SetView(Game::ViewType::DEATH);
+				GameLocator::getGame()->GetInGameViews()->GetDeathView()->Init();
+				GameLocator::getGame()->GetInGameViews()->SetView(ViewType::DEATH);
 				time_player_died = GameLocator::getGame()->GetTime();
 			}
 		}
@@ -1325,8 +1326,8 @@ void Pi::MainLoop()
 
 		Frame::GetRootFrame()->UpdateInterpTransform(Pi::GetGameTickAlpha());
 
-		GameLocator::getGame()->UpdateView();
-		GameLocator::getGame()->Draw3DView();
+		GameLocator::getGame()->GetInGameViews()->UpdateView();
+		GameLocator::getGame()->GetInGameViews()->Draw3DView();
 
 		// hide cursor for ship control. Do this before imgui runs, to prevent the mouse pointer from jumping
 		Pi::SetMouseGrab(input.MouseButtonState(SDL_BUTTON_RIGHT) | input.MouseButtonState(SDL_BUTTON_MIDDLE));
@@ -1343,7 +1344,7 @@ void Pi::MainLoop()
 		Pi::renderer->EndFrame();
 
 		Pi::renderer->ClearDepthBuffer();
-		if (GameLocator::getGame()->DrawGui()) {
+		if (GameLocator::getGame()->GetInGameViews()->DrawGui()) {
 			Gui::Draw();
 		}
 
@@ -1351,7 +1352,7 @@ void Pi::MainLoop()
 		// wrong, because we shouldn't this when the HUD is disabled, but
 		// probably sure draw it if they switch to eg infoview while the HUD is
 		// disabled so we need much smarter control for all this rubbish
-		if ((!GameLocator::getGame() || !GameLocator::getGame()->IsDeathView()) && GameLocator::getGame()->DrawGui()) {
+		if ((!GameLocator::getGame() || !GameLocator::getGame()->GetInGameViews()->IsDeathView()) && GameLocator::getGame()->GetInGameViews()->DrawGui()) {
 			Pi::ui->Update();
 			Pi::ui->Draw();
 		}
@@ -1361,10 +1362,10 @@ void Pi::MainLoop()
 		if (GameLocator::getGame() && !GameLocator::getGame()->GetPlayer()->IsDead()) {
 			// FIXME: Always begin a camera frame because WorldSpaceToScreenSpace
 			// requires it and is exposed to pigui.
-			GameLocator::getGame()->GetWorldView()->BeginCameraFrame();
-			PiGui::NewFrame(Pi::renderer->GetSDLWindow(), GameLocator::getGame()->DrawGui());
+			GameLocator::getGame()->GetInGameViews()->GetWorldView()->BeginCameraFrame();
+			PiGui::NewFrame(Pi::renderer->GetSDLWindow(), GameLocator::getGame()->GetInGameViews()->DrawGui());
 			DrawPiGui(Pi::frameTime, "GAME");
-			GameLocator::getGame()->GetWorldView()->EndCameraFrame();
+			GameLocator::getGame()->GetInGameViews()->GetWorldView()->EndCameraFrame();
 		}
 
 #if WITH_DEVKEYS
@@ -1394,7 +1395,7 @@ void Pi::MainLoop()
 			// this is something we need not do every turn...
 			if (!GameConfSingleton::getInstance().Int("DisableSound")) AmbientSounds::Update();
 		}
-		GameLocator::getGame()->GetCpan()->Update();
+		GameLocator::getGame()->GetInGameViews()->GetCpan()->Update();
 		Sound::MusicPlayer::Update();
 
 		syncJobQueue->RunJobs(SYNC_JOBS_PER_LOOP);

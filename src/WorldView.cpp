@@ -11,6 +11,7 @@
 #include "GameSaveError.h"
 #include "HudTrail.h"
 #include "HyperspaceCloud.h"
+#include "InGameViews.h"
 #include "Input.h"
 #include "Lang.h"
 #include "Pi.h"
@@ -215,7 +216,7 @@ void WorldView::Draw3D()
 
 void WorldView::OnToggleLabels()
 {
-	if (GameLocator::getGame()->IsWorldView()) {
+	if (GameLocator::getGame()->GetInGameViews()->IsWorldView()) {
 		if (m_guiOn && m_labelsOn) {
 			m_labelsOn = false;
 		} else if (m_guiOn && !m_labelsOn) {
@@ -389,8 +390,8 @@ void WorldView::OnPlayerChangeTarget()
 	if (b) {
 		Sound::PlaySfx("OK");
 		Ship *s = b->IsType(Object::HYPERSPACECLOUD) ? static_cast<HyperspaceCloud *>(b)->GetShip() : 0;
-		if (!s || !m_game->GetSectorView()->GetHyperspaceTarget().IsSameSystem(s->GetHyperspaceDest()))
-			m_game->GetSectorView()->FloatHyperspaceTarget();
+		if (!s || !m_game->GetInGameViews()->GetSectorView()->GetHyperspaceTarget().IsSameSystem(s->GetHyperspaceDest()))
+			m_game->GetInGameViews()->GetSectorView()->FloatHyperspaceTarget();
 	}
 }
 

@@ -7,6 +7,7 @@
 #include "Game.h"
 #include "GameConfig.h"
 #include "GameConfSingleton.h"
+#include "InGameViews.h"
 #include "Pi.h"
 #include "Player.h"
 #include "ShipCpanel.h"
@@ -45,7 +46,7 @@ void DeathView::Init()
 
 void DeathView::OnSwitchTo()
 {
-	m_game->GetCpan()->HideAll();
+	m_game->GetInGameViews()->GetCpan()->HideAll();
 }
 
 void DeathView::Update()

@@ -12,14 +12,14 @@
 #include "vector3.h"
 #include <string>
 #include <list>
-#include <SDL_events.h>
 
 class Galaxy;
 class GameLog;
 class HyperspaceCloud;
 class Player;
 class Space;
-class View;
+class InGameViews;
+class ShipCpanel;
 
 namespace Graphics {
 	class Renderer;
@@ -33,15 +33,6 @@ struct InvalidGameStartLocation {
 	InvalidGameStartLocation(const std::string &error_) :
 		error(error_) {}
 };
-
-class SectorView;
-class UIView;
-class SystemInfoView;
-class SystemView;
-class WorldView;
-class DeathView;
-class ShipCpanel;
-class ObjectViewerView;
 
 class Game {
 public:
@@ -132,55 +123,11 @@ public:
 
 	float GetTimeStep() const { return s_timeAccelRates[m_timeAccel] * (1.0f / PHYSICS_HZ); }
 
-	enum class ViewType {
-		NONE,
-		SECTOR,
-		GALACTIC,
-		SYSTEMINFO,
-		SYSTEM,
-		WORLD,
-		DEATH,
-		SPACESTATION,
-		INFO,
-		OBJECT
-	};
-
-	void SetView(ViewType vt);
-	View *GetView() { return m_currentView; } // <-- Only for a check on template name in Pi::
-
-	bool DrawGui();
-
-	bool IsEmptyView() const { return nullptr == m_currentView; }
-	bool IsSectorView() const { return ViewType::SECTOR == m_currentViewType; }
-	bool IsGalacticView() const { return ViewType::GALACTIC == m_currentViewType; }
-	bool IsSystemInfoView() const { return ViewType::SYSTEMINFO == m_currentViewType; }
-	bool IsSystemView() const { return ViewType::SYSTEM == m_currentViewType; }
-	bool IsWorldView() const { return ViewType::WORLD == m_currentViewType; }
-	bool IsDeathView() const { return ViewType::DEATH == m_currentViewType; }
-	bool IsSpaceStationView() const { return ViewType::SPACESTATION == m_currentViewType; }
-	bool IsInfoView() const { return ViewType::INFO == m_currentViewType; }
-	bool IsObjectView() const { return ViewType::OBJECT == m_currentViewType; }
-
-	SectorView *GetSectorView() const { return m_gameViews->m_sectorView; }
-	UIView *GetGalacticView() const { return m_gameViews->m_galacticView; }
-	SystemInfoView *GetSystemInfoView() const { return m_gameViews->m_systemInfoView; }
-	SystemView *GetSystemView() const { return m_gameViews->m_systemView; }
-	WorldView *GetWorldView() const { return m_gameViews->m_worldView; }
-	DeathView *GetDeathView() const { return m_gameViews->m_deathView; }
-	UIView *GetSpaceStationView() const { return m_gameViews->m_spaceStationView; }
-	UIView *GetInfoView() const { return m_gameViews->m_infoView; }
-	ShipCpanel *GetCpan() const { return m_gameViews->m_cpan; }
-
-	/* Only use #if WITH_OBJECTVIEWER */
-	ObjectViewerView *GetObjectViewerView() const;
-
-	void HandleSDLEvent(SDL_Event event);
-	void UpdateView();
-	void Draw3DView();
-
 	GameLog *log;
 
 	static void EmitPauseState(bool paused);
+
+	InGameViews *GetInGameViews() { return m_inGameViews.get(); };
 
 private:
 	void GenCaches(const SystemPath *here, int cacheRadius,
@@ -190,41 +137,12 @@ private:
 	RefCountedPtr<SectorCache::Slave> m_sectorCache;
 	RefCountedPtr<StarSystemCache::Slave> m_starSystemCache;
 
-	View *m_currentView;
-	ViewType m_currentViewType;
-
-	class Views {
-	public:
-		Views();
-		void Init(Game *game, const SystemPath &path);
-		void LoadFromJson(const Json &jsonObj, Game *game, const SystemPath &path);
-		~Views();
-
-		void SetRenderer(Graphics::Renderer *r);
-
-		SectorView *m_sectorView;
-		UIView *m_galacticView;
-		SystemInfoView *m_systemInfoView;
-		SystemView *m_systemView;
-		WorldView *m_worldView;
-		DeathView *m_deathView;
-		UIView *m_spaceStationView;
-		UIView *m_infoView;
-		ShipCpanel *m_cpan;
-
-		/* Only use #if WITH_OBJECTVIEWER */
-		ObjectViewerView *m_objectViewerView;
-	};
-
-	void CreateViews(const SystemPath &path);
-	void LoadViewsFromJson(const Json &jsonObj, const SystemPath &path);
-	void DestroyViews();
-
 	void SwitchToHyperspace();
 	void SwitchToNormalSpace();
 
+	std::unique_ptr<InGameViews> m_inGameViews;
+
 	RefCountedPtr<Galaxy> m_galaxy;
-	std::unique_ptr<Views> m_gameViews;
 	std::unique_ptr<Space> m_space;
 	double m_time;
 

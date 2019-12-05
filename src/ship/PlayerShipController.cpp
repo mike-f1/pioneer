@@ -9,6 +9,7 @@
 #include "GameConfSingleton.h"
 #include "GameLocator.h"
 #include "GameSaveError.h"
+#include "InGameViews.h"
 #include "KeyBindings.h"
 #include "LuaObject.h"
 #include "OS.h"
@@ -210,7 +211,7 @@ void PlayerShipController::CheckControlsLock()
 		GameLocator::getGame()->GetPlayer()->IsDead() ||
 		(m_ship->GetFlightState() != Ship::FLYING) ||
 		Pi::IsConsoleActive() ||
-		!GameLocator::getGame()->IsWorldView()); //to prevent moving the ship in starmap etc.
+		!GameLocator::getGame()->GetInGameViews()->IsWorldView()); //to prevent moving the ship in starmap etc.
 }
 
 vector3d PlayerShipController::GetMouseDir() const
@@ -304,7 +305,7 @@ void PlayerShipController::PollControls(const float timeStep, const bool force_r
 
 		if (InputBindings.primaryFire->IsActive() || (Pi::input.MouseButtonState(SDL_BUTTON_LEFT) && Pi::input.MouseButtonState(SDL_BUTTON_RIGHT))) {
 			//XXX worldview? madness, ask from ship instead
-			GunDir dir = GameLocator::getGame()->GetWorldView()->GetActiveWeapon() ? GunDir::GUN_REAR : GunDir::GUN_FRONT;
+			GunDir dir = GameLocator::getGame()->GetInGameViews()->GetWorldView()->GetActiveWeapon() ? GunDir::GUN_REAR : GunDir::GUN_FRONT;
 			m_ship->SetGunsState(dir, 1);
 		} else {
 			m_ship->SetGunsState(GunDir::GUN_FRONT, 0);

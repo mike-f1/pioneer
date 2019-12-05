@@ -10,6 +10,7 @@
 
 class Body;
 class Camera;
+class CameraContext;
 class Game;
 
 class ObjectViewerView : public UIView {

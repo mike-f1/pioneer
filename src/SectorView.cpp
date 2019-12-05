@@ -8,6 +8,7 @@
 #include "GameConfSingleton.h"
 #include "GameLocator.h"
 #include "GameSaveError.h"
+#include "InGameViews.h"
 #include "KeyBindings.h"
 #include "LuaConstants.h"
 #include "LuaObject.h"
@@ -1010,7 +1011,7 @@ void SectorView::OnSwitchTo()
 
 void SectorView::OnKeyPressed(SDL_Keysym *keysym)
 {
-	if (!GameLocator::getGame()->IsSectorView()) {
+	if (!GameLocator::getGame()->GetInGameViews()->IsSectorView()) {
 		m_onKeyPressConnection.disconnect();
 		return;
 	}
@@ -1204,7 +1205,7 @@ void SectorView::ShowAll()
 
 void SectorView::MouseWheel(bool up)
 {
-	if (GameLocator::getGame()->IsSectorView()) {
+	if (GameLocator::getGame()->GetInGameViews()->IsSectorView()) {
 		if (!up)
 			m_zoomMovingTo += ZOOM_SPEED * WHEEL_SENSITIVITY * Pi::GetMoveSpeedShiftModifier();
 		else

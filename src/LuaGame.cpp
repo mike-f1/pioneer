@@ -9,6 +9,7 @@
 #include "GameConfSingleton.h"
 #include "GameLocator.h"
 #include "GameSaveError.h"
+#include "InGameViews.h"
 #include "Lang.h"
 #include "LuaObject.h"
 #include "LuaUtils.h"
@@ -429,7 +430,7 @@ static int l_game_in_hyperspace(lua_State *l)
 static int l_game_set_radar_visible(lua_State *l)
 {
 	bool visible = LuaPull<bool>(l, 1);
-	GameLocator::getGame()->GetCpan()->SetRadarVisible(visible);
+	GameLocator::getGame()->GetInGameViews()->GetCpan()->SetRadarVisible(visible);
 	return 0;
 }
 
@@ -455,21 +456,21 @@ static int l_game_set_radar_visible(lua_State *l)
 
 static int l_game_current_view(lua_State *l)
 {
-	if (GameLocator::getGame()->IsWorldView()) {
+	if (GameLocator::getGame()->GetInGameViews()->IsWorldView()) {
 		LuaPush(l, "world");
-	} else if (GameLocator::getGame()->IsSpaceStationView()) {
+	} else if (GameLocator::getGame()->GetInGameViews()->IsSpaceStationView()) {
 		LuaPush(l, "space_station");
-	} else if (GameLocator::getGame()->IsInfoView()) {
+	} else if (GameLocator::getGame()->GetInGameViews()->IsInfoView()) {
 		LuaPush(l, "info");
-	} else if (GameLocator::getGame()->IsSectorView()) {
+	} else if (GameLocator::getGame()->GetInGameViews()->IsSectorView()) {
 		LuaPush(l, "sector");
-	} else if (GameLocator::getGame()->IsSystemView()) {
+	} else if (GameLocator::getGame()->GetInGameViews()->IsSystemView()) {
 		LuaPush(l, "system");
-	} else if (GameLocator::getGame()->IsSystemInfoView()) {
+	} else if (GameLocator::getGame()->GetInGameViews()->IsSystemInfoView()) {
 		LuaPush(l, "system_info");
-	} else if (GameLocator::getGame()->IsDeathView()) {
+	} else if (GameLocator::getGame()->GetInGameViews()->IsDeathView()) {
 		LuaPush(l, "death");
-	} else if (GameLocator::getGame()->IsGalacticView()) {
+	} else if (GameLocator::getGame()->GetInGameViews()->IsGalacticView()) {
 		LuaPush(l, "galaxy");
 	} else {
 		lua_pushnil(l);
@@ -484,9 +485,9 @@ static int l_game_switch_view(lua_State *l)
 	if (!GameLocator::getGame())
 		return luaL_error(l, "can't switch view when no game is running");
 	if (GameLocator::getGame()->GetPlayer()->IsDead())
-		GameLocator::getGame()->SetView(Game::ViewType::DEATH);
+		GameLocator::getGame()->GetInGameViews()->SetView(ViewType::DEATH);
 	else
-		GameLocator::getGame()->SetView(Game::ViewType::WORLD);
+		GameLocator::getGame()->GetInGameViews()->SetView(ViewType::WORLD);
 	return 0;
 }
 
@@ -563,21 +564,21 @@ static int l_game_set_view(lua_State *l)
 		return luaL_error(l, "can't set view when no game is running");
 	std::string target = luaL_checkstring(l, 1);
 	if (!target.compare("world")) {
-		GameLocator::getGame()->SetView(Game::ViewType::WORLD);
+		GameLocator::getGame()->GetInGameViews()->SetView(ViewType::WORLD);
 	} else if (!target.compare("space_station")) {
-		GameLocator::getGame()->SetView(Game::ViewType::SPACESTATION);
+		GameLocator::getGame()->GetInGameViews()->SetView(ViewType::SPACESTATION);
 	} else if (!target.compare("info")) {
-		GameLocator::getGame()->SetView(Game::ViewType::INFO);
+		GameLocator::getGame()->GetInGameViews()->SetView(ViewType::INFO);
 	} else if (!target.compare("death")) {
-		GameLocator::getGame()->SetView(Game::ViewType::DEATH);
+		GameLocator::getGame()->GetInGameViews()->SetView(ViewType::DEATH);
 	} else if (!target.compare("sector")) {
-		GameLocator::getGame()->SetView(Game::ViewType::SECTOR);
+		GameLocator::getGame()->GetInGameViews()->SetView(ViewType::SECTOR);
 	} else if (!target.compare("galaxy")) {
-		GameLocator::getGame()->SetView(Game::ViewType::GALACTIC);
+		GameLocator::getGame()->GetInGameViews()->SetView(ViewType::GALACTIC);
 	} else if (!target.compare("system")) {
-		GameLocator::getGame()->SetView(Game::ViewType::SYSTEM);
+		GameLocator::getGame()->GetInGameViews()->SetView(ViewType::SYSTEM);
 	} else if (!target.compare("system_info")) {
-		GameLocator::getGame()->SetView(Game::ViewType::SYSTEMINFO);
+		GameLocator::getGame()->GetInGameViews()->SetView(ViewType::SYSTEMINFO);
 	} else {
 		// TODO else error
 	}
@@ -586,7 +587,7 @@ static int l_game_set_view(lua_State *l)
 
 static int l_game_get_world_cam_type(lua_State *l)
 {
-	switch (GameLocator::getGame()->GetWorldView()->shipView.GetCamType()) {
+	switch (GameLocator::getGame()->GetInGameViews()->GetWorldView()->shipView.GetCamType()) {
 	case ShipViewController::CAM_INTERNAL: lua_pushstring(l, "internal"); break;
 	case ShipViewController::CAM_EXTERNAL: lua_pushstring(l, "external"); break;
 	case ShipViewController::CAM_SIDEREAL: lua_pushstring(l, "sidereal"); break;
@@ -600,13 +601,13 @@ static int l_game_set_world_cam_type(lua_State *l)
 {
 	std::string cam = luaL_checkstring(l, 1);
 	if (!cam.compare("internal"))
-		GameLocator::getGame()->GetWorldView()->shipView.SetCamType(ShipViewController::CAM_INTERNAL);
+		GameLocator::getGame()->GetInGameViews()->GetWorldView()->shipView.SetCamType(ShipViewController::CAM_INTERNAL);
 	else if (!cam.compare("external"))
-		GameLocator::getGame()->GetWorldView()->shipView.SetCamType(ShipViewController::CAM_EXTERNAL);
+		GameLocator::getGame()->GetInGameViews()->GetWorldView()->shipView.SetCamType(ShipViewController::CAM_EXTERNAL);
 	else if (!cam.compare("sidereal"))
-		GameLocator::getGame()->GetWorldView()->shipView.SetCamType(ShipViewController::CAM_SIDEREAL);
+		GameLocator::getGame()->GetInGameViews()->GetWorldView()->shipView.SetCamType(ShipViewController::CAM_SIDEREAL);
 	else if (!cam.compare("flyby"))
-		GameLocator::getGame()->GetWorldView()->shipView.SetCamType(ShipViewController::CAM_FLYBY);
+		GameLocator::getGame()->GetInGameViews()->GetWorldView()->shipView.SetCamType(ShipViewController::CAM_FLYBY);
 	else {
 		// TODO else error
 	}

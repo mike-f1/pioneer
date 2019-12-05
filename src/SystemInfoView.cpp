@@ -4,6 +4,7 @@
 #include "SystemInfoView.h"
 
 #include "Game.h"
+#include "InGameViews.h"
 #include "Lang.h"
 #include "Player.h"
 #include "SectorView.h"
@@ -57,7 +58,7 @@ void SystemInfoView::OnBodySelected(SystemBody *b)
 			if (body != 0)
 				m_game->GetPlayer()->SetNavTarget(body);
 		} else if (b->GetSuperType() == GalaxyEnums::BodySuperType::SUPERTYPE_STAR) { // We allow hyperjump to any star of the system
-			m_game->GetSectorView()->SetSelected(path);
+			m_game->GetInGameViews()->GetSectorView()->SetSelected(path);
 		}
 	}
 
@@ -526,7 +527,7 @@ static bool IsShownInInfoView(const SystemBody *sb)
 
 SystemInfoView::RefreshType SystemInfoView::NeedsRefresh()
 {
-	if (!m_system || !m_game->GetSectorView()->GetSelected().IsSameSystem(m_system->GetPath()))
+	if (!m_system || !m_game->GetInGameViews()->GetSectorView()->GetSelected().IsSameSystem(m_system->GetPath()))
 		return REFRESH_ALL;
 
 	if (m_system->GetUnexplored() != m_unexplored)
@@ -546,11 +547,11 @@ SystemInfoView::RefreshType SystemInfoView::NeedsRefresh()
 		// We are not currently in the selected system
 		if (m_selectedBodyPath.IsBodyPath()) {
 			// Some body was selected
-			if (m_game->GetSectorView()->GetSelected() != m_selectedBodyPath)
+			if (m_game->GetInGameViews()->GetSectorView()->GetSelected() != m_selectedBodyPath)
 				return REFRESH_SELECTED_BODY; // but now we want a different body (or none at all)
 		} else {
 			// No body was selected
-			if (m_game->GetSectorView()->GetSelected().IsBodyPath())
+			if (m_game->GetInGameViews()->GetSectorView()->GetSelected().IsBodyPath())
 				return REFRESH_SELECTED_BODY; // but now we want one, this can only be a star,
 					// so no check for IsShownInInfoView() needed
 		}
@@ -574,7 +575,7 @@ void SystemInfoView::Update()
 {
 	switch (m_refresh) {
 	case REFRESH_ALL:
-		SystemChanged(m_game->GetSectorView()->GetSelected());
+		SystemChanged(m_game->GetInGameViews()->GetSectorView()->GetSelected());
 		m_refresh = REFRESH_NONE;
 		assert(NeedsRefresh() == REFRESH_NONE);
 		break;
@@ -630,7 +631,7 @@ void SystemInfoView::UpdateIconSelections()
 				}
 			}
 		} else {
-			SystemPath selected = m_game->GetSectorView()->GetSelected();
+			SystemPath selected = m_game->GetInGameViews()->GetSectorView()->GetSelected();
 			if (selected.IsSameSystem(m_system->GetPath()) && !selected.IsSystemPath()) {
 				if (bodyIcon.first == selected.bodyIndex) {
 					bodyIcon.second->SetSelectColor(Color(64, 96, 255, 255));

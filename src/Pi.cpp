@@ -18,6 +18,7 @@
 #include "GameConfSingleton.h"
 #include "GameLog.h"
 #include "GameSaveError.h"
+#include "GameState.h"
 #include "InGameViews.h"
 #include "Intro.h"
 #include "JobQueue.h"
@@ -557,11 +558,11 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 	FaceParts::Init();
 	draw_progress(0.2f);
 
-	Output("new ModelCache\n");
+	Output("ModelCache::Init()\n");
 	ModelCache::Init(Pi::renderer);
 	draw_progress(0.3f);
 
-	Output("Shields::Init\n");
+	Output("Shields::Init()\n");
 	Shields::Init(Pi::renderer);
 	draw_progress(0.4f);
 
@@ -570,23 +571,23 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 	//_controlfp_s(&control_word, _EM_INEXACT | _EM_UNDERFLOW | _EM_ZERODIVIDE, _MCW_EM);
 	//double fpexcept = Pi::timeAccelRates[1] / Pi::timeAccelRates[0];
 
-	Output("BaseSphere::Init\n");
+	Output("BaseSphere::Init()\n");
 	BaseSphere::Init(GameConfSingleton::getDetail().planets);
 	draw_progress(0.5f);
 
-	Output("CityOnPlanet::Init\n");
+	Output("CityOnPlanet::Init()\n");
 	CityOnPlanet::Init();
 	draw_progress(0.6f);
 
-	Output("SpaceStation::Init\n");
+	Output("SpaceStation::Init()\n");
 	SpaceStation::Init();
 	draw_progress(0.7f);
 
-	Output("NavLights::Init\n");
+	Output("NavLights::Init()\n");
 	NavLights::Init(Pi::renderer);
 	draw_progress(0.75f);
 
-	Output("Sfx::Init\n");
+	Output("Sfx::Init()\n");
 	SfxManager::Init(Pi::renderer);
 	draw_progress(0.8f);
 
@@ -873,7 +874,8 @@ void Pi::HandleKeyDown(SDL_Keysym *key)
 					const std::string name = "_quicksave";
 					const std::string path = FileSystem::JoinPath(GameConfSingleton::GetSaveDirFull(), name);
 					try {
-						Game::SaveGame(name, GameLocator::getGame());
+						GameState::SaveGame(name);
+						Output("Quick save: %s", name.c_str());
 						GameLocator::getGame()->log->Add(Lang::GAME_SAVED_TO + path);
 					} catch (CouldNotOpenFileException) {
 						GameLocator::getGame()->log->Add(stringf(Lang::COULD_NOT_OPEN_FILENAME, formatarg("path", path)));

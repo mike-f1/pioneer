@@ -6,6 +6,7 @@
 #include "DateTime.h"
 #include "FileSystem.h"
 #include "Game.h"
+#include "GameState.h"
 #include "GameConfSingleton.h"
 #include "GameLocator.h"
 #include "GameSaveError.h"
@@ -106,7 +107,7 @@ static int l_game_savegame_stats(lua_State *l)
 	std::string filename = LuaPull<std::string>(l, 1);
 
 	try {
-		Json rootNode = Game::LoadGameToJson(filename);
+		Json rootNode = GameState::LoadGameToJson(filename);
 
 		LuaTable t(l, 0, 3);
 
@@ -174,8 +175,7 @@ static int l_game_load_game(lua_State *l)
 	const std::string filename(luaL_checkstring(l, 1));
 
 	try {
-		Game *game = Game::LoadGame(filename);
-		GameLocator::provideGame(game);
+		GameState::LoadGame(filename);
 	} catch (SavedGameCorruptException) {
 		luaL_error(l, Lang::GAME_LOAD_CORRUPT);
 	} catch (SavedGameWrongVersionException) {
@@ -216,7 +216,7 @@ static int l_game_can_load_game(lua_State *l)
 {
 	const std::string filename(luaL_checkstring(l, 1));
 
-	bool success = Game::CanLoadGame(filename);
+	bool success = GameState::CanLoadGame(filename);
 	lua_pushboolean(l, success);
 
 	return 1;
@@ -256,7 +256,7 @@ static int l_game_save_game(lua_State *l)
 	const std::string path = FileSystem::JoinPathBelow(GameConfSingleton::GetSaveDir(), filename);
 
 	try {
-		Game::SaveGame(filename, GameLocator::getGame());
+		GameState::SaveGame(filename);
 		lua_pushlstring(l, path.c_str(), path.size());
 		return 1;
 	} catch (CannotSaveInHyperspace) {

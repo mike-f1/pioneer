@@ -9,8 +9,7 @@
 #include "Body.h"
 #include "FileSystem.h"
 #include "Frame.h"
-#include "GZipFormat.h"
-#include "GameConfSingleton.h" // <- Here only for save/load path
+#include "GameState.h"
 #include "GameLocator.h"
 #include "GameLog.h"
 #include "GameSaveError.h"
@@ -35,9 +34,6 @@
 #include "SystemView.h" // <- Here for planner...
 #include "ShipCpanel.h" // <- Here for UI updates (find GetCpan )
 #include "WorldView.h"  // <- Here for CameraContext
-
-
-static const int s_saveVersion = 87;
 
 static const int cacheRadius = 5;
 
@@ -114,48 +110,11 @@ Game::Game(const SystemPath &path, const double startDateTime) :
 #endif
 }
 
-Game::~Game()
-{
-	// XXX this shutdown sequence is critical:
-	// 1- RemoveBody marks the Player for removal from Space,
-	// 2- Space is destroyed, which actually goes through its removal list,
-	//    removes the Player from Space and calls SetFrame(0) on it, which unlinks
-	//    any references it has to other Space items
-	// 3- Player is destroyed
-	//
-	// note that because of the declaration order of m_space and m_player in Game,
-	// without these explicit Reset() calls, m_player would be deleted before m_space is,
-	// which causes problems because then when Space is destroyed it tries to reference
-	// the deleted Player object (to call SetFrame(0))
-	//
-	// ideally we'd split Player out into two objects, the physics part that
-	// is owned by the space, and the game part that holds all the player
-	// attributes and whatever else
-
-	m_space->RemoveBody(m_player.get());
-	m_space.reset();
-	m_player.reset();
-	m_galaxy->FlushCaches();
-
-	delete log;
-}
-
 Game::Game(const Json &jsonObj) :
 	m_timeAccel(TIMEACCEL_PAUSED),
 	m_requestedTimeAccel(TIMEACCEL_PAUSED),
 	m_forceTimeAccel(false)
 {
-	try {
-		int version = jsonObj["version"];
-		Output("savefile version: %d\n", version);
-		if (version != s_saveVersion) {
-			Output("can't load savefile, expected version: %d\n", s_saveVersion);
-			throw SavedGameWrongVersionException();
-		}
-	} catch (Json::type_error &) {
-		throw SavedGameCorruptException();
-	}
-
 	// Preparing the Lua stuff
 	Pi::luaSerializer->InitTableRefs();
 
@@ -218,14 +177,37 @@ Game::Game(const Json &jsonObj) :
 	log = new GameLog();
 }
 
+Game::~Game()
+{
+	// XXX this shutdown sequence is critical:
+	// 1- RemoveBody marks the Player for removal from Space,
+	// 2- Space is destroyed, which actually goes through its removal list,
+	//    removes the Player from Space and calls SetFrame(0) on it, which unlinks
+	//    any references it has to other Space items
+	// 3- Player is destroyed
+	//
+	// note that because of the declaration order of m_space and m_player in Game,
+	// without these explicit Reset() calls, m_player would be deleted before m_space is,
+	// which causes problems because then when Space is destroyed it tries to reference
+	// the deleted Player object (to call SetFrame(0))
+	//
+	// ideally we'd split Player out into two objects, the physics part that
+	// is owned by the space, and the game part that holds all the player
+	// attributes and whatever else
+
+	m_space->RemoveBody(m_player.get());
+	m_space.reset();
+	m_player.reset();
+	m_galaxy->FlushCaches();
+
+	delete log;
+}
+
 void Game::ToJson(Json &jsonObj)
 {
 	PROFILE_SCOPED()
 	// preparing the lua serializer
 	Pi::luaSerializer->InitTableRefs();
-
-	// version
-	jsonObj["version"] = s_saveVersion;
 
 	// galaxy generator
 	m_galaxy->ToJson(jsonObj);
@@ -816,95 +798,4 @@ void Game::EmitPauseState(bool paused)
 		LuaEvent::Queue("onGameResumed");
 	}
 	LuaEvent::Emit();
-}
-
-Json Game::LoadGameToJson(const std::string &filename)
-{
-	Json rootNode = JsonUtils::LoadJsonSaveFile(FileSystem::JoinPathBelow(GameConfSingleton::GetSaveDir(), filename), FileSystem::userFiles);
-	if (!rootNode.is_object()) {
-		Output("Loading saved game '%s' failed.\n", filename.c_str());
-		throw SavedGameCorruptException();
-	}
-	if (!rootNode["version"].is_number_integer() || rootNode["version"].get<int>() != s_saveVersion) {
-		Output("Loading saved game '%s' failed: wrong save file version.\n", filename.c_str());
-		throw SavedGameCorruptException();
-	}
-	return rootNode;
-}
-
-Game *Game::LoadGame(const std::string &filename)
-{
-	Output("Game::LoadGame('%s')\n", filename.c_str());
-
-	Json rootNode = LoadGameToJson(filename);
-
-	try {
-		return new Game(rootNode);
-	} catch (Json::type_error) {
-		throw SavedGameCorruptException();
-	} catch (Json::out_of_range) {
-		throw SavedGameCorruptException();
-	}
-}
-
-bool Game::CanLoadGame(const std::string &filename)
-{
-	auto file = FileSystem::userFiles.ReadFile(FileSystem::JoinPathBelow(GameConfSingleton::GetSaveDir(), filename));
-	if (!file)
-		return false;
-
-	return true;
-	// file data is freed here
-}
-
-void Game::SaveGame(const std::string &filename, Game *game)
-{
-	PROFILE_SCOPED()
-	assert(game);
-
-	if (game->IsHyperspace())
-		throw CannotSaveInHyperspace();
-
-	if (game->GetPlayer()->IsDead())
-		throw CannotSaveDeadPlayer();
-
-	if (!FileSystem::userFiles.MakeDirectory(GameConfSingleton::GetSaveDir())) {
-		throw CouldNotOpenFileException();
-	}
-
-#ifdef PIONEER_PROFILER
-	std::string profilerPath;
-	FileSystem::userFiles.MakeDirectory("profiler");
-	FileSystem::userFiles.MakeDirectory("profiler/saving");
-	profilerPath = FileSystem::JoinPathBelow(FileSystem::userFiles.GetRoot(), "profiler/saving");
-	Profiler::reset();
-#endif
-
-	Json rootNode; // Create the root JSON value for receiving the game data.
-	game->ToJson(rootNode); // Encode the game data as JSON and give to the root value.
-	std::vector<uint8_t> jsonData;
-	{
-		PROFILE_SCOPED_DESC("json.to_cbor");
-		jsonData = Json::to_cbor(rootNode); // Convert the JSON data to CBOR.
-	}
-
-	FILE *f = FileSystem::userFiles.OpenWriteStream(FileSystem::JoinPathBelow(GameConfSingleton::GetSaveDir(), filename));
-	if (!f) throw CouldNotOpenFileException();
-
-	try {
-		// Compress the CBOR data.
-		const std::string comressed_data = gzip::CompressGZip(
-			std::string(reinterpret_cast<const char *>(jsonData.data()), jsonData.size()),
-			filename + ".json");
-		size_t nwritten = fwrite(comressed_data.data(), comressed_data.size(), 1, f);
-		fclose(f);
-		if (nwritten != 1) throw CouldNotWriteToFileException();
-	} catch (gzip::CompressionFailedException) {
-		fclose(f);
-		throw CouldNotWriteToFileException();
-	}
-
-#ifdef PIONEER_PROFILER
-	Profiler::dumphtml(profilerPath.c_str());
-#endif
 }

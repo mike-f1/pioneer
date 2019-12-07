@@ -19,7 +19,7 @@ const char GameConfSingleton::SAVE_DIR_NAME[] = "savefiles";
 
 void GameConfSingleton::Init(const GameConfig::map_string &override_)
 {
-	if (!m_gConfig) {
+	if (m_gConfig != nullptr) {
 		Output("Warning: GameConfig already initialised!!!\n");
 	}
 

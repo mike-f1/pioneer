@@ -15,6 +15,16 @@
 
 static const int s_saveVersion = 87;
 
+void GameState::MakeNewGame(const SystemPath &path, const double startDateTime)
+{
+	Game *game = new Game(path, startDateTime);
+	GameLocator::provideGame(game);
+	// Here because 'l_game_attr_player' would have
+	// a player to be pushed on Lua VM through GameLocator,
+	// but that is not yet set in a ctor
+	game->EmitPauseState(game->IsPaused());
+}
+
 Json GameState::LoadGameToJson(const std::string &filename)
 {
 	Json rootNode = JsonUtils::LoadJsonSaveFile(FileSystem::JoinPathBelow(GameConfSingleton::GetSaveDir(), filename), FileSystem::userFiles);
@@ -125,4 +135,14 @@ void GameState::SaveGame(const std::string &filename)
 #ifdef PIONEER_PROFILER
 	Profiler::dumphtml(profilerPath.c_str());
 #endif
+}
+
+void GameState::DestroyGame()
+{
+	if (GameLocator::getGame() == nullptr) {
+		Output("Attempt to destroy a not existing Game!\n");
+		return;
+	}
+	delete GameLocator::getGame();
+	GameLocator::provideGame(nullptr);
 }

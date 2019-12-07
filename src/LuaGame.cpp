@@ -70,12 +70,7 @@ static int l_game_start_game(lua_State *l)
 			time(&now);
 			start_time = difftime(now, 946684799); // <--- Friday, 31 December 1999 23:59:59 GMT+00:00 as UNIX epoch time in seconds
 		}
-		Game *game = new Game(*path, start_time);
-		GameLocator::provideGame(game);
-		// Here because 'l_game_attr_player' would have
-		// a player to be pushed on Lua VM through GameLocator,
-		// but that is not yet set in a ctor
-		game->EmitPauseState(game->IsPaused());
+		GameState::MakeNewGame(*path, start_time);
 	} catch (InvalidGameStartLocation &e) {
 		luaL_error(l, "invalid starting location for game: %s", e.error.c_str());
 	}

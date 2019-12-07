@@ -1078,7 +1078,7 @@ void Pi::Start(const SystemPath &startPath)
 		GameConfSingleton::GetAmountBackgroundStars()
 		);
 	if (startPath != SystemPath(0, 0, 0, 0, 0)) {
-		GameLocator::provideGame(new Game(startPath, 0.0));
+		GameState::MakeNewGame(startPath);
 	}
 	//XXX global ambient colour hack to make explicit the old default ambient colour dependency
 	// for some models
@@ -1217,8 +1217,8 @@ void Pi::EndGame()
 	Sound::DestroyAllEvents();
 
 	assert(GameLocator::getGame());
-	delete GameLocator::getGame();
-	GameLocator::provideGame(nullptr);
+
+	GameState::DestroyGame();
 }
 
 void Pi::MainLoop()

@@ -26,7 +26,7 @@ namespace Graphics {
 }
 
 class Game {
-public:
+	friend class GameState;
 	// start docked in station referenced by path or nearby to body if it is no station
 	Game(const SystemPath &path, const double startDateTime = 0.0);
 
@@ -38,6 +38,7 @@ public:
 	// save game
 	void ToJson(Json &jsonObj);
 
+public:
 	// various game states
 	bool IsNormalSpace() const { return m_state == State::NORMAL; }
 	bool IsHyperspace() const { return m_state == State::HYPERSPACE; }

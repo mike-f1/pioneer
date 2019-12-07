@@ -138,7 +138,6 @@ Graphics::Renderer *Pi::renderer;
 RefCountedPtr<UI::Context> Pi::ui;
 RefCountedPtr<PiGui> Pi::pigui;
 Intro *Pi::intro;
-SDLGraphics *Pi::sdl;
 Graphics::RenderTarget *Pi::renderTarget;
 RefCountedPtr<Graphics::Texture> Pi::renderTexture;
 std::unique_ptr<Graphics::Drawables::TexturedQuad> Pi::renderQuad;

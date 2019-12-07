@@ -112,7 +112,6 @@ public:
 	static LuaConsole *luaConsole;
 	static Graphics::Renderer *renderer;
 	static Intro *intro;
-	static SDLGraphics *sdl;
 
 	static JobQueue *GetAsyncJobQueue();
 	static JobQueue *GetSyncJobQueue();

@@ -930,10 +930,10 @@ void SystemView::Update()
 	if (!Pi::IsConsoleActive()) {
 		if (Pi::input.KeyState(SDLK_EQUALS) ||
 			m_zoomInButton->IsPressed())
-			m_zoomTo *= pow(ZOOM_IN_SPEED * Pi::GetMoveSpeedShiftModifier(), ft);
+			m_zoomTo *= pow(ZOOM_IN_SPEED * Pi::input.GetMoveSpeedShiftModifier(), ft);
 		if (Pi::input.KeyState(SDLK_MINUS) ||
 			m_zoomOutButton->IsPressed())
-			m_zoomTo *= pow(ZOOM_OUT_SPEED / Pi::GetMoveSpeedShiftModifier(), ft);
+			m_zoomTo *= pow(ZOOM_OUT_SPEED / Pi::input.GetMoveSpeedShiftModifier(), ft);
 
 		// transfer planner buttons
 		if (m_plannerIncreaseStartTimeButton->IsPressed()) {
@@ -1003,9 +1003,9 @@ void SystemView::MouseWheel(bool up)
 {
 	if (GameLocator::getGame()->GetInGameViews()->IsSystemView()) {
 		if (!up)
-			m_zoomTo *= ((ZOOM_OUT_SPEED - 1) * WHEEL_SENSITIVITY + 1) / Pi::GetMoveSpeedShiftModifier();
+			m_zoomTo *= ((ZOOM_OUT_SPEED - 1) * WHEEL_SENSITIVITY + 1) / Pi::input.GetMoveSpeedShiftModifier();
 		else
-			m_zoomTo *= ((ZOOM_IN_SPEED - 1) * WHEEL_SENSITIVITY + 1) * Pi::GetMoveSpeedShiftModifier();
+			m_zoomTo *= ((ZOOM_IN_SPEED - 1) * WHEEL_SENSITIVITY + 1) * Pi::input.GetMoveSpeedShiftModifier();
 	}
 }
 

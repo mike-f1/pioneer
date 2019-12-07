@@ -1481,14 +1481,6 @@ void Pi::MainLoop()
 	}
 }
 
-float Pi::GetMoveSpeedShiftModifier()
-{
-	// Suggestion: make x1000 speed on pressing both keys?
-	if (input.KeyState(SDLK_LSHIFT)) return 100.f;
-	if (input.KeyState(SDLK_RSHIFT)) return 10.f;
-	return 1;
-}
-
 void Pi::SetMouseGrab(bool on)
 {
 	if (!doingMouseGrab && on) {

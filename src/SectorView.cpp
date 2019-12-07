@@ -1083,7 +1083,7 @@ void SectorView::Update()
 	// don't check raw keypresses if the search box is active
 	// XXX ugly hack checking for Lua console here
 	if (!Pi::IsConsoleActive()) {
-		const float moveSpeed = Pi::GetMoveSpeedShiftModifier();
+		const float moveSpeed = Pi::input.GetMoveSpeedShiftModifier();
 		float move = moveSpeed * frameTime;
 		vector3f shift(0.0f);
 		if (KeyBindings::mapViewShiftLeft.IsActive()) shift.x -= move;
@@ -1207,9 +1207,9 @@ void SectorView::MouseWheel(bool up)
 {
 	if (GameLocator::getGame()->GetInGameViews()->IsSectorView()) {
 		if (!up)
-			m_zoomMovingTo += ZOOM_SPEED * WHEEL_SENSITIVITY * Pi::GetMoveSpeedShiftModifier();
+			m_zoomMovingTo += ZOOM_SPEED * WHEEL_SENSITIVITY * Pi::input.GetMoveSpeedShiftModifier();
 		else
-			m_zoomMovingTo -= ZOOM_SPEED * WHEEL_SENSITIVITY * Pi::GetMoveSpeedShiftModifier();
+			m_zoomMovingTo -= ZOOM_SPEED * WHEEL_SENSITIVITY * Pi::input.GetMoveSpeedShiftModifier();
 	}
 }
 
@@ -1250,7 +1250,7 @@ double SectorView::GetZoomLevel() const
 void SectorView::ZoomIn()
 {
 	const float frameTime = Pi::GetFrameTime();
-	const float moveSpeed = Pi::GetMoveSpeedShiftModifier();
+	const float moveSpeed = Pi::input.GetMoveSpeedShiftModifier();
 	float move = moveSpeed * frameTime;
 	m_zoomMovingTo -= move;
 	m_zoomMovingTo = Clamp(m_zoomMovingTo, 0.1f, FAR_MAX);
@@ -1259,7 +1259,7 @@ void SectorView::ZoomIn()
 void SectorView::ZoomOut()
 {
 	const float frameTime = Pi::GetFrameTime();
-	const float moveSpeed = Pi::GetMoveSpeedShiftModifier();
+	const float moveSpeed = Pi::input.GetMoveSpeedShiftModifier();
 	float move = moveSpeed * frameTime;
 	m_zoomMovingTo += move;
 	m_zoomMovingTo = Clamp(m_zoomMovingTo, 0.1f, FAR_MAX);

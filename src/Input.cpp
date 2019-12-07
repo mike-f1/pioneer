@@ -253,6 +253,14 @@ SDL_JoystickGUID Input::JoystickGUID(int joystick)
 	return joysticks[joystick].guid;
 }
 
+float Input::GetMoveSpeedShiftModifier()
+{
+	// Suggestion: make x1000 speed on pressing both keys?
+	if (KeyState(SDLK_LSHIFT)) return 100.f;
+	if (KeyState(SDLK_RSHIFT)) return 10.f;
+	return 1;
+}
+
 int Input::JoystickButtonState(int joystick, int button)
 {
 	if (!joystickEnabled) return 0;

@@ -69,10 +69,6 @@ public:
 	static void SetMouseGrab(bool on);
 	static bool DoingMouseGrab() { return doingMouseGrab; }
 
-	// Get the default speed modifier to apply to movement (scrolling, zooming...), depending on the "shift" keys.
-	// This is a default value only, centralized here to promote uniform user expericience.
-	static float GetMoveSpeedShiftModifier();
-
 	static void CreateRenderTarget(const Uint16 width, const Uint16 height);
 	static void DrawRenderTarget();
 	static void BeginRenderTarget();

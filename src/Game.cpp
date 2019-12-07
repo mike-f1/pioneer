@@ -9,7 +9,6 @@
 #include "Body.h"
 #include "FileSystem.h"
 #include "Frame.h"
-#include "GameState.h"
 #include "GameLocator.h"
 #include "GameLog.h"
 #include "GameSaveError.h"

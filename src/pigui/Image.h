@@ -4,9 +4,14 @@
 #ifndef PIGUI_IMAGE_H
 #define PIGUI_IMAGE_H
 
-#include "Pi.h"
-#include "SmartPtr.h"
-#include "graphics/TextureBuilder.h"
+#include "RefCounted.h"
+#include "vector2.h"
+#include <SDL_stdinc.h>
+#include <string>
+
+namespace Graphics {
+	class Texture;
+};
 
 namespace PiGUI {
 

@@ -3,6 +3,7 @@
 
 #include "Image.h"
 #include "FileSystem.h"
+#include "Pi.h"
 #include "graphics/TextureBuilder.h"
 
 namespace PiGUI {

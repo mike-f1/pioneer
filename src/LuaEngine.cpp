@@ -677,8 +677,9 @@ static int l_engine_set_gpu_jobs_enabled(lua_State *l)
 
 static int l_engine_is_intro_zooming(lua_State *l)
 {
-	if (Pi::intro) {
-		LuaPush(l, Pi::intro->isZooming());
+	Intro *intro = dynamic_cast<Intro *>(Pi::cutscene.get());
+	if (intro) {
+		LuaPush(l, intro->isZooming());
 		return 1;
 	} else {
 		LuaPush(l, false);
@@ -688,8 +689,9 @@ static int l_engine_is_intro_zooming(lua_State *l)
 
 static int l_engine_get_intro_current_model_name(lua_State *l)
 {
-	if (Pi::intro) {
-		SceneGraph::Model *m = Pi::intro->getCurrentModel();
+	Intro *intro = dynamic_cast<Intro *>(Pi::cutscene.get());
+	if (intro) {
+		SceneGraph::Model *m = intro->getCurrentModel();
 		if (m) {
 			LuaPush(l, m->GetName());
 			return 1;

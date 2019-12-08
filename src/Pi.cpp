@@ -137,7 +137,7 @@ int Pi::statNumPatches = 0;
 Graphics::Renderer *Pi::renderer;
 RefCountedPtr<UI::Context> Pi::ui;
 RefCountedPtr<PiGui> Pi::pigui;
-Intro *Pi::intro = nullptr;
+std::unique_ptr<Cutscene> Pi::cutscene;
 Graphics::RenderTarget *Pi::renderTarget;
 RefCountedPtr<Graphics::Texture> Pi::renderTexture;
 std::unique_ptr<Graphics::Drawables::TexturedQuad> Pi::renderQuad;
@@ -1088,8 +1088,6 @@ void Pi::StartGame()
 
 void Pi::Start(const SystemPath &startPath)
 {
-	std::unique_ptr<Intro> intro;
-	std::unique_ptr<Tombstone> tombstone;
 
 	if (startPath != SystemPath(0, 0, 0, 0, 0)) {
 		GameState::MakeNewGame(startPath);
@@ -1109,7 +1107,7 @@ void Pi::Start(const SystemPath &startPath)
 
 		switch (m_mainState) {
 		case MainState::MAIN_MENU:
-			CutSceneLoop(Pi::frameTime, intro.get());
+			CutSceneLoop(Pi::frameTime, cutscene.get());
 			if (GameLocator::getGame() != nullptr) {
 				Pi::m_mainState = MainState::TO_GAME_START;
 			}
@@ -1119,24 +1117,22 @@ void Pi::Start(const SystemPath &startPath)
 			// no m_mainState set as it can be either TO_TOMBSTONE or TO_GAME_START
 		break;
 		case MainState::TO_GAME_START:
-			intro.reset();
-			Pi::intro = nullptr;
+			cutscene.reset();
 			InitGame();
 			StartGame();
 			m_mainState = MainState::GAME_START;
 		break;
 		case MainState::TO_MAIN_MENU:
-			intro.reset(new Intro(Pi::renderer,
+			cutscene.reset(new Intro(Pi::renderer,
 				Graphics::GetScreenWidth(),
 				Graphics::GetScreenHeight(),
 				GameConfSingleton::GetAmountBackgroundStars()
 				));
-			Pi::intro = intro.get();
 			m_mainState = MainState::MAIN_MENU;
 		break;
 		case MainState::TO_TOMBSTONE:
 			EndGame();
-			tombstone.reset(new Tombstone(Pi::renderer,
+			cutscene.reset(new Tombstone(Pi::renderer,
 				Graphics::GetScreenWidth(),
 				Graphics::GetScreenHeight()
 				));
@@ -1145,9 +1141,9 @@ void Pi::Start(const SystemPath &startPath)
 		break;
 		case MainState::TOMBSTONE:
 			time += Pi::frameTime;
-			CutSceneLoop(Pi::frameTime, tombstone.get());
+			CutSceneLoop(Pi::frameTime, cutscene.get());
 			if ((time > 2.0) && ((input.MouseButtonState(SDL_BUTTON_LEFT)) || input.KeyState(SDLK_SPACE))) {
-				tombstone.reset();
+				cutscene.reset();
 				m_mainState = MainState::TO_MAIN_MENU;
 			}
 		break;

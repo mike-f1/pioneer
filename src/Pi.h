@@ -12,7 +12,6 @@
 #include <vector>
 
 class Cutscene;
-class Intro;
 class LuaConsole;
 class LuaNameGen;
 class LuaTimer;
@@ -108,7 +107,7 @@ public:
 	static TransferPlanner *planner;
 	static LuaConsole *luaConsole;
 	static Graphics::Renderer *renderer;
-	static Intro *intro;
+	static std::unique_ptr<Cutscene> cutscene;
 
 	static JobQueue *GetAsyncJobQueue();
 	static JobQueue *GetSyncJobQueue();

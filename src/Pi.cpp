@@ -250,15 +250,6 @@ void Pi::EndRenderTarget()
 #endif
 }
 
-static void draw_progress(float progress)
-{
-
-	Pi::renderer->ClearScreen();
-	PiGui::NewFrame(Pi::renderer->GetSDLWindow());
-	Pi::DrawPiGui(progress, "INIT");
-	Pi::renderer->SwapBuffers();
-}
-
 static void LuaInit()
 {
 	PROFILE_SCOPED()
@@ -393,6 +384,14 @@ void RegisterInputBindings()
 	ShipViewController::InputBindings.RegisterBindings();
 
 	WorldView::RegisterInputBindings();
+}
+
+static void draw_progress(float progress)
+{
+	Pi::renderer->ClearScreen();
+	PiGui::NewFrame(Pi::renderer->GetSDLWindow());
+	Pi::DrawPiGui(progress, "INIT");
+	Pi::renderer->SwapBuffers();
 }
 
 void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
@@ -867,10 +866,9 @@ void Pi::HandleKeyDown(SDL_Keysym *key)
 		case SDLK_F9: // Quicksave
 		{
 			if (GameLocator::getGame()) {
-				if (GameLocator::getGame()->IsHyperspace())
+				if (GameLocator::getGame()->IsHyperspace()) {
 					GameLocator::getGame()->log->Add(Lang::CANT_SAVE_IN_HYPERSPACE);
-
-				else {
+				} else {
 					const std::string name = "_quicksave";
 					const std::string path = FileSystem::JoinPath(GameConfSingleton::GetSaveDirFull(), name);
 					try {
@@ -971,9 +969,10 @@ void Pi::HandleEvents()
 		bool consoleActive = Pi::IsConsoleActive();
 		if (!consoleActive) {
 			KeyBindings::DispatchSDLEvent(&event);
-			GameLocator::getGame()->GetInGameViews()->HandleSDLEvent(event);
-		} else
+			if (GameLocator::getGame()) GameLocator::getGame()->GetInGameViews()->HandleSDLEvent(event);
+		} else {
 			KeyBindings::toggleLuaConsole.CheckSDLEventAndDispatch(&event);
+		}
 		if (consoleActive != Pi::IsConsoleActive()) {
 			skipTextInput = true;
 			continue;
@@ -1135,77 +1134,25 @@ void Pi::Start(const SystemPath &startPath)
 
 void Pi::MainMenu(double step, Intro *intro)
 {
-
-	SDL_Event event;
-	while (SDL_PollEvent(&event)) {
-		if (event.type == SDL_QUIT)
-			Pi::RequestQuit();
-		else {
-			Pi::pigui->ProcessEvent(&event);
-
-			if (Pi::pigui->WantCaptureMouse()) {
-				// don't process mouse event any further, imgui already handled it
-				switch (event.type) {
-				case SDL_MOUSEBUTTONDOWN:
-				case SDL_MOUSEBUTTONUP:
-				case SDL_MOUSEWHEEL:
-				case SDL_MOUSEMOTION:
-					continue;
-				default: break;
-				}
-			}
-			if (Pi::pigui->WantCaptureKeyboard()) {
-				// don't process keyboard event any further, imgui already handled it
-				switch (event.type) {
-				case SDL_KEYDOWN:
-				case SDL_KEYUP:
-				case SDL_TEXTINPUT:
-					continue;
-				default: break;
-				}
-			}
-
-#if 0 // Moved to Input::HandleSDLEvent, can be deleted when confirmed working \
-	// joystick stuff for the options window
-				switch (event.type) {
-				case SDL_JOYAXISMOTION:
-					if (!joysticks[event.jaxis.which].joystick)
-						break;
-					if (event.jaxis.value == -32768)
-						joysticks[event.jaxis.which].axes[event.jaxis.axis] = 1.f;
-					else
-						joysticks[event.jaxis.which].axes[event.jaxis.axis] = -event.jaxis.value / 32767.f;
-					break;
-				case SDL_JOYBUTTONUP:
-				case SDL_JOYBUTTONDOWN:
-					if (!joysticks[event.jaxis.which].joystick)
-						break;
-					joysticks[event.jbutton.which].buttons[event.jbutton.button] = event.jbutton.state != 0;
-					break;
-				case SDL_JOYHATMOTION:
-					if (!joysticks[event.jaxis.which].joystick)
-						break;
-					joysticks[event.jhat.which].hats[event.jhat.hat] = event.jhat.value;
-					break;
-				default: break;
-				}
-#endif
-			ui->DispatchSDLEvent(event);
-
-			input.HandleSDLEvent(event);
+	// XXX hack
+	// if we hit our exit conditions then ignore further queued events
+	// protects against eg double-click during game generation
+	if (GameLocator::getGame()) {
+		SDL_Event event;
+		while (SDL_PollEvent(&event)) {
 		}
-		// XXX hack
-		// if we hit our exit conditions then ignore further queued events
-		// protects against eg double-click during game generation
-		if (GameLocator::getGame())
-			while (SDL_PollEvent(&event)) {
-			}
 	}
 
 	Pi::BeginRenderTarget();
 	Pi::renderer->BeginFrame();
 	intro->Draw(step);
 	Pi::renderer->EndFrame();
+
+	Pi::renderer->ClearDepthBuffer();
+
+	// Mainly for Console
+	Pi::ui->Update();
+	Pi::ui->Draw();
 
 	PiGui::NewFrame(Pi::renderer->GetSDLWindow());
 	DrawPiGui(Pi::frameTime, "MAINMENU");
@@ -1215,6 +1162,8 @@ void Pi::MainMenu(double step, Intro *intro)
 	// render the rendertarget texture
 	Pi::DrawRenderTarget();
 	Pi::renderer->SwapBuffers();
+
+	Pi::HandleEvents();
 
 	Pi::HandleRequests();
 

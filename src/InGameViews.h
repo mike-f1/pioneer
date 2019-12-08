@@ -32,6 +32,8 @@ enum class ViewType {
 	SYSTEM,
 	WORLD,
 	DEATH,
+	SPACESTATION,
+	INFO,
 	OBJECT
 };
 
@@ -64,6 +66,8 @@ public:
 	bool IsSystemView() const { return ViewType::SYSTEM == m_currentViewType; }
 	bool IsWorldView() const { return ViewType::WORLD == m_currentViewType; }
 	bool IsDeathView() const { return ViewType::DEATH == m_currentViewType; }
+	bool IsSpaceStationView() const { return ViewType::SPACESTATION == m_currentViewType; }
+	bool IsInfoView() const { return ViewType::INFO == m_currentViewType; }
 	bool IsObjectView() const { return ViewType::OBJECT == m_currentViewType; }
 
 	SectorView *GetSectorView() const { return m_sectorView; }
@@ -72,6 +76,8 @@ public:
 	SystemView *GetSystemView() const { return m_systemView; }
 	WorldView *GetWorldView() const { return m_worldView; }
 	DeathView *GetDeathView() const { return m_deathView; }
+	UIView *GetSpaceStationView() const { return m_spaceStationView; }
+	UIView *GetInfoView() const { return m_infoView; }
 	ShipCpanel *GetCpan() const { return m_cpan; }
 
 	/* Only use #if WITH_OBJECTVIEWER */
@@ -91,6 +97,8 @@ private:
 	SystemView *m_systemView;
 	WorldView *m_worldView;
 	DeathView *m_deathView;
+	UIView *m_spaceStationView;
+	UIView *m_infoView;
 	ShipCpanel *m_cpan;
 
 	/* Only use #if WITH_OBJECTVIEWER */

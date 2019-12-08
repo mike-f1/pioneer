@@ -137,7 +137,7 @@ int Pi::statNumPatches = 0;
 Graphics::Renderer *Pi::renderer;
 RefCountedPtr<UI::Context> Pi::ui;
 RefCountedPtr<PiGui> Pi::pigui;
-Intro *Pi::intro;
+Intro *Pi::intro = nullptr;
 Graphics::RenderTarget *Pi::renderTarget;
 RefCountedPtr<Graphics::Texture> Pi::renderTexture;
 std::unique_ptr<Graphics::Drawables::TexturedQuad> Pi::renderQuad;
@@ -685,7 +685,6 @@ void Pi::Quit()
 	}
 	Projectile::FreeModel();
 	Beam::FreeModel();
-	delete Pi::intro;
 	delete Pi::luaConsole;
 	NavLights::Uninit();
 	Shields::Uninit();
@@ -1006,32 +1005,23 @@ void Pi::HandleRequests()
 	internalRequests.clear();
 }
 
-void Pi::TombStoneLoop(double step)
+void Pi::TombStoneLoop(double step, Tombstone *tombstone)
 {
-	std::unique_ptr<Tombstone> tombstone(new Tombstone(Pi::renderer, Graphics::GetScreenWidth(), Graphics::GetScreenHeight()));
-	Uint32 last_time = SDL_GetTicks();
-	float _time = 0;
-	do {
-		Pi::HandleEvents();
-		Pi::renderer->SetGrab(false);
+	Pi::HandleEvents();
+	Pi::renderer->SetGrab(false);
 
-		// render the scene
-		Pi::BeginRenderTarget();
-		Pi::renderer->BeginFrame();
-		tombstone->Draw(_time);
-		Pi::renderer->EndFrame();
-		Gui::Draw();
-		Pi::EndRenderTarget();
+	// render the scene
+	Pi::BeginRenderTarget();
+	Pi::renderer->BeginFrame();
+	tombstone->Draw(step);
+	Pi::renderer->EndFrame();
+	Gui::Draw();
+	Pi::EndRenderTarget();
 
-		Pi::DrawRenderTarget();
-		Pi::renderer->SwapBuffers();
+	Pi::DrawRenderTarget();
+	Pi::renderer->SwapBuffers();
 
-		Pi::HandleRequests();
-
-		Pi::frameTime = 0.001f * (SDL_GetTicks() - last_time);
-		_time += Pi::frameTime;
-		last_time = SDL_GetTicks();
-	} while (!((_time > 2.0) && ((input.MouseButtonState(SDL_BUTTON_LEFT)) || input.KeyState(SDLK_SPACE))));
+	Pi::HandleRequests();
 }
 
 void Pi::InitGame()
@@ -1074,25 +1064,28 @@ void Pi::StartGame()
 
 void Pi::Start(const SystemPath &startPath)
 {
-	Pi::intro = new Intro(Pi::renderer,
-		Graphics::GetScreenWidth(),
-		Graphics::GetScreenHeight(),
-		GameConfSingleton::GetAmountBackgroundStars()
-		);
+	std::unique_ptr<Intro> intro;
+	std::unique_ptr<Tombstone> tombstone;
+
 	if (startPath != SystemPath(0, 0, 0, 0, 0)) {
 		GameState::MakeNewGame(startPath);
+		m_mainState = MainState::TO_GAME_START;
+	} else {
+		m_mainState = MainState::TO_MAIN_MENU;
 	}
 
 	//XXX global ambient colour hack to make explicit the old default ambient colour dependency
 	// for some models
 	Pi::renderer->SetAmbientColor(Color(51, 51, 51, 255));
 
+	float time = 0.0;
+
 	while (1) {
 		Uint32 last_time = SDL_GetTicks();
 
 		switch (m_mainState) {
 		case MainState::MAIN_MENU:
-			MainMenu(Pi::frameTime);
+			MainMenu(Pi::frameTime, intro.get());
 			if (GameLocator::getGame() != nullptr) {
 				Pi::m_mainState = MainState::TO_GAME_START;
 			}
@@ -1102,24 +1095,37 @@ void Pi::Start(const SystemPath &startPath)
 			// no m_mainState set as it can be either TO_TOMBSTONE or TO_GAME_START
 		break;
 		case MainState::TO_GAME_START:
-			delete Pi::intro;
+			intro.reset();
 			Pi::intro = nullptr;
 			InitGame();
 			StartGame();
 			m_mainState = MainState::GAME_START;
 		break;
 		case MainState::TO_MAIN_MENU:
-			Pi::intro = new Intro(Pi::renderer,
+			intro.reset(new Intro(Pi::renderer,
 				Graphics::GetScreenWidth(),
 				Graphics::GetScreenHeight(),
 				GameConfSingleton::GetAmountBackgroundStars()
-				);
+				));
+			Pi::intro = intro.get();
 			m_mainState = MainState::MAIN_MENU;
 		break;
 		case MainState::TO_TOMBSTONE:
-			Pi::TombStoneLoop(0.);
-			Pi::EndGame();
-			m_mainState = MainState::TO_MAIN_MENU;
+			tombstone.reset(new Tombstone(Pi::renderer,
+				Graphics::GetScreenWidth(),
+				Graphics::GetScreenHeight()
+				));
+			time = 0.0;
+			m_mainState = MainState::TOMBSTONE;
+		break;
+		case MainState::TOMBSTONE:
+			time += Pi::frameTime;
+			Pi::TombStoneLoop(Pi::frameTime, tombstone.get());
+			if ((time > 2.0) && ((input.MouseButtonState(SDL_BUTTON_LEFT)) || input.KeyState(SDLK_SPACE))) {
+				tombstone.reset();
+				Pi::EndGame();
+				m_mainState = MainState::TO_MAIN_MENU;
+			}
 		break;
 		}
 		Pi::frameTime = 0.001f * (SDL_GetTicks() - last_time);
@@ -1127,7 +1133,7 @@ void Pi::Start(const SystemPath &startPath)
 	}
 }
 
-void Pi::MainMenu(double step)
+void Pi::MainMenu(double step, Intro *intro)
 {
 
 	SDL_Event event;

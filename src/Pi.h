@@ -18,6 +18,7 @@ class LuaTimer;
 class ObjectViewerView;
 class PiGui;
 class SystemPath;
+class Tombstone;
 class TransferPlanner;
 class View;
 class SDLGraphics;
@@ -59,8 +60,8 @@ public:
 	static void Start(const SystemPath &startPath);
 	static void RequestQuit();
 	static void MainLoop();
-	static void MainMenu(double step);
-	static void TombStoneLoop(double step);
+	static void MainMenu(double step, Intro *intro);
+	static void TombStoneLoop(double step, Tombstone *tombstone);
 	static void OnChangeDetailLevel();
 	static float GetFrameTime() { return frameTime; }
 	static float GetGameTickAlpha() { return gameTickAlpha; }

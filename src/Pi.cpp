@@ -694,8 +694,8 @@ void Pi::Quit()
 	FaceParts::Uninit();
 	Graphics::Uninit();
 	Pi::pigui->Uninit();
-	Pi::ui.Reset(0);
-	Pi::pigui.Reset(0);
+	Pi::ui.Reset(nullptr);
+	Pi::pigui.Reset(nullptr);
 	LuaUninit();
 	Gui::Uninit();
 	delete Pi::renderer;
@@ -1004,26 +1004,7 @@ void Pi::HandleRequests()
 	internalRequests.clear();
 }
 
-void Pi::TombStoneLoop(double step, Tombstone *tombstone)
-{
-	Pi::HandleEvents();
-	Pi::renderer->SetGrab(false);
-
-	// render the scene
-	Pi::BeginRenderTarget();
-	Pi::renderer->BeginFrame();
-	tombstone->Draw(step);
-	Pi::renderer->EndFrame();
-	Gui::Draw();
-	Pi::EndRenderTarget();
-
-	Pi::DrawRenderTarget();
-	Pi::renderer->SwapBuffers();
-
-	Pi::HandleRequests();
-}
-
-void Pi::MainMenu(double step, Intro *intro)
+void Pi::CutSceneLoop(double step, Cutscene *cutscene)
 {
 	// XXX hack
 	// if we hit our exit conditions then ignore further queued events
@@ -1036,7 +1017,7 @@ void Pi::MainMenu(double step, Intro *intro)
 
 	Pi::BeginRenderTarget();
 	Pi::renderer->BeginFrame();
-	intro->Draw(step);
+	cutscene->Draw(step);
 	Pi::renderer->EndFrame();
 
 	Pi::renderer->ClearDepthBuffer();
@@ -1045,16 +1026,20 @@ void Pi::MainMenu(double step, Intro *intro)
 	Pi::ui->Update();
 	Pi::ui->Draw();
 
-	PiGui::NewFrame(Pi::renderer->GetSDLWindow());
-	DrawPiGui(Pi::frameTime, "MAINMENU");
+	Pi::HandleEvents();
+
+	Gui::Draw();
+
+	if (dynamic_cast<Intro *>(cutscene) != nullptr) {
+		PiGui::NewFrame(Pi::renderer->GetSDLWindow());
+		DrawPiGui(step, "MAINMENU");
+	}
 
 	Pi::EndRenderTarget();
 
 	// render the rendertarget texture
 	Pi::DrawRenderTarget();
 	Pi::renderer->SwapBuffers();
-
-	Pi::HandleEvents();
 
 	Pi::HandleRequests();
 
@@ -1124,7 +1109,7 @@ void Pi::Start(const SystemPath &startPath)
 
 		switch (m_mainState) {
 		case MainState::MAIN_MENU:
-			MainMenu(Pi::frameTime, intro.get());
+			CutSceneLoop(Pi::frameTime, intro.get());
 			if (GameLocator::getGame() != nullptr) {
 				Pi::m_mainState = MainState::TO_GAME_START;
 			}
@@ -1150,6 +1135,7 @@ void Pi::Start(const SystemPath &startPath)
 			m_mainState = MainState::MAIN_MENU;
 		break;
 		case MainState::TO_TOMBSTONE:
+			EndGame();
 			tombstone.reset(new Tombstone(Pi::renderer,
 				Graphics::GetScreenWidth(),
 				Graphics::GetScreenHeight()
@@ -1159,10 +1145,9 @@ void Pi::Start(const SystemPath &startPath)
 		break;
 		case MainState::TOMBSTONE:
 			time += Pi::frameTime;
-			Pi::TombStoneLoop(Pi::frameTime, tombstone.get());
+			CutSceneLoop(Pi::frameTime, tombstone.get());
 			if ((time > 2.0) && ((input.MouseButtonState(SDL_BUTTON_LEFT)) || input.KeyState(SDLK_SPACE))) {
 				tombstone.reset();
-				Pi::EndGame();
 				m_mainState = MainState::TO_MAIN_MENU;
 			}
 		break;

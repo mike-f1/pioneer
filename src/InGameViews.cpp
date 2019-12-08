@@ -1,3 +1,5 @@
+#include "buildopts.h"
+
 #include "InGameViews.h"
 
 #include "DeathView.h"
@@ -95,9 +97,9 @@ void InGameViews::SetRenderer(Graphics::Renderer *r)
 }
 
 #if WITH_OBJECTVIEWER
-ObjectViewerView *Game::GetObjectViewerView() const
+ObjectViewerView *InGameViews::GetObjectViewerView() const
 {
-	return m_inGameViews->m_objectViewerView;
+	return m_objectViewerView;
 }
 #endif
 

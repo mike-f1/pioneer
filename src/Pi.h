@@ -60,7 +60,7 @@ public:
 	static void RequestQuit();
 	static void MainLoop();
 	static void MainMenu(double step);
-	static void TombStoneLoop();
+	static void TombStoneLoop(double step);
 	static void OnChangeDetailLevel();
 	static float GetFrameTime() { return frameTime; }
 	static float GetGameTickAlpha() { return gameTickAlpha; }
@@ -117,8 +117,10 @@ private:
 	enum class MainState {
 		MAIN_MENU,
 		GAME_START,
+		TOMBSTONE,
 		TO_GAME_START,
 		TO_MAIN_MENU,
+		TO_TOMBSTONE,
 	};
 	static MainState m_mainState;
 

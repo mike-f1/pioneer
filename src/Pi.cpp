@@ -1006,7 +1006,7 @@ void Pi::HandleRequests()
 	internalRequests.clear();
 }
 
-void Pi::TombStoneLoop()
+void Pi::TombStoneLoop(double step)
 {
 	std::unique_ptr<Tombstone> tombstone(new Tombstone(Pi::renderer, Graphics::GetScreenWidth(), Graphics::GetScreenHeight()));
 	Uint32 last_time = SDL_GetTicks();
@@ -1087,21 +1087,19 @@ void Pi::Start(const SystemPath &startPath)
 	// for some models
 	Pi::renderer->SetAmbientColor(Color(51, 51, 51, 255));
 
-	float _time = 0;
-
 	while (1) {
 		Uint32 last_time = SDL_GetTicks();
 
 		switch (m_mainState) {
 		case MainState::MAIN_MENU:
-			MainMenu(_time);
+			MainMenu(Pi::frameTime);
 			if (GameLocator::getGame() != nullptr) {
 				Pi::m_mainState = MainState::TO_GAME_START;
 			}
 		break;
 		case MainState::GAME_START:
 			MainLoop();
-			m_mainState = MainState::TO_MAIN_MENU;
+			// no m_mainState set as it can be either TO_TOMBSTONE or TO_GAME_START
 		break;
 		case MainState::TO_GAME_START:
 			delete Pi::intro;
@@ -1118,10 +1116,13 @@ void Pi::Start(const SystemPath &startPath)
 				);
 			m_mainState = MainState::MAIN_MENU;
 		break;
+		case MainState::TO_TOMBSTONE:
+			Pi::TombStoneLoop(0.);
+			Pi::EndGame();
+			m_mainState = MainState::TO_MAIN_MENU;
+		break;
 		}
-
 		Pi::frameTime = 0.001f * (SDL_GetTicks() - last_time);
-		_time += Pi::frameTime;
 		last_time = SDL_GetTicks();
 	}
 }
@@ -1330,9 +1331,8 @@ void Pi::MainLoop()
 			if (time_player_died > 0.0) {
 				if (GameLocator::getGame()->GetTime() - time_player_died > 8.0) {
 					GameLocator::getGame()->GetInGameViews()->SetView(ViewType::NONE);
-					Pi::TombStoneLoop();
-					Pi::EndGame();
-					break;
+					m_mainState = MainState::TO_TOMBSTONE;
+					return;
 				}
 			} else {
 				GameLocator::getGame()->SetTimeAccel(Game::TIMEACCEL_1X);
@@ -1509,6 +1509,7 @@ void Pi::MainLoop()
 		Profiler::reset();
 #endif
 	}
+	m_mainState = MainState::TO_MAIN_MENU;
 }
 
 void Pi::SetMouseGrab(bool on)

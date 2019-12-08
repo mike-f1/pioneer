@@ -1023,6 +1023,46 @@ void Pi::TombStoneLoop(double step, Tombstone *tombstone)
 	Pi::HandleRequests();
 }
 
+void Pi::MainMenu(double step, Intro *intro)
+{
+	// XXX hack
+	// if we hit our exit conditions then ignore further queued events
+	// protects against eg double-click during game generation
+	if (GameLocator::getGame()) {
+		SDL_Event event;
+		while (SDL_PollEvent(&event)) {
+		}
+	}
+
+	Pi::BeginRenderTarget();
+	Pi::renderer->BeginFrame();
+	intro->Draw(step);
+	Pi::renderer->EndFrame();
+
+	Pi::renderer->ClearDepthBuffer();
+
+	// Mainly for Console
+	Pi::ui->Update();
+	Pi::ui->Draw();
+
+	PiGui::NewFrame(Pi::renderer->GetSDLWindow());
+	DrawPiGui(Pi::frameTime, "MAINMENU");
+
+	Pi::EndRenderTarget();
+
+	// render the rendertarget texture
+	Pi::DrawRenderTarget();
+	Pi::renderer->SwapBuffers();
+
+	Pi::HandleEvents();
+
+	Pi::HandleRequests();
+
+#ifdef ENABLE_SERVER_AGENT
+	Pi::serverAgent->ProcessResponses();
+#endif
+}
+
 void Pi::InitGame()
 {
 	// this is a bit brittle. skank may be forgotten and survive between
@@ -1130,46 +1170,6 @@ void Pi::Start(const SystemPath &startPath)
 		Pi::frameTime = 0.001f * (SDL_GetTicks() - last_time);
 		last_time = SDL_GetTicks();
 	}
-}
-
-void Pi::MainMenu(double step, Intro *intro)
-{
-	// XXX hack
-	// if we hit our exit conditions then ignore further queued events
-	// protects against eg double-click during game generation
-	if (GameLocator::getGame()) {
-		SDL_Event event;
-		while (SDL_PollEvent(&event)) {
-		}
-	}
-
-	Pi::BeginRenderTarget();
-	Pi::renderer->BeginFrame();
-	intro->Draw(step);
-	Pi::renderer->EndFrame();
-
-	Pi::renderer->ClearDepthBuffer();
-
-	// Mainly for Console
-	Pi::ui->Update();
-	Pi::ui->Draw();
-
-	PiGui::NewFrame(Pi::renderer->GetSDLWindow());
-	DrawPiGui(Pi::frameTime, "MAINMENU");
-
-	Pi::EndRenderTarget();
-
-	// render the rendertarget texture
-	Pi::DrawRenderTarget();
-	Pi::renderer->SwapBuffers();
-
-	Pi::HandleEvents();
-
-	Pi::HandleRequests();
-
-#ifdef ENABLE_SERVER_AGENT
-	Pi::serverAgent->ProcessResponses();
-#endif
 }
 
 // request that the game is ended as soon as safely possible
@@ -1368,8 +1368,11 @@ void Pi::MainLoop()
 		Pi::renderer->SwapBuffers();
 
 		// game exit will have cleared GameLocator::getGame(). we can't continue.
-		if (!GameLocator::getGame())
+		if (!GameLocator::getGame()) {
+			// XXX: Not checked, but sure there's needs to change state..
+			m_mainState = MainState::TO_MAIN_MENU;
 			return;
+		}
 
 		if (GameLocator::getGame()->UpdateTimeAccel())
 			accumulator = 0; // fix for huge pauses 10000x -> 1x

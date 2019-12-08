@@ -59,6 +59,7 @@ public:
 	static void Start(const SystemPath &startPath);
 	static void RequestQuit();
 	static void MainLoop();
+	static void MainMenu(double step);
 	static void TombStoneLoop();
 	static void OnChangeDetailLevel();
 	static float GetFrameTime() { return frameTime; }
@@ -113,6 +114,14 @@ public:
 	static JobQueue *GetSyncJobQueue();
 
 private:
+	enum class MainState {
+		MAIN_MENU,
+		GAME_START,
+		TO_GAME_START,
+		TO_MAIN_MENU,
+	};
+	static MainState m_mainState;
+
 	// msgs/requests that can be posted which the game processes at the end of a game loop in HandleRequests
 	enum InternalRequests {
 		END_GAME = 0,

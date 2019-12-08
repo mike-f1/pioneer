@@ -146,6 +146,8 @@ std::vector<Pi::InternalRequests> Pi::internalRequests;
 bool Pi::isRecordingVideo = false;
 FILE *Pi::ffmpegFile = nullptr;
 
+Pi::MainState Pi::m_mainState = Pi::MainState::MAIN_MENU;
+
 std::unique_ptr<AsyncJobQueue> Pi::asyncJobQueue;
 std::unique_ptr<SyncJobQueue> Pi::syncJobQueue;
 
@@ -874,7 +876,7 @@ void Pi::HandleKeyDown(SDL_Keysym *key)
 					const std::string path = FileSystem::JoinPath(GameConfSingleton::GetSaveDirFull(), name);
 					try {
 						GameState::SaveGame(name);
-						Output("Quick save: %s", name.c_str());
+						Output("Quick save: %s\n", name.c_str());
 						GameLocator::getGame()->log->Add(Lang::GAME_SAVED_TO + path);
 					} catch (CouldNotOpenFileException) {
 						GameLocator::getGame()->log->Add(stringf(Lang::COULD_NOT_OPEN_FILENAME, formatarg("path", path)));
@@ -1080,42 +1082,81 @@ void Pi::Start(const SystemPath &startPath)
 	if (startPath != SystemPath(0, 0, 0, 0, 0)) {
 		GameState::MakeNewGame(startPath);
 	}
+
 	//XXX global ambient colour hack to make explicit the old default ambient colour dependency
 	// for some models
 	Pi::renderer->SetAmbientColor(Color(51, 51, 51, 255));
 
-	Uint32 last_time = SDL_GetTicks();
 	float _time = 0;
 
-	while (!GameLocator::getGame()) {
-		SDL_Event event;
-		while (SDL_PollEvent(&event)) {
-			if (event.type == SDL_QUIT)
-				Pi::RequestQuit();
-			else {
-				Pi::pigui->ProcessEvent(&event);
+	while (1) {
+		Uint32 last_time = SDL_GetTicks();
 
-				if (Pi::pigui->WantCaptureMouse()) {
-					// don't process mouse event any further, imgui already handled it
-					switch (event.type) {
-					case SDL_MOUSEBUTTONDOWN:
-					case SDL_MOUSEBUTTONUP:
-					case SDL_MOUSEWHEEL:
-					case SDL_MOUSEMOTION:
-						continue;
-					default: break;
-					}
+		switch (m_mainState) {
+		case MainState::MAIN_MENU:
+			MainMenu(_time);
+			if (GameLocator::getGame() != nullptr) {
+				Pi::m_mainState = MainState::TO_GAME_START;
+			}
+		break;
+		case MainState::GAME_START:
+			MainLoop();
+			m_mainState = MainState::TO_MAIN_MENU;
+		break;
+		case MainState::TO_GAME_START:
+			delete Pi::intro;
+			Pi::intro = nullptr;
+			InitGame();
+			StartGame();
+			m_mainState = MainState::GAME_START;
+		break;
+		case MainState::TO_MAIN_MENU:
+			Pi::intro = new Intro(Pi::renderer,
+				Graphics::GetScreenWidth(),
+				Graphics::GetScreenHeight(),
+				GameConfSingleton::GetAmountBackgroundStars()
+				);
+			m_mainState = MainState::MAIN_MENU;
+		break;
+		}
+
+		Pi::frameTime = 0.001f * (SDL_GetTicks() - last_time);
+		_time += Pi::frameTime;
+		last_time = SDL_GetTicks();
+	}
+}
+
+void Pi::MainMenu(double step)
+{
+
+	SDL_Event event;
+	while (SDL_PollEvent(&event)) {
+		if (event.type == SDL_QUIT)
+			Pi::RequestQuit();
+		else {
+			Pi::pigui->ProcessEvent(&event);
+
+			if (Pi::pigui->WantCaptureMouse()) {
+				// don't process mouse event any further, imgui already handled it
+				switch (event.type) {
+				case SDL_MOUSEBUTTONDOWN:
+				case SDL_MOUSEBUTTONUP:
+				case SDL_MOUSEWHEEL:
+				case SDL_MOUSEMOTION:
+					continue;
+				default: break;
 				}
-				if (Pi::pigui->WantCaptureKeyboard()) {
-					// don't process keyboard event any further, imgui already handled it
-					switch (event.type) {
-					case SDL_KEYDOWN:
-					case SDL_KEYUP:
-					case SDL_TEXTINPUT:
-						continue;
-					default: break;
-					}
+			}
+			if (Pi::pigui->WantCaptureKeyboard()) {
+				// don't process keyboard event any further, imgui already handled it
+				switch (event.type) {
+				case SDL_KEYDOWN:
+				case SDL_KEYUP:
+				case SDL_TEXTINPUT:
+					continue;
+				default: break;
 				}
+			}
 
 #if 0 // Moved to Input::HandleSDLEvent, can be deleted when confirmed working \
 	// joystick stuff for the options window
@@ -1142,49 +1183,37 @@ void Pi::Start(const SystemPath &startPath)
 				default: break;
 				}
 #endif
-				ui->DispatchSDLEvent(event);
+			ui->DispatchSDLEvent(event);
 
-				input.HandleSDLEvent(event);
-			}
-			// XXX hack
-			// if we hit our exit conditions then ignore further queued events
-			// protects against eg double-click during game generation
-			if (GameLocator::getGame())
-				while (SDL_PollEvent(&event)) {
-				}
+			input.HandleSDLEvent(event);
 		}
-
-		Pi::BeginRenderTarget();
-		Pi::renderer->BeginFrame();
-		intro->Draw(_time);
-		Pi::renderer->EndFrame();
-
-		PiGui::NewFrame(Pi::renderer->GetSDLWindow());
-		DrawPiGui(Pi::frameTime, "MAINMENU");
-
-		Pi::EndRenderTarget();
-
-		// render the rendertarget texture
-		Pi::DrawRenderTarget();
-		Pi::renderer->SwapBuffers();
-
-		Pi::frameTime = 0.001f * (SDL_GetTicks() - last_time);
-		_time += Pi::frameTime;
-		last_time = SDL_GetTicks();
-
-		Pi::HandleRequests();
-
-#ifdef ENABLE_SERVER_AGENT
-		Pi::serverAgent->ProcessResponses();
-#endif
+		// XXX hack
+		// if we hit our exit conditions then ignore further queued events
+		// protects against eg double-click during game generation
+		if (GameLocator::getGame())
+			while (SDL_PollEvent(&event)) {
+			}
 	}
 
-	delete Pi::intro;
-	Pi::intro = 0;
+	Pi::BeginRenderTarget();
+	Pi::renderer->BeginFrame();
+	intro->Draw(step);
+	Pi::renderer->EndFrame();
 
-	InitGame();
-	StartGame();
-	MainLoop();
+	PiGui::NewFrame(Pi::renderer->GetSDLWindow());
+	DrawPiGui(Pi::frameTime, "MAINMENU");
+
+	Pi::EndRenderTarget();
+
+	// render the rendertarget texture
+	Pi::DrawRenderTarget();
+	Pi::renderer->SwapBuffers();
+
+	Pi::HandleRequests();
+
+#ifdef ENABLE_SERVER_AGENT
+	Pi::serverAgent->ProcessResponses();
+#endif
 }
 
 // request that the game is ended as soon as safely possible

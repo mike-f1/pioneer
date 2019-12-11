@@ -13,7 +13,7 @@ class Game;
 
 class DeathView : public View {
 public:
-	DeathView(Game *game, Graphics::Renderer *r);
+	DeathView(Graphics::Renderer *r);
 	virtual ~DeathView();
 
 	void Init();
@@ -28,7 +28,6 @@ private:
 	RefCountedPtr<CameraContext> m_cameraContext;
 	std::unique_ptr<Camera> m_camera;
 	float m_cameraDist;
-	Game *m_game;
 };
 
 #endif

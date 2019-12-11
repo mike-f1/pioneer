@@ -21,7 +21,7 @@ InGameViews::InGameViews(Game *game, const SystemPath &path, RefCountedPtr<Secto
 	m_systemInfoView(new SystemInfoView(game)),
 	m_systemView(new SystemView()),
 	m_worldView(new WorldView(game)),
-	m_deathView(new DeathView(game, Pi::renderer)),
+	m_deathView(new DeathView(Pi::renderer)),
 	m_spaceStationView(new UIView("StationView")),
 	m_infoView(new UIView("InfoView")),
 	m_cpan(new ShipCpanel(Pi::renderer)),
@@ -44,7 +44,7 @@ InGameViews::InGameViews(const Json &jsonObj, Game *game, const SystemPath &path
 	m_systemInfoView = new SystemInfoView(game);
 	m_spaceStationView = new UIView("StationView");
 	m_infoView = new UIView("InfoView");
-	m_deathView = new DeathView(game, Pi::renderer);
+	m_deathView = new DeathView(Pi::renderer);
 
 #if WITH_OBJECTVIEWER
 	m_objectViewerView = new ObjectViewerView(game);

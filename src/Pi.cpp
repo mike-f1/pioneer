@@ -1219,6 +1219,8 @@ void Pi::MainLoop()
 					break;
 				}
 				GameLocator::getGame()->TimeStep(step);
+				GameLocator::getGame()->GetInGameViews()->GetCpan()->TimeStepUpdate(step);
+
 				BaseSphere::UpdateAllBaseSphereDerivatives();
 
 				accumulator -= step;

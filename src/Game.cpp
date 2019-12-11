@@ -31,7 +31,6 @@
 #include "ship/PlayerShipController.h"
 
 #include "SystemView.h" // <- Because of planner
-#include "ShipCpanel.h" // <- Here for UI updates (find GetCpan )
 #include "WorldView.h"  // <- Here for CameraContext
 
 static const int cacheRadius = 5;
@@ -100,6 +99,8 @@ Game::Game(const SystemPath &path, const double startDateTime) :
     size_t filled = m_galaxy->FillSectorCache(sectorCache, path, cacheRadius + 2);
     Output("SectorView cache pre-filled with %lu entries\n", filled);
 
+    // TODO: Remove this when m_inGameViews disappear
+    GameLocator::provideGame(this);
 	m_inGameViews.reset(new InGameViews(this, path, sectorCache));
 
 	m_luaTimer.reset(new LuaTimer());
@@ -165,13 +166,14 @@ Game::Game(const Json &jsonObj) :
     size_t filled = m_galaxy->FillSectorCache(sectorCache, path, cacheRadius + 2);
     Output("SectorView cache pre-filled with %lu entries\n", filled);
 
-	// views
-	m_inGameViews.reset(new InGameViews(jsonObj, this, path, sectorCache));
-
 	/// HACK!
 	// Lua needs Space up and running (see LuaBody::_body_deserializer
 	// thus the needs for the following call:
     GameLocator::provideGame(this);
+
+	// views
+	m_inGameViews.reset(new InGameViews(jsonObj, this, path, sectorCache));
+
 	// lua
 	luaSerializer->FromJson(jsonObj);
 
@@ -318,8 +320,6 @@ void Game::TimeStep(float step)
 
 	m_luaTimer->Tick();
 
-	// XXX ui updates, not sure if they belong here
-	m_inGameViews->GetCpan()->TimeStepUpdate(step);
 	SfxManager::TimeStepAll(step, Frame::GetRootFrameId());
 
 	if (m_state == State::HYPERSPACE) {

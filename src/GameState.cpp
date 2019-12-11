@@ -17,6 +17,7 @@ static const int s_saveVersion = 87;
 
 void GameState::MakeNewGame(const SystemPath &path, const double startDateTime)
 {
+	Output("Starting new game at (%i;%i;%i;%i;%i)\n", path.sectorX, path.sectorY, path.sectorZ, path.systemIndex, path.bodyIndex);
 	Game *game = new Game(path, startDateTime);
 	GameLocator::provideGame(game);
 	// Here because 'l_game_attr_player' would have

@@ -1088,7 +1088,6 @@ void Pi::StartGame()
 
 void Pi::Start(const SystemPath &startPath)
 {
-
 	if (startPath != SystemPath(0, 0, 0, 0, 0)) {
 		GameState::MakeNewGame(startPath);
 		m_mainState = MainState::TO_GAME_START;
@@ -1101,15 +1100,17 @@ void Pi::Start(const SystemPath &startPath)
 	Pi::renderer->SetAmbientColor(Color(51, 51, 51, 255));
 
 	float time = 0.0;
+	Uint32 last_time = SDL_GetTicks();
 
 	while (1) {
-		Uint32 last_time = SDL_GetTicks();
+		frameTime = 0.001f * (SDL_GetTicks() - last_time);
+		last_time = SDL_GetTicks();
 
 		switch (m_mainState) {
 		case MainState::MAIN_MENU:
-			CutSceneLoop(Pi::frameTime, cutscene.get());
+			CutSceneLoop(frameTime, cutscene.get());
 			if (GameLocator::getGame() != nullptr) {
-				Pi::m_mainState = MainState::TO_GAME_START;
+				m_mainState = MainState::TO_GAME_START;
 			}
 		break;
 		case MainState::GAME_START:
@@ -1140,16 +1141,14 @@ void Pi::Start(const SystemPath &startPath)
 			m_mainState = MainState::TOMBSTONE;
 		break;
 		case MainState::TOMBSTONE:
-			time += Pi::frameTime;
-			CutSceneLoop(Pi::frameTime, cutscene.get());
+			time += frameTime;
+			CutSceneLoop(frameTime, cutscene.get());
 			if ((time > 2.0) && ((input.MouseButtonState(SDL_BUTTON_LEFT)) || input.KeyState(SDLK_SPACE))) {
 				cutscene.reset();
 				m_mainState = MainState::TO_MAIN_MENU;
 			}
 		break;
 		}
-		Pi::frameTime = 0.001f * (SDL_GetTicks() - last_time);
-		last_time = SDL_GetTicks();
 	}
 }
 

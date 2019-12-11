@@ -85,7 +85,7 @@ protected:
 	virtual void OnSwitchFrom();
 
 private:
-	void InitObject();
+	void InitObject(Game *game);
 
 	void RefreshButtonStateAndVisibility();
 
@@ -125,8 +125,6 @@ private:
 	void OnRequestTimeAccelInc();
 	/// Handler for "requestTimeAccelerationDec" event
 	void OnRequestTimeAccelDec();
-
-	Game *m_game;
 
 	NavTunnelWidget *m_navTunnel;
 	std::unique_ptr<SpeedLines> m_speedLines;

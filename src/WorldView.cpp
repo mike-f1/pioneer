@@ -1,5 +1,6 @@
 // Copyright © 2008-2019 Pioneer Developers. See AUTHORS.txt for details
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
+#include "buildopts.h"
 
 #include "WorldView.h"
 
@@ -30,6 +31,11 @@
 
 #include "gui/GuiScreen.h"
 
+#ifdef WITH_DEVKEYS
+#include <sstream>
+#include "galaxy/SystemBody.h"
+#endif // WITH_DEVKEYS
+
 const double WorldView::PICK_OBJECT_RECT_SIZE = 20.0;
 namespace {
 	static const Color s_hudTextColor(0, 255, 0, 230);
@@ -42,15 +48,13 @@ namespace {
 
 WorldView::WorldView(Game *game) :
 	UIView(),
-	m_game(game),
 	shipView(this)
 {
-	InitObject();
+	InitObject(game);
 }
 
 WorldView::WorldView(const Json &jsonObj, Game *game) :
 	UIView(),
-	m_game(game),
 	shipView(this)
 {
 	if (!jsonObj["world_view"].is_object()) throw SavedGameCorruptException();
@@ -59,7 +63,7 @@ WorldView::WorldView(const Json &jsonObj, Game *game) :
 	if (!worldViewObj["cam_type"].is_number_integer()) throw SavedGameCorruptException();
 	shipView.m_camType = worldViewObj["cam_type"];
 
-	InitObject();
+	InitObject(game);
 
 	shipView.LoadFromJson(worldViewObj);
 }
@@ -84,7 +88,7 @@ void WorldView::RegisterInputBindings()
 	KEY_BINDING(decreaseTimeAcceleration, "BindDecreaseTimeAcceleration", SDLK_PAGEDOWN, 0)
 }
 
-void WorldView::InitObject()
+void WorldView::InitObject(Game *game)
 {
 	float size[2];
 	GetSizeRequested(size);
@@ -130,7 +134,7 @@ void WorldView::InitObject()
 	Add(m_combatTargetIndicator.label, 0, 0);
 	Add(m_targetLeadIndicator.label, 0, 0);
 
-	m_speedLines.reset(new SpeedLines(m_game->GetPlayer()));
+	m_speedLines.reset(new SpeedLines(game->GetPlayer()));
 
 	//get near & far clipping distances
 	//XXX m_renderer not set yet
@@ -142,7 +146,7 @@ void WorldView::InitObject()
 
 	m_cameraContext.Reset(new CameraContext(Graphics::GetScreenWidth(), Graphics::GetScreenHeight(), fovY, znear, zfar));
 	m_camera.reset(new Camera(m_cameraContext, Pi::renderer));
-	shipView.Init(m_game->GetPlayer());
+	shipView.Init(game->GetPlayer());
 
 	m_onPlayerChangeTargetCon =
 		Pi::onPlayerChangeTarget.connect(sigc::mem_fun(this, &WorldView::OnPlayerChangeTarget));
@@ -184,7 +188,7 @@ void WorldView::OnRequestTimeAccelDec()
 void WorldView::Draw3D()
 {
 	PROFILE_SCOPED()
-	assert(m_game);
+	assert(GameLocator::getGame());
 	assert(GameLocator::getGame()->GetPlayer());
 	assert(!GameLocator::getGame()->GetPlayer()->IsDead());
 
@@ -236,11 +240,11 @@ void WorldView::ShowAll()
 
 void WorldView::RefreshButtonStateAndVisibility()
 {
-	assert(m_game);
+	assert(GameLocator::getGame());
 	assert(GameLocator::getGame()->GetPlayer());
 	assert(!GameLocator::getGame()->GetPlayer()->IsDead());
 
-	if (m_game->IsPaused())
+	if (GameLocator::getGame()->IsPaused())
 		m_pauseText->Show();
 	else
 		m_pauseText->Hide();
@@ -251,9 +255,9 @@ void WorldView::RefreshButtonStateAndVisibility()
 
 		if (GameLocator::getGame()->GetPlayer()->GetFlightState() != Ship::HYPERSPACE) {
 			vector3d pos = GameLocator::getGame()->GetPlayer()->GetPosition();
-			vector3d abs_pos = GameLocator::getGame()->GetPlayer()->GetPositionRelTo(m_game->GetSpace()->GetRootFrame());
+			vector3d abs_pos = GameLocator::getGame()->GetPlayer()->GetPositionRelTo(Frame::GetRootFrameId());
 
-			const Frame *playerFrame = GameLocator::getGame()->GetPlayer()->GetFrame();
+			const Frame *playerFrame = Frame::GetFrame(GameLocator::getGame()->GetPlayer()->GetFrame());
 
 			ss << stringf("Pos: %0{f.2}, %1{f.2}, %2{f.2}\n", pos.x, pos.y, pos.z);
 			ss << stringf("AbsPos: %0{f.2}, %1{f.2}, %2{f.2}\n", abs_pos.x, abs_pos.y, abs_pos.z);
@@ -289,7 +293,7 @@ void WorldView::RefreshButtonStateAndVisibility()
 void WorldView::Update()
 {
 	PROFILE_SCOPED()
-	assert(m_game);
+	assert(GameLocator::getGame());
 	assert(GameLocator::getGame()->GetPlayer());
 	assert(!GameLocator::getGame()->GetPlayer()->IsDead());
 
@@ -312,13 +316,13 @@ void WorldView::Update()
 	//speedlines and contact trails need camFrame for transform, so they
 	//must be updated here
 	if (GameConfSingleton::AreSpeedLinesDisplayed()) {
-		m_speedLines->Update(m_game->GetTimeStep());
+		m_speedLines->Update(GameLocator::getGame()->GetTimeStep());
 
 		matrix4x4d trans;
 		Frame::GetFrameTransform(playerFrameId, camFrameId, trans);
 
 		if (m_speedLines.get() && GameConfSingleton::AreSpeedLinesDisplayed()) {
-			m_speedLines->Update(m_game->GetTimeStep());
+			m_speedLines->Update(GameLocator::getGame()->GetTimeStep());
 
 			trans[12] = trans[13] = trans[14] = 0.0;
 			trans[15] = 1.0;
@@ -366,18 +370,18 @@ static void PlayerPayFine()
 	Sint64 crime, fine;
 	Polit::GetCrime(&crime, &fine);
 	if (GameLocator::getGame()->GetPlayer()->GetMoney() == 0) {
-		m_game->log->Add(Lang::YOU_NO_MONEY);
+		GameLocator::getGame()->log->Add(Lang::YOU_NO_MONEY);
 	} else if (fine > GameLocator::getGame()->GetPlayer()->GetMoney()) {
 		Polit::AddCrime(0, -GameLocator::getGame()->GetPlayer()->GetMoney());
 		Polit::GetCrime(&crime, &fine);
-		m_game->log->Add(stringf(
+		GameLocator::getGame()->log->Add(stringf(
 			Lang::FINE_PAID_N_BUT_N_REMAINING,
 				formatarg("paid", format_money(GameLocator::getGame()->GetPlayer()->GetMoney())),
 				formatarg("fine", format_money(fine))));
 		GameLocator::getGame()->GetPlayer()->SetMoney(0);
 	} else {
 		GameLocator::getGame()->GetPlayer()->SetMoney(GameLocator::getGame()->GetPlayer()->GetMoney() - fine);
-		m_game->log->Add(stringf(Lang::FINE_PAID_N,
+		GameLocator::getGame()->log->Add(stringf(Lang::FINE_PAID_N,
 				formatarg("fine", format_money(fine))));
 		Polit::AddCrime(0, -fine);
 	}
@@ -390,8 +394,8 @@ void WorldView::OnPlayerChangeTarget()
 	if (b) {
 		Sound::PlaySfx("OK");
 		Ship *s = b->IsType(Object::HYPERSPACECLOUD) ? static_cast<HyperspaceCloud *>(b)->GetShip() : 0;
-		if (!s || !m_game->GetInGameViews()->GetSectorView()->GetHyperspaceTarget().IsSameSystem(s->GetHyperspaceDest()))
-			m_game->GetInGameViews()->GetSectorView()->FloatHyperspaceTarget();
+		if (!s || !GameLocator::getGame()->GetInGameViews()->GetSectorView()->GetHyperspaceTarget().IsSameSystem(s->GetHyperspaceDest()))
+			GameLocator::getGame()->GetInGameViews()->GetSectorView()->FloatHyperspaceTarget();
 	}
 }
 
@@ -677,7 +681,7 @@ double getSquareHeight(double distance, double angle)
 
 void WorldView::Draw()
 {
-	assert(m_game);
+	assert(GameLocator::getGame());
 	assert(GameLocator::getGame()->GetPlayer());
 
 	m_renderer->ClearDepthBuffer();

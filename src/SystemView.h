@@ -45,7 +45,7 @@ enum ShowLagrange {
 
 class SystemView : public UIView {
 public:
-	SystemView(Game *game);
+	SystemView();
 	virtual ~SystemView();
 	virtual void Update();
 	virtual void Draw3D();
@@ -80,7 +80,6 @@ private:
 	void LabelShip(Ship *s, const vector3d &offset);
 	void OnClickShip(Ship *s);
 
-	Game *m_game;
 	RefCountedPtr<StarSystem> m_system;
 	const SystemBody *m_selectedObject;
 	std::vector<SystemBody *> m_displayed_sbody;

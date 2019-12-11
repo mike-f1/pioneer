@@ -39,9 +39,8 @@ static const float ZOOM_OUT_SPEED = 1.f / ZOOM_IN_SPEED;
 static const float WHEEL_SENSITIVITY = .1f; // Should be a variable in user settings.
 static const double DEFAULT_VIEW_DISTANCE = 10.0;
 
-SystemView::SystemView(Game *game) :
+SystemView::SystemView() :
 	UIView(),
-	m_game(game),
 	m_gridDrawing(GridDrawing::OFF),
 	m_shipDrawing(OFF),
 	m_showL4L5(LAG_OFF)
@@ -346,7 +345,7 @@ void SystemView::ResetViewpoint()
 	m_zoom = 1.0f / float(AU);
 	m_zoomTo = m_zoom;
 	m_timeStep = 1.0f;
-	m_time = m_game->GetTime();
+	m_time = GameLocator::getGame()->GetTime();
 }
 
 void SystemView::PutOrbit(const Orbit *orbit, const vector3d &offset, const Color &color, const double planetRadius, const bool showLagrange)
@@ -366,7 +365,7 @@ void SystemView::PutOrbit(const Orbit *orbit, const vector3d &offset, const Colo
 	static const float fadedColorParameter = 0.8;
 
 	Uint16 fadingColors = 0;
-	const double tMinust0 = m_time - m_game->GetTime();
+	const double tMinust0 = m_time - GameLocator::getGame()->GetTime();
 	for (unsigned short i = 0; i < N_VERTICES_MAX; ++i) {
 		const double t = double(i) / double(N_VERTICES_MAX) * maxT;
 		if (fadingColors == 0 && t >= startTrailPercent * maxT)
@@ -457,16 +456,16 @@ void SystemView::OnClickObject(const SystemBody *b)
 
 	// click on object (in same system) sets/unsets it as nav target
 	SystemPath path = m_system->GetPathOf(b);
-	if (m_game->GetSpace()->GetStarSystem()->GetPath() == m_system->GetPath()) {
-		Body *body = m_game->GetSpace()->FindBodyForPath(&path);
+	if (GameLocator::getGame()->GetSpace()->GetStarSystem()->GetPath() == m_system->GetPath()) {
+		Body *body = GameLocator::getGame()->GetSpace()->FindBodyForPath(&path);
 		if (body != 0) {
 			if (GameLocator::getGame()->GetPlayer()->GetNavTarget() == body) {
 				GameLocator::getGame()->GetPlayer()->SetNavTarget(body);
 				GameLocator::getGame()->GetPlayer()->SetNavTarget(0);
-				m_game->log->Add(Lang::UNSET_NAVTARGET);
+				GameLocator::getGame()->log->Add(Lang::UNSET_NAVTARGET);
 			} else {
 				GameLocator::getGame()->GetPlayer()->SetNavTarget(body);
-				m_game->log->Add(Lang::SET_NAVTARGET_TO + body->GetLabel());
+				GameLocator::getGame()->log->Add(Lang::SET_NAVTARGET_TO + body->GetLabel());
 			}
 		}
 	}
@@ -509,12 +508,12 @@ void SystemView::OnClickShip(Ship *s)
 	}
 	if (GameLocator::getGame()->GetPlayer()->GetNavTarget() == s) { //un-select ship if already selected
 		GameLocator::getGame()->GetPlayer()->SetNavTarget(0); // remove current
-		m_game->log->Add(Lang::UNSET_NAVTARGET);
+		GameLocator::getGame()->log->Add(Lang::UNSET_NAVTARGET);
 		m_infoLabel->SetText(""); // remove lingering text
 		m_infoText->SetText("");
 	} else {
 		GameLocator::getGame()->GetPlayer()->SetNavTarget(s);
-		m_game->log->Add(Lang::SET_NAVTARGET_TO + s->GetLabel());
+		GameLocator::getGame()->log->Add(Lang::SET_NAVTARGET_TO + s->GetLabel());
 
 		// always show label of selected ship...
 		std::string text;
@@ -589,7 +588,7 @@ void SystemView::PutBody(const SystemBody *b, const vector3d &offset, const matr
 
 	// display the players orbit(?)
 	if (frame->GetSystemBody() == b && frame->GetSystemBody()->GetMass() > 0) {
-		const double t0 = m_game->GetTime();
+		const double t0 = GameLocator::getGame()->GetTime();
 		Orbit playerOrbit = GameLocator::getGame()->GetPlayer()->ComputeOrbit();
 
 		PutOrbit(&playerOrbit, offset, Color::RED, b->GetRadius());
@@ -686,7 +685,7 @@ void SystemView::Draw3D()
 	m_renderer->SetPerspectiveProjection(50.f, m_renderer->GetDisplayAspect(), 1.f, 1000.f);
 	m_renderer->ClearScreen();
 
-	SystemPath path = m_game->GetInGameViews()->GetSectorView()->GetSelected().SystemOnly();
+	SystemPath path = GameLocator::getGame()->GetInGameViews()->GetSectorView()->GetSelected().SystemOnly();
 	if (m_system) {
 		if (m_system->GetUnexplored() != m_unexplored || !m_system->GetPath().IsSameSystem(path)) {
 			m_system.Reset();
@@ -695,7 +694,7 @@ void SystemView::Draw3D()
 	}
 
 	if (m_realtime) {
-		m_time = m_game->GetTime();
+		m_time = GameLocator::getGame()->GetTime();
 	} else {
 		m_time += m_timeStep * Pi::GetFrameTime();
 	}
@@ -703,7 +702,7 @@ void SystemView::Draw3D()
 	m_timePoint->SetText(t);
 
 	if (!m_system) {
-		m_system = m_game->GetGalaxy()->GetStarSystem(path);
+		m_system = GameLocator::getGame()->GetGalaxy()->GetStarSystem(path);
 		m_unexplored = m_system->GetUnexplored();
 	}
 
@@ -723,7 +722,7 @@ void SystemView::Draw3D()
 	else {
 		if (m_system->GetRootBody()) {
 			PutBody(m_system->GetRootBody().Get(), pos, trans);
-			if (m_game->GetSpace()->GetStarSystem() == m_system) {
+			if (GameLocator::getGame()->GetSpace()->GetStarSystem() == m_system) {
 				const Body *navTarget = GameLocator::getGame()->GetPlayer()->GetNavTarget();
 				const SystemBody *navTargetSystemBody = navTarget ? navTarget->GetSystemBody() : 0;
 				if (navTargetSystemBody)
@@ -735,7 +734,7 @@ void SystemView::Draw3D()
 
 	if (m_shipDrawing != OFF) {
 		RefreshShips();
-		DrawShips(m_time - m_game->GetTime(), pos);
+		DrawShips(m_time - GameLocator::getGame()->GetTime(), pos);
 	}
 
 	if (m_gridDrawing != GridDrawing::OFF) {
@@ -840,17 +839,17 @@ void SystemView::MouseWheel(bool up)
 void SystemView::RefreshShips()
 {
 	m_contacts.clear();
-	if (!m_game->GetInGameViews()) return;
-	if (!m_game->GetInGameViews()->GetSectorView()) return;
+	if (!GameLocator::getGame()->GetInGameViews()) return;
+	if (!GameLocator::getGame()->GetInGameViews()->GetSectorView()) return;
 
-	SystemPath sectorPath = m_game->GetInGameViews()->GetSectorView()->GetSelected().SystemOnly();
-	if (!m_game->GetSpace()->GetStarSystem()->GetPath().IsSameSystem(sectorPath)) {
+	SystemPath sectorPath = GameLocator::getGame()->GetInGameViews()->GetSectorView()->GetSelected().SystemOnly();
+	if (!GameLocator::getGame()->GetSpace()->GetStarSystem()->GetPath().IsSameSystem(sectorPath)) {
 		return;
 	}
 
-	auto bs = m_game->GetSpace()->GetBodies();
+	auto bs = GameLocator::getGame()->GetSpace()->GetBodies();
 	for (auto s = bs.begin(); s != bs.end(); s++) {
-		if ((*s) != m_game->GetPlayer() &&
+		if ((*s) != GameLocator::getGame()->GetPlayer() &&
 			(*s)->GetType() == Object::SHIP) {
 
 			const auto c = static_cast<Ship *>(*s);
@@ -939,7 +938,7 @@ void SystemView::DrawGrid()
 	if (contact_num != 0) {
 		for (auto &s: m_contacts) {
 			const bool isNavTarget = GameLocator::getGame()->GetPlayer()->GetNavTarget() == s.first;
-			vector3d offset = GetShipPositionAtTime(s, m_time - m_game->GetTime()) * zoom / float(AU);
+			vector3d offset = GetShipPositionAtTime(s, m_time - GameLocator::getGame()->GetTime()) * zoom / float(AU);
 			m_lineVerts->Add(vector3f(pos + offset), (isNavTarget ? Color::GREEN : Color::GRAY) * 0.5);
 			offset.y = 0.0;
 			m_lineVerts->Add(vector3f(pos + offset), (isNavTarget ? Color::GREEN : Color::GRAY) * 0.5);

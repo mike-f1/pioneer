@@ -19,7 +19,7 @@ InGameViews::InGameViews(Game *game, const SystemPath &path, RefCountedPtr<Secto
 	m_sectorView(new SectorView(path, game->GetGalaxy(), sectorCache)),
 	m_galacticView(new UIView("GalacticView")),
 	m_systemInfoView(new SystemInfoView(game)),
-	m_systemView(new SystemView(game)),
+	m_systemView(new SystemView()),
 	m_worldView(new WorldView(game)),
 	m_deathView(new DeathView(game, Pi::renderer)),
 	m_spaceStationView(new UIView("StationView")),
@@ -40,7 +40,7 @@ InGameViews::InGameViews(const Json &jsonObj, Game *game, const SystemPath &path
 {
 	// Not loaded first as it should diminish initialization issue
 	m_galacticView = new UIView("GalacticView");
-	m_systemView = new SystemView(game);
+	m_systemView = new SystemView();
 	m_systemInfoView = new SystemInfoView(game);
 	m_spaceStationView = new UIView("StationView");
 	m_infoView = new UIView("InfoView");

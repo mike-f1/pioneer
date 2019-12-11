@@ -15,7 +15,6 @@
 #include "Json.h"
 #include "Lang.h"
 #include "LuaEvent.h"
-#include "LuaTimer.h"
 #include "MathUtil.h"
 #include "Pi.h"
 #include "Planet.h"
@@ -831,7 +830,6 @@ void Space::TimeStep(float step, double total_time)
 		b->TimeStepUpdate(step);
 
 	LuaEvent::Emit();
-	Pi::luaTimer->Tick();
 
 	UpdateBodies();
 

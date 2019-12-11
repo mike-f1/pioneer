@@ -14,7 +14,6 @@
 class Cutscene;
 class LuaConsole;
 class LuaNameGen;
-class LuaTimer;
 class ObjectViewerView;
 class PiGui;
 class SystemPath;
@@ -72,8 +71,6 @@ public:
 	static void DrawRenderTarget();
 	static void BeginRenderTarget();
 	static void EndRenderTarget();
-
-	static LuaTimer *luaTimer;
 
 	static LuaNameGen *luaNameGen;
 

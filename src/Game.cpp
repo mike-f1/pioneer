@@ -16,6 +16,7 @@
 #include "InGameViews.h"
 #include "LuaEvent.h"
 #include "LuaSerializer.h"
+#include "LuaTimer.h"
 #include "MathUtil.h"
 #include "Object.h"
 #if WITH_OBJECTVIEWER
@@ -102,6 +103,8 @@ Game::Game(const SystemPath &path, const double startDateTime) :
 
 	m_inGameViews.reset(new InGameViews(this, path, sectorCache));
 
+	m_luaTimer.reset(new LuaTimer());
+
 	log = new GameLog();
 
 #ifdef PIONEER_PROFILER
@@ -175,6 +178,8 @@ Game::Game(const Json &jsonObj) :
 
 	luaSerializer->UninitTableRefs();
 
+	m_luaTimer.reset(new LuaTimer());
+
 	log = new GameLog();
 }
 
@@ -200,6 +205,8 @@ Game::~Game()
 	m_space.reset();
 	m_player.reset();
 	m_galaxy->FlushCaches();
+
+	m_luaTimer->RemoveAll();
 
 	delete log;
 }
@@ -309,6 +316,8 @@ void Game::TimeStep(float step)
 		m_time = m_hyperspaceEndTime;
 
 	m_space->TimeStep(step, GetTime());
+
+	m_luaTimer->Tick();
 
 	// XXX ui updates, not sure if they belong here
 	m_inGameViews->GetCpan()->TimeStepUpdate(step);

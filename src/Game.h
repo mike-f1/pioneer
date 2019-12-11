@@ -16,6 +16,7 @@
 class Galaxy;
 class GameLog;
 class HyperspaceCloud;
+class LuaTimer;
 class Player;
 class Space;
 class InGameViews;
@@ -131,6 +132,9 @@ private:
 	double m_time;
 
 	std::unique_ptr<Player> m_player;
+
+
+	std::unique_ptr<LuaTimer> m_luaTimer;
 
 	enum class State {
 		NORMAL,

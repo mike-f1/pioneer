@@ -9,6 +9,11 @@
 #include "LuaObject.h"
 #include "LuaUtils.h"
 
+LuaTimer::~LuaTimer()
+{
+	RemoveAll();
+}
+
 void LuaTimer::RemoveAll()
 {
 	lua_State *l = Lua::manager->GetLuaState();

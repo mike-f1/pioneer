@@ -109,7 +109,6 @@
 #endif
 
 float Pi::gameTickAlpha;
-LuaTimer *Pi::luaTimer;
 LuaNameGen *Pi::luaNameGen;
 #ifdef ENABLE_SERVER_AGENT
 ServerAgent *Pi::serverAgent;
@@ -267,8 +266,6 @@ static void LuaInit()
 	LuaObject<Random>::RegisterClass();
 	LuaObject<Faction>::RegisterClass();
 
-	Pi::luaTimer = new LuaTimer();
-
 	LuaObject<LuaSerializer>::RegisterClass();
 	LuaObject<LuaTimer>::RegisterClass();
 
@@ -316,8 +313,6 @@ static void LuaInit()
 static void LuaUninit()
 {
 	delete Pi::luaNameGen;
-
-	delete Pi::luaTimer;
 
 	Lua::Uninit();
 }
@@ -1167,16 +1162,14 @@ void Pi::EndGame()
 	LuaEvent::Queue("onGameEnd");
 	LuaEvent::Emit();
 
-	luaTimer->RemoveAll();
-
-	Lua::manager->CollectGarbage();
-
 	if (!GameConfSingleton::getInstance().Int("DisableSound")) AmbientSounds::Uninit();
 	Sound::DestroyAllEvents();
 
 	assert(GameLocator::getGame());
 
 	GameState::DestroyGame();
+
+	Lua::manager->CollectGarbage();
 }
 
 void Pi::MainLoop()

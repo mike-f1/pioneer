@@ -21,7 +21,6 @@ class SystemPath;
 class TransferPlanner;
 class View;
 class SDLGraphics;
-class LuaSerializer;
 
 class AsyncJobQueue;
 class SyncJobQueue;
@@ -74,7 +73,6 @@ public:
 	static void BeginRenderTarget();
 	static void EndRenderTarget();
 
-	static LuaSerializer *luaSerializer;
 	static LuaTimer *luaTimer;
 
 	static LuaNameGen *luaNameGen;

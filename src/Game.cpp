@@ -114,8 +114,10 @@ Game::Game(const Json &jsonObj) :
 	m_requestedTimeAccel(TIMEACCEL_PAUSED),
 	m_forceTimeAccel(false)
 {
+	std::unique_ptr<LuaSerializer> luaSerializer(new LuaSerializer());
+
 	// Preparing the Lua stuff
-	Pi::luaSerializer->InitTableRefs();
+	luaSerializer->InitTableRefs();
 
 	// galaxy generator
 	m_galaxy = Galaxy::LoadFromJson(jsonObj);
@@ -169,9 +171,9 @@ Game::Game(const Json &jsonObj) :
 	// thus the needs for the following call:
     GameLocator::provideGame(this);
 	// lua
-	Pi::luaSerializer->FromJson(jsonObj);
+	luaSerializer->FromJson(jsonObj);
 
-	Pi::luaSerializer->UninitTableRefs();
+	luaSerializer->UninitTableRefs();
 
 	log = new GameLog();
 }
@@ -206,7 +208,9 @@ void Game::ToJson(Json &jsonObj)
 {
 	PROFILE_SCOPED()
 	// preparing the lua serializer
-	Pi::luaSerializer->InitTableRefs();
+	std::unique_ptr<LuaSerializer> luaSerializer(new LuaSerializer());
+
+	luaSerializer->InitTableRefs();
 
 	// galaxy generator
 	m_galaxy->ToJson(jsonObj);
@@ -246,7 +250,7 @@ void Game::ToJson(Json &jsonObj)
 	m_inGameViews->SaveToJson(jsonObj);
 
 	// lua
-	Pi::luaSerializer->ToJson(jsonObj);
+	luaSerializer->ToJson(jsonObj);
 
 	// Stuff to show in the preview in load game window
 	// some may be redundant, but this won't require loading up a game to get it all
@@ -289,7 +293,7 @@ void Game::ToJson(Json &jsonObj)
 
 	jsonObj["game_info"] = gameInfo;
 
-	Pi::luaSerializer->UninitTableRefs();
+	luaSerializer->UninitTableRefs();
 
 	// Bring back camera frame:
 	if (have_cam_frame)	m_inGameViews->GetWorldView()->BeginCameraFrame();

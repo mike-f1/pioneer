@@ -58,7 +58,6 @@
 #include "PiGui.h"
 #include "Player.h"
 #include "Projectile.h"
-#include "SectorView.h"
 #include "Sfx.h"
 #include "Shields.h"
 #include "ShipCpanel.h"
@@ -67,7 +66,6 @@
 #include "SpaceStation.h"
 #include "Star.h"
 #include "StringF.h"
-#include "SystemInfoView.h"
 #include "SystemView.h"
 #include "Random.h"
 #include "RandomSingleton.h"
@@ -111,7 +109,6 @@
 #endif
 
 float Pi::gameTickAlpha;
-LuaSerializer *Pi::luaSerializer;
 LuaTimer *Pi::luaTimer;
 LuaNameGen *Pi::luaNameGen;
 #ifdef ENABLE_SERVER_AGENT
@@ -270,7 +267,6 @@ static void LuaInit()
 	LuaObject<Random>::RegisterClass();
 	LuaObject<Faction>::RegisterClass();
 
-	Pi::luaSerializer = new LuaSerializer();
 	Pi::luaTimer = new LuaTimer();
 
 	LuaObject<LuaSerializer>::RegisterClass();
@@ -321,7 +317,6 @@ static void LuaUninit()
 {
 	delete Pi::luaNameGen;
 
-	delete Pi::luaSerializer;
 	delete Pi::luaTimer;
 
 	Lua::Uninit();

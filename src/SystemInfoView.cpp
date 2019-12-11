@@ -4,6 +4,7 @@
 #include "SystemInfoView.h"
 
 #include "Game.h"
+#include "GameLocator.h"
 #include "InGameViews.h"
 #include "Lang.h"
 #include "Player.h"
@@ -26,14 +27,13 @@
 #include "gui/GuiTabbed.h"
 
 SystemInfoView::SystemInfoView(Game *game) :
-	UIView(),
-	m_game(game)
+	UIView()
 {
 	SetTransparency(true);
 	m_refresh = REFRESH_NONE;
 	m_unexplored = true;
 	int trade_computer = 0;
-	m_game->GetPlayer()->Properties().Get("trade_computer_cap", trade_computer);
+	game->GetPlayer()->Properties().Get("trade_computer_cap", trade_computer);
 	m_hasTradeComputer = bool(trade_computer);
 }
 
@@ -45,20 +45,20 @@ void SystemInfoView::OnBodySelected(SystemBody *b)
 	}
 
 	SystemPath path = m_system->GetPathOf(b);
-	RefCountedPtr<StarSystem> currentSys = m_game->GetSpace()->GetStarSystem();
+	RefCountedPtr<StarSystem> currentSys = GameLocator::getGame()->GetSpace()->GetStarSystem();
 	bool isCurrentSystem = (currentSys && currentSys->GetPath() == m_system->GetPath());
 
 	if (path == m_selectedBodyPath) {
 		if (isCurrentSystem) {
-			m_game->GetPlayer()->SetNavTarget(0);
+			GameLocator::getGame()->GetPlayer()->SetNavTarget(0);
 		}
 	} else {
 		if (isCurrentSystem) {
-			Body *body = m_game->GetSpace()->FindBodyForPath(&path);
+			Body *body = GameLocator::getGame()->GetSpace()->FindBodyForPath(&path);
 			if (body != 0)
-				m_game->GetPlayer()->SetNavTarget(body);
+				GameLocator::getGame()->GetPlayer()->SetNavTarget(body);
 		} else if (b->GetSuperType() == GalaxyEnums::BodySuperType::SUPERTYPE_STAR) { // We allow hyperjump to any star of the system
-			m_game->GetInGameViews()->GetSectorView()->SetSelected(path);
+			GameLocator::getGame()->GetInGameViews()->GetSectorView()->SetSelected(path);
 		}
 	}
 
@@ -158,11 +158,11 @@ void SystemInfoView::UpdateEconomyTab()
 	StarSystem *s = m_system.Get(); // selected system
 
 	/* imports and exports */
-	const RefCountedPtr<StarSystem> hs = m_game->GetSpace()->GetStarSystem();
+	const RefCountedPtr<StarSystem> hs = GameLocator::getGame()->GetSpace()->GetStarSystem();
 
 	// check if trade analyzer is installed
 	int trade_computer = 0;
-	m_game->GetPlayer()->Properties().Get("trade_computer_cap", trade_computer);
+	GameLocator::getGame()->GetPlayer()->Properties().Get("trade_computer_cap", trade_computer);
 
 	// we might be here because we changed equipment, update that as well:
 	m_hasTradeComputer = bool(trade_computer);
@@ -349,7 +349,7 @@ void SystemInfoView::SystemChanged(const SystemPath &path)
 	if (!path.HasValidSystem())
 		return;
 
-	m_system = m_game->GetGalaxy()->GetStarSystem(path);
+	m_system = GameLocator::getGame()->GetGalaxy()->GetStarSystem(path);
 	m_unexplored = m_system->GetUnexplored();
 	m_sbodyInfoTab = new Gui::Fixed(float(Gui::Screen::GetWidth()), float(Gui::Screen::GetHeight() - 100));
 
@@ -527,7 +527,7 @@ static bool IsShownInInfoView(const SystemBody *sb)
 
 SystemInfoView::RefreshType SystemInfoView::NeedsRefresh()
 {
-	if (!m_system || !m_game->GetInGameViews()->GetSectorView()->GetSelected().IsSameSystem(m_system->GetPath()))
+	if (!m_system || !GameLocator::getGame()->GetInGameViews()->GetSectorView()->GetSelected().IsSameSystem(m_system->GetPath()))
 		return REFRESH_ALL;
 
 	if (m_system->GetUnexplored() != m_unexplored)
@@ -535,28 +535,28 @@ SystemInfoView::RefreshType SystemInfoView::NeedsRefresh()
 
 	// If we changed equipment since last refresh
 	int trade_computer = 0;
-	m_game->GetPlayer()->Properties().Get("trade_computer_cap", trade_computer);
+	GameLocator::getGame()->GetPlayer()->Properties().Get("trade_computer_cap", trade_computer);
 	if (m_hasTradeComputer != (trade_computer != 0))
 		return REFRESH_ALL;
 
 	if (m_system->GetUnexplored())
 		return REFRESH_NONE; // Nothing can be selected and we reset in SystemChanged
 
-	RefCountedPtr<StarSystem> currentSys = m_game->GetSpace()->GetStarSystem();
+	RefCountedPtr<StarSystem> currentSys = GameLocator::getGame()->GetSpace()->GetStarSystem();
 	if (!currentSys || currentSys->GetPath() != m_system->GetPath()) {
 		// We are not currently in the selected system
 		if (m_selectedBodyPath.IsBodyPath()) {
 			// Some body was selected
-			if (m_game->GetInGameViews()->GetSectorView()->GetSelected() != m_selectedBodyPath)
+			if (GameLocator::getGame()->GetInGameViews()->GetSectorView()->GetSelected() != m_selectedBodyPath)
 				return REFRESH_SELECTED_BODY; // but now we want a different body (or none at all)
 		} else {
 			// No body was selected
-			if (m_game->GetInGameViews()->GetSectorView()->GetSelected().IsBodyPath())
+			if (GameLocator::getGame()->GetInGameViews()->GetSectorView()->GetSelected().IsBodyPath())
 				return REFRESH_SELECTED_BODY; // but now we want one, this can only be a star,
 					// so no check for IsShownInInfoView() needed
 		}
 	} else {
-		Body *navTarget = m_game->GetPlayer()->GetNavTarget();
+		Body *navTarget = GameLocator::getGame()->GetPlayer()->GetNavTarget();
 		if (navTarget && (navTarget->GetSystemBody() != nullptr) && IsShownInInfoView(navTarget->GetSystemBody())) {
 			// Navigation target is something we show in the info view
 			if (navTarget->GetSystemBody()->GetPath() != m_selectedBodyPath)
@@ -575,7 +575,7 @@ void SystemInfoView::Update()
 {
 	switch (m_refresh) {
 	case REFRESH_ALL:
-		SystemChanged(m_game->GetInGameViews()->GetSectorView()->GetSelected());
+		SystemChanged(GameLocator::getGame()->GetInGameViews()->GetSectorView()->GetSelected());
 		m_refresh = REFRESH_NONE;
 		assert(NeedsRefresh() == REFRESH_NONE);
 		break;
@@ -615,10 +615,10 @@ void SystemInfoView::UpdateIconSelections()
 
 		bodyIcon.second->SetSelected(false);
 
-		RefCountedPtr<StarSystem> currentSys = m_game->GetSpace()->GetStarSystem();
+		RefCountedPtr<StarSystem> currentSys = GameLocator::getGame()->GetSpace()->GetStarSystem();
 		if (currentSys && currentSys->GetPath() == m_system->GetPath()) {
 			//navtarget can be only set in current system
-			Body *navtarget = m_game->GetPlayer()->GetNavTarget();
+			Body *navtarget = GameLocator::getGame()->GetPlayer()->GetNavTarget();
 			if (navtarget &&
 				(navtarget->IsType(Body::STAR) ||
 					navtarget->IsType(Body::PLANET) ||
@@ -631,7 +631,7 @@ void SystemInfoView::UpdateIconSelections()
 				}
 			}
 		} else {
-			SystemPath selected = m_game->GetInGameViews()->GetSectorView()->GetSelected();
+			SystemPath selected = GameLocator::getGame()->GetInGameViews()->GetSectorView()->GetSelected();
 			if (selected.IsSameSystem(m_system->GetPath()) && !selected.IsSystemPath()) {
 				if (bodyIcon.first == selected.bodyIndex) {
 					bodyIcon.second->SetSelectColor(Color(64, 96, 255, 255));

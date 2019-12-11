@@ -72,8 +72,6 @@ private:
 	void PutBodies(SystemBody *body, Gui::Fixed *container, int dir, float pos[2], int &majorBodies, int &starports, int &onSurface, float &prevSize);
 	void UpdateIconSelections();
 
-	Game *m_game;
-
 	Gui::VBox *m_infoBox;
 	Gui::Fixed *m_econInfo;
 	Gui::Fixed *m_econMajImport, *m_econMinImport;

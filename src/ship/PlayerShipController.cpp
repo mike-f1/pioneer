@@ -363,8 +363,6 @@ void PlayerShipController::SetFlightControlState(FlightControlState s)
 			// A change from Manual to Set Speed never sets a negative speed.
 			m_setSpeed = std::max(shipVel.Dot(-m_ship->GetOrient().VectorZ()), 0.0);
 		}
-		//XXX global stuff
-		Pi::onPlayerChangeFlightControlState.emit();
 	}
 }
 

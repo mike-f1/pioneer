@@ -74,9 +74,6 @@ public:
 	static void BeginRenderTarget();
 	static void EndRenderTarget();
 
-	static sigc::signal<void> onPlayerChangeTarget; // navigation or combat
-	static sigc::signal<void> onPlayerChangeFlightControlState;
-
 	static LuaSerializer *luaSerializer;
 	static LuaTimer *luaTimer;
 

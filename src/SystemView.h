@@ -10,11 +10,12 @@
 #include "matrix4x4.h"
 #include "vector3.h"
 
-class StarSystem;
-class SystemBody;
+class Game;
 class Orbit;
 class Ship;
-class Game;
+class StarSystem;
+class SystemBody;
+class TransferPlanner;
 
 namespace Gui {
 	class ImageButton;
@@ -23,12 +24,6 @@ namespace Gui {
 	class MultiStateImageButton;
 	class TexturedQuad;
 }
-
-enum BurnDirection {
-	PROGRADE,
-	NORMAL,
-	RADIAL,
-};
 
 enum ShipDrawing {
 	BOXES,
@@ -48,41 +43,15 @@ enum ShowLagrange {
 	LAG_OFF
 };
 
-class TransferPlanner {
-public:
-	TransferPlanner();
-	vector3d GetVel() const;
-	vector3d GetOffsetVel() const;
-	vector3d GetPosition() const;
-	double GetStartTime() const;
-	void SetPosition(const vector3d &position);
-	void IncreaseFactor(), ResetFactor(), DecreaseFactor();
-	void AddStartTime(double timeStep);
-	void ResetStartTime();
-	void AddDv(BurnDirection d, double dv);
-	void ResetDv(BurnDirection d);
-	void ResetDv();
-	std::string printDeltaTime();
-	std::string printDv(BurnDirection d);
-	std::string printFactor();
-
-private:
-	double m_dvPrograde;
-	double m_dvNormal;
-	double m_dvRadial;
-	double m_factor; // dv multiplier
-	const double m_factorFactor = 5.0; // m_factor multiplier
-	vector3d m_position;
-	vector3d m_velocity;
-	double m_startTime;
-};
-
 class SystemView : public UIView {
 public:
 	SystemView(Game *game);
 	virtual ~SystemView();
 	virtual void Update();
 	virtual void Draw3D();
+
+	const TransferPlanner *GetPlanner() const { return m_planner.get(); };
+	void ResetPlanner();
 
 private:
 	static const double PICK_OBJECT_RECT_SIZE;
@@ -117,7 +86,7 @@ private:
 	std::vector<SystemBody *> m_displayed_sbody;
 	bool m_unexplored;
 	ShowLagrange m_showL4L5;
-	TransferPlanner *m_planner;
+	std::unique_ptr<TransferPlanner> m_planner;
 	std::list<std::pair<Ship *, Orbit>> m_contacts;
 	Gui::LabelSet *m_shipLabels;
 	ShipDrawing m_shipDrawing;

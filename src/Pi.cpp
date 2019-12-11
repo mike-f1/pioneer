@@ -66,7 +66,6 @@
 #include "SpaceStation.h"
 #include "Star.h"
 #include "StringF.h"
-#include "SystemView.h"
 #include "Random.h"
 #include "RandomSingleton.h"
 #include "Tombstone.h"
@@ -114,7 +113,6 @@ LuaNameGen *Pi::luaNameGen;
 ServerAgent *Pi::serverAgent;
 #endif
 Input Pi::input;
-TransferPlanner *Pi::planner;
 LuaConsole *Pi::luaConsole;
 float Pi::frameTime;
 bool Pi::doingMouseGrab;
@@ -646,8 +644,6 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 	luaConsole = new LuaConsole();
 	KeyBindings::toggleLuaConsole.onPress.connect(sigc::mem_fun(Pi::luaConsole, &LuaConsole::Toggle));
 
-	planner = new TransferPlanner();
-
 	draw_progress(1.0f);
 
 	timer.Stop();
@@ -688,7 +684,6 @@ void Pi::Quit()
 	Gui::Uninit();
 	delete Pi::renderer;
 	GalaxyGenerator::Uninit();
-	delete Pi::planner;
 	SDL_Quit();
 	FileSystem::Uninit();
 	asyncJobQueue.reset();

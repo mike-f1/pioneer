@@ -23,7 +23,7 @@
 #include "Sfx.h"
 #include "ship/PlayerShipController.h"
 #include "StringF.h"
-#include "SystemView.h" // for the transfer planner
+#include "TransferPlanner.h"
 #include "sound/Sound.h"
 #include "galaxy/SystemBody.h"
 
@@ -305,27 +305,30 @@ void Player::StaticUpdate(const float timeStep)
 
 int Player::GetManeuverTime() const
 {
-	if (Pi::planner->GetOffsetVel().ExactlyEqual(vector3d(0, 0, 0))) {
+	const TransferPlanner *planner = GameLocator::getGame()->GetPlanner();
+	if (planner->GetOffsetVel().ExactlyEqual(vector3d(0, 0, 0))) {
 		return 0;
 	}
-	return Pi::planner->GetStartTime();
+	return planner->GetStartTime();
 }
 
 vector3d Player::GetManeuverVelocity() const
 {
+	const TransferPlanner *planner = GameLocator::getGame()->GetPlanner();
 	Frame *frame = Frame::GetFrame(GetFrame());
+
 	if (frame->IsRotFrame())
 		frame = Frame::GetFrame(frame->GetNonRotFrame());
 	const SystemBody *systemBody = frame->GetSystemBody();
 
-	if (Pi::planner->GetOffsetVel().ExactlyEqual(vector3d(0, 0, 0))) {
+	if (planner->GetOffsetVel().ExactlyEqual(vector3d(0, 0, 0))) {
 		return vector3d(0, 0, 0);
 	} else if (systemBody) {
 		Orbit playerOrbit = ComputeOrbit();
 		if (!is_zero_exact(playerOrbit.GetSemiMajorAxis())) {
 			double mass = systemBody->GetMass();
 			// XXX The best solution would be to store the mass(es) on Orbit
-			const vector3d velocity = (Pi::planner->GetVel() - playerOrbit.OrbitalVelocityAtTime(mass, playerOrbit.OrbitalTimeAtPos(Pi::planner->GetPosition(), mass)));
+			const vector3d velocity = (planner->GetVel() - playerOrbit.OrbitalVelocityAtTime(mass, playerOrbit.OrbitalTimeAtPos(planner->GetPosition(), mass)));
 			return velocity;
 		}
 	}

@@ -22,7 +22,6 @@
 #if WITH_OBJECTVIEWER
 #include "ObjectViewerView.h"
 #endif
-#include "Pi.h"
 #include "Player.h"
 #include "Sfx.h"
 #include "Space.h"
@@ -31,7 +30,7 @@
 #include "galaxy/GalaxyGenerator.h"
 #include "ship/PlayerShipController.h"
 
-#include "SystemView.h" // <- Here for planner...
+#include "SystemView.h" // <- Because of planner
 #include "ShipCpanel.h" // <- Here for UI updates (find GetCpan )
 #include "WorldView.h"  // <- Here for CameraContext
 
@@ -509,8 +508,7 @@ void Game::SwitchToHyperspace()
 	m_space->GetBackground()->SetDrawFlags(Background::Container::DRAW_STARS);
 
 	// Reset planner
-	Pi::planner->ResetStartTime();
-	Pi::planner->ResetDv();
+	m_inGameViews->GetSystemView()->ResetPlanner();
 
 	// Update caches:
 	assert(m_starSystemCache && m_sectorCache);
@@ -798,6 +796,11 @@ void Game::UpdateStarSystemCache(const SystemPath *here, int sectorRadius)
 	size_t rem_ss = m_starSystemCache->ShrinkCache(*here, survivorRadius, m_hyperspaceSource);
 
 	m_galaxy->FillStarSystemCache(m_starSystemCache, *here, sectorRadius, m_sectorCache);
+}
+
+const TransferPlanner *Game::GetPlanner() const
+{
+	return m_inGameViews->GetSystemView()->GetPlanner();
 }
 
 void Game::EmitPauseState(bool paused)

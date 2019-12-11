@@ -17,7 +17,6 @@ class LuaNameGen;
 class ObjectViewerView;
 class PiGui;
 class SystemPath;
-class TransferPlanner;
 class View;
 class SDLGraphics;
 
@@ -96,7 +95,6 @@ public:
 #endif
 
 	static Input input;
-	static TransferPlanner *planner;
 	static LuaConsole *luaConsole;
 	static Graphics::Renderer *renderer;
 	static std::unique_ptr<Cutscene> cutscene;

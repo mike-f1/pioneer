@@ -13,10 +13,10 @@
 #include "UIView.h"
 #include "WorldView.h"
 #include "galaxy/Galaxy.h"
-#include "galaxy/GalaxyCache.h"
+#include "galaxy/SystemPath.h"
 
-InGameViews::InGameViews(Game *game, const SystemPath &path, RefCountedPtr<SectorCache::Slave> sectorCache) :
-	m_sectorView(new SectorView(path, game->GetGalaxy(), sectorCache)),
+InGameViews::InGameViews(Game *game, const SystemPath &path, unsigned int cacheRadius) :
+	m_sectorView(new SectorView(path, game->GetGalaxy(), cacheRadius)),
 	m_galacticView(new UIView("GalacticView")),
 	m_systemInfoView(new SystemInfoView(game)),
 	m_systemView(new SystemView()),
@@ -34,7 +34,7 @@ InGameViews::InGameViews(Game *game, const SystemPath &path, RefCountedPtr<Secto
 	SetRenderer(Pi::renderer);
 }
 
-InGameViews::InGameViews(const Json &jsonObj, Game *game, const SystemPath &path, RefCountedPtr<SectorCache::Slave> sectorCache) :
+InGameViews::InGameViews(const Json &jsonObj, Game *game, const SystemPath &path, unsigned int cacheRadius) :
 	m_currentView(nullptr),
 	m_currentViewType(ViewType::NONE)
 {
@@ -51,7 +51,7 @@ InGameViews::InGameViews(const Json &jsonObj, Game *game, const SystemPath &path
 #endif
 
 	m_cpan = new ShipCpanel(jsonObj, Pi::renderer);
-	m_sectorView = new SectorView(jsonObj, game->GetGalaxy(), sectorCache);
+	m_sectorView = new SectorView(jsonObj, game->GetGalaxy(), cacheRadius);
 	m_worldView = new WorldView(jsonObj, game);
 
 	SetRenderer(Pi::renderer);

@@ -3,12 +3,11 @@
 
 #include "JsonFwd.h"
 #include "RefCounted.h"
-#include "galaxy/GalaxyCache.h"
-#include "galaxy/SystemPath.h"
 
 #include <SDL_events.h>
 
 class Game;
+class SystemPath;
 
 class SectorView;
 class UIView;
@@ -39,18 +38,11 @@ enum class ViewType {
 
 class InGameViews {
 public:
-	InGameViews(Game *game, const SystemPath &path, RefCountedPtr<SectorCache::Slave> sectorCache);
-	InGameViews(const Json &jsonObj, Game *game, const SystemPath &path, RefCountedPtr<SectorCache::Slave> sectorCache);
+	InGameViews(Game *game, const SystemPath &path, unsigned int cacheRadius);
+	InGameViews(const Json &jsonObj, Game *game, const SystemPath &path, unsigned int cacheRadius);
 	~InGameViews();
 
 	void SaveToJson(Json &jsonObj);
-
-	void InitInGameViews(Game *game, const SystemPath &path);
-	void CreateInGameViews(const SystemPath &path);
-	void LoadViewsFromJson(const Json &jsonObj, const SystemPath &path);
-	void DestroyInGameViews();
-
-	void LoadFromJson(const Json &jsonObj, Game *game, const SystemPath &path);
 
 	void SetRenderer(Graphics::Renderer *r);
 

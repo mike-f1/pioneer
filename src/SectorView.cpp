@@ -48,10 +48,9 @@ enum DetailSelection {
 static const float ZOOM_SPEED = 15;
 static const float WHEEL_SENSITIVITY = .03f; // Should be a variable in user settings.
 
-SectorView::SectorView(const SystemPath &path, RefCountedPtr<Galaxy> galaxy, RefCountedPtr<SectorCache::Slave> sectorcache) :
+SectorView::SectorView(const SystemPath &path, RefCountedPtr<Galaxy> galaxy, unsigned int cacheRadius) :
 	UIView(),
-	m_galaxy(galaxy),
-	m_sectorCache(sectorcache)
+	m_galaxy(galaxy)
 {
 	InitDefaults();
 
@@ -72,7 +71,6 @@ SectorView::SectorView(const SystemPath &path, RefCountedPtr<Galaxy> galaxy, Ref
 	m_current = m_current.SystemOnly();
 	m_selected = m_hyperspaceTarget = system->GetStars()[0]->GetPath(); // XXX This always selects the first star of the system
 
-	GotoSystem(m_current);
 	m_pos = m_posMovingTo;
 
 	m_matchTargetToSelection = true;
@@ -80,13 +78,14 @@ SectorView::SectorView(const SystemPath &path, RefCountedPtr<Galaxy> galaxy, Ref
 	m_detailBoxVisible = DETAILBOX_INFO;
 	m_toggledFaction = false;
 
-	InitObject();
+	InitObject(cacheRadius);
+
+	GotoSystem(m_current);
 }
 
-SectorView::SectorView(const Json &jsonObj, RefCountedPtr<Galaxy> galaxy, RefCountedPtr<SectorCache::Slave> sectorcache) :
+SectorView::SectorView(const Json &jsonObj, RefCountedPtr<Galaxy> galaxy, unsigned int cacheRadius) :
 	UIView(),
-	m_galaxy(galaxy),
-	m_sectorCache(sectorcache)
+	m_galaxy(galaxy)
 {
 	InitDefaults();
 
@@ -113,7 +112,7 @@ SectorView::SectorView(const Json &jsonObj, RefCountedPtr<Galaxy> galaxy, RefCou
 		throw SavedGameCorruptException();
 	}
 
-	InitObject();
+	InitObject(cacheRadius);
 }
 
 void SectorView::InitDefaults()
@@ -138,7 +137,7 @@ void SectorView::InitDefaults()
 	m_route = std::vector<SystemPath>();
 }
 
-void SectorView::InitObject()
+void SectorView::InitObject(unsigned int cacheRadius)
 {
 	SetTransparency(true);
 
@@ -173,6 +172,10 @@ void SectorView::InitObject()
 
 	m_onMouseWheelCon =
 		Pi::input.onMouseWheel.connect(sigc::mem_fun(this, &SectorView::MouseWheel));
+
+	m_sectorCache = m_galaxy->NewSectorSlaveCache();
+    size_t filled = m_galaxy->FillSectorCache(m_sectorCache, m_current, cacheRadius);
+    Output("SectorView cache pre-filled with %lu entries\n", filled);
 }
 
 SectorView::~SectorView()

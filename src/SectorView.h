@@ -26,8 +26,8 @@ namespace Graphics {
 
 class SectorView : public UIView {
 public:
-	SectorView(const SystemPath &path, RefCountedPtr<Galaxy> galaxy, RefCountedPtr<SectorCache::Slave>);
-	SectorView(const Json &jsonObj, RefCountedPtr<Galaxy> galaxy, RefCountedPtr<SectorCache::Slave>);
+	SectorView(const SystemPath &path, RefCountedPtr<Galaxy> galaxy, unsigned int cacheRadius);
+	SectorView(const Json &jsonObj, RefCountedPtr<Galaxy> galaxy, unsigned int cacheRadius);
 	virtual ~SectorView();
 
 	virtual void Update();
@@ -81,7 +81,7 @@ protected:
 
 private:
 	void InitDefaults();
-	void InitObject();
+	void InitObject(unsigned int cacheRadius);
 
 	struct DistanceIndicator {
 		Gui::Label *label;

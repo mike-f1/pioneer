@@ -95,13 +95,9 @@ Game::Game(const SystemPath &path, const double startDateTime) :
 		m_player->SetVelocity(vector3d(0, 0, 0));
 	}
 
-	RefCountedPtr<SectorCache::Slave> sectorCache = m_galaxy->NewSectorSlaveCache();
-    size_t filled = m_galaxy->FillSectorCache(sectorCache, path, cacheRadius + 2);
-    Output("SectorView cache pre-filled with %lu entries\n", filled);
-
     // TODO: Remove this when m_inGameViews disappear
     GameLocator::provideGame(this);
-	m_inGameViews.reset(new InGameViews(this, path, sectorCache));
+	m_inGameViews.reset(new InGameViews(this, path, cacheRadius + 2));
 
 	m_luaTimer.reset(new LuaTimer());
 
@@ -162,17 +158,13 @@ Game::Game(const Json &jsonObj) :
 	GenCaches(&path, cacheRadius + 2,
 			[this, path]() { UpdateStarSystemCache(&path, cacheRadius); });
 
-	RefCountedPtr<SectorCache::Slave> sectorCache = m_galaxy->NewSectorSlaveCache();
-    size_t filled = m_galaxy->FillSectorCache(sectorCache, path, cacheRadius + 2);
-    Output("SectorView cache pre-filled with %lu entries\n", filled);
-
 	/// HACK!
 	// Lua needs Space up and running (see LuaBody::_body_deserializer
 	// thus the needs for the following call:
     GameLocator::provideGame(this);
 
 	// views
-	m_inGameViews.reset(new InGameViews(jsonObj, this, path, sectorCache));
+	m_inGameViews.reset(new InGameViews(jsonObj, this, path, cacheRadius + 2));
 
 	// lua
 	luaSerializer->FromJson(jsonObj);

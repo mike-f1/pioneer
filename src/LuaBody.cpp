@@ -11,6 +11,7 @@
 #include "LuaObject.h"
 #include "LuaUtils.h"
 #include "LuaVector.h"
+#include "Pi.h"
 #include "Space.h"
 #include "TerrainBody.h"
 #include "WorldView.h"
@@ -656,7 +657,7 @@ static int l_body_get_phys_radius(lua_State *l)
 static int l_body_get_projected_screen_position(lua_State *l)
 {
 	Body *b = LuaObject<Body>::CheckFromLua(1);
-	WorldView *wv = GameLocator::getGame()->GetInGameViews()->GetWorldView();
+	WorldView *wv = Pi::GetInGameViews()->GetWorldView();
 	vector3d p = wv->WorldSpaceToScreenSpace(b);
 	return pushOnScreenPositionDirection(l, p);
 }
@@ -688,7 +689,7 @@ static int l_body_get_label(lua_State *l)
 static int l_body_get_target_indicator_screen_position(lua_State *l)
 {
 	Body *b = LuaObject<Body>::CheckFromLua(1);
-	WorldView *wv = GameLocator::getGame()->GetInGameViews()->GetWorldView();
+	WorldView *wv = Pi::GetInGameViews()->GetWorldView();
 	vector3d p = wv->GetTargetIndicatorScreenPosition(b);
 	return pushOnScreenPositionDirection(l, p);
 }

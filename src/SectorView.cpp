@@ -1014,7 +1014,7 @@ void SectorView::OnSwitchTo()
 
 void SectorView::OnKeyPressed(SDL_Keysym *keysym)
 {
-	if (!GameLocator::getGame()->GetInGameViews()->IsSectorView()) {
+	if (!Pi::GetInGameViews()->IsSectorView()) {
 		m_onKeyPressConnection.disconnect();
 		return;
 	}
@@ -1208,7 +1208,7 @@ void SectorView::ShowAll()
 
 void SectorView::MouseWheel(bool up)
 {
-	if (GameLocator::getGame()->GetInGameViews()->IsSectorView()) {
+	if (Pi::GetInGameViews()->IsSectorView()) {
 		if (!up)
 			m_zoomMovingTo += ZOOM_SPEED * WHEEL_SENSITIVITY * Pi::input.GetMoveSpeedShiftModifier();
 		else

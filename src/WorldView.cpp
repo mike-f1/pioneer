@@ -219,7 +219,7 @@ void WorldView::Draw3D()
 
 void WorldView::OnToggleLabels()
 {
-	if (GameLocator::getGame()->GetInGameViews()->IsWorldView()) {
+	if (Pi::GetInGameViews()->IsWorldView()) {
 		if (m_guiOn && m_labelsOn) {
 			m_labelsOn = false;
 		} else if (m_guiOn && !m_labelsOn) {
@@ -393,8 +393,8 @@ void WorldView::OnPlayerChangeTarget()
 	if (b) {
 		Sound::PlaySfx("OK");
 		Ship *s = b->IsType(Object::HYPERSPACECLOUD) ? static_cast<HyperspaceCloud *>(b)->GetShip() : 0;
-		if (!s || !GameLocator::getGame()->GetInGameViews()->GetSectorView()->GetHyperspaceTarget().IsSameSystem(s->GetHyperspaceDest()))
-			GameLocator::getGame()->GetInGameViews()->GetSectorView()->FloatHyperspaceTarget();
+		if (!s || !Pi::GetInGameViews()->GetSectorView()->GetHyperspaceTarget().IsSameSystem(s->GetHyperspaceDest()))
+			Pi::GetInGameViews()->GetSectorView()->FloatHyperspaceTarget();
 	}
 }
 

@@ -685,7 +685,7 @@ void SystemView::Draw3D()
 	m_renderer->SetPerspectiveProjection(50.f, m_renderer->GetDisplayAspect(), 1.f, 1000.f);
 	m_renderer->ClearScreen();
 
-	SystemPath path = GameLocator::getGame()->GetInGameViews()->GetSectorView()->GetSelected().SystemOnly();
+	SystemPath path = Pi::GetInGameViews()->GetSectorView()->GetSelected().SystemOnly();
 	if (m_system) {
 		if (m_system->GetUnexplored() != m_unexplored || !m_system->GetPath().IsSameSystem(path)) {
 			m_system.Reset();
@@ -828,7 +828,7 @@ void SystemView::Update()
 
 void SystemView::MouseWheel(bool up)
 {
-	if (GameLocator::getGame()->GetInGameViews()->IsSystemView()) {
+	if (Pi::GetInGameViews()->IsSystemView()) {
 		if (!up)
 			m_zoomTo *= ((ZOOM_OUT_SPEED - 1) * WHEEL_SENSITIVITY + 1) / Pi::input.GetMoveSpeedShiftModifier();
 		else
@@ -839,10 +839,10 @@ void SystemView::MouseWheel(bool up)
 void SystemView::RefreshShips()
 {
 	m_contacts.clear();
-	if (!GameLocator::getGame()->GetInGameViews()) return;
-	if (!GameLocator::getGame()->GetInGameViews()->GetSectorView()) return;
+	if (!Pi::GetInGameViews()) return;
+	if (!Pi::GetInGameViews()->GetSectorView()) return;
 
-	SystemPath sectorPath = GameLocator::getGame()->GetInGameViews()->GetSectorView()->GetSelected().SystemOnly();
+	SystemPath sectorPath = Pi::GetInGameViews()->GetSectorView()->GetSelected().SystemOnly();
 	if (!GameLocator::getGame()->GetSpace()->GetStarSystem()->GetPath().IsSameSystem(sectorPath)) {
 		return;
 	}

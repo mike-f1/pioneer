@@ -46,7 +46,7 @@ void DeathView::Init()
 
 void DeathView::OnSwitchTo()
 {
-	GameLocator::getGame()->GetInGameViews()->GetCpan()->HideAll();
+	Pi::GetInGameViews()->GetCpan()->HideAll();
 }
 
 void DeathView::Update()

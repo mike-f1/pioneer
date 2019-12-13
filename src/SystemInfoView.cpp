@@ -7,6 +7,7 @@
 #include "GameLocator.h"
 #include "InGameViews.h"
 #include "Lang.h"
+#include "Pi.h"
 #include "Player.h"
 #include "SectorView.h"
 #include "Space.h"
@@ -58,7 +59,7 @@ void SystemInfoView::OnBodySelected(SystemBody *b)
 			if (body != 0)
 				GameLocator::getGame()->GetPlayer()->SetNavTarget(body);
 		} else if (b->GetSuperType() == GalaxyEnums::BodySuperType::SUPERTYPE_STAR) { // We allow hyperjump to any star of the system
-			GameLocator::getGame()->GetInGameViews()->GetSectorView()->SetSelected(path);
+			Pi::GetInGameViews()->GetSectorView()->SetSelected(path);
 		}
 	}
 
@@ -527,7 +528,7 @@ static bool IsShownInInfoView(const SystemBody *sb)
 
 SystemInfoView::RefreshType SystemInfoView::NeedsRefresh()
 {
-	if (!m_system || !GameLocator::getGame()->GetInGameViews()->GetSectorView()->GetSelected().IsSameSystem(m_system->GetPath()))
+	if (!m_system || !Pi::GetInGameViews()->GetSectorView()->GetSelected().IsSameSystem(m_system->GetPath()))
 		return REFRESH_ALL;
 
 	if (m_system->GetUnexplored() != m_unexplored)
@@ -547,11 +548,11 @@ SystemInfoView::RefreshType SystemInfoView::NeedsRefresh()
 		// We are not currently in the selected system
 		if (m_selectedBodyPath.IsBodyPath()) {
 			// Some body was selected
-			if (GameLocator::getGame()->GetInGameViews()->GetSectorView()->GetSelected() != m_selectedBodyPath)
+			if (Pi::GetInGameViews()->GetSectorView()->GetSelected() != m_selectedBodyPath)
 				return REFRESH_SELECTED_BODY; // but now we want a different body (or none at all)
 		} else {
 			// No body was selected
-			if (GameLocator::getGame()->GetInGameViews()->GetSectorView()->GetSelected().IsBodyPath())
+			if (Pi::GetInGameViews()->GetSectorView()->GetSelected().IsBodyPath())
 				return REFRESH_SELECTED_BODY; // but now we want one, this can only be a star,
 					// so no check for IsShownInInfoView() needed
 		}
@@ -575,7 +576,7 @@ void SystemInfoView::Update()
 {
 	switch (m_refresh) {
 	case REFRESH_ALL:
-		SystemChanged(GameLocator::getGame()->GetInGameViews()->GetSectorView()->GetSelected());
+		SystemChanged(Pi::GetInGameViews()->GetSectorView()->GetSelected());
 		m_refresh = REFRESH_NONE;
 		assert(NeedsRefresh() == REFRESH_NONE);
 		break;
@@ -631,7 +632,7 @@ void SystemInfoView::UpdateIconSelections()
 				}
 			}
 		} else {
-			SystemPath selected = GameLocator::getGame()->GetInGameViews()->GetSectorView()->GetSelected();
+			SystemPath selected = Pi::GetInGameViews()->GetSectorView()->GetSelected();
 			if (selected.IsSameSystem(m_system->GetPath()) && !selected.IsSystemPath()) {
 				if (bodyIcon.first == selected.bodyIndex) {
 					bodyIcon.second->SetSelectColor(Color(64, 96, 255, 255));

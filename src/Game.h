@@ -16,7 +16,6 @@
 class Galaxy;
 class GameLog;
 class HyperspaceCloud;
-class InGameViews;
 class LuaTimer;
 class Player;
 class Space;
@@ -112,9 +111,6 @@ public:
 
 	static void EmitPauseState(bool paused);
 
-	const TransferPlanner *GetPlanner() const;
-	InGameViews *GetInGameViews() { return m_inGameViews.get(); };
-
 private:
 	void GenCaches(const SystemPath *here, int cacheRadius,
 		StarSystemCache::CacheFilledCallback callback = StarSystemCache::CacheFilledCallback());
@@ -125,8 +121,6 @@ private:
 
 	void SwitchToHyperspace();
 	void SwitchToNormalSpace();
-
-	std::unique_ptr<InGameViews> m_inGameViews;
 
 	RefCountedPtr<Galaxy> m_galaxy;
 	std::unique_ptr<Space> m_space;

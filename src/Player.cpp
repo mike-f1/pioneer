@@ -21,6 +21,7 @@
 #include "RandomSingleton.h"
 #include "SectorView.h"
 #include "Sfx.h"
+#include "SystemView.h"
 #include "ship/PlayerShipController.h"
 #include "StringF.h"
 #include "TransferPlanner.h"
@@ -221,7 +222,7 @@ void Player::OnEnterSystem()
 {
 	m_controller->SetFlightControlState(CONTROL_MANUAL);
 	//XXX don't call sectorview from here, use signals instead
-	GameLocator::getGame()->GetInGameViews()->GetSectorView()->ResetHyperspaceTarget();
+	Pi::GetInGameViews()->GetSectorView()->ResetHyperspaceTarget();
 }
 
 //temporary targeting stuff
@@ -305,7 +306,7 @@ void Player::StaticUpdate(const float timeStep)
 
 int Player::GetManeuverTime() const
 {
-	const TransferPlanner *planner = GameLocator::getGame()->GetPlanner();
+	const TransferPlanner *planner = Pi::GetInGameViews()->GetSystemView()->GetPlanner();
 	if (planner->GetOffsetVel().ExactlyEqual(vector3d(0, 0, 0))) {
 		return 0;
 	}
@@ -314,7 +315,7 @@ int Player::GetManeuverTime() const
 
 vector3d Player::GetManeuverVelocity() const
 {
-	const TransferPlanner *planner = GameLocator::getGame()->GetPlanner();
+	const TransferPlanner *planner = Pi::GetInGameViews()->GetSystemView()->GetPlanner();
 	Frame *frame = Frame::GetFrame(GetFrame());
 
 	if (frame->IsRotFrame())

@@ -246,8 +246,8 @@ void Game::ToJson(Json &jsonObj)
 	jsonObj["hyperspace_end_time"] = m_hyperspaceEndTime;
 
 	// Delete camera frame from frame structure:
-	if (m_inGameViews->GetWorldView()->GetCameraContext()->GetCamFrame())
-		m_inGameViews->GetWorldView()->EndCameraFrame();
+	bool have_cam_frame = m_inGameViews->GetWorldView()->GetCameraContext()->GetCamFrame();
+	if (have_cam_frame)	m_inGameViews->GetWorldView()->EndCameraFrame();
 
 	// space, all the bodies and things
 	m_space->ToJson(jsonObj);
@@ -311,7 +311,7 @@ void Game::ToJson(Json &jsonObj)
 	Pi::luaSerializer->UninitTableRefs();
 
 	// Bring back camera frame:
-	m_inGameViews->GetWorldView()->BeginCameraFrame();
+	if (have_cam_frame)	m_inGameViews->GetWorldView()->BeginCameraFrame();
 }
 
 RefCountedPtr<Galaxy> Game::GetGalaxy() const { return m_galaxy; }

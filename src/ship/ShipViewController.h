@@ -18,6 +18,8 @@ public:
 		m_camType(CAM_INTERNAL),
 		headtracker_input_priority(false) {}
 
+	~ShipViewController();
+
 	void Update() override;
 	void Activated() override;
 	void Deactivated() override;

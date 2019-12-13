@@ -62,6 +62,11 @@ void ShipViewController::InputBinding::RegisterBindings()
 #undef AXIS_BINDING
 }
 
+ShipViewController::~ShipViewController()
+{
+	Deactivated();
+}
+
 void ShipViewController::LoadFromJson(const Json &jsonObj)
 {
 	m_internalCameraController->LoadFromJson(jsonObj);
@@ -226,6 +231,8 @@ void ShipViewController::Update()
 
 void ShipViewController::MouseWheel(bool up)
 {
+	if (m_activeCameraController == nullptr) return;
+
 	if (m_activeCameraController->IsExternal()) {
 		MoveableCameraController *cam = static_cast<MoveableCameraController *>(m_activeCameraController);
 

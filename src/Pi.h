@@ -5,23 +5,21 @@
 #define _PI_H
 
 #include "Input.h"
+#include "JsonFwd.h"
 #include "gameconsts.h"
 
 #include <map>
 #include <string>
 #include <vector>
 
-class Intro;
+class Cutscene;
+class InGameViews;
 class LuaConsole;
 class LuaNameGen;
-class LuaTimer;
 class ObjectViewerView;
 class PiGui;
 class SystemPath;
-class TransferPlanner;
 class View;
-class SDLGraphics;
-class LuaSerializer;
 
 class AsyncJobQueue;
 class SyncJobQueue;
@@ -59,7 +57,7 @@ public:
 	static void Start(const SystemPath &startPath);
 	static void RequestQuit();
 	static void MainLoop();
-	static void TombStoneLoop();
+	static void CutSceneLoop(double step, Cutscene *cutscene);
 	static void OnChangeDetailLevel();
 	static float GetFrameTime() { return frameTime; }
 	static float GetGameTickAlpha() { return gameTickAlpha; }
@@ -69,26 +67,26 @@ public:
 	static void SetMouseGrab(bool on);
 	static bool DoingMouseGrab() { return doingMouseGrab; }
 
-	// Get the default speed modifier to apply to movement (scrolling, zooming...), depending on the "shift" keys.
-	// This is a default value only, centralized here to promote uniform user expericience.
-	static float GetMoveSpeedShiftModifier();
-
 	static void CreateRenderTarget(const Uint16 width, const Uint16 height);
 	static void DrawRenderTarget();
 	static void BeginRenderTarget();
 	static void EndRenderTarget();
-
-	static sigc::signal<void> onPlayerChangeTarget; // navigation or combat
-	static sigc::signal<void> onPlayerChangeFlightControlState;
-
-	static LuaSerializer *luaSerializer;
-	static LuaTimer *luaTimer;
 
 	static LuaNameGen *luaNameGen;
 
 #if ENABLE_SERVER_AGENT
 	static ServerAgent *serverAgent;
 #endif
+
+	static InGameViews *GetInGameViews();
+
+	// TODO: These are needed because Pi doesn't know how a new
+	// game is made (either be it loaded or created) and it doesn't
+	// know if that game would be saved. Until now these functionality
+	// are delegated to Game(Mono)State, which will use below methods
+	// to set m_InGameViews
+	static void NewInGameViews(InGameViews *newInGameViews);
+	static void SaveInGameViews(Json &rootNode);
 
 	static RefCountedPtr<UI::Context> ui;
 	static RefCountedPtr<PiGui> pigui;
@@ -108,16 +106,24 @@ public:
 #endif
 
 	static Input input;
-	static TransferPlanner *planner;
 	static LuaConsole *luaConsole;
 	static Graphics::Renderer *renderer;
-	static Intro *intro;
-	static SDLGraphics *sdl;
+	static std::unique_ptr<Cutscene> cutscene;
 
 	static JobQueue *GetAsyncJobQueue();
 	static JobQueue *GetSyncJobQueue();
 
 private:
+	enum class MainState {
+		MAIN_MENU,
+		GAME_START,
+		TOMBSTONE,
+		TO_GAME_START,
+		TO_MAIN_MENU,
+		TO_TOMBSTONE,
+	};
+	static MainState m_mainState;
+
 	// msgs/requests that can be posted which the game processes at the end of a game loop in HandleRequests
 	enum InternalRequests {
 		END_GAME = 0,
@@ -143,6 +149,8 @@ private:
 	  */
 	static float gameTickAlpha;
 	static float frameTime;
+
+	static std::unique_ptr<InGameViews> m_inGameViews;
 
 	static Graphics::RenderTarget *renderTarget;
 	static RefCountedPtr<Graphics::Texture> renderTexture;

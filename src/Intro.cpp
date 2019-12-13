@@ -88,7 +88,7 @@ Intro::~Intro()
 		delete (*i);
 }
 
-void Intro::Reset(float _time)
+void Intro::Reset()
 {
 	m_model = m_models[m_modelIndex++];
 	if (m_modelIndex == m_models.size()) m_modelIndex = 0;
@@ -99,7 +99,7 @@ void Intro::Reset(float _time)
 	m_zoomBegin = -10000.0f;
 	m_zoomEnd = -m_model->GetDrawClipRadius() * 1.7f;
 	m_dist = m_zoomBegin;
-	m_startTime = _time;
+	m_duration = 0.;
 	m_needReset = false;
 }
 
@@ -111,26 +111,25 @@ static const float ZOOM_OUT_END = 14.0f;
 void Intro::Draw(float _time)
 {
 	if (m_needReset)
-		Reset(_time);
+		Reset();
 
-	float duration = _time - m_startTime;
+	m_duration += _time;
 
 	// zoom in
-	if (duration < ZOOM_IN_END)
-		m_dist = Clamp(Easing::Quad::EaseOut(duration, m_zoomBegin, m_zoomEnd - m_zoomBegin, 2.0f), m_zoomBegin, m_zoomEnd);
+	if (m_duration < ZOOM_IN_END)
+		m_dist = Clamp(Easing::Quad::EaseOut(m_duration, m_zoomBegin, m_zoomEnd - m_zoomBegin, 2.0f), m_zoomBegin, m_zoomEnd);
 
 	// wait
-	else if (duration < WAIT_END) {
+	else if (m_duration < WAIT_END) {
 		m_dist = m_zoomEnd;
 	}
 
 	// zoom out
-	else if (duration < ZOOM_OUT_END)
-		m_dist = Clamp(Easing::Quad::EaseIn(duration - WAIT_END, m_zoomEnd, m_zoomBegin - m_zoomEnd, 2.0f), m_zoomBegin, m_zoomEnd);
-
-	// done
-	else
+	else if (m_duration < ZOOM_OUT_END) {
+		m_dist = Clamp(Easing::Quad::EaseIn(m_duration - WAIT_END, m_zoomEnd, m_zoomBegin - m_zoomEnd, 2.0f), m_zoomBegin, m_zoomEnd);
+	} else {
 		m_needReset = true;
+	}
 
 	Graphics::Renderer::StateTicket ticket(m_renderer);
 
@@ -142,7 +141,7 @@ void Intro::Draw(float _time)
 
 	// XXX all this stuff will be gone when intro uses a Camera
 	// rotate background by time, and a bit extra Z so it's not so flat
-	matrix4x4d brot = matrix4x4d::RotateXMatrix(-0.25 * _time) * matrix4x4d::RotateZMatrix(0.6);
+	matrix4x4d brot = matrix4x4d::RotateXMatrix(-0.25 * m_duration) * matrix4x4d::RotateZMatrix(0.6);
 	m_renderer->ClearDepthBuffer();
 	m_background->Draw(brot);
 
@@ -152,6 +151,6 @@ void Intro::Draw(float _time)
 	matrix4x4f trans =
 		matrix4x4f::Translation(0, 0, m_dist) *
 		matrix4x4f::RotateXMatrix(DEG2RAD(-15.0f)) *
-		matrix4x4f::RotateYMatrix(_time);
+		matrix4x4f::RotateYMatrix(m_duration);
 	m_model->Render(trans);
 }

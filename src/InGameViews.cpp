@@ -13,15 +13,15 @@
 #include "UIView.h"
 #include "WorldView.h"
 #include "galaxy/Galaxy.h"
-#include "galaxy/GalaxyCache.h"
+#include "galaxy/SystemPath.h"
 
-InGameViews::InGameViews(Game *game, const SystemPath &path, RefCountedPtr<SectorCache::Slave> sectorCache) :
-	m_sectorView(new SectorView(path, game->GetGalaxy(), sectorCache)),
+InGameViews::InGameViews(Game *game, const SystemPath &path, unsigned int cacheRadius) :
+	m_sectorView(new SectorView(path, game->GetGalaxy(), cacheRadius)),
 	m_galacticView(new UIView("GalacticView")),
 	m_systemInfoView(new SystemInfoView(game)),
-	m_systemView(new SystemView(game)),
+	m_systemView(new SystemView()),
 	m_worldView(new WorldView(game)),
-	m_deathView(new DeathView(game, Pi::renderer)),
+	m_deathView(new DeathView(Pi::renderer)),
 	m_spaceStationView(new UIView("StationView")),
 	m_infoView(new UIView("InfoView")),
 	m_cpan(new ShipCpanel(Pi::renderer)),
@@ -34,24 +34,24 @@ InGameViews::InGameViews(Game *game, const SystemPath &path, RefCountedPtr<Secto
 	SetRenderer(Pi::renderer);
 }
 
-InGameViews::InGameViews(const Json &jsonObj, Game *game, const SystemPath &path, RefCountedPtr<SectorCache::Slave> sectorCache) :
+InGameViews::InGameViews(const Json &jsonObj, Game *game, const SystemPath &path, unsigned int cacheRadius) :
 	m_currentView(nullptr),
 	m_currentViewType(ViewType::NONE)
 {
 	// Not loaded first as it should diminish initialization issue
 	m_galacticView = new UIView("GalacticView");
-	m_systemView = new SystemView(game);
+	m_systemView = new SystemView();
 	m_systemInfoView = new SystemInfoView(game);
 	m_spaceStationView = new UIView("StationView");
 	m_infoView = new UIView("InfoView");
-	m_deathView = new DeathView(game, Pi::renderer);
+	m_deathView = new DeathView(Pi::renderer);
 
 #if WITH_OBJECTVIEWER
 	m_objectViewerView = new ObjectViewerView(game);
 #endif
 
 	m_cpan = new ShipCpanel(jsonObj, Pi::renderer);
-	m_sectorView = new SectorView(jsonObj, game->GetGalaxy(), sectorCache);
+	m_sectorView = new SectorView(jsonObj, game->GetGalaxy(), cacheRadius);
 	m_worldView = new WorldView(jsonObj, game);
 
 	SetRenderer(Pi::renderer);
@@ -133,8 +133,8 @@ void InGameViews::HandleSDLEvent(SDL_Event event) {
 	if (m_currentView != nullptr) m_currentView->HandleSDLEvent(event);
 }
 
-void InGameViews::UpdateView() {
-	if (m_currentView != nullptr) m_currentView->Update();
+void InGameViews::UpdateView(const float frameTime) {
+	if (m_currentView != nullptr) m_currentView->Update(frameTime);
 }
 
 void InGameViews::Draw3DView() {

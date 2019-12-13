@@ -20,13 +20,13 @@ public:
 	bool isZooming() const { return m_dist == m_zoomEnd; }
 
 private:
-	void Reset(float time);
+	void Reset();
 	bool m_needReset;
 
 	std::vector<SceneGraph::Model *> m_models;
 	SceneGraph::ModelSkin m_skin;
 
-	float m_startTime;
+	float m_duration;
 
 	unsigned int m_modelIndex;
 	float m_zoomBegin, m_zoomEnd;

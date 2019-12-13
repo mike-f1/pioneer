@@ -23,10 +23,13 @@ Tombstone::Tombstone(Graphics::Renderer *r, int width, int height) :
 		RefCountedPtr<Graphics::Material> mat = m_model->GetMaterialByIndex(m);
 		mat->specialParameter0 = nullptr;
 	}
+	m_total_time = 0.0;
 }
 
 void Tombstone::Draw(float _time)
 {
+	m_total_time += _time;
+
 	m_renderer->SetClearColor(Color::BLACK);
 	m_renderer->ClearScreen();
 
@@ -36,7 +39,7 @@ void Tombstone::Draw(float _time)
 	m_renderer->SetAmbientColor(m_ambientColor);
 	m_renderer->SetLights(m_lights.size(), &m_lights[0]);
 
-	matrix4x4f rot = matrix4x4f::RotateYMatrix(_time * 2);
-	rot[14] = -std::max(150.0f - 30.0f * _time, 30.0f);
+	matrix4x4f rot = matrix4x4f::RotateYMatrix(m_total_time * 2);
+	rot[14] = -std::max(150.0f - 30.0f * m_total_time, 30.0f);
 	m_model->Render(rot);
 }

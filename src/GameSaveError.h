@@ -4,6 +4,17 @@
 #ifndef GAME_SAVE_ERROR_H
 #define GAME_SAVE_ERROR_H
 
+#include <string>
+
+struct CannotSaveCurrentGameState {};
+struct CannotSaveInHyperspace : public CannotSaveCurrentGameState {};
+struct CannotSaveDeadPlayer : public CannotSaveCurrentGameState {};
+struct InvalidGameStartLocation {
+	std::string error;
+	InvalidGameStartLocation(const std::string &error_) :
+		error(error_) {}
+};
+
 struct SavedGameCorruptException {};
 struct SavedGameWrongVersionException {};
 struct CouldNotOpenFileException {};

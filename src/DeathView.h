@@ -13,12 +13,12 @@ class Game;
 
 class DeathView : public View {
 public:
-	DeathView(Game *game, Graphics::Renderer *r);
+	DeathView(Graphics::Renderer *r);
 	virtual ~DeathView();
 
 	void Init();
 
-	virtual void Update() override;
+	virtual void Update(const float frameTime) override;
 	virtual void Draw3D() override;
 
 protected:
@@ -28,7 +28,6 @@ private:
 	RefCountedPtr<CameraContext> m_cameraContext;
 	std::unique_ptr<Camera> m_camera;
 	float m_cameraDist;
-	Game *m_game;
 };
 
 #endif

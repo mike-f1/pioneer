@@ -7,6 +7,7 @@
 #include "Game.h"
 #include "GameConfig.h"
 #include "GameConfSingleton.h"
+#include "GameLocator.h"
 #include "InGameViews.h"
 #include "Pi.h"
 #include "Player.h"
@@ -14,9 +15,8 @@
 #include "graphics/Graphics.h"
 #include "graphics/Renderer.h"
 
-DeathView::DeathView(Game *game, Graphics::Renderer *r) :
-	View(),
-	m_game(game)
+DeathView::DeathView(Graphics::Renderer *r) :
+	View()
 {
 	m_renderer = r;
 
@@ -38,23 +38,23 @@ DeathView::~DeathView() {}
 
 void DeathView::Init()
 {
-	m_cameraDist = m_game->GetPlayer()->GetClipRadius() * 5.0;
-	m_cameraContext->SetCameraFrame(m_game->GetPlayer()->GetFrame());
-	m_cameraContext->SetCameraPosition(m_game->GetPlayer()->GetInterpPosition() + vector3d(0, 0, m_cameraDist));
+	m_cameraDist = GameLocator::getGame()->GetPlayer()->GetClipRadius() * 5.0;
+	m_cameraContext->SetCameraFrame(GameLocator::getGame()->GetPlayer()->GetFrame());
+	m_cameraContext->SetCameraPosition(GameLocator::getGame()->GetPlayer()->GetInterpPosition() + vector3d(0, 0, m_cameraDist));
 	m_cameraContext->SetCameraOrient(matrix3x3d::Identity());
 }
 
 void DeathView::OnSwitchTo()
 {
-	m_game->GetInGameViews()->GetCpan()->HideAll();
+	Pi::GetInGameViews()->GetCpan()->HideAll();
 }
 
-void DeathView::Update()
+void DeathView::Update(const float frameTime)
 {
-	assert(m_game->GetPlayer()->IsDead());
+	assert(GameLocator::getGame()->GetPlayer()->IsDead());
 
-	m_cameraDist += 160.0 * Pi::GetFrameTime();
-	m_cameraContext->SetCameraPosition(m_game->GetPlayer()->GetInterpPosition() + vector3d(0, 0, m_cameraDist));
+	m_cameraDist += 160.0 * frameTime;
+	m_cameraContext->SetCameraPosition(GameLocator::getGame()->GetPlayer()->GetInterpPosition() + vector3d(0, 0, m_cameraDist));
 	m_cameraContext->BeginFrame();
 	m_camera->Update();
 }

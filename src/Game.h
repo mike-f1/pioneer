@@ -16,34 +16,17 @@
 class Galaxy;
 class GameLog;
 class HyperspaceCloud;
+class LuaTimer;
 class Player;
 class Space;
-class InGameViews;
-class ShipCpanel;
+class TransferPlanner;
 
 namespace Graphics {
 	class Renderer;
 }
 
-struct CannotSaveCurrentGameState {};
-struct CannotSaveInHyperspace : public CannotSaveCurrentGameState {};
-struct CannotSaveDeadPlayer : public CannotSaveCurrentGameState {};
-struct InvalidGameStartLocation {
-	std::string error;
-	InvalidGameStartLocation(const std::string &error_) :
-		error(error_) {}
-};
-
 class Game {
-public:
-	static Json LoadGameToJson(const std::string &filename);
-	// LoadGame and SaveGame throw exceptions on failure
-	static Game *LoadGame(const std::string &filename);
-	static bool CanLoadGame(const std::string &filename);
-	// XXX game arg should be const, and this should probably be a member function
-	// (or LoadGame/SaveGame should be somewhere else entirely)
-	static void SaveGame(const std::string &filename, Game *game);
-
+	friend class GameState;
 	// start docked in station referenced by path or nearby to body if it is no station
 	Game(const SystemPath &path, const double startDateTime = 0.0);
 
@@ -55,6 +38,7 @@ public:
 	// save game
 	void ToJson(Json &jsonObj);
 
+public:
 	// various game states
 	bool IsNormalSpace() const { return m_state == State::NORMAL; }
 	bool IsHyperspace() const { return m_state == State::HYPERSPACE; }
@@ -127,8 +111,6 @@ public:
 
 	static void EmitPauseState(bool paused);
 
-	InGameViews *GetInGameViews() { return m_inGameViews.get(); };
-
 private:
 	void GenCaches(const SystemPath *here, int cacheRadius,
 		StarSystemCache::CacheFilledCallback callback = StarSystemCache::CacheFilledCallback());
@@ -140,13 +122,12 @@ private:
 	void SwitchToHyperspace();
 	void SwitchToNormalSpace();
 
-	std::unique_ptr<InGameViews> m_inGameViews;
-
 	RefCountedPtr<Galaxy> m_galaxy;
 	std::unique_ptr<Space> m_space;
 	double m_time;
 
 	std::unique_ptr<Player> m_player;
+	std::unique_ptr<LuaTimer> m_luaTimer;
 
 	enum class State {
 		NORMAL,

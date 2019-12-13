@@ -31,8 +31,8 @@ namespace Gui {
 class SystemInfoView : public UIView {
 public:
 	SystemInfoView(Game *game);
-	virtual void Update();
-	virtual void Draw3D();
+	virtual void Update(const float frameTime) override;
+	virtual void Draw3D() override;
 	void NextPage();
 
 protected:
@@ -71,8 +71,6 @@ private:
 	void OnClickBackground(Gui::MouseButtonEvent *e);
 	void PutBodies(SystemBody *body, Gui::Fixed *container, int dir, float pos[2], int &majorBodies, int &starports, int &onSurface, float &prevSize);
 	void UpdateIconSelections();
-
-	Game *m_game;
 
 	Gui::VBox *m_infoBox;
 	Gui::Fixed *m_econInfo;

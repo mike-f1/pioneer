@@ -48,10 +48,9 @@ enum DetailSelection {
 static const float ZOOM_SPEED = 15;
 static const float WHEEL_SENSITIVITY = .03f; // Should be a variable in user settings.
 
-SectorView::SectorView(const SystemPath &path, RefCountedPtr<Galaxy> galaxy, RefCountedPtr<SectorCache::Slave> sectorcache) :
+SectorView::SectorView(const SystemPath &path, RefCountedPtr<Galaxy> galaxy, unsigned int cacheRadius) :
 	UIView(),
-	m_galaxy(galaxy),
-	m_sectorCache(sectorcache)
+	m_galaxy(galaxy)
 {
 	InitDefaults();
 
@@ -72,7 +71,6 @@ SectorView::SectorView(const SystemPath &path, RefCountedPtr<Galaxy> galaxy, Ref
 	m_current = m_current.SystemOnly();
 	m_selected = m_hyperspaceTarget = system->GetStars()[0]->GetPath(); // XXX This always selects the first star of the system
 
-	GotoSystem(m_current);
 	m_pos = m_posMovingTo;
 
 	m_matchTargetToSelection = true;
@@ -80,13 +78,14 @@ SectorView::SectorView(const SystemPath &path, RefCountedPtr<Galaxy> galaxy, Ref
 	m_detailBoxVisible = DETAILBOX_INFO;
 	m_toggledFaction = false;
 
-	InitObject();
+	InitObject(cacheRadius);
+
+	GotoSystem(m_current);
 }
 
-SectorView::SectorView(const Json &jsonObj, RefCountedPtr<Galaxy> galaxy, RefCountedPtr<SectorCache::Slave> sectorcache) :
+SectorView::SectorView(const Json &jsonObj, RefCountedPtr<Galaxy> galaxy, unsigned int cacheRadius) :
 	UIView(),
-	m_galaxy(galaxy),
-	m_sectorCache(sectorcache)
+	m_galaxy(galaxy)
 {
 	InitDefaults();
 
@@ -113,7 +112,7 @@ SectorView::SectorView(const Json &jsonObj, RefCountedPtr<Galaxy> galaxy, RefCou
 		throw SavedGameCorruptException();
 	}
 
-	InitObject();
+	InitObject(cacheRadius);
 }
 
 void SectorView::InitDefaults()
@@ -138,7 +137,7 @@ void SectorView::InitDefaults()
 	m_route = std::vector<SystemPath>();
 }
 
-void SectorView::InitObject()
+void SectorView::InitObject(unsigned int cacheRadius)
 {
 	SetTransparency(true);
 
@@ -173,6 +172,10 @@ void SectorView::InitObject()
 
 	m_onMouseWheelCon =
 		Pi::input.onMouseWheel.connect(sigc::mem_fun(this, &SectorView::MouseWheel));
+
+	m_sectorCache = m_galaxy->NewSectorSlaveCache();
+    size_t filled = m_galaxy->FillSectorCache(m_sectorCache, m_current, cacheRadius);
+    Output("SectorView cache pre-filled with %lu entries\n", filled);
 }
 
 SectorView::~SectorView()
@@ -1006,12 +1009,12 @@ void SectorView::OnSwitchTo()
 
 	UIView::OnSwitchTo();
 
-	Update();
+	Update(0.);
 }
 
 void SectorView::OnKeyPressed(SDL_Keysym *keysym)
 {
-	if (!GameLocator::getGame()->GetInGameViews()->IsSectorView()) {
+	if (!Pi::GetInGameViews()->IsSectorView()) {
 		m_onKeyPressConnection.disconnect();
 		return;
 	}
@@ -1061,7 +1064,7 @@ void SectorView::OnKeyPressed(SDL_Keysym *keysym)
 	}
 }
 
-void SectorView::Update()
+void SectorView::Update(const float frameTime)
 {
 	PROFILE_SCOPED()
 	SystemPath last_current = m_current;
@@ -1074,8 +1077,6 @@ void SectorView::Update()
 		m_current = GameLocator::getGame()->GetPlayer()->GetHyperspaceDest();
 	}
 
-	const float frameTime = Pi::GetFrameTime();
-
 	matrix4x4f rot = matrix4x4f::Identity();
 	rot.RotateX(DEG2RAD(-m_rotX));
 	rot.RotateZ(DEG2RAD(-m_rotZ));
@@ -1083,7 +1084,7 @@ void SectorView::Update()
 	// don't check raw keypresses if the search box is active
 	// XXX ugly hack checking for Lua console here
 	if (!Pi::IsConsoleActive()) {
-		const float moveSpeed = Pi::GetMoveSpeedShiftModifier();
+		const float moveSpeed = Pi::input.GetMoveSpeedShiftModifier();
 		float move = moveSpeed * frameTime;
 		vector3f shift(0.0f);
 		if (KeyBindings::mapViewShiftLeft.IsActive()) shift.x -= move;
@@ -1195,7 +1196,7 @@ void SectorView::Update()
 		m_jumpSphere.reset(new Graphics::Drawables::Sphere3D(m_renderer, m_fresnelMat, m_jumpSphereState, 4, 1.0f));
 	}
 
-	UIView::Update();
+	UIView::Update(frameTime);
 }
 
 void SectorView::ShowAll()
@@ -1205,11 +1206,11 @@ void SectorView::ShowAll()
 
 void SectorView::MouseWheel(bool up)
 {
-	if (GameLocator::getGame()->GetInGameViews()->IsSectorView()) {
+	if (Pi::GetInGameViews()->IsSectorView()) {
 		if (!up)
-			m_zoomMovingTo += ZOOM_SPEED * WHEEL_SENSITIVITY * Pi::GetMoveSpeedShiftModifier();
+			m_zoomMovingTo += ZOOM_SPEED * WHEEL_SENSITIVITY * Pi::input.GetMoveSpeedShiftModifier();
 		else
-			m_zoomMovingTo -= ZOOM_SPEED * WHEEL_SENSITIVITY * Pi::GetMoveSpeedShiftModifier();
+			m_zoomMovingTo -= ZOOM_SPEED * WHEEL_SENSITIVITY * Pi::input.GetMoveSpeedShiftModifier();
 	}
 }
 
@@ -1250,7 +1251,7 @@ double SectorView::GetZoomLevel() const
 void SectorView::ZoomIn()
 {
 	const float frameTime = Pi::GetFrameTime();
-	const float moveSpeed = Pi::GetMoveSpeedShiftModifier();
+	const float moveSpeed = Pi::input.GetMoveSpeedShiftModifier();
 	float move = moveSpeed * frameTime;
 	m_zoomMovingTo -= move;
 	m_zoomMovingTo = Clamp(m_zoomMovingTo, 0.1f, FAR_MAX);
@@ -1259,7 +1260,7 @@ void SectorView::ZoomIn()
 void SectorView::ZoomOut()
 {
 	const float frameTime = Pi::GetFrameTime();
-	const float moveSpeed = Pi::GetMoveSpeedShiftModifier();
+	const float moveSpeed = Pi::input.GetMoveSpeedShiftModifier();
 	float move = moveSpeed * frameTime;
 	m_zoomMovingTo += move;
 	m_zoomMovingTo = Clamp(m_zoomMovingTo, 0.1f, FAR_MAX);

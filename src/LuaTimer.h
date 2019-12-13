@@ -9,6 +9,8 @@
 
 class LuaTimer : public DeleteEmitter {
 public:
+	LuaTimer() = default;
+	~LuaTimer();
 	void Tick();
 	void RemoveAll();
 };

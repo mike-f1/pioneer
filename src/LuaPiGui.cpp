@@ -1353,7 +1353,7 @@ static int l_pigui_get_mouse_clicked_pos(lua_State *l)
 TScreenSpace lua_world_space_to_screen_space(const vector3d &pos)
 {
 	PROFILE_SCOPED()
-	const WorldView *wv = GameLocator::getGame()->GetInGameViews()->GetWorldView();
+	const WorldView *wv = Pi::GetInGameViews()->GetWorldView();
 	const vector3d p = wv->WorldSpaceToScreenSpace(pos);
 	const int width = Graphics::GetScreenWidth();
 	const int height = Graphics::GetScreenHeight();
@@ -1368,7 +1368,7 @@ TScreenSpace lua_world_space_to_screen_space(const vector3d &pos)
 TScreenSpace lua_world_space_to_screen_space(const Body *body)
 {
 	PROFILE_SCOPED()
-	const WorldView *wv = GameLocator::getGame()->GetInGameViews()->GetWorldView();
+	const WorldView *wv = Pi::GetInGameViews()->GetWorldView();
 	const vector3d p = wv->WorldSpaceToScreenSpace(body);
 	const int width = Graphics::GetScreenWidth();
 	const int height = Graphics::GetScreenHeight();
@@ -1671,7 +1671,7 @@ static int l_pigui_set_mouse_button_state(lua_State *l)
 static int l_pigui_should_show_labels(lua_State *l)
 {
 	PROFILE_SCOPED()
-	bool show_labels = GameLocator::getGame()->GetInGameViews()->GetWorldView()->ShouldShowLabels();
+	bool show_labels = Pi::GetInGameViews()->GetWorldView()->ShouldShowLabels();
 	LuaPush(l, show_labels);
 	return 1;
 }
@@ -1828,7 +1828,7 @@ static int l_pigui_radial_menu(lua_State *l)
 static int l_pigui_should_draw_ui(lua_State *l)
 {
 	PROFILE_SCOPED()
-	LuaPush(l, GameLocator::getGame()->GetInGameViews()->DrawGui());
+	LuaPush(l, Pi::GetInGameViews()->DrawGui());
 	return 1;
 }
 
@@ -1865,7 +1865,7 @@ static int l_pigui_is_window_hovered(lua_State *l)
 static int l_pigui_system_info_view_next_page(lua_State *l)
 {
 	PROFILE_SCOPED()
-	GameLocator::getGame()->GetInGameViews()->GetSystemInfoView()->NextPage();
+	Pi::GetInGameViews()->GetSystemInfoView()->NextPage();
 	return 0;
 }
 

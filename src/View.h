@@ -27,7 +27,7 @@ public:
 	// called before Gui::Draw will call widget ::Draw methods.
 	virtual void Draw3D() = 0;
 	// for checking key states, mouse crud
-	virtual void Update() = 0;
+	virtual void Update(const float frameTime) = 0;
 	virtual void SaveToJson(Json &jsonObj) {}
 	virtual void LoadFromJson(const Json &jsonObj) {}
 	virtual void HandleSDLEvent(SDL_Event &event) {}

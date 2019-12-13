@@ -21,9 +21,10 @@
 #include "RandomSingleton.h"
 #include "SectorView.h"
 #include "Sfx.h"
+#include "SystemView.h"
 #include "ship/PlayerShipController.h"
 #include "StringF.h"
-#include "SystemView.h" // for the transfer planner
+#include "TransferPlanner.h"
 #include "sound/Sound.h"
 #include "galaxy/SystemBody.h"
 
@@ -221,7 +222,7 @@ void Player::OnEnterSystem()
 {
 	m_controller->SetFlightControlState(CONTROL_MANUAL);
 	//XXX don't call sectorview from here, use signals instead
-	GameLocator::getGame()->GetInGameViews()->GetSectorView()->ResetHyperspaceTarget();
+	Pi::GetInGameViews()->GetSectorView()->ResetHyperspaceTarget();
 }
 
 //temporary targeting stuff
@@ -248,20 +249,20 @@ Body *Player::GetSetSpeedTarget() const
 void Player::SetCombatTarget(Body *const target, bool setSpeedTo)
 {
 	static_cast<PlayerShipController *>(m_controller)->SetCombatTarget(target, setSpeedTo);
-	Pi::onPlayerChangeTarget.emit();
+	onPlayerChangeTarget.emit();
 }
 
 void Player::SetNavTarget(Body *const target, bool setSpeedTo)
 {
 	static_cast<PlayerShipController *>(m_controller)->SetNavTarget(target, setSpeedTo);
-	Pi::onPlayerChangeTarget.emit();
+	onPlayerChangeTarget.emit();
 }
 
 void Player::SetSetSpeedTarget(Body *const target)
 {
 	static_cast<PlayerShipController *>(m_controller)->SetSetSpeedTarget(target);
 	// TODO: not sure, do we actually need this? we are only changing the set speed target
-	Pi::onPlayerChangeTarget.emit();
+	onPlayerChangeTarget.emit();
 }
 
 void Player::ChangeSetSpeed(double delta)
@@ -305,27 +306,30 @@ void Player::StaticUpdate(const float timeStep)
 
 int Player::GetManeuverTime() const
 {
-	if (Pi::planner->GetOffsetVel().ExactlyEqual(vector3d(0, 0, 0))) {
+	const TransferPlanner *planner = Pi::GetInGameViews()->GetSystemView()->GetPlanner();
+	if (planner->GetOffsetVel().ExactlyEqual(vector3d(0, 0, 0))) {
 		return 0;
 	}
-	return Pi::planner->GetStartTime();
+	return planner->GetStartTime();
 }
 
 vector3d Player::GetManeuverVelocity() const
 {
+	const TransferPlanner *planner = Pi::GetInGameViews()->GetSystemView()->GetPlanner();
 	Frame *frame = Frame::GetFrame(GetFrame());
+
 	if (frame->IsRotFrame())
 		frame = Frame::GetFrame(frame->GetNonRotFrame());
 	const SystemBody *systemBody = frame->GetSystemBody();
 
-	if (Pi::planner->GetOffsetVel().ExactlyEqual(vector3d(0, 0, 0))) {
+	if (planner->GetOffsetVel().ExactlyEqual(vector3d(0, 0, 0))) {
 		return vector3d(0, 0, 0);
 	} else if (systemBody) {
 		Orbit playerOrbit = ComputeOrbit();
 		if (!is_zero_exact(playerOrbit.GetSemiMajorAxis())) {
 			double mass = systemBody->GetMass();
 			// XXX The best solution would be to store the mass(es) on Orbit
-			const vector3d velocity = (Pi::planner->GetVel() - playerOrbit.OrbitalVelocityAtTime(mass, playerOrbit.OrbitalTimeAtPos(Pi::planner->GetPosition(), mass)));
+			const vector3d velocity = (planner->GetVel() - playerOrbit.OrbitalVelocityAtTime(mass, playerOrbit.OrbitalTimeAtPos(planner->GetPosition(), mass)));
 			return velocity;
 		}
 	}

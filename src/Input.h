@@ -94,6 +94,10 @@ public:
 	bool KeyState(SDL_Keycode k) { return keyState[k]; }
 	int KeyModState() { return keyModState; }
 
+	// Get the default speed modifier to apply to movement (scrolling, zooming...), depending on the "shift" keys.
+	// This is a default value only, centralized here to promote uniform user expericience.
+	float GetMoveSpeedShiftModifier();
+
 	int JoystickButtonState(int joystick, int button);
 	int JoystickHatState(int joystick, int hat);
 	float JoystickAxisState(int joystick, int axis);

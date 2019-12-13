@@ -16,13 +16,12 @@
 #include "SectorView.h"
 #include "Space.h"
 #include "StringF.h"
+#include "TransferPlanner.h"
 #include "galaxy/Galaxy.h"
 #include "galaxy/StarSystem.h"
 #include "graphics/Material.h"
 #include "graphics/Renderer.h"
 #include "graphics/TextureBuilder.h"
-#include <iomanip>
-#include <sstream>
 
 #include "gui/GuiLabel.h"
 #include "gui/GuiLabelSet.h"
@@ -40,186 +39,8 @@ static const float ZOOM_OUT_SPEED = 1.f / ZOOM_IN_SPEED;
 static const float WHEEL_SENSITIVITY = .1f; // Should be a variable in user settings.
 static const double DEFAULT_VIEW_DISTANCE = 10.0;
 
-TransferPlanner::TransferPlanner() :
-	m_position(0., 0., 0.),
-	m_velocity(0., 0., 0.)
-{
-	m_dvPrograde = 0.0;
-	m_dvNormal = 0.0;
-	m_dvRadial = 0.0;
-	m_startTime = 0.0;
-	m_factor = 1;
-}
-
-vector3d TransferPlanner::GetVel() const { return m_velocity + GetOffsetVel(); }
-
-vector3d TransferPlanner::GetOffsetVel() const
-{
-	if (m_position.ExactlyEqual(vector3d(0., 0., 0.)))
-		return vector3d(0., 0., 0.);
-
-	const vector3d pNormal = m_position.Cross(m_velocity);
-
-	return m_dvPrograde * m_velocity.Normalized() +
-		m_dvNormal * pNormal.Normalized() +
-		m_dvRadial * m_position.Normalized();
-}
-
-void TransferPlanner::AddStartTime(double timeStep)
-{
-	if (std::fabs(m_startTime) < 1.)
-		m_startTime = GameLocator::getGame()->GetTime();
-
-	m_startTime += m_factor * timeStep;
-	double deltaT = m_startTime - GameLocator::getGame()->GetTime();
-	if (deltaT > 0.) {
-		FrameId frameId = Frame::GetFrame(GameLocator::getGame()->GetPlayer()->GetFrame())->GetNonRotFrame();
-		Frame *frame = Frame::GetFrame(frameId);
-		Orbit playerOrbit = Orbit::FromBodyState(GameLocator::getGame()->GetPlayer()->GetPositionRelTo(frameId), GameLocator::getGame()->GetPlayer()->GetVelocityRelTo(frameId), frame->GetSystemBody()->GetMass());
-
-		m_position = playerOrbit.OrbitalPosAtTime(deltaT);
-		m_velocity = playerOrbit.OrbitalVelocityAtTime(frame->GetSystemBody()->GetMass(), deltaT);
-	} else
-		ResetStartTime();
-}
-
-void TransferPlanner::ResetStartTime()
-{
-	m_startTime = 0;
-	Frame *frame = Frame::GetFrame(GameLocator::getGame()->GetPlayer()->GetFrame());
-	if (!frame || GetOffsetVel().ExactlyEqual(vector3d(0., 0., 0.))) {
-		m_position = vector3d(0., 0., 0.);
-		m_velocity = vector3d(0., 0., 0.);
-	} else {
-		frame = Frame::GetFrame(frame->GetNonRotFrame());
-		m_position = GameLocator::getGame()->GetPlayer()->GetPositionRelTo(frame->GetId());
-		m_velocity = GameLocator::getGame()->GetPlayer()->GetVelocityRelTo(frame->GetId());
-	}
-}
-
-double TransferPlanner::GetStartTime() const
-{
-	return m_startTime;
-}
-
-static std::string formatTime(double t)
-{
-	std::stringstream formattedTime;
-	formattedTime << std::setprecision(1) << std::fixed;
-	double absT = fabs(t);
-	if (absT < 60.)
-		formattedTime << t << "s";
-	else if (absT < 3600)
-		formattedTime << t / 60. << "m";
-	else if (absT < 86400)
-		formattedTime << t / 3600. << "h";
-	else if (absT < 31536000)
-		formattedTime << t / 86400. << "d";
-	else
-		formattedTime << t / 31536000. << "y";
-	return formattedTime.str();
-}
-
-std::string TransferPlanner::printDeltaTime()
-{
-	std::stringstream out;
-	out << std::setw(9);
-	double deltaT = m_startTime - GameLocator::getGame()->GetTime();
-	if (std::fabs(m_startTime) < 1.)
-		out << Lang::NOW;
-	else
-		out << formatTime(deltaT);
-
-	return out.str();
-}
-
-void TransferPlanner::AddDv(BurnDirection d, double dv)
-{
-	if (m_position.ExactlyEqual(vector3d(0., 0., 0.))) {
-		FrameId frame = Frame::GetFrame(GameLocator::getGame()->GetPlayer()->GetFrame())->GetNonRotFrame();
-		m_position = GameLocator::getGame()->GetPlayer()->GetPositionRelTo(frame);
-		m_velocity = GameLocator::getGame()->GetPlayer()->GetVelocityRelTo(frame);
-		m_startTime = GameLocator::getGame()->GetTime();
-	}
-
-	switch (d) {
-	case PROGRADE: m_dvPrograde += m_factor * dv; break;
-	case NORMAL: m_dvNormal += m_factor * dv; break;
-	case RADIAL: m_dvRadial += m_factor * dv; break;
-	}
-}
-
-void TransferPlanner::ResetDv(BurnDirection d)
-{
-	switch (d) {
-	case PROGRADE: m_dvPrograde = 0; break;
-	case NORMAL: m_dvNormal = 0; break;
-	case RADIAL: m_dvRadial = 0; break;
-	}
-
-	if (std::fabs(m_startTime) < 1. &&
-		GetOffsetVel().ExactlyEqual(vector3d(0., 0., 0.))) {
-		m_position = vector3d(0., 0., 0.);
-		m_velocity = vector3d(0., 0., 0.);
-		m_startTime = 0.;
-	}
-}
-
-void TransferPlanner::ResetDv()
-{
-	m_dvPrograde = 0;
-	m_dvNormal = 0;
-	m_dvRadial = 0;
-
-	if (std::fabs(m_startTime) < 1.) {
-		m_position = vector3d(0., 0., 0.);
-		m_velocity = vector3d(0., 0., 0.);
-		m_startTime = 0.;
-	}
-}
-
-std::string TransferPlanner::printDv(BurnDirection d)
-{
-	double dv = 0;
-	char buf[10];
-
-	switch (d) {
-	case PROGRADE: dv = m_dvPrograde; break;
-	case NORMAL: dv = m_dvNormal; break;
-	case RADIAL: dv = m_dvRadial; break;
-	}
-
-	snprintf(buf, sizeof(buf), "%6.0fm/s", dv);
-	return std::string(buf);
-}
-
-void TransferPlanner::IncreaseFactor(void)
-{
-	if (m_factor > 1000) return;
-	m_factor *= m_factorFactor;
-}
-void TransferPlanner::ResetFactor(void) { m_factor = 1; }
-
-void TransferPlanner::DecreaseFactor(void)
-{
-	if (m_factor < 0.0002) return;
-	m_factor /= m_factorFactor;
-}
-
-std::string TransferPlanner::printFactor(void)
-{
-	char buf[16];
-	snprintf(buf, sizeof(buf), "%8gx", 10 * m_factor);
-	return std::string(buf);
-}
-
-vector3d TransferPlanner::GetPosition() const { return m_position; }
-
-void TransferPlanner::SetPosition(const vector3d &position) { m_position = position; }
-
-SystemView::SystemView(Game *game) :
+SystemView::SystemView() :
 	UIView(),
-	m_game(game),
 	m_gridDrawing(GridDrawing::OFF),
 	m_shipDrawing(OFF),
 	m_showL4L5(LAG_OFF)
@@ -435,7 +256,7 @@ SystemView::SystemView(Game *game) :
 	ResetViewpoint();
 
 	RefreshShips();
-	m_planner = Pi::planner;
+	m_planner.reset(new TransferPlanner());
 
 	m_orbitVts.reset(new vector3f[N_VERTICES_MAX]);
 	m_orbitColors.reset(new Color[N_VERTICES_MAX]);
@@ -524,7 +345,7 @@ void SystemView::ResetViewpoint()
 	m_zoom = 1.0f / float(AU);
 	m_zoomTo = m_zoom;
 	m_timeStep = 1.0f;
-	m_time = m_game->GetTime();
+	m_time = GameLocator::getGame()->GetTime();
 }
 
 void SystemView::PutOrbit(const Orbit *orbit, const vector3d &offset, const Color &color, const double planetRadius, const bool showLagrange)
@@ -544,7 +365,7 @@ void SystemView::PutOrbit(const Orbit *orbit, const vector3d &offset, const Colo
 	static const float fadedColorParameter = 0.8;
 
 	Uint16 fadingColors = 0;
-	const double tMinust0 = m_time - m_game->GetTime();
+	const double tMinust0 = m_time - GameLocator::getGame()->GetTime();
 	for (unsigned short i = 0; i < N_VERTICES_MAX; ++i) {
 		const double t = double(i) / double(N_VERTICES_MAX) * maxT;
 		if (fadingColors == 0 && t >= startTrailPercent * maxT)
@@ -635,16 +456,16 @@ void SystemView::OnClickObject(const SystemBody *b)
 
 	// click on object (in same system) sets/unsets it as nav target
 	SystemPath path = m_system->GetPathOf(b);
-	if (m_game->GetSpace()->GetStarSystem()->GetPath() == m_system->GetPath()) {
-		Body *body = m_game->GetSpace()->FindBodyForPath(&path);
+	if (GameLocator::getGame()->GetSpace()->GetStarSystem()->GetPath() == m_system->GetPath()) {
+		Body *body = GameLocator::getGame()->GetSpace()->FindBodyForPath(&path);
 		if (body != 0) {
 			if (GameLocator::getGame()->GetPlayer()->GetNavTarget() == body) {
 				GameLocator::getGame()->GetPlayer()->SetNavTarget(body);
 				GameLocator::getGame()->GetPlayer()->SetNavTarget(0);
-				m_game->log->Add(Lang::UNSET_NAVTARGET);
+				GameLocator::getGame()->log->Add(Lang::UNSET_NAVTARGET);
 			} else {
 				GameLocator::getGame()->GetPlayer()->SetNavTarget(body);
-				m_game->log->Add(Lang::SET_NAVTARGET_TO + body->GetLabel());
+				GameLocator::getGame()->log->Add(Lang::SET_NAVTARGET_TO + body->GetLabel());
 			}
 		}
 	}
@@ -687,12 +508,12 @@ void SystemView::OnClickShip(Ship *s)
 	}
 	if (GameLocator::getGame()->GetPlayer()->GetNavTarget() == s) { //un-select ship if already selected
 		GameLocator::getGame()->GetPlayer()->SetNavTarget(0); // remove current
-		m_game->log->Add(Lang::UNSET_NAVTARGET);
+		GameLocator::getGame()->log->Add(Lang::UNSET_NAVTARGET);
 		m_infoLabel->SetText(""); // remove lingering text
 		m_infoText->SetText("");
 	} else {
 		GameLocator::getGame()->GetPlayer()->SetNavTarget(s);
-		m_game->log->Add(Lang::SET_NAVTARGET_TO + s->GetLabel());
+		GameLocator::getGame()->log->Add(Lang::SET_NAVTARGET_TO + s->GetLabel());
 
 		// always show label of selected ship...
 		std::string text;
@@ -767,7 +588,7 @@ void SystemView::PutBody(const SystemBody *b, const vector3d &offset, const matr
 
 	// display the players orbit(?)
 	if (frame->GetSystemBody() == b && frame->GetSystemBody()->GetMass() > 0) {
-		const double t0 = m_game->GetTime();
+		const double t0 = GameLocator::getGame()->GetTime();
 		Orbit playerOrbit = GameLocator::getGame()->GetPlayer()->ComputeOrbit();
 
 		PutOrbit(&playerOrbit, offset, Color::RED, b->GetRadius());
@@ -864,7 +685,7 @@ void SystemView::Draw3D()
 	m_renderer->SetPerspectiveProjection(50.f, m_renderer->GetDisplayAspect(), 1.f, 1000.f);
 	m_renderer->ClearScreen();
 
-	SystemPath path = m_game->GetInGameViews()->GetSectorView()->GetSelected().SystemOnly();
+	SystemPath path = Pi::GetInGameViews()->GetSectorView()->GetSelected().SystemOnly();
 	if (m_system) {
 		if (m_system->GetUnexplored() != m_unexplored || !m_system->GetPath().IsSameSystem(path)) {
 			m_system.Reset();
@@ -873,7 +694,7 @@ void SystemView::Draw3D()
 	}
 
 	if (m_realtime) {
-		m_time = m_game->GetTime();
+		m_time = GameLocator::getGame()->GetTime();
 	} else {
 		m_time += m_timeStep * Pi::GetFrameTime();
 	}
@@ -881,7 +702,7 @@ void SystemView::Draw3D()
 	m_timePoint->SetText(t);
 
 	if (!m_system) {
-		m_system = m_game->GetGalaxy()->GetStarSystem(path);
+		m_system = GameLocator::getGame()->GetGalaxy()->GetStarSystem(path);
 		m_unexplored = m_system->GetUnexplored();
 	}
 
@@ -901,7 +722,7 @@ void SystemView::Draw3D()
 	else {
 		if (m_system->GetRootBody()) {
 			PutBody(m_system->GetRootBody().Get(), pos, trans);
-			if (m_game->GetSpace()->GetStarSystem() == m_system) {
+			if (GameLocator::getGame()->GetSpace()->GetStarSystem() == m_system) {
 				const Body *navTarget = GameLocator::getGame()->GetPlayer()->GetNavTarget();
 				const SystemBody *navTargetSystemBody = navTarget ? navTarget->GetSystemBody() : 0;
 				if (navTargetSystemBody)
@@ -913,7 +734,7 @@ void SystemView::Draw3D()
 
 	if (m_shipDrawing != OFF) {
 		RefreshShips();
-		DrawShips(m_time - m_game->GetTime(), pos);
+		DrawShips(m_time - GameLocator::getGame()->GetTime(), pos);
 	}
 
 	if (m_gridDrawing != GridDrawing::OFF) {
@@ -923,17 +744,22 @@ void SystemView::Draw3D()
 	UIView::Draw3D();
 }
 
-void SystemView::Update()
+void SystemView::ResetPlanner()
 {
-	const float ft = Pi::GetFrameTime();
+	m_planner->ResetStartTime();
+	m_planner->ResetDv();
+}
+
+void SystemView::Update(const float frameTime)
+{
 	// XXX ugly hack checking for console here
 	if (!Pi::IsConsoleActive()) {
 		if (Pi::input.KeyState(SDLK_EQUALS) ||
 			m_zoomInButton->IsPressed())
-			m_zoomTo *= pow(ZOOM_IN_SPEED * Pi::GetMoveSpeedShiftModifier(), ft);
+			m_zoomTo *= pow(ZOOM_IN_SPEED * Pi::input.GetMoveSpeedShiftModifier(), frameTime);
 		if (Pi::input.KeyState(SDLK_MINUS) ||
 			m_zoomOutButton->IsPressed())
-			m_zoomTo *= pow(ZOOM_OUT_SPEED / Pi::GetMoveSpeedShiftModifier(), ft);
+			m_zoomTo *= pow(ZOOM_OUT_SPEED / Pi::input.GetMoveSpeedShiftModifier(), frameTime);
 
 		// transfer planner buttons
 		if (m_plannerIncreaseStartTimeButton->IsPressed()) {
@@ -984,45 +810,45 @@ void SystemView::Update()
 	m_zoom = Clamp(m_zoom, MIN_ZOOM, MAX_ZOOM);
 	// Since m_zoom changes over multiple orders of magnitude, any fixed linear factor will not be appropriate
 	// at some of them.
-	AnimationCurves::Approach(m_zoom, m_zoomTo, ft, 10.f, m_zoomTo / 60.f);
+	AnimationCurves::Approach(m_zoom, m_zoomTo, frameTime, 10.f, m_zoomTo / 60.f);
 
-	AnimationCurves::Approach(m_rot_x, m_rot_x_to, ft);
-	AnimationCurves::Approach(m_rot_z, m_rot_z_to, ft);
+	AnimationCurves::Approach(m_rot_x, m_rot_x_to, frameTime);
+	AnimationCurves::Approach(m_rot_z, m_rot_z_to, frameTime);
 
 	if (Pi::input.MouseButtonState(SDL_BUTTON_RIGHT)) {
 		int motion[2];
 		Pi::input.GetMouseMotion(motion);
-		m_rot_x_to += motion[1] * 20 * ft;
-		m_rot_z_to += motion[0] * 20 * ft;
+		m_rot_x_to += motion[1] * 20 * frameTime;
+		m_rot_z_to += motion[0] * 20 * frameTime;
 	}
 
-	UIView::Update();
+	UIView::Update(frameTime);
 }
 
 void SystemView::MouseWheel(bool up)
 {
-	if (GameLocator::getGame()->GetInGameViews()->IsSystemView()) {
+	if (Pi::GetInGameViews()->IsSystemView()) {
 		if (!up)
-			m_zoomTo *= ((ZOOM_OUT_SPEED - 1) * WHEEL_SENSITIVITY + 1) / Pi::GetMoveSpeedShiftModifier();
+			m_zoomTo *= ((ZOOM_OUT_SPEED - 1) * WHEEL_SENSITIVITY + 1) / Pi::input.GetMoveSpeedShiftModifier();
 		else
-			m_zoomTo *= ((ZOOM_IN_SPEED - 1) * WHEEL_SENSITIVITY + 1) * Pi::GetMoveSpeedShiftModifier();
+			m_zoomTo *= ((ZOOM_IN_SPEED - 1) * WHEEL_SENSITIVITY + 1) * Pi::input.GetMoveSpeedShiftModifier();
 	}
 }
 
 void SystemView::RefreshShips()
 {
 	m_contacts.clear();
-	if (!m_game->GetInGameViews()) return;
-	if (!m_game->GetInGameViews()->GetSectorView()) return;
+	if (!Pi::GetInGameViews()) return;
+	if (!Pi::GetInGameViews()->GetSectorView()) return;
 
-	SystemPath sectorPath = m_game->GetInGameViews()->GetSectorView()->GetSelected().SystemOnly();
-	if (!m_game->GetSpace()->GetStarSystem()->GetPath().IsSameSystem(sectorPath)) {
+	SystemPath sectorPath = Pi::GetInGameViews()->GetSectorView()->GetSelected().SystemOnly();
+	if (!GameLocator::getGame()->GetSpace()->GetStarSystem()->GetPath().IsSameSystem(sectorPath)) {
 		return;
 	}
 
-	auto bs = m_game->GetSpace()->GetBodies();
+	auto bs = GameLocator::getGame()->GetSpace()->GetBodies();
 	for (auto s = bs.begin(); s != bs.end(); s++) {
-		if ((*s) != m_game->GetPlayer() &&
+		if ((*s) != GameLocator::getGame()->GetPlayer() &&
 			(*s)->GetType() == Object::SHIP) {
 
 			const auto c = static_cast<Ship *>(*s);
@@ -1111,7 +937,7 @@ void SystemView::DrawGrid()
 	if (contact_num != 0) {
 		for (auto &s: m_contacts) {
 			const bool isNavTarget = GameLocator::getGame()->GetPlayer()->GetNavTarget() == s.first;
-			vector3d offset = GetShipPositionAtTime(s, m_time - m_game->GetTime()) * zoom / float(AU);
+			vector3d offset = GetShipPositionAtTime(s, m_time - GameLocator::getGame()->GetTime()) * zoom / float(AU);
 			m_lineVerts->Add(vector3f(pos + offset), (isNavTarget ? Color::GREEN : Color::GRAY) * 0.5);
 			offset.y = 0.0;
 			m_lineVerts->Add(vector3f(pos + offset), (isNavTarget ? Color::GREEN : Color::GRAY) * 0.5);

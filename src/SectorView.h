@@ -26,13 +26,13 @@ namespace Graphics {
 
 class SectorView : public UIView {
 public:
-	SectorView(const SystemPath &path, RefCountedPtr<Galaxy> galaxy, RefCountedPtr<SectorCache::Slave>);
-	SectorView(const Json &jsonObj, RefCountedPtr<Galaxy> galaxy, RefCountedPtr<SectorCache::Slave>);
+	SectorView(const SystemPath &path, RefCountedPtr<Galaxy> galaxy, unsigned int cacheRadius);
+	SectorView(const Json &jsonObj, RefCountedPtr<Galaxy> galaxy, unsigned int cacheRadius);
 	virtual ~SectorView();
 
-	virtual void Update();
+	virtual void Update(const float frameTime) override;
 	virtual void ShowAll();
-	virtual void Draw3D();
+	virtual void Draw3D() override;
 	vector3f GetPosition() const { return m_pos; }
 	SystemPath GetCurrent() const { return m_current; }
 	SystemPath GetSelected() const { return m_selected; }
@@ -81,7 +81,7 @@ protected:
 
 private:
 	void InitDefaults();
-	void InitObject();
+	void InitObject(unsigned int cacheRadius);
 
 	struct DistanceIndicator {
 		Gui::Label *label;

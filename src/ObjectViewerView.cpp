@@ -168,7 +168,7 @@ void ObjectViewerView::OnSwitchTo()
 	UIView::OnSwitchTo();
 }
 
-void ObjectViewerView::Update()
+void ObjectViewerView::Update(const float frameTime)
 {
 	if (Pi::input.KeyState(SDLK_EQUALS)) viewingDist *= 0.99f;
 	if (Pi::input.KeyState(SDLK_MINUS)) viewingDist *= 1.01f;
@@ -219,7 +219,7 @@ void ObjectViewerView::Update()
 	else
 		m_vbox->HideAll();
 
-	UIView::Update();
+	UIView::Update(frameTime);
 }
 
 void ObjectViewerView::OnChangeTerrain()

@@ -11,6 +11,7 @@
 #include "LuaPiGui.h"
 #include "LuaUtils.h"
 #include "LuaVector.h"
+#include "Pi.h"
 #include "Player.h"
 #include "SectorView.h"
 #include "TerrainBody.h"
@@ -182,7 +183,7 @@ static int l_get_hyperspace_target(lua_State *l)
 	Player *player = LuaObject<Player>::CheckFromLua(1);
 	SystemPath target;
 	if (GameLocator::getGame()->IsNormalSpace())
-		target = GameLocator::getGame()->GetInGameViews()->GetSectorView()->GetHyperspaceTarget();
+		target = Pi::GetInGameViews()->GetSectorView()->GetHyperspaceTarget();
 	else
 		target = player->GetHyperspaceDest();
 	LuaObject<SystemPath>::PushToLua(target);
@@ -226,7 +227,7 @@ static int l_set_hyperspace_target(lua_State *l)
 			if (sbody->GetSuperType() != GalaxyEnums::BodySuperType::SUPERTYPE_STAR)
 				return luaL_error(l, "Player:SetHyperspaceTarget() -- second parameter is not a system path or the path of a star");
 		}
-		GameLocator::getGame()->GetInGameViews()->GetSectorView()->SetHyperspaceTarget(path);
+		Pi::GetInGameViews()->GetSectorView()->SetHyperspaceTarget(path);
 		return 0;
 	} else
 		return luaL_error(l, "Player:SetHyperspaceTarget() cannot be used while in hyperspace");
@@ -235,7 +236,7 @@ static int l_set_hyperspace_target(lua_State *l)
 static int l_get_mouse_direction(lua_State *l)
 {
 	//		Player *player = LuaObject<Player>::CheckFromLua(1);
-	LuaPush<vector3d>(l, GameLocator::getGame()->GetInGameViews()->GetWorldView()->GetMouseDirection());
+	LuaPush<vector3d>(l, Pi::GetInGameViews()->GetWorldView()->GetMouseDirection());
 	return 1;
 }
 
@@ -483,7 +484,7 @@ static int l_get_heading_pitch_roll(lua_State *l)
 		return 0;
 	}
 
-	std::tuple<double, double, double> res = GameLocator::getGame()->GetInGameViews()->GetWorldView()->CalculateHeadingPitchRoll(pt);
+	std::tuple<double, double, double> res = Pi::GetInGameViews()->GetWorldView()->CalculateHeadingPitchRoll(pt);
 	LuaPush(l, std::get<0>(res));
 	LuaPush(l, std::get<1>(res));
 	LuaPush(l, std::get<2>(res));

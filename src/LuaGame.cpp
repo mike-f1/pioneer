@@ -6,6 +6,7 @@
 #include "DateTime.h"
 #include "FileSystem.h"
 #include "Game.h"
+#include "GameState.h"
 #include "GameConfSingleton.h"
 #include "GameLocator.h"
 #include "GameSaveError.h"
@@ -69,12 +70,7 @@ static int l_game_start_game(lua_State *l)
 			time(&now);
 			start_time = difftime(now, 946684799); // <--- Friday, 31 December 1999 23:59:59 GMT+00:00 as UNIX epoch time in seconds
 		}
-		Game *game = new Game(*path, start_time);
-		GameLocator::provideGame(game);
-		// Here because 'l_game_attr_player' would have
-		// a player to be pushed on Lua VM through GameLocator,
-		// but that is not yet set in a ctor
-		game->EmitPauseState(game->IsPaused());
+		GameState::MakeNewGame(*path, start_time);
 	} catch (InvalidGameStartLocation &e) {
 		luaL_error(l, "invalid starting location for game: %s", e.error.c_str());
 	}
@@ -106,7 +102,7 @@ static int l_game_savegame_stats(lua_State *l)
 	std::string filename = LuaPull<std::string>(l, 1);
 
 	try {
-		Json rootNode = Game::LoadGameToJson(filename);
+		Json rootNode = GameState::LoadGameToJson(filename);
 
 		LuaTable t(l, 0, 3);
 
@@ -174,8 +170,7 @@ static int l_game_load_game(lua_State *l)
 	const std::string filename(luaL_checkstring(l, 1));
 
 	try {
-		Game *game = Game::LoadGame(filename);
-		GameLocator::provideGame(game);
+		GameState::LoadGame(filename);
 	} catch (SavedGameCorruptException) {
 		luaL_error(l, Lang::GAME_LOAD_CORRUPT);
 	} catch (SavedGameWrongVersionException) {
@@ -216,7 +211,7 @@ static int l_game_can_load_game(lua_State *l)
 {
 	const std::string filename(luaL_checkstring(l, 1));
 
-	bool success = Game::CanLoadGame(filename);
+	bool success = GameState::CanLoadGame(filename);
 	lua_pushboolean(l, success);
 
 	return 1;
@@ -256,7 +251,7 @@ static int l_game_save_game(lua_State *l)
 	const std::string path = FileSystem::JoinPathBelow(GameConfSingleton::GetSaveDir(), filename);
 
 	try {
-		Game::SaveGame(filename, GameLocator::getGame());
+		GameState::SaveGame(filename);
 		lua_pushlstring(l, path.c_str(), path.size());
 		return 1;
 	} catch (CannotSaveInHyperspace) {
@@ -430,7 +425,7 @@ static int l_game_in_hyperspace(lua_State *l)
 static int l_game_set_radar_visible(lua_State *l)
 {
 	bool visible = LuaPull<bool>(l, 1);
-	GameLocator::getGame()->GetInGameViews()->GetCpan()->SetRadarVisible(visible);
+	Pi::GetInGameViews()->GetCpan()->SetRadarVisible(visible);
 	return 0;
 }
 
@@ -456,21 +451,21 @@ static int l_game_set_radar_visible(lua_State *l)
 
 static int l_game_current_view(lua_State *l)
 {
-	if (GameLocator::getGame()->GetInGameViews()->IsWorldView()) {
+	if (Pi::GetInGameViews()->IsWorldView()) {
 		LuaPush(l, "world");
-	} else if (GameLocator::getGame()->GetInGameViews()->IsSpaceStationView()) {
+	} else if (Pi::GetInGameViews()->IsSpaceStationView()) {
 		LuaPush(l, "space_station");
-	} else if (GameLocator::getGame()->GetInGameViews()->IsInfoView()) {
+	} else if (Pi::GetInGameViews()->IsInfoView()) {
 		LuaPush(l, "info");
-	} else if (GameLocator::getGame()->GetInGameViews()->IsSectorView()) {
+	} else if (Pi::GetInGameViews()->IsSectorView()) {
 		LuaPush(l, "sector");
-	} else if (GameLocator::getGame()->GetInGameViews()->IsSystemView()) {
+	} else if (Pi::GetInGameViews()->IsSystemView()) {
 		LuaPush(l, "system");
-	} else if (GameLocator::getGame()->GetInGameViews()->IsSystemInfoView()) {
+	} else if (Pi::GetInGameViews()->IsSystemInfoView()) {
 		LuaPush(l, "system_info");
-	} else if (GameLocator::getGame()->GetInGameViews()->IsDeathView()) {
+	} else if (Pi::GetInGameViews()->IsDeathView()) {
 		LuaPush(l, "death");
-	} else if (GameLocator::getGame()->GetInGameViews()->IsGalacticView()) {
+	} else if (Pi::GetInGameViews()->IsGalacticView()) {
 		LuaPush(l, "galaxy");
 	} else {
 		lua_pushnil(l);
@@ -485,9 +480,9 @@ static int l_game_switch_view(lua_State *l)
 	if (!GameLocator::getGame())
 		return luaL_error(l, "can't switch view when no game is running");
 	if (GameLocator::getGame()->GetPlayer()->IsDead())
-		GameLocator::getGame()->GetInGameViews()->SetView(ViewType::DEATH);
+		Pi::GetInGameViews()->SetView(ViewType::DEATH);
 	else
-		GameLocator::getGame()->GetInGameViews()->SetView(ViewType::WORLD);
+		Pi::GetInGameViews()->SetView(ViewType::WORLD);
 	return 0;
 }
 
@@ -564,21 +559,21 @@ static int l_game_set_view(lua_State *l)
 		return luaL_error(l, "can't set view when no game is running");
 	std::string target = luaL_checkstring(l, 1);
 	if (!target.compare("world")) {
-		GameLocator::getGame()->GetInGameViews()->SetView(ViewType::WORLD);
+		Pi::GetInGameViews()->SetView(ViewType::WORLD);
 	} else if (!target.compare("space_station")) {
-		GameLocator::getGame()->GetInGameViews()->SetView(ViewType::SPACESTATION);
+		Pi::GetInGameViews()->SetView(ViewType::SPACESTATION);
 	} else if (!target.compare("info")) {
-		GameLocator::getGame()->GetInGameViews()->SetView(ViewType::INFO);
+		Pi::GetInGameViews()->SetView(ViewType::INFO);
 	} else if (!target.compare("death")) {
-		GameLocator::getGame()->GetInGameViews()->SetView(ViewType::DEATH);
+		Pi::GetInGameViews()->SetView(ViewType::DEATH);
 	} else if (!target.compare("sector")) {
-		GameLocator::getGame()->GetInGameViews()->SetView(ViewType::SECTOR);
+		Pi::GetInGameViews()->SetView(ViewType::SECTOR);
 	} else if (!target.compare("galaxy")) {
-		GameLocator::getGame()->GetInGameViews()->SetView(ViewType::GALACTIC);
+		Pi::GetInGameViews()->SetView(ViewType::GALACTIC);
 	} else if (!target.compare("system")) {
-		GameLocator::getGame()->GetInGameViews()->SetView(ViewType::SYSTEM);
+		Pi::GetInGameViews()->SetView(ViewType::SYSTEM);
 	} else if (!target.compare("system_info")) {
-		GameLocator::getGame()->GetInGameViews()->SetView(ViewType::SYSTEMINFO);
+		Pi::GetInGameViews()->SetView(ViewType::SYSTEMINFO);
 	} else {
 		// TODO else error
 	}
@@ -587,7 +582,7 @@ static int l_game_set_view(lua_State *l)
 
 static int l_game_get_world_cam_type(lua_State *l)
 {
-	switch (GameLocator::getGame()->GetInGameViews()->GetWorldView()->shipView.GetCamType()) {
+	switch (Pi::GetInGameViews()->GetWorldView()->shipView.GetCamType()) {
 	case ShipViewController::CAM_INTERNAL: lua_pushstring(l, "internal"); break;
 	case ShipViewController::CAM_EXTERNAL: lua_pushstring(l, "external"); break;
 	case ShipViewController::CAM_SIDEREAL: lua_pushstring(l, "sidereal"); break;
@@ -601,13 +596,13 @@ static int l_game_set_world_cam_type(lua_State *l)
 {
 	std::string cam = luaL_checkstring(l, 1);
 	if (!cam.compare("internal"))
-		GameLocator::getGame()->GetInGameViews()->GetWorldView()->shipView.SetCamType(ShipViewController::CAM_INTERNAL);
+		Pi::GetInGameViews()->GetWorldView()->shipView.SetCamType(ShipViewController::CAM_INTERNAL);
 	else if (!cam.compare("external"))
-		GameLocator::getGame()->GetInGameViews()->GetWorldView()->shipView.SetCamType(ShipViewController::CAM_EXTERNAL);
+		Pi::GetInGameViews()->GetWorldView()->shipView.SetCamType(ShipViewController::CAM_EXTERNAL);
 	else if (!cam.compare("sidereal"))
-		GameLocator::getGame()->GetInGameViews()->GetWorldView()->shipView.SetCamType(ShipViewController::CAM_SIDEREAL);
+		Pi::GetInGameViews()->GetWorldView()->shipView.SetCamType(ShipViewController::CAM_SIDEREAL);
 	else if (!cam.compare("flyby"))
-		GameLocator::getGame()->GetInGameViews()->GetWorldView()->shipView.SetCamType(ShipViewController::CAM_FLYBY);
+		Pi::GetInGameViews()->GetWorldView()->shipView.SetCamType(ShipViewController::CAM_FLYBY);
 	else {
 		// TODO else error
 	}

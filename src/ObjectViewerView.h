@@ -16,8 +16,8 @@ class Game;
 class ObjectViewerView : public UIView {
 public:
 	ObjectViewerView(Game *game);
-	virtual void Update();
-	virtual void Draw3D();
+	virtual void Update(const float frameTime) override;
+	virtual void Draw3D() override;
 
 protected:
 	virtual void OnSwitchTo();

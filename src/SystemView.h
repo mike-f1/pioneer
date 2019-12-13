@@ -47,8 +47,8 @@ class SystemView : public UIView {
 public:
 	SystemView();
 	virtual ~SystemView();
-	virtual void Update();
-	virtual void Draw3D();
+	virtual void Update(const float frameTime) override;
+	virtual void Draw3D() override;
 
 	const TransferPlanner *GetPlanner() const { return m_planner.get(); };
 	void ResetPlanner();

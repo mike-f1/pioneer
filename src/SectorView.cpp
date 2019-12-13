@@ -1009,7 +1009,7 @@ void SectorView::OnSwitchTo()
 
 	UIView::OnSwitchTo();
 
-	Update();
+	Update(0.);
 }
 
 void SectorView::OnKeyPressed(SDL_Keysym *keysym)
@@ -1064,7 +1064,7 @@ void SectorView::OnKeyPressed(SDL_Keysym *keysym)
 	}
 }
 
-void SectorView::Update()
+void SectorView::Update(const float frameTime)
 {
 	PROFILE_SCOPED()
 	SystemPath last_current = m_current;
@@ -1076,8 +1076,6 @@ void SectorView::Update()
 		m_inSystem = false;
 		m_current = GameLocator::getGame()->GetPlayer()->GetHyperspaceDest();
 	}
-
-	const float frameTime = Pi::GetFrameTime();
 
 	matrix4x4f rot = matrix4x4f::Identity();
 	rot.RotateX(DEG2RAD(-m_rotX));
@@ -1198,7 +1196,7 @@ void SectorView::Update()
 		m_jumpSphere.reset(new Graphics::Drawables::Sphere3D(m_renderer, m_fresnelMat, m_jumpSphereState, 4, 1.0f));
 	}
 
-	UIView::Update();
+	UIView::Update(frameTime);
 }
 
 void SectorView::ShowAll()

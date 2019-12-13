@@ -289,7 +289,7 @@ void WorldView::RefreshButtonStateAndVisibility()
 #endif
 }
 
-void WorldView::Update()
+void WorldView::Update(const float frameTime)
 {
 	PROFILE_SCOPED()
 	assert(GameLocator::getGame());
@@ -340,7 +340,7 @@ void WorldView::Update()
 			item.trail->Reset(playerFrameId);
 	}
 
-	UIView::Update();
+	UIView::Update(frameTime);
 }
 
 void WorldView::BuildUI(UI::Single *container)

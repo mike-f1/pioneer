@@ -20,8 +20,8 @@ public:
 	UIView() :
 		m_templateName(0) {}
 
-	virtual void Update() {}
-	virtual void Draw3D() {}
+	virtual void Update(const float frameTime) override {}
+	virtual void Draw3D() override {}
 	const char *GetTemplateName() { return m_templateName; }
 
 protected:

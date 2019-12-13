@@ -1291,7 +1291,7 @@ void Pi::MainLoop()
 
 		Frame::GetRootFrame()->UpdateInterpTransform(Pi::GetGameTickAlpha());
 
-		m_inGameViews->UpdateView();
+		m_inGameViews->UpdateView(frameTime);
 		m_inGameViews->Draw3DView();
 
 		// hide cursor for ship control. Do this before imgui runs, to prevent the mouse pointer from jumping

@@ -750,17 +750,16 @@ void SystemView::ResetPlanner()
 	m_planner->ResetDv();
 }
 
-void SystemView::Update()
+void SystemView::Update(const float frameTime)
 {
-	const float ft = Pi::GetFrameTime();
 	// XXX ugly hack checking for console here
 	if (!Pi::IsConsoleActive()) {
 		if (Pi::input.KeyState(SDLK_EQUALS) ||
 			m_zoomInButton->IsPressed())
-			m_zoomTo *= pow(ZOOM_IN_SPEED * Pi::input.GetMoveSpeedShiftModifier(), ft);
+			m_zoomTo *= pow(ZOOM_IN_SPEED * Pi::input.GetMoveSpeedShiftModifier(), frameTime);
 		if (Pi::input.KeyState(SDLK_MINUS) ||
 			m_zoomOutButton->IsPressed())
-			m_zoomTo *= pow(ZOOM_OUT_SPEED / Pi::input.GetMoveSpeedShiftModifier(), ft);
+			m_zoomTo *= pow(ZOOM_OUT_SPEED / Pi::input.GetMoveSpeedShiftModifier(), frameTime);
 
 		// transfer planner buttons
 		if (m_plannerIncreaseStartTimeButton->IsPressed()) {
@@ -811,19 +810,19 @@ void SystemView::Update()
 	m_zoom = Clamp(m_zoom, MIN_ZOOM, MAX_ZOOM);
 	// Since m_zoom changes over multiple orders of magnitude, any fixed linear factor will not be appropriate
 	// at some of them.
-	AnimationCurves::Approach(m_zoom, m_zoomTo, ft, 10.f, m_zoomTo / 60.f);
+	AnimationCurves::Approach(m_zoom, m_zoomTo, frameTime, 10.f, m_zoomTo / 60.f);
 
-	AnimationCurves::Approach(m_rot_x, m_rot_x_to, ft);
-	AnimationCurves::Approach(m_rot_z, m_rot_z_to, ft);
+	AnimationCurves::Approach(m_rot_x, m_rot_x_to, frameTime);
+	AnimationCurves::Approach(m_rot_z, m_rot_z_to, frameTime);
 
 	if (Pi::input.MouseButtonState(SDL_BUTTON_RIGHT)) {
 		int motion[2];
 		Pi::input.GetMouseMotion(motion);
-		m_rot_x_to += motion[1] * 20 * ft;
-		m_rot_z_to += motion[0] * 20 * ft;
+		m_rot_x_to += motion[1] * 20 * frameTime;
+		m_rot_z_to += motion[0] * 20 * frameTime;
 	}
 
-	UIView::Update();
+	UIView::Update(frameTime);
 }
 
 void SystemView::MouseWheel(bool up)

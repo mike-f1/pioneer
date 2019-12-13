@@ -76,7 +76,7 @@ public:
 	ObjectViewerView *GetObjectViewerView() const;
 
 	void HandleSDLEvent(SDL_Event event);
-	void UpdateView();
+	void UpdateView(const float frameTime);
 	void Draw3DView();
 
 private:

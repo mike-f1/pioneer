@@ -18,7 +18,7 @@ public:
 
 	void Init();
 
-	virtual void Update() override;
+	virtual void Update(const float frameTime) override;
 	virtual void Draw3D() override;
 
 protected:

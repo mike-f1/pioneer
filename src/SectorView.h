@@ -30,9 +30,9 @@ public:
 	SectorView(const Json &jsonObj, RefCountedPtr<Galaxy> galaxy, unsigned int cacheRadius);
 	virtual ~SectorView();
 
-	virtual void Update();
+	virtual void Update(const float frameTime) override;
 	virtual void ShowAll();
-	virtual void Draw3D();
+	virtual void Draw3D() override;
 	vector3f GetPosition() const { return m_pos; }
 	SystemPath GetCurrent() const { return m_current; }
 	SystemPath GetSelected() const { return m_selected; }

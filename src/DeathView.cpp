@@ -49,11 +49,11 @@ void DeathView::OnSwitchTo()
 	Pi::GetInGameViews()->GetCpan()->HideAll();
 }
 
-void DeathView::Update()
+void DeathView::Update(const float frameTime)
 {
 	assert(GameLocator::getGame()->GetPlayer()->IsDead());
 
-	m_cameraDist += 160.0 * Pi::GetFrameTime();
+	m_cameraDist += 160.0 * frameTime;
 	m_cameraContext->SetCameraPosition(GameLocator::getGame()->GetPlayer()->GetInterpPosition() + vector3d(0, 0, m_cameraDist));
 	m_cameraContext->BeginFrame();
 	m_camera->Update();

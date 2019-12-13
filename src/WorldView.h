@@ -51,8 +51,8 @@ public:
 	WorldView(const Json &jsonObj, Game *game);
 	virtual ~WorldView();
 	virtual void ShowAll();
-	virtual void Update();
-	virtual void Draw3D();
+	virtual void Update(const float frameTime) override;
+	virtual void Draw3D() override;
 	virtual void Draw();
 	static const double PICK_OBJECT_RECT_SIZE;
 	virtual void SaveToJson(Json &jsonObj);

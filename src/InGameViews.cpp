@@ -133,8 +133,8 @@ void InGameViews::HandleSDLEvent(SDL_Event event) {
 	if (m_currentView != nullptr) m_currentView->HandleSDLEvent(event);
 }
 
-void InGameViews::UpdateView() {
-	if (m_currentView != nullptr) m_currentView->Update();
+void InGameViews::UpdateView(const float frameTime) {
+	if (m_currentView != nullptr) m_currentView->Update(frameTime);
 }
 
 void InGameViews::Draw3DView() {

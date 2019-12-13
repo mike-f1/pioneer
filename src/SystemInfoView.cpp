@@ -572,7 +572,7 @@ SystemInfoView::RefreshType SystemInfoView::NeedsRefresh()
 	return REFRESH_NONE;
 }
 
-void SystemInfoView::Update()
+void SystemInfoView::Update(const float frameTime)
 {
 	switch (m_refresh) {
 	case REFRESH_ALL:
@@ -589,7 +589,7 @@ void SystemInfoView::Update()
 	case REFRESH_NONE:
 		break;
 	}
-	UIView::Update();
+	UIView::Update(frameTime);
 }
 
 void SystemInfoView::OnSwitchTo()

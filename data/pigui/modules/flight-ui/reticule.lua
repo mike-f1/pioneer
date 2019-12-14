@@ -332,23 +332,20 @@ local function displayDetailData(target, radius, combatTarget, navTarget, colorL
 	local ratio = brake_distance / altitude
 	local ratio_retro = brake_distance_retro / altitude
 
-	speed, speed_unit = ui.Format.Speed(velocity:length())
+	speed = ui.Format.Speed(velocity:length())
 
 	uiPos = ui.pointOnClock(center, radius, 3)
-	local distance,unit = ui.Format.Distance(brake_distance)
+	local distance = ui.Format.Distance(brake_distance)
 	ui.addFancyText(uiPos, ui.anchor.left, ui.anchor.baseline, {
 		{ text="~" .. distance, color=colorDark, font=pionillium.medium, tooltip=lui.HUD_BRAKE_DISTANCE_MAIN_THRUSTERS },
-		{ text=unit,            color=colorDark, font=pionillium.small,  tooltip=lui.HUD_BRAKE_DISTANCE_MAIN_THRUSTERS }
 	}, colors.lightBlackBackground)
 
 	-- current altitude
 	uiPos = ui.pointOnClock(center, radius, 3.25)
-	local altitude, altitude_unit = ui.Format.Distance(altitude)
+	local altitude = ui.Format.Distance(altitude)
 	ui.addFancyText(uiPos, ui.anchor.left, ui.anchor.baseline, {
 		{ text=altitude,      color=colorLight, font=pionillium.medium, tooltip=lui.HUD_DISTANCE_TO_SURFACE_OF_TARGET },
-		{ text=altitude_unit, color=colorDark,  font=pionillium.small,  tooltip=lui.HUD_DISTANCE_TO_SURFACE_OF_TARGET },
 		{ text=" " .. speed,  color=colorLight, font=pionillium.medium, tooltip=lui.HUD_SPEED_RELATIVE_TO_TARGET },
-		{ text=speed_unit,    color=colorDark,  font=pionillium.small,  tooltip=lui.HUD_SPEED_RELATIVE_TO_TARGET }
 	}, colors.lightBlackBackground)
 
 	-- current speed of approach
@@ -367,7 +364,7 @@ local function displayFrameData(frame, radius)
 	local brake_distance = player:GetDistanceToZeroV(velocity:length(),"forward")
 	local altitude, altitude_unit = ui.Format.Distance(altitude)
 	local approach_speed = position:dot(velocity) / position:length()
-	local speed, speed_unit = ui.Format.Speed(approach_speed)
+	local speed = ui.Format.Speed(approach_speed)
 	local uiPos = ui.pointOnClock(center, radius, -2.46)
 	-- label of frame
 	ui.addStyledText(uiPos, ui.anchor.right, ui.anchor.baseline, frame.label, colors.frame, pionillium.medium, lui.HUD_CURRENT_FRAME, colors.lightBlackBackground)
@@ -375,25 +372,20 @@ local function displayFrameData(frame, radius)
 	uiPos = ui.pointOnClock(center, radius, -2.75)
 	ui.addFancyText(uiPos, ui.anchor.right, ui.anchor.baseline, {
 		{ text=speed,      color=colors.frame,     font=pionillium.medium, tooltip=lui.HUD_SPEED_OF_APPROACH_TO_FRAME },
-		{ text=speed_unit, color=colors.frameDark, font=pionillium.small,  tooltip=lui.HUD_SPEED_OF_APPROACH_TO_FRAME }
 	}, colors.lightBlackBackground)
 	-- brake distance
 	uiPos = ui.pointOnClock(center, radius, -3)
-	local distance,unit = ui.Format.Distance(brake_distance)
+	local distance = ui.Format.Distance(brake_distance)
 	ui.addFancyText(uiPos, ui.anchor.right, ui.anchor.baseline, {
 		{ text="~" .. distance, color=colors.frame,     font=pionillium.medium, tooltip=lui.HUD_BRAKE_DISTANCE_MAIN_THRUSTERS },
-		{ text=unit,            color=colors.frameDark, font=pionillium.small,  tooltip=lui.HUD_BRAKE_DISTANCE_MAIN_THRUSTERS }
 	}, colors.lightBlackBackground)
 
-
 	-- altitude above frame
-	speed, speed_unit = ui.Format.Speed(velocity:length())
+	speed = ui.Format.Speed(velocity:length())
 	uiPos = ui.pointOnClock(center, radius, -3.25)
 	ui.addFancyText(uiPos, ui.anchor.right, ui.anchor.baseline, {
 		{ text=speed,           color=colors.frame,     font=pionillium.medium, tooltip=lui.HUD_SPEED_RELATIVE_TO_TARGET },
-		{ text=speed_unit,      color=colors.frameDark, font=pionillium.small,  tooltip=lui.HUD_SPEED_RELATIVE_TO_TARGET },
 		{ text=' ' .. altitude, color=colors.frame,     font=pionillium.medium, tooltip=lui.HUD_DISTANCE_TO_SURFACE_OF_FRAME },
-		{ text=altitude_unit,   color=colors.frameDark, font=pionillium.small,  tooltip=lui.HUD_DISTANCE_TO_SURFACE_OF_FRAME }
 	}, colors.lightBlackBackground)
 
 end

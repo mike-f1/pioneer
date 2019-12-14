@@ -237,86 +237,11 @@ ui.Format = {
 	Longitude = function(decimal_degrees)
 		return Format.Longitude(decimal_degrees)
 	end,
-	Duration = function(duration, elements)
-		-- shown elements items (2 -> wd or dh, 3 -> dhm or hms)
-		local negative = false
-		if duration < 0 then
-			duration = math.abs(duration)
-			negative = true
-		end
-		local seconds = math.floor(duration % 60)
-		local minutes = math.floor(duration / 60 % 60)
-		local hours = math.floor(duration / 60 / 60 % 24)
-		local days = math.floor(duration / 60 / 60 / 24 % 7)
-		local weeks = math.floor(duration / 60 / 60 / 24 / 7)
-		local i = elements or 5
-		local count = false
-		local result = ""
-		if i > 0 then
-			if weeks ~= 0 then
-				result = result .. weeks .. "w"
-				count = true
-			end
-			if count then
-				i = i - 1
-			end
-		end
-		if i > 0 then
-			if days ~= 0 then
-				result = result .. days .. "d"
-				count = true
-			end
-			if count then
-				i = i - 1
-			end
-		end
-		if i > 0 then
-			if hours ~= 0 then
-				result = result .. hours .. "h"
-				count = true
-			end
-			if count then
-				i = i - 1
-			end
-		end
-		if i > 0 then
-			if minutes ~= 0 then
-				result = result .. minutes .. "m"
-				count = true
-			end
-			if count then
-				i = i - 1
-			end
-		end
-		if i > 0 then
-			if seconds ~= 0 then
-				result = result .. seconds .. "s"
-				count = true
-			end
-			if result == "" then
-				result = "0s"
-			end
-			if count then
-				i = i - 1
-			end
-		end
-		if negative then
-			result = "-" .. result
-		end
-		return result
+	Duration = function(duration)
+		return Format.Duration(duration)
 	end,
 	Distance = function(distance)
-		local d = math.abs(distance)
-		if d < 1000 then
-			return math.floor(distance), lc.UNIT_METERS
-		end
-		if d < 1000*1000 then
-			return string.format("%0.2f", distance / 1000), lc.UNIT_KILOMETERS
-		end
-		if d < 1000*1000*1000 then
-			return string.format("%0.2f", distance / 1000 / 1000), lc.UNIT_MILLION_METERS
-		end
-		return string.format("%0.2f", distance / 1.4960e11), lc.UNIT_AU
+		return Format.Distance(distance)
 	end,
 	Speed = function(distance)
 		local d = math.abs(distance)

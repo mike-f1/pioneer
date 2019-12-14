@@ -42,8 +42,8 @@ static const double DEFAULT_VIEW_DISTANCE = 10.0;
 SystemView::SystemView() :
 	UIView(),
 	m_gridDrawing(GridDrawing::OFF),
-	m_shipDrawing(OFF),
-	m_showL4L5(LAG_OFF)
+	m_shipDrawing(ShipDrawing::OFF),
+	m_showL4L5(ShowLagrange::LAG_OFF)
 {
 	SetTransparency(true);
 
@@ -338,9 +338,9 @@ void SystemView::OnClickRealt()
 void SystemView::ResetViewpoint()
 {
 	m_selectedObject = nullptr;
-	m_rot_z = 0;
+	m_rot_y = 0;
 	m_rot_x = 50;
-	m_rot_z_to = m_rot_z;
+	m_rot_y_to = m_rot_y;
 	m_rot_x_to = m_rot_x;
 	m_zoom = 1.0f / float(AU);
 	m_zoomTo = m_zoom;
@@ -709,7 +709,7 @@ void SystemView::Draw3D()
 	matrix4x4f trans = matrix4x4f::Identity();
 	trans.Translate(0, 0, -DEFAULT_VIEW_DISTANCE);
 	trans.Rotate(DEG2RAD(m_rot_x), 1, 0, 0);
-	trans.Rotate(-DEG2RAD(m_rot_z), 0, 0, 1);
+	trans.Rotate(DEG2RAD(m_rot_y), 0, 1, 0);
 	m_renderer->SetTransform(trans);
 
 	vector3d pos(0, 0, 0);
@@ -813,13 +813,13 @@ void SystemView::Update(const float frameTime)
 	AnimationCurves::Approach(m_zoom, m_zoomTo, frameTime, 10.f, m_zoomTo / 60.f);
 
 	AnimationCurves::Approach(m_rot_x, m_rot_x_to, frameTime);
-	AnimationCurves::Approach(m_rot_z, m_rot_z_to, frameTime);
+	AnimationCurves::Approach(m_rot_y, m_rot_y_to, frameTime);
 
 	if (Pi::input.MouseButtonState(SDL_BUTTON_RIGHT)) {
 		int motion[2];
 		Pi::input.GetMouseMotion(motion);
 		m_rot_x_to += motion[1] * 20 * frameTime;
-		m_rot_z_to += motion[0] * 20 * frameTime;
+		m_rot_y_to += motion[0] * 20 * frameTime;
 	}
 
 	UIView::Update(frameTime);

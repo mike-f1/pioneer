@@ -3,6 +3,7 @@
 
 local ui = import 'pigui'
 local Game = import 'Game'
+local Format = import 'Format'
 local Vector2 = _G.Vector2
 
 -- cache ui
@@ -85,7 +86,7 @@ local function displayTargetScanner()
 				local mass = stats.staticMass
 				local path,destName = ship:GetHyperspaceDestination()
 				local date = target:GetDueDate()
-				local dueDate = ui.Format.Datetime(date)
+				local dueDate = Format.Datetime(date)
 				local uiPos = shipInfoLowerBound + Vector2(0, 15)
 				local name = (arrival and lc.HYPERSPACE_ARRIVAL_CLOUD or lc.HYPERSPACE_DEPARTURE_CLOUD)
 				local r = ui.addStyledText(uiPos, ui.anchor.right, ui.anchor.top, name , colors.frame, pionillium.medium, nil, colors.lightBlackBackground)

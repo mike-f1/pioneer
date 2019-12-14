@@ -6,6 +6,7 @@ local Lang = import("Lang")
 local lc = Lang.GetResource("core")
 local lui = Lang.GetResource("ui-core");
 local Equipment = import("Equipment")
+local Format = import("Format")
 
 local player = nil
 local colors = ui.theme.colors
@@ -57,7 +58,7 @@ local function showJumpData(start, target, status, distance, fuel, duration, sho
 			ui.sameLine()
 			ui.text(fuel .. lc.UNIT_TONNES)
 			ui.sameLine()
-			ui.text(ui.Format.Duration(duration, 2))
+			ui.text(Format.Duration(duration, 2))
 		end)
 	end
 end -- showJumpData
@@ -93,7 +94,7 @@ local function showInfo()
 		ui.sameLine()
 		ui.text(lui.REQUIRED_FUEL .. " " .. total_fuel .. lc.UNIT_TONNES)
 
-		ui.text(lui.TOTAL_DURATION .. " " ..ui.Format.Duration(total_duration, 2))
+		ui.text(lui.TOTAL_DURATION .. " " ..Format.Duration(total_duration, 2))
 		ui.sameLine()
 		ui.text(lui.TOTAL_DISTANCE .. " " ..string.format("%.2f", total_distance) .. lc.UNIT_LY)
 	end

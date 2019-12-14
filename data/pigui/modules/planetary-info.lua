@@ -9,6 +9,7 @@ local lc = Lang.GetResource("core");
 local lui = Lang.GetResource("ui-core");
 local utils = import("utils")
 local Event = import("Event")
+local Format = import("Format")
 
 local player = nil
 local pionillium = ui.fonts.pionillium
@@ -36,19 +37,19 @@ local function displayPlanetaryInfo()
 																ui.columns(2, "", false)
 																ui.icon(icons.altitude, iconSize, colors.reticuleCircle)
 																ui.sameLine()
-																local altitude = ui.Format.Distance(alt)
+																local altitude = Format.Distance(alt)
 																ui.text(altitude)
 																ui.icon(icons.normal, iconSize, colors.reticuleCircle)
 																ui.sameLine()
-																local speed = ui.Format.Speed(vspd)
+																local speed = Format.Speed(vspd)
 																ui.text(speed)
 																ui.nextColumn()
 																ui.icon(icons.latitude, iconSize, colors.reticuleCircle)
 																ui.sameLine()
-																ui.text(ui.Format.Latitude(latitude))
+																ui.text(Format.Latitude(latitude))
 																ui.icon(icons.longitude, iconSize, colors.reticuleCircle)
 																ui.sameLine()
-																ui.text(ui.Format.Longitude(longitude))
+																ui.text(Format.Longitude(longitude))
 									end)
 			end)
 		end

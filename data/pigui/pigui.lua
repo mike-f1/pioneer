@@ -230,28 +230,6 @@ ui.circleSegments = function(radius)
 	end
 end
 
-ui.Format = {
-	Latitude = function(decimal_degrees)
-		return Format.Latitude(decimal_degrees)
-	end,
-	Longitude = function(decimal_degrees)
-		return Format.Longitude(decimal_degrees)
-	end,
-	Duration = function(duration)
-		return Format.Duration(duration)
-	end,
-	Distance = function(distance)
-		return Format.Distance(distance)
-	end,
-	Speed = function(speed)
-		return Format.Speed(speed)
-		-- no need for au/s
-	end,
-  Datetime = function(date)
-		return Format.Date(date)
-  end
-}
-
 ui.addIcon = function(position, icon, color, size, anchor_horizontal, anchor_vertical, tooltip, angle_rad)
 	local pos = ui.calcTextAlignment(position, size, anchor_horizontal, anchor_vertical)
 	local uv0, uv1 = get_icon_tex_coords(icon)
@@ -707,6 +685,7 @@ ui.coloredSelectedButton = function(label, thesize, is_selected, bg_color, toolt
 	end
 	return res
 end
+
 ui.coloredSelectedIconButton = function(icon, thesize, is_selected, frame_padding, bg_color, fg_color, tooltip, img_size)
 	if is_selected then
 		pigui.PushStyleColor("Button", bg_color)

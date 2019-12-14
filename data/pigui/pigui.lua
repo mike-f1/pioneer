@@ -132,6 +132,7 @@ function ui.child(id, size, flags, fun)
 	fun()
 	pigui.EndChild()
 end
+
 function ui.withFont(name, size, fun)
 	-- allow `withFont(fontObj, fun)`
 	if type(name) == "table" and type(size) == "function" then
@@ -231,26 +232,10 @@ end
 
 ui.Format = {
 	Latitude = function(decimal_degrees)
-		local prefix = lc.LATITUDE_NORTH_ABBREV
-		if decimal_degrees < 0 then
-			prefix = lc.LATITUDE_SOUTH_ABBREV
-			decimal_degrees = math.abs(decimal_degrees)
-		end
-		local deg = math.floor(decimal_degrees)
-		local min = (decimal_degrees - deg) * 60
-		local sec = (min - math.floor(min)) * 60
-		return string.format('%s %03i°%02i\'%02i"', prefix, deg, min, sec)
+		return Format.Latitude(decimal_degrees)
 	end,
 	Longitude = function(decimal_degrees)
-		local prefix = lc.LONGITUDE_EAST_ABBREV
-		if decimal_degrees < 0 then
-			prefix = lc.LONGITUDE_WEST_ABBREV
-			decimal_degrees = math.abs(decimal_degrees)
-		end
-		local deg = math.floor(decimal_degrees)
-		local min = (decimal_degrees - deg) * 60
-		local sec = (min - math.floor(min)) * 60
-		return string.format('%s %03i°%02i\'%02i"', prefix, deg, min, sec)
+		return Format.Longitude(decimal_degrees)
 	end,
 	Duration = function(duration, elements)
 		-- shown elements items (2 -> wd or dh, 3 -> dhm or hms)

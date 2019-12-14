@@ -146,6 +146,20 @@ static int l_format_duration(lua_State *l)
 	return 1;
 }
 
+static int l_format_latitude(lua_State *l)
+{
+	double lat = luaL_checknumber(l, 1);
+	lua_pushstring(l, format_latitude(lat).c_str());
+	return 1;
+}
+
+static int l_format_longitude(lua_State *l)
+{
+	double longi = luaL_checknumber(l, 1);
+	lua_pushstring(l, format_longitude(longi).c_str());
+	return 1;
+}
+
 void LuaFormat::Register()
 {
 	lua_State *l = Lua::manager->GetLuaState();
@@ -159,6 +173,8 @@ void LuaFormat::Register()
 		{ "AccelG", l_format_accel_g },
 		{ "MassTonnes", l_format_mass_tonnes },
 		{ "Duration", l_format_duration },
+		{ "Latitude", l_format_latitude },
+		{ "Longitude", l_format_longitude },
 		{ 0, 0 }
 	};
 

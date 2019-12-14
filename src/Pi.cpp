@@ -716,6 +716,32 @@ void Pi::OnChangeDetailLevel()
 	BaseSphere::OnChangeDetailLevel(GameConfSingleton::getDetail().planets);
 }
 
+void Pi::HandleEscKey()
+{
+	if (!m_inGameViews) return;
+
+	if (!m_inGameViews->IsEmptyView()) {
+		if (m_inGameViews->IsSectorView()) {
+			m_inGameViews->SetView(ViewType::WORLD);
+		} else if ((m_inGameViews->IsSystemView()) || (m_inGameViews->IsSystemInfoView())) {
+			m_inGameViews->SetView(ViewType::SECTOR);
+		} else {
+			UIView *view = dynamic_cast<UIView *>(m_inGameViews->GetView());
+			if (view) {
+				// checks the template name
+				const char *tname = view->GetTemplateName();
+				if (tname) {
+					if (!strcmp(tname, "GalacticView")) {
+						m_inGameViews->SetView(ViewType::SECTOR);
+					} else if (!strcmp(tname, "InfoView") || !strcmp(tname, "StationView")) {
+						m_inGameViews->SetView(ViewType::WORLD);
+					}
+				}
+			}
+		}
+	}
+}
+
 void Pi::HandleKeyDown(SDL_Keysym *key)
 {
 	if (key->sym == SDLK_ESCAPE) {
@@ -893,30 +919,6 @@ void Pi::HandleKeyDown(SDL_Keysym *key)
 	}
 }
 
-void Pi::HandleEscKey()
-{
-	if (!m_inGameViews->IsEmptyView()) {
-		if (m_inGameViews->IsSectorView()) {
-			m_inGameViews->SetView(ViewType::WORLD);
-		} else if ((m_inGameViews->IsSystemView()) || (m_inGameViews->IsSystemInfoView())) {
-			m_inGameViews->SetView(ViewType::SECTOR);
-		} else {
-			UIView *view = dynamic_cast<UIView *>(m_inGameViews->GetView());
-			if (view) {
-				// checks the template name
-				const char *tname = view->GetTemplateName();
-				if (tname) {
-					if (!strcmp(tname, "GalacticView")) {
-						m_inGameViews->SetView(ViewType::SECTOR);
-					} else if (!strcmp(tname, "InfoView") || !strcmp(tname, "StationView")) {
-						m_inGameViews->SetView(ViewType::WORLD);
-					}
-				}
-			}
-		}
-	}
-}
-
 void Pi::HandleEvents()
 {
 	PROFILE_SCOPED()
@@ -972,7 +974,7 @@ void Pi::HandleEvents()
 		bool consoleActive = Pi::IsConsoleActive();
 		if (!consoleActive) {
 			KeyBindings::DispatchSDLEvent(&event);
-			if (GameLocator::getGame()) m_inGameViews->HandleSDLEvent(event);
+			if (m_inGameViews) m_inGameViews->HandleSDLEvent(event);
 		} else {
 			KeyBindings::toggleLuaConsole.CheckSDLEventAndDispatch(&event);
 		}

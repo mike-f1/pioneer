@@ -345,8 +345,7 @@ ui.Format = {
 		-- no need for au/s
 	end,
   Datetime = function(date)
-		local second, minute, hour, day, month, year = Game.GetPartsFromDateTime(date)
-		return string.format("%4i-%02i-%02i %02i:%02i:%02i", year, month, day, hour, minute, second)
+		return Format.Date(date)
   end
 }
 

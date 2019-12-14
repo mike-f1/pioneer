@@ -539,21 +539,6 @@ static int l_game_set_time_acceleration(lua_State *l)
 	return 0;
 }
 
-static int l_game_get_date_time(lua_State *l)
-{
-	Time::DateTime t(GameLocator::getGame()->GetTime());
-	int year, month, day, hour, minute, second;
-	t.GetDateParts(&year, &month, &day);
-	t.GetTimeParts(&hour, &minute, &second);
-	lua_pushinteger(l, year);
-	lua_pushinteger(l, month);
-	lua_pushinteger(l, day);
-	lua_pushinteger(l, hour);
-	lua_pushinteger(l, minute);
-	lua_pushinteger(l, second);
-	return 6;
-}
-
 static int l_game_set_view(lua_State *l)
 {
 	if (!GameLocator::getGame())
@@ -616,6 +601,11 @@ static int l_game_get_hyperspace_travelled_percentage(lua_State *l)
 	return 1;
 }
 
+/*
+COMMENTED as conversion function are in LuaFormat
+Left here because it may become usefull if someone wanna
+do its "home made" date/time conversion.
+(Or also make a customizable function)
 static int l_game_get_parts_from_date_time(lua_State *l)
 {
 	float time = LuaPull<float>(l, 1);
@@ -631,6 +621,7 @@ static int l_game_get_parts_from_date_time(lua_State *l)
 	LuaPush(l, year);
 	return 6;
 }
+*/
 
 void LuaGame::Register()
 {
@@ -651,8 +642,6 @@ void LuaGame::Register()
 		{ "SwitchView", l_game_switch_view },
 		{ "CurrentView", l_game_current_view },
 		{ "SetView", l_game_set_view },
-		{ "GetDateTime", l_game_get_date_time },
-		{ "GetPartsFromDateTime", l_game_get_parts_from_date_time },
 		{ "SetTimeAcceleration", l_game_set_time_acceleration },
 		{ "GetTimeAcceleration", l_game_get_time_acceleration },
 		{ "GetRequestedTimeAcceleration", l_game_get_requested_time_acceleration },

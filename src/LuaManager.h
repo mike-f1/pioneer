@@ -4,21 +4,21 @@
 #ifndef _LUAMANAGER_H
 #define _LUAMANAGER_H
 
-#include "LuaUtils.h"
+#include <lua.hpp>
 
 class LuaManager {
 public:
 	LuaManager();
 	~LuaManager();
 
+	LuaManager(const LuaManager &) = delete;
+	LuaManager &operator=(const LuaManager &) = delete;
+
 	lua_State *GetLuaState() { return m_lua; }
 	size_t GetMemoryUsage() const;
 	void CollectGarbage();
 
 private:
-	LuaManager(const LuaManager &);
-	LuaManager &operator=(const LuaManager &) = delete;
-
 	lua_State *m_lua;
 };
 

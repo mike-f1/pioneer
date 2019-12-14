@@ -6,6 +6,7 @@
 #include "Game.h"
 #include "GameLocator.h"
 #include "GameLog.h"
+#include "LuaManager.h"
 #include "LuaObject.h"
 
 /*
@@ -42,7 +43,7 @@
 static int l_comms_message(lua_State *l)
 {
 	if (!GameLocator::getGame() || !GameLocator::getGame()->log)
-		luaL_error(l, "Control panel does not exist.");
+		luaL_error(l, "Log does not exist.");
 
 	std::string msg = luaL_checkstring(l, 1);
 
@@ -85,7 +86,7 @@ static int l_comms_message(lua_State *l)
 static int l_comms_important_message(lua_State *l)
 {
 	if (!GameLocator::getGame() || !GameLocator::getGame()->log)
-		luaL_error(l, "Control panel does not exist.");
+		luaL_error(l, "Log does not exist.");
 
 	std::string msg = luaL_checkstring(l, 1);
 

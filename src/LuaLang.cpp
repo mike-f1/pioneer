@@ -2,9 +2,11 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "LuaLang.h"
+
 #include "GameConfig.h"
 #include "GameConfSingleton.h"
 #include "Lang.h"
+#include "LuaManager.h"
 #include "LuaObject.h"
 #include "LuaUtils.h"
 #include <algorithm>

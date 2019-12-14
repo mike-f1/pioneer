@@ -12,6 +12,7 @@
 #include "GameSaveError.h"
 #include "InGameViews.h"
 #include "Lang.h"
+#include "LuaManager.h"
 #include "LuaObject.h"
 #include "LuaUtils.h"
 #include "Pi.h"

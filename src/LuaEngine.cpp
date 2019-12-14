@@ -15,6 +15,7 @@
 #include "KeyBindings.h"
 #include "Lang.h"
 #include "LuaConstants.h"
+#include "LuaManager.h"
 #include "LuaObject.h"
 #include "LuaPiGui.h"
 #include "LuaUtils.h"

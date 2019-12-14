@@ -7,7 +7,6 @@
 #include "LuaUtils.h"
 #include "PropertiedObject.h"
 #include "PropertyMap.h"
-#include "libs.h"
 
 #include <map>
 #include <utility>

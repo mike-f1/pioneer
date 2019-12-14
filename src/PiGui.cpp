@@ -3,6 +3,9 @@
 
 #include "PiGui.h"
 #include "Pi.h"
+
+#include "LuaManager.h"
+
 #include "graphics/opengl/TextureGL.h" // nasty, usage of GL is implementation specific
 // Use GLEW instead of GL3W.
 #define IMGUI_IMPL_OPENGL_LOADER_GLEW 1

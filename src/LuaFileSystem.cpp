@@ -5,6 +5,7 @@
 
 #include "FileSystem.h"
 #include "LuaConstants.h"
+#include "LuaManager.h"
 #include "LuaObject.h"
 
 /*

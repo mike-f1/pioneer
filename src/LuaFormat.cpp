@@ -4,6 +4,7 @@
 #include "LuaFormat.h"
 
 #include "Lang.h"
+#include "LuaManager.h"
 #include "LuaObject.h"
 #include "LuaUtils.h"
 #include "StringF.h"

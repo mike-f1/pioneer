@@ -82,6 +82,36 @@ static int l_format_distance(lua_State *l)
 }
 
 /*
+ * Function: Speed
+ *
+ * Create a string representation of the given speed value.
+ *
+ * > string = Format.Speed(speed)
+ *
+ * Parameters:
+ *
+ *   speed - a speed in metres/second
+ *
+ * Return:
+ *
+ *   string - the string representation
+ *
+ * Availability:
+ *
+ *   Dec 2019
+ *
+ * Status:
+ *
+ *   stable
+ */
+static int l_format_speed(lua_State *l)
+{
+	double t = luaL_checknumber(l, 1);
+	lua_pushstring(l, format_speed(t).c_str());
+	return 1;
+}
+
+/*
  * Function: Money
  *
  * Create a string representation of the given money value.
@@ -169,6 +199,7 @@ void LuaFormat::Register()
 	static const luaL_Reg l_methods[] = {
 		{ "Date", l_format_date },
 		{ "Distance", l_format_distance },
+		{ "Speed", l_format_speed },
 		{ "Money", l_format_money },
 		{ "AccelG", l_format_accel_g },
 		{ "MassTonnes", l_format_mass_tonnes },

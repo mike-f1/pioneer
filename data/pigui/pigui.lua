@@ -243,15 +243,8 @@ ui.Format = {
 	Distance = function(distance)
 		return Format.Distance(distance)
 	end,
-	Speed = function(distance)
-		local d = math.abs(distance)
-		if d < 1000 then
-			return math.floor(distance), lc.UNIT_METERS_PER_SECOND
-		end
-		if d < 1000*1000 then
-			return string.format("%0.2f", distance / 1000), lc.UNIT_KILOMETERS_PER_SECOND
-		end
-		return string.format("%0.2f", distance / 1000 / 1000), lc.UNIT_MILLION_METERS_PER_SECOND
+	Speed = function(speed)
+		return Format.Speed(speed)
 		-- no need for au/s
 	end,
   Datetime = function(date)

@@ -258,9 +258,21 @@ std::string format_longitude(double decimal_degree)
 	return ss.str();
 }
 
-std::string format_speed(double speed)
+std::string format_speed(double speed, int precision)
 {
 	std::ostringstream ss;
+	ss.setf(std::ios::fixed, std::ios::floatfield);
+	if (speed < 1e3) {
+		ss.precision(0);
+		ss << speed << Lang::UNIT_METERS_PER_SECOND;
+	} else {
+		ss.precision(precision);
+
+		if (speed < 1e6)
+			ss << (speed * 1e-3) << Lang::UNIT_KILOMETERS_PER_SECOND;
+		else if (speed < AU * 0.01)
+			ss << (speed * 1e-6) << Lang::UNIT_MILLION_METERS_PER_SECOND;
+	}
 	return ss.str();
 }
 

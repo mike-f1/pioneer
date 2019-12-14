@@ -70,7 +70,7 @@ std::string format_money(double cents, bool showCents = true);
 std::string format_duration(double seconds);
 std::string format_latitude(double decimal_degree);
 std::string format_longitude(double decimal_degree);
-std::string format_speed(double speed);
+std::string format_speed(double speed, int precision = 2);
 
 static inline Sint64 isqrt(Sint64 a)
 {

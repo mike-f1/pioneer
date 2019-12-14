@@ -159,13 +159,12 @@ local function displayReticuleDeltaV()
 	  gauge(dvc, reticuleCircleRadius + offset + thickness, colors.deltaVCurrent, thickness)
 	end
 
-	local dvr_text, dvr_unit = ui.Format.Speed(deltav_remaining)
+	local dvr_text = ui.Format.Speed(deltav_remaining)
 	local uiPos = ui.pointOnClock(center, reticuleCircleRadius + 5, 7)
 	ui.addFancyText(uiPos, ui.anchor.right, ui.anchor.top, {
 		{ text=math.floor(dvr*100), color=colors.reticuleCircle,     font=pionillium.small, tooltip=lui.HUD_DELTA_V_PERCENT },
 		{ text='% ',                color=colors.reticuleCircleDark, font=pionillium.tiny,  tooltip=lui.HUD_DELTA_V_PERCENT },
 		{ text=dvr_text,            color=colors.reticuleCircle,     font=pionillium.small, tooltip=lui.HUD_DELTA_V },
-		{ text=dvr_unit,            color=colors.reticuleCircleDark, font=pionillium.tiny,  tooltip=lui.HUD_DELTA_V }
 	}, colors.lightBlackBackground)
 end
 
@@ -318,11 +317,10 @@ local function displayDetailData(target, radius, combatTarget, navTarget, colorL
 	-- currently unused: local distance, distance_unit = ui.Format.Distance(player:DistanceTo(target))
 	local approach_speed = position:dot(velocity) / position:length()
 
-	local speed, speed_unit = ui.Format.Speed(approach_speed)
+	local speed = ui.Format.Speed(approach_speed)
 
 	ui.addFancyText(uiPos, ui.anchor.left, ui.anchor.baseline, {
 		{ text=speed,      color=colorLight, font=pionillium.medium, tooltip=lui.HUD_SPEED_OF_APPROACH_TO_TARGET },
-		{ text=speed_unit, color=colorDark,  font=pionillium.small,  tooltip=lui.HUD_SPEED_OF_APPROACH_TO_TARGET }
 	}, colors.lightBlackBackground)
 
 	-- current brake distance
@@ -416,7 +414,7 @@ end
 local function displaySetSpeed(radius)
 	local setSpeed = player:GetSetSpeed()
 	if setSpeed ~= nil then
-		local distance, unit = ui.Format.Speed(setSpeed)
+		local distance = ui.Format.Speed(setSpeed)
 		local uiPos = ui.pointOnClock(center, radius, 4.0)
 		local target = player:GetSetSpeedTarget()
 		if target then
@@ -425,7 +423,6 @@ local function displaySetSpeed(radius)
 			ui.addFancyText(uiPos, ui.anchor.left, ui.anchor.top, {
 				{ text=icons.autopilot_set_speed, color=color,     font=pionicons.medium,  tooltip="set speed" },
 				{ text=distance,                  color=color,     font=pionillium.medium, tooltip="set speed" },
-				{ text=unit,                      color=colorDark, font=pionillium.small,  tooltip="set speed" },
 				{ text=' ' .. target.label,       color=color,     font=pionillium.medium, tooltip="set speed" }
 			}, colors.lightBlackBackground)
 		end

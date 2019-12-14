@@ -5,34 +5,41 @@
 
 #if WITH_OBJECTVIEWER
 
+#include "ObjectViewerView.h"
+
 #include "Camera.h"
 #include "Frame.h"
 #include "Game.h"
 #include "GameConfig.h"
 #include "GameConfSingleton.h"
 #include "GameLocator.h"
-#include "ObjectViewerView.h"
 #include "Pi.h"
-#include "Planet.h"
 #include "Player.h"
 #include "Random.h"
 #include "RandomSingleton.h"
-#include "Space.h"
 #include "StringF.h"
-#include "WorldView.h"
+#include "TerrainBody.h"
 #include "galaxy/SystemBody.h"
 #include "graphics/Drawables.h"
 #include "graphics/Light.h"
 #include "graphics/Renderer.h"
 #include "terrain/Terrain.h"
 
+#include "gui/GuiBox.h"
+#include "gui/GuiButton.h"
+#include "gui/GuiLabel.h"
+#include "gui/GuiScreen.h"
+#include "gui/GuiTextEntry.h"
+
 #include <sstream>
+
+constexpr const float VIEW_DIST = 1000.0;
 
 ObjectViewerView::ObjectViewerView(Game *game) :
 	UIView()
 {
 	SetTransparency(true);
-	viewingDist = 1000.0f;
+	m_viewingDist = VIEW_DIST;
 	m_camRot = matrix4x4d::Identity();
 
 	float size[2];
@@ -49,7 +56,7 @@ ObjectViewerView::ObjectViewerView(Game *game) :
 	m_camera.reset(new Camera(m_cameraContext, Pi::renderer));
 
 	m_cameraContext->SetCameraFrame(game->GetPlayer()->GetFrame());
-	m_cameraContext->SetCameraPosition(game->GetPlayer()->GetInterpPosition() + vector3d(0, 0, viewingDist));
+	m_cameraContext->SetCameraPosition(game->GetPlayer()->GetInterpPosition() + vector3d(0, 0, m_viewingDist));
 	m_cameraContext->SetCameraOrient(matrix3x3d::Identity());
 
 	m_infoLabel = new Gui::Label("");
@@ -133,24 +140,23 @@ void ObjectViewerView::Draw3D()
 		Pi::input.GetMouseMotion(m);
 		m_camRot = matrix4x4d::RotateXMatrix(-0.002 * m[1]) *
 			matrix4x4d::RotateYMatrix(-0.002 * m[0]) * m_camRot;
-		m_cameraContext->SetCameraPosition(GameLocator::getGame()->GetPlayer()->GetInterpPosition() + vector3d(0, 0, viewingDist));
+		m_cameraContext->SetCameraPosition(GameLocator::getGame()->GetPlayer()->GetInterpPosition() + vector3d(0, 0, m_viewingDist));
 		m_cameraContext->BeginFrame();
 		m_camera->Update();
 	}
 
-	Body *body = GameLocator::getGame()->GetPlayer()->GetNavTarget();
-	if (body) {
-		if (body->IsType(Object::STAR))
+	if (m_lastTarget) {
+		if (m_lastTarget->IsType(Object::STAR))
 			light.SetPosition(vector3f(0.f));
 		else {
 			light.SetPosition(vector3f(0.577f));
 		}
 		m_renderer->SetLights(1, &light);
 
-		body->Render(m_renderer, m_camera.get(), vector3d(0, 0, -viewingDist), m_camRot);
+		m_lastTarget->Render(m_renderer, m_camera.get(), vector3d(0, 0, -m_viewingDist), m_camRot);
 
 		// industry-standard red/green/blue XYZ axis indiactor
-		m_renderer->SetTransform(matrix4x4d::Translation(vector3d(0, 0, -viewingDist)) * m_camRot * matrix4x4d::ScaleMatrix(body->GetClipRadius() * 2.0));
+		m_renderer->SetTransform(matrix4x4d::Translation(vector3d(0, 0, -m_viewingDist)) * m_camRot * matrix4x4d::ScaleMatrix(m_lastTarget->GetClipRadius() * 2.0));
 		Graphics::Drawables::GetAxes3DDrawable(m_renderer)->Draw(m_renderer);
 	}
 
@@ -170,16 +176,21 @@ void ObjectViewerView::OnSwitchTo()
 
 void ObjectViewerView::Update(const float frameTime)
 {
-	if (Pi::input.KeyState(SDLK_EQUALS)) viewingDist *= 0.99f;
-	if (Pi::input.KeyState(SDLK_MINUS)) viewingDist *= 1.01f;
-	viewingDist = Clamp(viewingDist, 10.0f, 1e12f);
+	if (Pi::input.KeyState(SDLK_PERIOD)) m_viewingDist *= 0.99f;
+	if (Pi::input.KeyState(SDLK_MINUS)) m_viewingDist *= 1.01f;
+	if (Pi::input.KeyState(SDLK_SPACE) && m_lastTarget != nullptr) {
+		m_viewingDist = m_lastTarget->GetClipRadius() * 2.0f;
+	}
+	m_viewingDist = Clamp(m_viewingDist, 10.0f, 1e12f);
 
 	char buf[128];
 	Body *body = GameLocator::getGame()->GetPlayer()->GetNavTarget();
-	if (body && (body != lastTarget)) {
+	if (body == nullptr) body = GameLocator::getGame()->GetPlayer()->GetCombatTarget();
+
+	if (body && (body != m_lastTarget)) {
 		// Reset view distance for new target.
-		viewingDist = body->GetClipRadius() * 2.0f;
-		lastTarget = body;
+		m_viewingDist = body->GetClipRadius() * 2.0f;
+		m_lastTarget = body;
 
 		if (body->IsType(Object::TERRAINBODY)) {
 			TerrainBody *tbody = static_cast<TerrainBody *>(body);
@@ -210,7 +221,7 @@ void ObjectViewerView::Update(const float frameTime)
 	}
 
 	snprintf(buf, sizeof(buf), "View dist: %s     Object: %s\nSystemPath: %s",
-		format_distance(viewingDist).c_str(), (body ? body->GetLabel().c_str() : "<none>"),
+		format_distance(m_viewingDist).c_str(), (body ? body->GetLabel().c_str() : "<none>"),
 		pathStr.str().c_str());
 	m_infoLabel->SetText(buf);
 

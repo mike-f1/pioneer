@@ -4,14 +4,21 @@
 #ifndef _OBJECTVIEWERVIEW_H
 #define _OBJECTVIEWERVIEW_H
 
+#include "RefCounted.h"
 #include "UIView.h"
-#include "gui/Gui.h"
-#include "libs.h"
+#include "matrix4x4.h"
+#include <memory>
 
 class Body;
 class Camera;
 class CameraContext;
 class Game;
+
+namespace Gui {
+	class Label;
+	class TextEntry;
+	class VBox;
+}
 
 class ObjectViewerView : public UIView {
 public:
@@ -23,10 +30,10 @@ protected:
 	virtual void OnSwitchTo();
 
 private:
-	float viewingDist;
+	float m_viewingDist;
 	Gui::Label *m_infoLabel;
 	Gui::VBox *m_vbox;
-	const Body *lastTarget;
+	Body *m_lastTarget;
 	matrix4x4d m_camRot;
 
 	RefCountedPtr<CameraContext> m_cameraContext;

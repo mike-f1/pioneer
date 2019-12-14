@@ -80,6 +80,8 @@
 #include "sound/Sound.h"
 #include "sound/SoundMusic.h"
 
+#include "gui/Gui.h"
+
 #include "graphics/Renderer.h"
 
 #if WITH_DEVKEYS

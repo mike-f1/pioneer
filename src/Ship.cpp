@@ -540,13 +540,13 @@ bool Ship::OnCollision(Object *b, Uint32 flags, double relVel)
 		if (LuaObject<Ship>::CallMethod<int>(this, "AddEquip", item) > 0) { // try to add it to the ship cargo.
 			GameLocator::getGame()->GetSpace()->KillBody(dynamic_cast<Body *>(b));
 			if (this->IsType(Object::PLAYER))
-				GameLocator::getGame()->log->Add(stringf(Lang::CARGO_SCOOP_ACTIVE_1_TONNE_X_COLLECTED, formatarg("item", ScopedTable(item).CallMethod<std::string>("GetName"))));
+				GameLocator::getGame()->GetGameLog().Add(stringf(Lang::CARGO_SCOOP_ACTIVE_1_TONNE_X_COLLECTED, formatarg("item", ScopedTable(item).CallMethod<std::string>("GetName"))));
 			// XXX SfxManager::Add(this, TYPE_SCOOP);
 			UpdateEquipStats();
 			return true;
 		}
 		if (this->IsType(Object::PLAYER))
-			GameLocator::getGame()->log->Add(Lang::CARGO_SCOOP_ATTEMPTED);
+			GameLocator::getGame()->GetGameLog().Add(Lang::CARGO_SCOOP_ATTEMPTED);
 	}
 
 	if (b->IsType(Object::PLANET)) {
@@ -1216,7 +1216,7 @@ void Ship::StaticUpdate(const float timeStep)
 						LuaObject<Ship>::CallMethod(this, "AddEquip", hydrogen);
 						UpdateEquipStats();
 						if (this->IsType(Object::PLAYER)) {
-							GameLocator::getGame()->log->Add(stringf(Lang::FUEL_SCOOP_ACTIVE_N_TONNES_H_COLLECTED,
+							GameLocator::getGame()->GetGameLog().Add(stringf(Lang::FUEL_SCOOP_ACTIVE_N_TONNES_H_COLLECTED,
 								formatarg("quantity", LuaObject<Ship>::CallMethod<int>(this, "CountEquip", hydrogen))));
 						}
 						lua_pop(l, 3);
@@ -1243,7 +1243,7 @@ void Ship::StaticUpdate(const float timeStep)
 			if (LuaObject<Ship>::CallMethod<int>(this, "RemoveEquip", cargo.Sub(t))) {
 				LuaObject<Ship>::CallMethod<int>(this, "AddEquip", cargo.Sub("fertilizer"));
 				if (this->IsType(Object::PLAYER)) {
-					GameLocator::getGame()->log->Add(Lang::CARGO_BAY_LIFE_SUPPORT_LOST);
+					GameLocator::getGame()->GetGameLog().Add(Lang::CARGO_BAY_LIFE_SUPPORT_LOST);
 				}
 				lua_pop(l, 4);
 			} else

@@ -462,10 +462,10 @@ void SystemView::OnClickObject(const SystemBody *b)
 			if (GameLocator::getGame()->GetPlayer()->GetNavTarget() == body) {
 				GameLocator::getGame()->GetPlayer()->SetNavTarget(body);
 				GameLocator::getGame()->GetPlayer()->SetNavTarget(0);
-				GameLocator::getGame()->log->Add(Lang::UNSET_NAVTARGET);
+				GameLocator::getGame()->GetGameLog().Add(Lang::UNSET_NAVTARGET);
 			} else {
 				GameLocator::getGame()->GetPlayer()->SetNavTarget(body);
-				GameLocator::getGame()->log->Add(Lang::SET_NAVTARGET_TO + body->GetLabel());
+				GameLocator::getGame()->GetGameLog().Add(Lang::SET_NAVTARGET_TO + body->GetLabel());
 			}
 		}
 	}
@@ -508,12 +508,12 @@ void SystemView::OnClickShip(Ship *s)
 	}
 	if (GameLocator::getGame()->GetPlayer()->GetNavTarget() == s) { //un-select ship if already selected
 		GameLocator::getGame()->GetPlayer()->SetNavTarget(0); // remove current
-		GameLocator::getGame()->log->Add(Lang::UNSET_NAVTARGET);
+		GameLocator::getGame()->GetGameLog().Add(Lang::UNSET_NAVTARGET);
 		m_infoLabel->SetText(""); // remove lingering text
 		m_infoText->SetText("");
 	} else {
 		GameLocator::getGame()->GetPlayer()->SetNavTarget(s);
-		GameLocator::getGame()->log->Add(Lang::SET_NAVTARGET_TO + s->GetLabel());
+		GameLocator::getGame()->GetGameLog().Add(Lang::SET_NAVTARGET_TO + s->GetLabel());
 
 		// always show label of selected ship...
 		std::string text;

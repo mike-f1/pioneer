@@ -42,8 +42,8 @@
  */
 static int l_comms_message(lua_State *l)
 {
-	if (!GameLocator::getGame() || !GameLocator::getGame()->log)
-		luaL_error(l, "Log does not exist.");
+	if (!GameLocator::getGame())
+		luaL_error(l, "Game does not exist, thus no Log.");
 
 	std::string msg = luaL_checkstring(l, 1);
 
@@ -51,7 +51,7 @@ static int l_comms_message(lua_State *l)
 	if (lua_gettop(l) >= 2)
 		from = luaL_checkstring(l, 2);
 
-	GameLocator::getGame()->log->Add(from, msg, GameLog::Priority::PRIORITY_NORMAL);
+	GameLocator::getGame()->GetGameLog().Add(from, msg, GameLog::Priority::PRIORITY_NORMAL);
 	return 0;
 }
 
@@ -85,8 +85,8 @@ static int l_comms_message(lua_State *l)
  */
 static int l_comms_important_message(lua_State *l)
 {
-	if (!GameLocator::getGame() || !GameLocator::getGame()->log)
-		luaL_error(l, "Log does not exist.");
+	if (!GameLocator::getGame())
+		luaL_error(l, "Game does not exist, thus no Log.");
 
 	std::string msg = luaL_checkstring(l, 1);
 
@@ -94,7 +94,7 @@ static int l_comms_important_message(lua_State *l)
 	if (lua_gettop(l) >= 2)
 		from = luaL_checkstring(l, 2);
 
-	GameLocator::getGame()->log->Add(from, msg, GameLog::Priority::PRIORITY_ALERT);
+	GameLocator::getGame()->GetGameLog().Add(from, msg, GameLog::Priority::PRIORITY_ALERT);
 	return 0;
 }
 

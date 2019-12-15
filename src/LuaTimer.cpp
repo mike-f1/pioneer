@@ -3,14 +3,21 @@
 
 #include "LuaTimer.h"
 
-#include "Game.h"
-#include "GameLocator.h"
 #include "Lua.h"
+#include "LuaManager.h"
 #include "LuaObject.h"
 #include "LuaUtils.h"
 
+double LuaTimer::m_time = 0.0;
+
+LuaTimer::LuaTimer()
+{
+	m_time = 0.0;
+}
+
 LuaTimer::~LuaTimer()
 {
+	m_time = 0.0;
 	RemoveAll();
 }
 
@@ -22,9 +29,10 @@ void LuaTimer::RemoveAll()
 	lua_setfield(l, LUA_REGISTRYINDEX, "PiTimerCallbacks");
 }
 
-void LuaTimer::Tick()
+void LuaTimer::Tick(const double actualTime)
 {
-	assert(GameLocator::getGame());
+	m_time = actualTime;
+
 	lua_State *l = Lua::manager->GetLuaState();
 
 	LUA_DEBUG_START(l);
@@ -37,8 +45,6 @@ void LuaTimer::Tick()
 	}
 	assert(lua_istable(l, -1));
 
-	double now = GameLocator::getGame()->GetTime();
-
 	lua_pushnil(l);
 	while (lua_next(l, -2)) {
 		assert(lua_istable(l, -1));
@@ -47,7 +53,7 @@ void LuaTimer::Tick()
 		double at = lua_tonumber(l, -1);
 		lua_pop(l, 1);
 
-		if (at <= now) {
+		if (at <= actualTime) {
 			lua_getfield(l, -1, "callback");
 			pi_lua_protected_call(l, 0, 1);
 			bool cancel = lua_toboolean(l, -1);
@@ -64,7 +70,7 @@ void LuaTimer::Tick()
 				double every = lua_tonumber(l, -1);
 				lua_pop(l, 1);
 
-				pi_lua_settable(l, "at", GameLocator::getGame()->GetTime() + every);
+				pi_lua_settable(l, "at", actualTime + every);
 			}
 		}
 
@@ -74,42 +80,6 @@ void LuaTimer::Tick()
 
 	LUA_DEBUG_END(l, 0);
 }
-
-/*
- * Class: Timer
- *
- * A class to invoke functions at specific times.
- *
- * The <Timer> class provides a facility whereby scripts can request that a
- * function be called at a given time, or regularly.
- *
- * Pioneer provides a single <Timer> object to the Lua environment. It resides
- * in the global namespace and is simply called Timer.
- *
- * The <Timer> is bound to the game clock, not the OS (real time) clock. The
- * game clock is subject to time acceleration. As such, timer triggers will
- * not necessarily occur at the exact time you request but can arrive seconds,
- * minutes or even hours after the requested time (game time).
- *
- * Because timer functions are called outside of the normal event model, it is
- * possible that game objects no longer exist. Consider this example:
- *
- * > local enemy = Space.SpawnShipNear("eagle_lrf", Game.player, 20, 20)
- * > Comms.ImportantMessage(enemy:GetLabel(), "You have 20 seconds to surrender or you will be destroyed.")
- * > Timer:CallAt(Game.time+20, function ()
- * >     Comms.ImportantMessage(enemy:GetLabel(), "You were warned. Prepare to die!")
- * >     enemy:Kill(Game.player)
- * > end)
- *
- * This works exactly as you'd expect: 20 seconds after the threat message is
- * sent, the enemy comes to life and attacks the player. If however the player
- * chooses to avoid the battle by hyperspacing away, the enemy ship is
- * destroyed by the game engine. In that case, the "enemy" object held by the
- * script is a shell, and any attempt to use it will be greeted by a Lua error.
- *
- * To protect against this, you should call <Object.exists> to confirm that the
- * underlying object exists before trying to use it.
- */
 
 static void _finish_timer_create(lua_State *l)
 {
@@ -166,15 +136,10 @@ static void _finish_timer_create(lua_State *l)
  */
 static int l_timer_call_at(lua_State *l)
 {
-	if (!GameLocator::getGame()) {
-		luaL_error(l, "Game is not started");
-		return 0;
-	}
-
 	double at = luaL_checknumber(l, 2);
 	luaL_checktype(l, 3, LUA_TFUNCTION); // any type of function
 
-	if (at <= GameLocator::getGame()->GetTime())
+	if (at <= LuaTimer::GetTime())
 		luaL_error(l, "Specified time is in the past");
 
 	LUA_DEBUG_START(l);
@@ -231,11 +196,6 @@ static int l_timer_call_at(lua_State *l)
  */
 static int l_timer_call_every(lua_State *l)
 {
-	if (!GameLocator::getGame()) {
-		luaL_error(l, "Game is not started");
-		return 0;
-	}
-
 	double every = luaL_checknumber(l, 2);
 	luaL_checktype(l, 3, LUA_TFUNCTION); // any type of function
 
@@ -246,7 +206,7 @@ static int l_timer_call_every(lua_State *l)
 
 	lua_newtable(l);
 	pi_lua_settable(l, "every", every);
-	pi_lua_settable(l, "at", GameLocator::getGame()->GetTime() + every);
+	pi_lua_settable(l, "at", LuaTimer::GetTime() + every);
 
 	_finish_timer_create(l);
 

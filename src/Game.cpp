@@ -100,7 +100,7 @@ Game::Game(const SystemPath &path, const double startDateTime, unsigned int cach
 
 	m_luaTimer.reset(new LuaTimer());
 
-	log = new GameLog();
+	m_log.reset(new GameLog());
 
 #ifdef PIONEER_PROFILER
 	Profiler::dumphtml(profilerPath.c_str());
@@ -170,7 +170,7 @@ Game::Game(const Json &jsonObj, unsigned int cacheRadius) :
 
 	m_luaTimer.reset(new LuaTimer());
 
-	log = new GameLog();
+	m_log.reset(new GameLog());
 }
 
 Game::~Game()
@@ -195,10 +195,6 @@ Game::~Game()
 	m_space.reset();
 	m_player.reset();
 	m_galaxy->FlushCaches();
-
-	m_luaTimer->RemoveAll();
-
-	delete log;
 }
 
 void Game::ToJson(Json &jsonObj)
@@ -305,7 +301,7 @@ void Game::TimeStep(float step)
 
 	m_space->TimeStep(step, GetTime());
 
-	m_luaTimer->Tick();
+	m_luaTimer->Tick(GetTime());
 
 	SfxManager::TimeStepAll(step, Frame::GetRootFrameId());
 

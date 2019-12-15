@@ -902,18 +902,18 @@ void Pi::HandleKeyDown(SDL_Keysym *key)
 		{
 			if (GameLocator::getGame()) {
 				if (GameLocator::getGame()->IsHyperspace()) {
-					GameLocator::getGame()->log->Add(Lang::CANT_SAVE_IN_HYPERSPACE);
+					GameLocator::getGame()->GetGameLog().Add(Lang::CANT_SAVE_IN_HYPERSPACE);
 				} else {
 					const std::string name = "_quicksave";
 					const std::string path = FileSystem::JoinPath(GameConfSingleton::GetSaveDirFull(), name);
 					try {
 						GameState::SaveGame(name);
 						Output("Quick save: %s\n", name.c_str());
-						GameLocator::getGame()->log->Add(Lang::GAME_SAVED_TO + path);
+						GameLocator::getGame()->GetGameLog().Add(Lang::GAME_SAVED_TO + path);
 					} catch (CouldNotOpenFileException) {
-						GameLocator::getGame()->log->Add(stringf(Lang::COULD_NOT_OPEN_FILENAME, formatarg("path", path)));
+						GameLocator::getGame()->GetGameLog().Add(stringf(Lang::COULD_NOT_OPEN_FILENAME, formatarg("path", path)));
 					} catch (CouldNotWriteToFileException) {
-						GameLocator::getGame()->log->Add(Lang::GAME_SAVE_CANNOT_WRITE);
+						GameLocator::getGame()->GetGameLog().Add(Lang::GAME_SAVE_CANNOT_WRITE);
 					}
 				}
 			}

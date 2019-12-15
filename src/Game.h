@@ -107,7 +107,7 @@ public:
 
 	float GetTimeStep() const { return s_timeAccelRates[m_timeAccel] * (1.0f / PHYSICS_HZ); }
 
-	GameLog *log;
+	GameLog &GetGameLog() const { return *m_log.get(); };
 
 	static void EmitPauseState(bool paused);
 
@@ -130,6 +130,8 @@ private:
 
 	std::unique_ptr<Player> m_player;
 	std::unique_ptr<LuaTimer> m_luaTimer;
+
+	std::unique_ptr<GameLog> m_log;
 
 	enum class State {
 		NORMAL,

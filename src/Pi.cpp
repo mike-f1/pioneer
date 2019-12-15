@@ -132,7 +132,7 @@ int Pi::statNumPatches = 0;
 Graphics::Renderer *Pi::renderer;
 RefCountedPtr<UI::Context> Pi::ui;
 RefCountedPtr<PiGui> Pi::pigui;
-std::unique_ptr<Cutscene> Pi::cutscene;
+std::unique_ptr<Cutscene> Pi::m_cutscene;
 Graphics::RenderTarget *Pi::renderTarget;
 RefCountedPtr<Graphics::Texture> Pi::renderTexture;
 std::unique_ptr<Graphics::Drawables::TexturedQuad> Pi::renderQuad;
@@ -260,6 +260,12 @@ void Pi::NewInGameViews(InGameViews *newInGameViews)
 void Pi::SaveInGameViews(Json &rootNode)
 {
 	m_inGameViews->SaveToJson(rootNode);
+}
+
+//static
+Cutscene *Pi::GetCutscene()
+{
+	return m_cutscene.get();
 }
 
 static void LuaInit()
@@ -1009,7 +1015,7 @@ void Pi::HandleRequests()
 	internalRequests.clear();
 }
 
-void Pi::CutSceneLoop(double step, Cutscene *cutscene)
+void Pi::CutSceneLoop(double step, Cutscene *m_cutscene)
 {
 	// XXX hack
 	// if we hit our exit conditions then ignore further queued events
@@ -1022,7 +1028,7 @@ void Pi::CutSceneLoop(double step, Cutscene *cutscene)
 
 	Pi::BeginRenderTarget();
 	Pi::renderer->BeginFrame();
-	cutscene->Draw(step);
+	m_cutscene->Draw(step);
 	Pi::renderer->EndFrame();
 
 	Pi::renderer->ClearDepthBuffer();
@@ -1035,7 +1041,7 @@ void Pi::CutSceneLoop(double step, Cutscene *cutscene)
 
 	Gui::Draw();
 
-	if (dynamic_cast<Intro *>(cutscene) != nullptr) {
+	if (dynamic_cast<Intro *>(m_cutscene) != nullptr) {
 		PiGui::NewFrame(Pi::renderer->GetSDLWindow());
 		DrawPiGui(step, "MAINMENU");
 	}
@@ -1113,7 +1119,7 @@ void Pi::Start(const SystemPath &startPath)
 
 		switch (m_mainState) {
 		case MainState::MAIN_MENU:
-			CutSceneLoop(frameTime, cutscene.get());
+			CutSceneLoop(frameTime, m_cutscene.get());
 			if (GameLocator::getGame() != nullptr) {
 				m_mainState = MainState::TO_GAME_START;
 			}
@@ -1123,13 +1129,13 @@ void Pi::Start(const SystemPath &startPath)
 			// no m_mainState set as it can be either TO_TOMBSTONE or TO_GAME_START
 		break;
 		case MainState::TO_GAME_START:
-			cutscene.reset();
+			m_cutscene.reset();
 			InitGame();
 			StartGame();
 			m_mainState = MainState::GAME_START;
 		break;
 		case MainState::TO_MAIN_MENU:
-			cutscene.reset(new Intro(Pi::renderer,
+			m_cutscene.reset(new Intro(Pi::renderer,
 				Graphics::GetScreenWidth(),
 				Graphics::GetScreenHeight(),
 				GameConfSingleton::GetAmountBackgroundStars()
@@ -1138,7 +1144,7 @@ void Pi::Start(const SystemPath &startPath)
 		break;
 		case MainState::TO_TOMBSTONE:
 			EndGame();
-			cutscene.reset(new Tombstone(Pi::renderer,
+			m_cutscene.reset(new Tombstone(Pi::renderer,
 				Graphics::GetScreenWidth(),
 				Graphics::GetScreenHeight()
 				));
@@ -1147,9 +1153,9 @@ void Pi::Start(const SystemPath &startPath)
 		break;
 		case MainState::TOMBSTONE:
 			time += frameTime;
-			CutSceneLoop(frameTime, cutscene.get());
+			CutSceneLoop(frameTime, m_cutscene.get());
 			if ((time > 2.0) && ((input.MouseButtonState(SDL_BUTTON_LEFT)) || input.KeyState(SDLK_SPACE))) {
-				cutscene.reset();
+				m_cutscene.reset();
 				m_mainState = MainState::TO_MAIN_MENU;
 			}
 		break;

@@ -88,6 +88,8 @@ public:
 	static void NewInGameViews(InGameViews *newInGameViews);
 	static void SaveInGameViews(Json &rootNode);
 
+	static Cutscene *GetCutscene();
+
 	static RefCountedPtr<UI::Context> ui;
 	static RefCountedPtr<PiGui> pigui;
 
@@ -108,7 +110,6 @@ public:
 	static Input input;
 	static LuaConsole *luaConsole;
 	static Graphics::Renderer *renderer;
-	static std::unique_ptr<Cutscene> cutscene;
 
 	static JobQueue *GetAsyncJobQueue();
 	static JobQueue *GetSyncJobQueue();
@@ -150,6 +151,7 @@ private:
 	static float gameTickAlpha;
 	static float frameTime;
 
+	static std::unique_ptr<Cutscene> m_cutscene;
 	static std::unique_ptr<InGameViews> m_inGameViews;
 
 	static Graphics::RenderTarget *renderTarget;

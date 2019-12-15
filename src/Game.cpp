@@ -7,7 +7,6 @@
 
 #include "Background.h"
 #include "Body.h"
-#include "FileSystem.h"
 #include "Frame.h"
 #include "GameLocator.h"
 #include "GameLog.h"
@@ -19,9 +18,6 @@
 #include "LuaTimer.h"
 #include "MathUtil.h"
 #include "Object.h"
-#if WITH_OBJECTVIEWER
-#include "ObjectViewerView.h"
-#endif
 #include "Pi.h"
 #include "Player.h"
 #include "Sfx.h"
@@ -31,21 +27,27 @@
 #include "galaxy/GalaxyGenerator.h"
 #include "ship/PlayerShipController.h"
 
+#if WITH_OBJECTVIEWER
+#include "ObjectViewerView.h"
+#endif // WITH_OBJECTVIEWER
+#ifdef PIONEER_PROFILER
+#include "FileSystem.h"
+#endif // PIONEER_PROFILER
+
 #include "SystemView.h" // <- Because of planner
 #include "WorldView.h"  // <- Here for CameraContext
 
-static const int cacheRadius = 5;
-
 //#define DEBUG_CACHE
 
-Game::Game(const SystemPath &path, const double startDateTime) :
+Game::Game(const SystemPath &path, const double startDateTime, unsigned int cacheRadius) :
 	m_galaxy(GalaxyGenerator::Create()),
 	m_time(startDateTime),
 	m_state(State::NORMAL),
 	m_wantHyperspace(false),
 	m_timeAccel(TIMEACCEL_1X),
 	m_requestedTimeAccel(TIMEACCEL_1X),
-	m_forceTimeAccel(false)
+	m_forceTimeAccel(false),
+	m_cacheRadius(cacheRadius)
 {
 #ifdef PIONEER_PROFILER
 	std::string profilerPath;
@@ -74,8 +76,8 @@ Game::Game(const SystemPath &path, const double startDateTime) :
 	}
 
 	m_starSystemCache = m_galaxy->NewStarSystemSlaveCache();
-	GenCaches(&path, cacheRadius + 2,
-			[this, path]() { UpdateStarSystemCache(&path, cacheRadius); });
+	GenCaches(&path, m_cacheRadius + 2,
+			[this, path]() { UpdateStarSystemCache(&path, m_cacheRadius); });
 
 	m_space.reset(new Space(GetTime(), GetTimeStep(), sys, path));
 
@@ -105,10 +107,11 @@ Game::Game(const SystemPath &path, const double startDateTime) :
 #endif
 }
 
-Game::Game(const Json &jsonObj) :
+Game::Game(const Json &jsonObj, unsigned int cacheRadius) :
 	m_timeAccel(TIMEACCEL_PAUSED),
 	m_requestedTimeAccel(TIMEACCEL_PAUSED),
-	m_forceTimeAccel(false)
+	m_forceTimeAccel(false),
+	m_cacheRadius(cacheRadius)
 {
 	std::unique_ptr<LuaSerializer> luaSerializer(new LuaSerializer());
 
@@ -152,8 +155,8 @@ Game::Game(const Json &jsonObj) :
 	// Prepare caches
 	SystemPath path = starSystem->GetPath();
 	m_starSystemCache = m_galaxy->NewStarSystemSlaveCache();
-	GenCaches(&path, cacheRadius + 2,
-			[this, path]() { UpdateStarSystemCache(&path, cacheRadius); });
+	GenCaches(&path, m_cacheRadius + 2,
+			[this, path]() { UpdateStarSystemCache(&path, m_cacheRadius); });
 
 	/// HACK!
 	// Lua needs Space up and running (see LuaBody::_body_deserializer
@@ -496,8 +499,8 @@ void Game::SwitchToHyperspace()
 
 	// Update caches:
 	assert(m_starSystemCache && m_sectorCache);
-	GenCaches(&m_hyperspaceDest, cacheRadius + 2,
-			[this]() { UpdateStarSystemCache(&this->m_hyperspaceDest, cacheRadius); });
+	GenCaches(&m_hyperspaceDest, m_cacheRadius + 2,
+			[this]() { UpdateStarSystemCache(&this->m_hyperspaceDest, m_cacheRadius); });
 
 	// put the player in it
 	m_player->SetFrame(Frame::GetRootFrameId());
@@ -755,7 +758,7 @@ void Game::RequestTimeAccelDec(bool force)
 	m_forceTimeAccel = force;
 }
 
-void Game::GenCaches(const SystemPath *here, int sectorRadius,
+void Game::GenCaches(const SystemPath *here, unsigned int sectorRadius,
 	StarSystemCache::CacheFilledCallback callback)
 {
 	PROFILE_SCOPED()
@@ -765,7 +768,7 @@ void Game::GenCaches(const SystemPath *here, int sectorRadius,
 	m_galaxy->FillSectorCache(m_sectorCache, center, sectorRadius, callback);
 }
 
-void Game::UpdateStarSystemCache(const SystemPath *here, int sectorRadius)
+void Game::UpdateStarSystemCache(const SystemPath *here, unsigned int sectorRadius)
 {
 	PROFILE_SCOPED()
 

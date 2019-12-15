@@ -9,6 +9,7 @@
 #include "gameconsts.h"
 
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -19,7 +20,6 @@ class LuaNameGen;
 class ObjectViewerView;
 class PiGui;
 class SystemPath;
-class View;
 
 class AsyncJobQueue;
 class SyncJobQueue;
@@ -38,10 +38,6 @@ namespace Graphics {
 		class TexturedQuad;
 	}
 } // namespace Graphics
-
-namespace Sound {
-	class MusicPlayer;
-}
 
 namespace UI {
 	class Context;

@@ -129,7 +129,7 @@ bool InGameViews::DrawGui() {
 	return (!IsWorldView() ? true : m_worldView->DrawGui());
 }
 
-void InGameViews::HandleSDLEvent(SDL_Event event) {
+void InGameViews::HandleSDLEvent(SDL_Event &event) {
 	if (m_currentView != nullptr) m_currentView->HandleSDLEvent(event);
 }
 

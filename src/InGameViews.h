@@ -75,7 +75,7 @@ public:
 	/* Only use #if WITH_OBJECTVIEWER */
 	ObjectViewerView *GetObjectViewerView() const;
 
-	void HandleSDLEvent(SDL_Event event);
+	void HandleSDLEvent(SDL_Event &event);
 	void UpdateView(const float frameTime);
 	void Draw3DView();
 

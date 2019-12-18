@@ -14,6 +14,7 @@
 #include "graphics/Graphics.h"
 #include "graphics/Material.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 #include "graphics/VertexBuffer.h"
 #include "perlin.h"
 #include "vcacheopt/vcacheopt.h"
@@ -73,11 +74,11 @@ GeoPatch::~GeoPatch()
 	m_colors.reset();
 }
 
-void GeoPatch::UpdateVBOs(Graphics::Renderer *renderer)
+void GeoPatch::UpdateVBOs()
 {
 	PROFILE_SCOPED()
 	if (m_needUpdateVBOs) {
-		assert(renderer);
+		assert(RendererLocator::getRenderer());
 		m_needUpdateVBOs = false;
 
 		//create buffer and upload data
@@ -92,7 +93,7 @@ void GeoPatch::UpdateVBOs(Graphics::Renderer *renderer)
 		vbd.attrib[3].format = Graphics::ATTRIB_FORMAT_FLOAT2;
 		vbd.numVertices = m_ctx->NUMVERTICES();
 		vbd.usage = Graphics::BUFFER_USAGE_STATIC;
-		m_vertexBuffer.reset(renderer->CreateVertexBuffer(vbd));
+		m_vertexBuffer.reset(RendererLocator::getRenderer()->CreateVertexBuffer(vbd));
 
 		GeoPatchContext::VBOVertex *VBOVtxPtr = m_vertexBuffer->Map<GeoPatchContext::VBOVertex>(Graphics::BUFFER_MAP_WRITE);
 		assert(m_vertexBuffer->GetDesc().stride == sizeof(GeoPatchContext::VBOVertex));
@@ -242,7 +243,7 @@ void GeoPatch::UpdateVBOs(Graphics::Renderer *renderer)
 		m_colors.reset();
 
 #ifdef DEBUG_BOUNDING_SPHERES
-		RefCountedPtr<Graphics::Material> mat(Pi::renderer->CreateMaterial(Graphics::MaterialDescriptor()));
+		RefCountedPtr<Graphics::Material> mat(RendererLocator::getRenderer()->CreateMaterial(Graphics::MaterialDescriptor()));
 		switch (m_depth) {
 			case 0: mat->diffuse = Color::WHITE; break;
 			case 1: mat->diffuse = Color::RED; break;
@@ -250,18 +251,18 @@ void GeoPatch::UpdateVBOs(Graphics::Renderer *renderer)
 			case 3: mat->diffuse = Color::BLUE; break;
 			default: mat->diffuse = Color::BLACK; break;
 		}
-		m_boundsphere.reset(new Graphics::Drawables::Sphere3D(Pi::renderer, mat, Pi::renderer->CreateRenderState(Graphics::RenderStateDesc()), 2, m_clipRadius));
+		m_boundsphere.reset(new Graphics::Drawables::Sphere3D(mat, RendererLocator::getRenderer()->CreateRenderState(Graphics::RenderStateDesc()), 2, m_clipRadius));
 #endif
 	}
 }
 
 // the default sphere we do the horizon culling against
 static const SSphere s_sph;
-void GeoPatch::Render(Graphics::Renderer *renderer, const vector3d &campos, const matrix4x4d &modelView, const Graphics::Frustum &frustum)
+void GeoPatch::Render(const vector3d &campos, const matrix4x4d &modelView, const Graphics::Frustum &frustum)
 {
 	PROFILE_SCOPED()
 	// must update the VBOs to calculate the clipRadius...
-	UpdateVBOs(renderer);
+	UpdateVBOs();
 	// ...before doing the furstum culling that relies on it.
 	if (!frustum.TestPoint(m_clipCentroid, m_clipRadius))
 		return; // nothing below this patch is visible
@@ -284,13 +285,13 @@ void GeoPatch::Render(Graphics::Renderer *renderer, const vector3d &campos, cons
 
 	if (m_kids[0]) {
 		for (int i = 0; i < NUM_KIDS; i++)
-			m_kids[i]->Render(renderer, campos, modelView, frustum);
+			m_kids[i]->Render(campos, modelView, frustum);
 	} else if (m_heights) {
 		RefCountedPtr<Graphics::Material> mat = m_geosphere->GetSurfaceMaterial();
 		Graphics::RenderState *rs = m_geosphere->GetSurfRenderState();
 
 		const vector3d relpos = m_clipCentroid - campos;
-		renderer->SetTransform(modelView * matrix4x4d::Translation(relpos));
+		RendererLocator::getRenderer()->SetTransform(modelView * matrix4x4d::Translation(relpos));
 
 		Pi::statSceneTris += (m_ctx->GetNumTris());
 		++Pi::statNumPatches;
@@ -298,15 +299,15 @@ void GeoPatch::Render(Graphics::Renderer *renderer, const vector3d &campos, cons
 		// per-patch detail texture scaling value
 		m_geosphere->GetMaterialParameters().patchDepth = m_depth;
 
-		renderer->DrawBufferIndexed(m_vertexBuffer.get(), m_ctx->GetIndexBuffer(), rs, mat.Get());
+		RendererLocator::getRenderer()->DrawBufferIndexed(m_vertexBuffer.get(), m_ctx->GetIndexBuffer(), rs, mat.Get());
 #ifdef DEBUG_BOUNDING_SPHERES
 		if (m_boundsphere.get()) {
-			renderer->SetWireFrameMode(true);
-			m_boundsphere->Draw(renderer);
-			renderer->SetWireFrameMode(false);
+			RendererLocator::getRenderer()->SetWireFrameMode(true);
+			m_boundsphere->Draw();
+			RendererLocator::getRenderer()->SetWireFrameMode(false);
 		}
 #endif
-		renderer->GetStats().AddToStatCount(Graphics::Stats::STAT_PATCHES, 1);
+		RendererLocator::getRenderer()->GetStats().AddToStatCount(Graphics::Stats::STAT_PATCHES, 1);
 	}
 }
 

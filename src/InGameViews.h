@@ -19,10 +19,6 @@ class ShipCpanel;
 class ObjectViewerView;
 class View;
 
-namespace Graphics {
-	class Renderer;
-}
-
 enum class ViewType {
 	NONE,
 	SECTOR,
@@ -43,8 +39,6 @@ public:
 	~InGameViews();
 
 	void SaveToJson(Json &jsonObj);
-
-	void SetRenderer(Graphics::Renderer *r);
 
 	void SetView(ViewType vt);
 	View *GetView() { return m_currentView; } // <-- Only for a check on template name in Pi::

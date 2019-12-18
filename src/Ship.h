@@ -30,10 +30,6 @@ class Space;
 struct CollisionContact;
 struct HeatGradientParameters_t;
 
-namespace Graphics {
-	class Renderer;
-}
-
 struct shipstats_t {
 	int used_capacity;
 	int used_cargo;
@@ -78,7 +74,7 @@ public:
 
 	virtual void SetLandedOn(Planet *p, float latitude, float longitude);
 
-	virtual void Render(Graphics::Renderer *r, const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform) override;
+	virtual void Render(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform) override;
 
 	inline void ClearThrusterState()
 	{

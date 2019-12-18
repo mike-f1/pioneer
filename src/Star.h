@@ -24,11 +24,11 @@ public:
 	Star(const Json &jsonObj, Space *space);
 	virtual ~Star();
 
-	virtual void Render(Graphics::Renderer *r, const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform) override;
+	virtual void Render(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform) override;
 
 protected:
 	void InitStar();
-	void BuildHaloBuffer(Graphics::Renderer *renderer, double rad);
+	void BuildHaloBuffer(double rad);
 
 	Graphics::RenderState *m_haloState;
 	std::unique_ptr<Graphics::VertexBuffer> m_haloBuffer;

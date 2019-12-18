@@ -9,7 +9,6 @@
 #include <SDL.h>
 
 namespace Graphics {
-	class Renderer;
 	class VertexBuffer;
 	class RenderState;
 } // namespace Graphics
@@ -30,7 +29,7 @@ namespace Gui {
 	void HandleSDLEvent(SDL_Event *event);
 	void Draw();
 	sigc::connection AddTimer(Uint32 ms, sigc::slot<void> slot);
-	void Init(Graphics::Renderer *renderer, int screen_width, int screen_height, int ui_width, int ui_height);
+	void Init(int screen_width, int screen_height, int ui_width, int ui_height);
 	void Uninit();
 } // namespace Gui
 

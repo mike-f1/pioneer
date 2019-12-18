@@ -9,11 +9,10 @@
 
 class Camera;
 class CameraContext;
-class Game;
 
 class DeathView : public View {
 public:
-	DeathView(Graphics::Renderer *r);
+	DeathView();
 	virtual ~DeathView();
 
 	void Init();

@@ -13,7 +13,7 @@ namespace Background {
 
 class Intro : public Cutscene {
 public:
-	Intro(Graphics::Renderer *r, int width, int height, float amountOfBackgroundStars);
+	Intro(int width, int height, float amountOfBackgroundStars);
 	~Intro();
 	virtual void Draw(float time);
 	SceneGraph::Model *getCurrentModel() const { return m_model; }

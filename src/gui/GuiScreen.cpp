@@ -4,6 +4,7 @@
 #include "Gui.h"
 
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 #include "text/TextSupport.h"
 #include "vector3.h" // for projection
 
@@ -28,13 +29,11 @@ namespace Gui {
 	std::stack<RefCountedPtr<Text::TextureFont>> Screen::s_fontStack;
 	RefCountedPtr<Text::TextureFont> Screen::s_defaultFont;
 
-	Graphics::Renderer *Screen::s_renderer;
 	Graphics::RenderState *Screen::alphaBlendState = nullptr;
 	Graphics::Material *Screen::flatColorMaterial = nullptr;
 
-	void Screen::Init(Graphics::Renderer *renderer, int real_width, int real_height, int ui_width, int ui_height)
+	void Screen::Init(int real_width, int real_height, int ui_width, int ui_height)
 	{
-		s_renderer = renderer;
 
 		Screen::width = ui_width;
 		Screen::height = ui_height;
@@ -57,10 +56,10 @@ namespace Gui {
 		Graphics::RenderStateDesc rsd;
 		rsd.blendMode = Graphics::BLEND_ALPHA;
 		rsd.depthWrite = false;
-		alphaBlendState = renderer->CreateRenderState(rsd);
+		alphaBlendState = RendererLocator::getRenderer()->CreateRenderState(rsd);
 
 		Graphics::MaterialDescriptor mdesc;
-		flatColorMaterial = renderer->CreateMaterial(mdesc);
+		flatColorMaterial = RendererLocator::getRenderer()->CreateMaterial(mdesc);
 	}
 
 	void Screen::Uninit()
@@ -138,7 +137,7 @@ namespace Gui {
 	{
 		PROFILE_SCOPED()
 
-		Graphics::Renderer *r = GetRenderer();
+		Graphics::Renderer *r = RendererLocator::getRenderer();
 
 		modelMatrix = r->GetCurrentModelView();
 		projMatrix = r->GetCurrentProjection();
@@ -152,7 +151,7 @@ namespace Gui {
 	{
 		PROFILE_SCOPED()
 
-		Graphics::Renderer *r = GetRenderer();
+		Graphics::Renderer *r = RendererLocator::getRenderer();
 
 		r->SetProjection(projMatrix);
 		r->SetTransform(modelMatrix);
@@ -299,7 +298,7 @@ namespace Gui {
 		PROFILE_SCOPED()
 		if (!font) font = GetFont().Get();
 
-		Graphics::Renderer *r = Gui::Screen::GetRenderer();
+		Graphics::Renderer *r = RendererLocator::getRenderer();
 
 		const matrix4x4f &modelMatrix_ = r->GetCurrentModelView();
 		Graphics::Renderer::MatrixTicket ticket(r, Graphics::MatrixMode::MODELVIEW);
@@ -337,7 +336,7 @@ namespace Gui {
 		PROFILE_SCOPED()
 		if (!font) font = GetFont().Get();
 
-		Graphics::Renderer *r = Gui::Screen::GetRenderer();
+		Graphics::Renderer *r = RendererLocator::getRenderer();
 
 		const matrix4x4f &modelMatrix_ = r->GetCurrentModelView();
 		Graphics::Renderer::MatrixTicket ticket(r, Graphics::MatrixMode::MODELVIEW);

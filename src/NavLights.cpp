@@ -7,6 +7,7 @@
 #include "GameSaveError.h"
 #include "IniConfig.h"
 #include "Json.h"
+#include "graphics/RendererLocator.h"
 #include "graphics/RenderState.h"
 #include "graphics/TextureBuilder.h"
 #include "scenegraph/FindNodeVisitor.h"
@@ -46,7 +47,7 @@ NavLights::LightBulb::LightBulb(Uint8 _group, Uint8 _mask, Uint8 _color, SceneGr
 {
 }
 
-void NavLights::Init(Graphics::Renderer *renderer)
+void NavLights::Init()
 {
 	assert(!g_initted);
 
@@ -84,8 +85,6 @@ NavLights::NavLights(SceneGraph::Model *model, float period) :
 	PROFILE_SCOPED();
 	assert(g_initted);
 
-	Graphics::Renderer *renderer = model->GetRenderer();
-
 	using SceneGraph::Billboard;
 	using SceneGraph::MatrixTransform;
 	using SceneGraph::Node;
@@ -99,7 +98,7 @@ NavLights::NavLights(SceneGraph::Model *model, float period) :
 	for (unsigned int i = 0; i < results.size(); i++) {
 		MatrixTransform *mt = dynamic_cast<MatrixTransform *>(results.at(i));
 		assert(mt);
-		Billboard *bblight = new Billboard(m_billboardTris, renderer, BILLBOARD_SIZE);
+		Billboard *bblight = new Billboard(m_billboardTris, BILLBOARD_SIZE);
 		Uint32 group = 0;
 		Uint8 mask = 0xff; //always on
 		Uint8 color = NAVLIGHT_BLUE;
@@ -177,20 +176,20 @@ void NavLights::Update(float time)
 	}
 }
 
-void NavLights::Render(Graphics::Renderer *renderer)
+void NavLights::Render()
 {
 	if (!m_billboardRS) {
 		Graphics::MaterialDescriptor desc;
 		desc.effect = Graphics::EFFECT_BILLBOARD_ATLAS;
 		desc.textures = 1;
-		matHalos4x4.Reset(renderer->CreateMaterial(desc));
-		texHalos4x4.Reset(Graphics::TextureBuilder::Billboard("textures/halo_4x4.dds").GetOrCreateTexture(renderer, std::string("billboard")));
+		matHalos4x4.Reset(RendererLocator::getRenderer()->CreateMaterial(desc));
+		texHalos4x4.Reset(Graphics::TextureBuilder::Billboard("textures/halo_4x4.dds").GetOrCreateTexture(RendererLocator::getRenderer(), std::string("billboard")));
 		matHalos4x4->texture0 = texHalos4x4.Get();
 
 		Graphics::RenderStateDesc rsd;
 		rsd.blendMode = Graphics::BLEND_ADDITIVE;
 		rsd.depthWrite = false;
-		m_billboardRS = renderer->CreateRenderState(rsd);
+		m_billboardRS = RendererLocator::getRenderer()->CreateRenderState(rsd);
 	}
 
 	const bool isVBValid = m_billboardVB.Valid();
@@ -206,15 +205,15 @@ void NavLights::Render(Graphics::Renderer *renderer)
 		vbd.attrib[1].format = Graphics::ATTRIB_FORMAT_FLOAT3;
 		vbd.numVertices = m_billboardTris.GetNumVerts();
 		vbd.usage = Graphics::BUFFER_USAGE_DYNAMIC; // we could be updating this per-frame
-		m_billboardVB.Reset(renderer->CreateVertexBuffer(vbd));
+		m_billboardVB.Reset(RendererLocator::getRenderer()->CreateVertexBuffer(vbd));
 	}
 
 	if (m_billboardVB.Valid()) {
 		if (hasVerts) {
 			m_billboardVB->Populate(m_billboardTris);
-			renderer->SetTransform(matrix4x4f::Identity());
-			renderer->DrawBuffer(m_billboardVB.Get(), m_billboardRS, matHalos4x4.Get(), Graphics::POINTS);
-			renderer->GetStats().AddToStatCount(Graphics::Stats::STAT_BILLBOARD, 1);
+			RendererLocator::getRenderer()->SetTransform(matrix4x4f::Identity());
+			RendererLocator::getRenderer()->DrawBuffer(m_billboardVB.Get(), m_billboardRS, matHalos4x4.Get(), Graphics::POINTS);
+			RendererLocator::getRenderer()->GetStats().AddToStatCount(Graphics::Stats::STAT_BILLBOARD, 1);
 		}
 		m_billboardTris.Clear();
 	}

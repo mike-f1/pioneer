@@ -25,7 +25,7 @@ public:
 	virtual ~HyperspaceCloud();
 	virtual void SetVelocity(const vector3d &v) override { m_vel = v; }
 	virtual vector3d GetVelocity() const override { return m_vel; }
-	virtual void Render(Graphics::Renderer *r, const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform) override;
+	virtual void Render(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform) override;
 	virtual void PostLoadFixup(Space *space) override;
 	virtual void TimeStepUpdate(const float timeStep) override;
 	Ship *GetShip() { return m_ship; }

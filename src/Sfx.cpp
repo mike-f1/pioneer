@@ -18,6 +18,7 @@
 #include "graphics/Graphics.h"
 #include "graphics/Material.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 #include "graphics/RenderState.h"
 #include "graphics/TextureBuilder.h"
 
@@ -244,7 +245,7 @@ void SfxManager::Cleanup()
 	}
 }
 
-void SfxManager::RenderAll(Renderer *renderer, FrameId fId, FrameId camFrameId)
+void SfxManager::RenderAll(FrameId fId, FrameId camFrameId)
 {
 	Frame *f = Frame::GetFrame(fId);
 
@@ -299,12 +300,12 @@ void SfxManager::RenderAll(Renderer *renderer, FrameId fId, FrameId camFrameId)
 				offsets.push_back(offset);
 			}
 
-			renderer->DrawPointSprites(numInstances, &positions[0], &offsets[0], &sizes[0], rs, material);
+			RendererLocator::getRenderer()->DrawPointSprites(numInstances, &positions[0], &offsets[0], &sizes[0], rs, material);
 		}
 	}
 
 	for (FrameId kid : f->GetChildren()) {
-		RenderAll(renderer, kid, camFrameId);
+		RenderAll(kid, camFrameId);
 	}
 }
 
@@ -368,7 +369,7 @@ bool SfxManager::SplitMaterialData(const std::string &spec, MaterialData &output
 	return i == eCOORD_DOWNSCALE;
 }
 
-void SfxManager::Init(Graphics::Renderer *r)
+void SfxManager::Init()
 {
 	IniConfig cfg;
 	// set defaults in case they're missing from the file
@@ -386,13 +387,13 @@ void SfxManager::Init(Graphics::Renderer *r)
 	Graphics::RenderStateDesc rsd;
 	rsd.blendMode = Graphics::BLEND_ALPHA;
 	rsd.depthWrite = false;
-	alphaState = r->CreateRenderState(rsd);
+	alphaState = RendererLocator::getRenderer()->CreateRenderState(rsd);
 
 	rsd.blendMode = Graphics::BLEND_ALPHA_ONE;
-	additiveAlphaState = r->CreateRenderState(rsd);
+	additiveAlphaState = RendererLocator::getRenderer()->CreateRenderState(rsd);
 
 	rsd.depthWrite = true;
-	alphaOneState = r->CreateRenderState(rsd);
+	alphaOneState = RendererLocator::getRenderer()->CreateRenderState(rsd);
 
 	// materials
 	Graphics::MaterialDescriptor desc;
@@ -400,8 +401,8 @@ void SfxManager::Init(Graphics::Renderer *r)
 
 	// ECM effect is different, not managed by Sfx at all, should it be factored out?
 	desc.effect = Graphics::EFFECT_BILLBOARD;
-	ecmParticle.reset(r->CreateMaterial(desc));
-	ecmParticle->texture0 = Graphics::TextureBuilder::Billboard("textures/ecm.png").GetOrCreateTexture(r, "billboard");
+	ecmParticle.reset(RendererLocator::getRenderer()->CreateMaterial(desc));
+	ecmParticle->texture0 = Graphics::TextureBuilder::Billboard("textures/ecm.png").GetOrCreateTexture(RendererLocator::getRenderer(), "billboard");
 
 	// load material definition data
 	SplitMaterialData(cfg.String("explosionPacking"), m_materialData[TYPE_EXPLOSION]);
@@ -409,20 +410,20 @@ void SfxManager::Init(Graphics::Renderer *r)
 	SplitMaterialData(cfg.String("smokePacking"), m_materialData[TYPE_SMOKE]);
 
 	desc.effect = m_materialData[TYPE_DAMAGE].effect;
-	damageParticle.reset(r->CreateMaterial(desc));
-	damageParticle->texture0 = Graphics::TextureBuilder::Billboard(cfg.String("damageFile")).GetOrCreateTexture(r, "billboard");
+	damageParticle.reset(RendererLocator::getRenderer()->CreateMaterial(desc));
+	damageParticle->texture0 = Graphics::TextureBuilder::Billboard(cfg.String("damageFile")).GetOrCreateTexture(RendererLocator::getRenderer(), "billboard");
 	if (desc.effect == Graphics::EFFECT_BILLBOARD_ATLAS)
 		damageParticle->specialParameter0 = &m_materialData[TYPE_DAMAGE].coord_downscale;
 
 	desc.effect = m_materialData[TYPE_SMOKE].effect;
-	smokeParticle.reset(r->CreateMaterial(desc));
-	smokeParticle->texture0 = Graphics::TextureBuilder::Billboard(cfg.String("smokeFile")).GetOrCreateTexture(r, "billboard");
+	smokeParticle.reset(RendererLocator::getRenderer()->CreateMaterial(desc));
+	smokeParticle->texture0 = Graphics::TextureBuilder::Billboard(cfg.String("smokeFile")).GetOrCreateTexture(RendererLocator::getRenderer(), "billboard");
 	if (desc.effect == Graphics::EFFECT_BILLBOARD_ATLAS)
 		smokeParticle->specialParameter0 = &m_materialData[TYPE_SMOKE].coord_downscale;
 
 	desc.effect = m_materialData[TYPE_EXPLOSION].effect;
-	explosionParticle.reset(r->CreateMaterial(desc));
-	explosionParticle->texture0 = Graphics::TextureBuilder::Billboard(cfg.String("explosionFile")).GetOrCreateTexture(r, "billboard");
+	explosionParticle.reset(RendererLocator::getRenderer()->CreateMaterial(desc));
+	explosionParticle->texture0 = Graphics::TextureBuilder::Billboard(cfg.String("explosionFile")).GetOrCreateTexture(RendererLocator::getRenderer(), "billboard");
 	if (desc.effect == Graphics::EFFECT_BILLBOARD_ATLAS)
 		explosionParticle->specialParameter0 = &m_materialData[TYPE_EXPLOSION].coord_downscale;
 }

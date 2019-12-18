@@ -4,6 +4,7 @@
 #include "Gui.h"
 
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 
 namespace Gui {
 
@@ -93,7 +94,7 @@ namespace Gui {
 		m_layout->Update(size[0], m_color);
 
 		if (m_shadow) {
-			Graphics::Renderer *r = Gui::Screen::GetRenderer();
+			Graphics::Renderer *r = RendererLocator::getRenderer();
 			r->Translate(1, 1, 0);
 			m_layout->Render(size[0], Color::BLACK);
 			r->Translate(-1, -1, 0);

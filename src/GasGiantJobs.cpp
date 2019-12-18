@@ -4,16 +4,17 @@
 #include "GasGiantJobs.h"
 
 #include "GasGiant.h"
-#include "Pi.h"
 #include "RefCounted.h"
 #include "graphics/Frustum.h"
 #include "graphics/Graphics.h"
 #include "graphics/Material.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 #include "graphics/Texture.h"
 #include "graphics/TextureBuilder.h"
 #include "graphics/Types.h"
 #include "graphics/VertexArray.h"
+#include "graphics/VertexBuffer.h"
 #include "graphics/opengl/GenGasGiantColourMaterial.h"
 #include "perlin.h"
 #include "vcacheopt/vcacheopt.h"
@@ -109,7 +110,7 @@ namespace GasGiantJobs {
 	}
 
 	// ********************************************************************************
-	GenFaceQuad::GenFaceQuad(Graphics::Renderer *r, const vector2f &size, Graphics::RenderState *state, const Uint32 GGQuality)
+	GenFaceQuad::GenFaceQuad(const vector2f &size, Graphics::RenderState *state, const Uint32 GGQuality)
 	{
 		PROFILE_SCOPED()
 		assert(state);
@@ -119,31 +120,31 @@ namespace GasGiantJobs {
 		desc.effect = Graphics::EFFECT_GEN_GASGIANT_TEXTURE;
 		desc.quality = GGQuality;
 		desc.textures = 3;
-		m_material.reset(r->CreateMaterial(desc));
+		m_material.reset(RendererLocator::getRenderer()->CreateMaterial(desc));
 
 		// setup noise textures
-		m_material->texture0 = Graphics::TextureBuilder::Raw("textures/permTexture.png").GetOrCreateTexture(Pi::renderer, "noise");
-		m_material->texture1 = Graphics::TextureBuilder::Raw("textures/gradTexture.png").GetOrCreateTexture(Pi::renderer, "noise");
+		m_material->texture0 = Graphics::TextureBuilder::Raw("textures/permTexture.png").GetOrCreateTexture(RendererLocator::getRenderer(), "noise");
+		m_material->texture1 = Graphics::TextureBuilder::Raw("textures/gradTexture.png").GetOrCreateTexture(RendererLocator::getRenderer(), "noise");
 
 		// pick the correct colour basis texture for the planet
 		switch (0x0000FFFF & GGQuality) {
 		case Graphics::OGL::GEN_JUPITER_TEXTURE:
-			m_material->texture2 = Graphics::TextureBuilder::Raw("textures/gasgiants/jupiterramp.png").GetOrCreateTexture(Pi::renderer, "gasgiant");
+			m_material->texture2 = Graphics::TextureBuilder::Raw("textures/gasgiants/jupiterramp.png").GetOrCreateTexture(RendererLocator::getRenderer(), "gasgiant");
 			break;
 		case Graphics::OGL::GEN_SATURN_TEXTURE:
-			m_material->texture2 = Graphics::TextureBuilder::Raw("textures/gasgiants/saturnramp.png").GetOrCreateTexture(Pi::renderer, "gasgiant");
+			m_material->texture2 = Graphics::TextureBuilder::Raw("textures/gasgiants/saturnramp.png").GetOrCreateTexture(RendererLocator::getRenderer(), "gasgiant");
 			break;
 		case Graphics::OGL::GEN_SATURN2_TEXTURE:
-			m_material->texture2 = Graphics::TextureBuilder::Raw("textures/gasgiants/saturn2ramp.png").GetOrCreateTexture(Pi::renderer, "gasgiant");
+			m_material->texture2 = Graphics::TextureBuilder::Raw("textures/gasgiants/saturn2ramp.png").GetOrCreateTexture(RendererLocator::getRenderer(), "gasgiant");
 			break;
 		case Graphics::OGL::GEN_NEPTUNE_TEXTURE:
-			m_material->texture2 = Graphics::TextureBuilder::Raw("textures/gasgiants/neptuneramp.png").GetOrCreateTexture(Pi::renderer, "gasgiant");
+			m_material->texture2 = Graphics::TextureBuilder::Raw("textures/gasgiants/neptuneramp.png").GetOrCreateTexture(RendererLocator::getRenderer(), "gasgiant");
 			break;
 		case Graphics::OGL::GEN_NEPTUNE2_TEXTURE:
-			m_material->texture2 = Graphics::TextureBuilder::Raw("textures/gasgiants/neptune2ramp.png").GetOrCreateTexture(Pi::renderer, "gasgiant");
+			m_material->texture2 = Graphics::TextureBuilder::Raw("textures/gasgiants/neptune2ramp.png").GetOrCreateTexture(RendererLocator::getRenderer(), "gasgiant");
 			break;
 		case Graphics::OGL::GEN_URANUS_TEXTURE:
-			m_material->texture2 = Graphics::TextureBuilder::Raw("textures/gasgiants/uranusramp.png").GetOrCreateTexture(Pi::renderer, "gasgiant");
+			m_material->texture2 = Graphics::TextureBuilder::Raw("textures/gasgiants/uranusramp.png").GetOrCreateTexture(RendererLocator::getRenderer(), "gasgiant");
 			break;
 		}
 
@@ -165,14 +166,14 @@ namespace GasGiantJobs {
 		vbd.attrib[1].format = Graphics::ATTRIB_FORMAT_FLOAT2;
 		vbd.numVertices = vertices.GetNumVerts();
 		vbd.usage = Graphics::BUFFER_USAGE_STATIC;
-		m_vertexBuffer.reset(r->CreateVertexBuffer(vbd));
+		m_vertexBuffer.reset(RendererLocator::getRenderer()->CreateVertexBuffer(vbd));
 		m_vertexBuffer->Populate(vertices);
 	}
 
-	void GenFaceQuad::Draw(Graphics::Renderer *r)
+	void GenFaceQuad::Draw()
 	{
 		PROFILE_SCOPED()
-		r->DrawBuffer(m_vertexBuffer.get(), m_renderState, m_material.get(), Graphics::TRIANGLE_STRIP);
+		RendererLocator::getRenderer()->DrawBuffer(m_vertexBuffer.get(), m_renderState, m_material.get(), Graphics::TRIANGLE_STRIP);
 	}
 
 	// ********************************************************************************
@@ -243,40 +244,40 @@ namespace GasGiantJobs {
 		PROFILE_SCOPED()
 		//MsgTimer timey;
 
-		Pi::renderer->SetViewport(0, 0, mData->UVDims(), mData->UVDims());
-		Pi::renderer->SetTransform(matrix4x4f::Identity());
+		RendererLocator::getRenderer()->SetViewport(0, 0, mData->UVDims(), mData->UVDims());
+		RendererLocator::getRenderer()->SetTransform(matrix4x4f::Identity());
 
 		// enter ortho
 		{
-			Pi::renderer->SetMatrixMode(Graphics::MatrixMode::PROJECTION);
-			Pi::renderer->PushMatrix();
-			Pi::renderer->SetOrthographicProjection(0, mData->UVDims(), mData->UVDims(), 0, -1, 1);
-			Pi::renderer->SetMatrixMode(Graphics::MatrixMode::MODELVIEW);
-			Pi::renderer->PushMatrix();
-			Pi::renderer->LoadIdentity();
+			RendererLocator::getRenderer()->SetMatrixMode(Graphics::MatrixMode::PROJECTION);
+			RendererLocator::getRenderer()->PushMatrix();
+			RendererLocator::getRenderer()->SetOrthographicProjection(0, mData->UVDims(), mData->UVDims(), 0, -1, 1);
+			RendererLocator::getRenderer()->SetMatrixMode(Graphics::MatrixMode::MODELVIEW);
+			RendererLocator::getRenderer()->PushMatrix();
+			RendererLocator::getRenderer()->LoadIdentity();
 		}
 
 		GasGiant::BeginRenderTarget();
 		for (Uint32 iFace = 0; iFace < NUM_PATCHES; iFace++) {
 			// render the scene
 			GasGiant::SetRenderTargetCubemap(iFace, mData->Texture());
-			Pi::renderer->BeginFrame();
+			RendererLocator::getRenderer()->BeginFrame();
 
 			// draw to the texture here
 			mData->SetupMaterialParams(iFace);
-			mData->Quad()->Draw(Pi::renderer);
+			mData->Quad()->Draw();
 
-			Pi::renderer->EndFrame();
+			RendererLocator::getRenderer()->EndFrame();
 			GasGiant::SetRenderTargetCubemap(iFace, nullptr);
 		}
 		GasGiant::EndRenderTarget();
 
 		// leave ortho?
 		{
-			Pi::renderer->SetMatrixMode(Graphics::MatrixMode::PROJECTION);
-			Pi::renderer->PopMatrix();
-			Pi::renderer->SetMatrixMode(Graphics::MatrixMode::MODELVIEW);
-			Pi::renderer->PopMatrix();
+			RendererLocator::getRenderer()->SetMatrixMode(Graphics::MatrixMode::PROJECTION);
+			RendererLocator::getRenderer()->PopMatrix();
+			RendererLocator::getRenderer()->SetMatrixMode(Graphics::MatrixMode::MODELVIEW);
+			RendererLocator::getRenderer()->PopMatrix();
 		}
 
 		// add this patches data

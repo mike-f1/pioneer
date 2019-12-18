@@ -4,6 +4,9 @@
 #include "PiGui.h"
 #include "Pi.h"
 
+#include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
+
 #include "LuaManager.h"
 
 #include "graphics/opengl/TextureGL.h" // nasty, usage of GL is implementation specific
@@ -211,7 +214,7 @@ void PiGui::Init(SDL_Window *window)
 	// unused, but that is slated to change very soon.
 	// We will need to fill this with a valid pointer to the OpenGL context.
 	ImGui_ImplSDL2_InitForOpenGL(window, NULL);
-	switch (Pi::renderer->GetRendererType()) {
+	switch (RendererLocator::getRenderer()->GetRendererType()) {
 	default:
 	case Graphics::RENDERER_DUMMY:
 		Error("RENDERER_DUMMY is not a valid renderer, aborting.");
@@ -365,7 +368,7 @@ void *PiGui::makeTexture(unsigned char *pixels, int width, int height)
 		false, false, false, 0, Graphics::TEXTURE_2D);
 	// Create the texture, calling it via renderer directly avoids the caching call of TextureBuilder
 	// However interestingly this gets called twice which would have been a WIN for the TextureBuilder :/
-	Graphics::Texture *pTex = Pi::renderer->CreateTexture(texDesc);
+	Graphics::Texture *pTex = RendererLocator::getRenderer()->CreateTexture(texDesc);
 	// Update it with the actual pixels, this is a two step process due to legacy code
 	pTex->Update(pixels, dataSize, Graphics::TEXTURE_RGBA_8888);
 	// nasty bit as I invoke the TextureGL
@@ -390,7 +393,7 @@ void PiGui::NewFrame(SDL_Window *window, bool skip)
 	if (!skip) {
 		ImGui::GetIO().MouseDrawCursor = true;
 	}
-	switch (Pi::renderer->GetRendererType()) {
+	switch (RendererLocator::getRenderer()->GetRendererType()) {
 	default:
 	case Graphics::RENDERER_DUMMY:
 		Error("RENDERER_DUMMY is not a valid renderer, aborting.");
@@ -402,7 +405,7 @@ void PiGui::NewFrame(SDL_Window *window, bool skip)
 	ImGui_ImplSDL2_NewFrame(window);
 	ImGui::NewFrame();
 
-	Pi::renderer->CheckRenderErrors(__FUNCTION__, __LINE__);
+	RendererLocator::getRenderer()->CheckRenderErrors(__FUNCTION__, __LINE__);
 	ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
 #if 0 // Mouse cursors are set via the OS facilities.
 	// We may want to revisit this at a later date.
@@ -419,7 +422,7 @@ void PiGui::Render(double delta, std::string handler)
 	ScopedTable t(m_handlers);
 	if (t.Get<bool>(handler)) {
 		t.Call<bool>(handler, delta);
-		Pi::renderer->CheckRenderErrors(__FUNCTION__, __LINE__);
+		RendererLocator::getRenderer()->CheckRenderErrors(__FUNCTION__, __LINE__);
 	}
 	// Explicitly end frame, to show tooltips. Otherwise, they are shown at the next NextFrame,
 	// which might crash because the font atlas was rebuilt, and the old fonts were cached inside imgui.
@@ -449,7 +452,7 @@ void PiGui::RenderImGui()
 	PROFILE_SCOPED()
 	ImGui::Render();
 
-	switch (Pi::renderer->GetRendererType()) {
+	switch (RendererLocator::getRenderer()->GetRendererType()) {
 	default:
 	case Graphics::RENDERER_DUMMY:
 		return;
@@ -729,7 +732,7 @@ void PiGui::Cleanup()
 		delete tex;
 	}
 
-	switch (Pi::renderer->GetRendererType()) {
+	switch (RendererLocator::getRenderer()->GetRendererType()) {
 	default:
 	case Graphics::RENDERER_DUMMY:
 		return;

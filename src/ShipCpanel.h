@@ -18,8 +18,8 @@ namespace Graphics {
 
 class ShipCpanel : public Gui::Fixed {
 public:
-	ShipCpanel(Graphics::Renderer *r);
-	ShipCpanel(const Json &jsonObj, Graphics::Renderer *r);
+	ShipCpanel();
+	ShipCpanel(const Json &jsonObj);
 	virtual ~ShipCpanel();
 	virtual void Draw();
 	void Update();

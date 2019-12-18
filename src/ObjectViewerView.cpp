@@ -23,6 +23,7 @@
 #include "graphics/Drawables.h"
 #include "graphics/Light.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 #include "terrain/Terrain.h"
 
 #include "gui/GuiBox.h"
@@ -49,11 +50,11 @@ ObjectViewerView::ObjectViewerView(Game *game) :
 
 	float znear;
 	float zfar;
-	Pi::renderer->GetNearFarRange(znear, zfar);
+	RendererLocator::getRenderer()->GetNearFarRange(znear, zfar);
 
 	const float fovY = GameConfSingleton::getInstance().Float("FOVVertical");
 	m_cameraContext.Reset(new CameraContext(Graphics::GetScreenWidth(), Graphics::GetScreenHeight(), fovY, znear, zfar));
-	m_camera.reset(new Camera(m_cameraContext, Pi::renderer));
+	m_camera.reset(new Camera(m_cameraContext));
 
 	m_cameraContext->SetCameraFrame(game->GetPlayer()->GetFrame());
 	m_cameraContext->SetCameraPosition(game->GetPlayer()->GetInterpPosition() + vector3d(0, 0, m_viewingDist));
@@ -125,11 +126,11 @@ ObjectViewerView::ObjectViewerView(Game *game) :
 void ObjectViewerView::Draw3D()
 {
 	PROFILE_SCOPED()
-	m_renderer->ClearScreen();
+	RendererLocator::getRenderer()->ClearScreen();
 	float znear, zfar;
-	m_renderer->GetNearFarRange(znear, zfar);
-	m_renderer->SetPerspectiveProjection(75.f, m_renderer->GetDisplayAspect(), znear, zfar);
-	m_renderer->SetTransform(matrix4x4f::Identity());
+	RendererLocator::getRenderer()->GetNearFarRange(znear, zfar);
+	RendererLocator::getRenderer()->SetPerspectiveProjection(75.f, RendererLocator::getRenderer()->GetDisplayAspect(), znear, zfar);
+	RendererLocator::getRenderer()->SetTransform(matrix4x4f::Identity());
 
 	Graphics::Light light;
 	light.SetType(Graphics::Light::LIGHT_DIRECTIONAL);
@@ -151,13 +152,13 @@ void ObjectViewerView::Draw3D()
 		else {
 			light.SetPosition(vector3f(0.577f));
 		}
-		m_renderer->SetLights(1, &light);
+		RendererLocator::getRenderer()->SetLights(1, &light);
 
-		m_lastTarget->Render(m_renderer, m_camera.get(), vector3d(0, 0, -m_viewingDist), m_camRot);
+		m_lastTarget->Render(m_camera.get(), vector3d(0, 0, -m_viewingDist), m_camRot);
 
 		// industry-standard red/green/blue XYZ axis indiactor
-		m_renderer->SetTransform(matrix4x4d::Translation(vector3d(0, 0, -m_viewingDist)) * m_camRot * matrix4x4d::ScaleMatrix(m_lastTarget->GetClipRadius() * 2.0));
-		Graphics::Drawables::GetAxes3DDrawable(m_renderer)->Draw(m_renderer);
+		RendererLocator::getRenderer()->SetTransform(matrix4x4d::Translation(vector3d(0, 0, -m_viewingDist)) * m_camRot * matrix4x4d::ScaleMatrix(m_lastTarget->GetClipRadius() * 2.0));
+		Graphics::Drawables::GetAxes3DDrawable(RendererLocator::getRenderer())->Draw(RendererLocator::getRenderer());
 	}
 
 	UIView::Draw3D();

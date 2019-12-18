@@ -8,7 +8,6 @@
  */
 #include "LoaderDefinitions.h"
 #include "Model.h"
-#include "libs.h"
 #include "text/DistanceFieldFont.h"
 
 namespace Graphics {
@@ -19,16 +18,14 @@ namespace SceneGraph {
 
 	class BaseLoader {
 	public:
-		BaseLoader(Graphics::Renderer *r);
+		BaseLoader();
 
-		Graphics::Renderer *GetRenderer() const { return m_renderer; }
 		RefCountedPtr<Text::DistanceFieldFont> GetLabel3DFont() const { return m_labelFont; }
 
 		//allocate material for dynamic decal, should be used in order 1..4
 		RefCountedPtr<Graphics::Material> GetDecalMaterial(unsigned int index);
 
 	protected:
-		Graphics::Renderer *m_renderer;
 		Model *m_model;
 		std::string m_curPath; //path of current model file
 		RefCountedPtr<Text::DistanceFieldFont> m_labelFont;

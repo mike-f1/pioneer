@@ -2,9 +2,8 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "View.h"
-#include "Pi.h"
-#include "ShipCpanel.h"
 
+#include "ShipCpanel.h"
 #include "gui/GuiScreen.h"
 
 ShipCpanel *View::s_cpan = nullptr;

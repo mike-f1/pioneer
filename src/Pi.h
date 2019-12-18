@@ -30,7 +30,6 @@ class ServerAgent;
 #endif
 
 namespace Graphics {
-	class Renderer;
 	class Texture;
 	class RenderState;
 	class RenderTarget;
@@ -105,7 +104,6 @@ public:
 
 	static Input input;
 	static LuaConsole *luaConsole;
-	static Graphics::Renderer *renderer;
 
 	static JobQueue *GetAsyncJobQueue();
 	static JobQueue *GetSyncJobQueue();

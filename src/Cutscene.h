@@ -8,7 +8,6 @@
 #include <vector>
 
 namespace Graphics {
-	class Renderer;
 	class Light;
 }
 
@@ -20,9 +19,8 @@ class Shields;
 
 class Cutscene {
 public:
-	Cutscene(Graphics::Renderer *r, int width, int height) :
-		m_aspectRatio(float(width) / float(height)),
-		m_renderer(r)
+	Cutscene(int width, int height) :
+		m_aspectRatio(float(width) / float(height))
 	{
 	}
 	virtual ~Cutscene() {}
@@ -32,7 +30,6 @@ public:
 protected:
 	Color m_ambientColor;
 	float m_aspectRatio;
-	Graphics::Renderer *m_renderer;
 	SceneGraph::Model *m_model;
 	Shields *m_shield;
 	std::vector<Graphics::Light> m_lights;

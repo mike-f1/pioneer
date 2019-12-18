@@ -6,11 +6,10 @@
 
 #include "JsonFwd.h"
 #include "Object.h"
-#include "gui/GuiWidget.h"
 #include "graphics/Drawables.h"
+#include "gui/GuiWidget.h"
 
 namespace Graphics {
-	class Renderer;
 	class RenderState;
 }
 
@@ -29,8 +28,8 @@ public:
 
 class RadarWidget : public IMultiFunc, public Gui::Widget {
 public:
-	RadarWidget(Graphics::Renderer *r);
-	RadarWidget(Graphics::Renderer *r, const Json &jsonObj);
+	RadarWidget();
+	RadarWidget(const Json &jsonObj);
 	virtual ~RadarWidget();
 	void GetSizeRequested(float size[2]);
 	void ToggleMode();
@@ -81,7 +80,6 @@ private:
 	std::vector<vector3f> m_edgeVts;
 	std::vector<Color> m_edgeCols;
 
-	Graphics::Renderer *m_renderer;
 	Graphics::RenderState *m_renderState;
 
 	Graphics::Drawables::Lines m_scanLines;

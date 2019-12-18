@@ -4,6 +4,8 @@
 #include "Gui.h"
 #include "libs.h"
 
+#include "graphics/RendererLocator.h"
+
 static const float SCROLLBAR_SIZE = 12.f;
 static const float BORDER = 2.f;
 
@@ -84,7 +86,7 @@ namespace Gui {
 			lines[1] = vector3f(size[0] - BORDER, BORDER + (size[1] - 2 * BORDER) * pos, 0.f);
 		}
 		m_lines.SetData(2, &lines[0], Color::WHITE);
-		m_lines.Draw(Screen::GetRenderer(), Screen::alphaBlendState);
+		m_lines.Draw(RendererLocator::getRenderer(), Screen::alphaBlendState);
 	}
 
 	void ScrollBar::GetSizeRequested(float size[2])

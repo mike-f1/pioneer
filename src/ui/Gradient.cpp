@@ -5,6 +5,7 @@
 #include "Context.h"
 #include "graphics/Material.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 #include "graphics/VertexArray.h"
 
 namespace UI {
@@ -17,12 +18,12 @@ namespace UI {
 	{
 		Graphics::MaterialDescriptor desc;
 		desc.vertexColors = true;
-		m_material.Reset(GetContext()->GetRenderer()->CreateMaterial(desc));
+		m_material.Reset(RendererLocator::getRenderer()->CreateMaterial(desc));
 	}
 
 	void Gradient::Draw()
 	{
-		Graphics::Renderer *r = GetContext()->GetRenderer();
+		Graphics::Renderer *r = RendererLocator::getRenderer();
 		if (!m_quad) {
 			const Point &offset = GetActiveOffset();
 			const Point &area = GetActiveArea();

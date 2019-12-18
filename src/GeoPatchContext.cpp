@@ -3,9 +3,10 @@
 
 #include "GeoPatchContext.h"
 
-#include "Pi.h"
 #include "graphics/Graphics.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
+#include "graphics/VertexBuffer.h"
 
 #include "perlin.h"
 #include "vcacheopt/vcacheopt.h"
@@ -37,8 +38,6 @@ void GeoPatchContext::GenerateIndices()
 	// pre-allocate and fill enough space
 	pl_short.assign(tri_count + VBO_COUNT_MID_IDX() + VBO_COUNT_HI_EDGE() * 4, 0);
 
-	Output("GenerateIndices: triangles count = %i, mid indexes = %i, hi edges = %i\n", tri_count, VBO_COUNT_MID_IDX(), VBO_COUNT_HI_EDGE());
-
 	// want vtx indices for tris
 	Uint32 *idx = &pl_short[0];
 	for (int x = 0; x < m_edgeLen - 1; x++) {
@@ -63,7 +62,7 @@ void GeoPatchContext::GenerateIndices()
 		VertexCacheOptimizerUInt::Result res = vco.Optimize(&pl_short[0], tri_count);
 		assert(0 == res);
 		//create buffer & copy
-		m_indices.Reset(Pi::renderer->CreateIndexBuffer(pl_short.size(), Graphics::BUFFER_USAGE_STATIC));
+		m_indices.Reset(RendererLocator::getRenderer()->CreateIndexBuffer(pl_short.size(), Graphics::BUFFER_USAGE_STATIC));
 		Uint32 *idxPtr = m_indices->Map(Graphics::BUFFER_MAP_WRITE);
 		for (Uint32 j = 0; j < pl_short.size(); j++) {
 			idxPtr[j] = pl_short[j];

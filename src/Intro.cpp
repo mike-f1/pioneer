@@ -12,6 +12,7 @@
 #include "graphics/Drawables.h"
 #include "graphics/Graphics.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 #include "graphics/TextureBuilder.h"
 #include "scenegraph/ModelSkin.h"
 #include "scenegraph/SceneGraph.h"
@@ -24,12 +25,12 @@ struct PiRngWrapper {
 	}
 };
 
-Intro::Intro(Graphics::Renderer *r, int width, int height, float amountOfBackgroundStars) :
-	Cutscene(r, width, height)
+Intro::Intro(int width, int height, float amountOfBackgroundStars) :
+	Cutscene(width, height)
 {
 	using Graphics::Light;
 
-	m_background.reset(new Background::Container(r, RandomSingleton::getInstance(), amountOfBackgroundStars));
+	m_background.reset(new Background::Container(RandomSingleton::getInstance(), amountOfBackgroundStars));
 	m_ambientColor = Color::BLANK;
 
 	const Color one = Color::WHITE;
@@ -131,22 +132,22 @@ void Intro::Draw(float _time)
 		m_needReset = true;
 	}
 
-	Graphics::Renderer::StateTicket ticket(m_renderer);
+	Graphics::Renderer::StateTicket ticket(RendererLocator::getRenderer());
 
-	m_renderer->SetPerspectiveProjection(75, m_aspectRatio, 1.f, 10000.f);
-	m_renderer->SetTransform(matrix4x4f::Identity());
+	RendererLocator::getRenderer()->SetPerspectiveProjection(75, m_aspectRatio, 1.f, 10000.f);
+	RendererLocator::getRenderer()->SetTransform(matrix4x4f::Identity());
 
-	m_renderer->SetAmbientColor(m_ambientColor);
-	m_renderer->SetLights(m_lights.size(), &m_lights[0]);
+	RendererLocator::getRenderer()->SetAmbientColor(m_ambientColor);
+	RendererLocator::getRenderer()->SetLights(m_lights.size(), &m_lights[0]);
 
 	// XXX all this stuff will be gone when intro uses a Camera
 	// rotate background by time, and a bit extra Z so it's not so flat
 	matrix4x4d brot = matrix4x4d::RotateXMatrix(-0.25 * m_duration) * matrix4x4d::RotateZMatrix(0.6);
-	m_renderer->ClearDepthBuffer();
+	RendererLocator::getRenderer()->ClearDepthBuffer();
 	m_background->Draw(brot);
 
-	m_renderer->SetViewport(m_spinnerLeft, 0, m_spinnerWidth, Graphics::GetScreenHeight());
-	m_renderer->SetPerspectiveProjection(75, m_spinnerRatio, 1.f, 10000.f);
+	RendererLocator::getRenderer()->SetViewport(m_spinnerLeft, 0, m_spinnerWidth, Graphics::GetScreenHeight());
+	RendererLocator::getRenderer()->SetPerspectiveProjection(75, m_spinnerRatio, 1.f, 10000.f);
 
 	matrix4x4f trans =
 		matrix4x4f::Translation(0, 0, m_dist) *

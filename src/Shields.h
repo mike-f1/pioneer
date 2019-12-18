@@ -10,9 +10,6 @@
 #include "libs.h"
 #include <deque>
 
-namespace Graphics {
-	class Renderer;
-}
 namespace SceneGraph {
 	class Model;
 	class StaticGeometry;
@@ -46,7 +43,7 @@ public:
 	void SetColor(const Color3ub &);
 	void AddHit(const vector3d &hitPos);
 
-	static void Init(Graphics::Renderer *);
+	static void Init();
 	static void ReparentShieldNodes(SceneGraph::Model *);
 	static void Uninit();
 

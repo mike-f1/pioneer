@@ -5,14 +5,13 @@
 
 #include "Shields.h"
 #include "scenegraph/SceneGraph.h"
+#include "scenegraph/Loader.h"
 #include "utils.h"
 
 ModelCache::ModelMap ModelCache::s_models;
-Graphics::Renderer *ModelCache::s_renderer = nullptr;
 
-void ModelCache::Init(Graphics::Renderer *r)
+void ModelCache::Init()
 {
-	s_renderer = r;
 }
 
 SceneGraph::Model *ModelCache::findmodel(const std::string &name)
@@ -21,7 +20,7 @@ SceneGraph::Model *ModelCache::findmodel(const std::string &name)
 
 	if (it == s_models.end()) {
 		try {
-			SceneGraph::Loader loader(s_renderer);
+			SceneGraph::Loader loader;
 			SceneGraph::Model *m = loader.LoadModel(name);
 			Shields::ReparentShieldNodes(m);
 			s_models[name] = m;

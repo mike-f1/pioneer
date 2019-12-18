@@ -15,6 +15,8 @@
 #include "ShipCockpit.h"
 #include "galaxy/GalaxyEnums.h"
 #include "galaxy/SystemBody.h"
+#include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 #include "graphics/TextureBuilder.h"
 
 using namespace Graphics;
@@ -73,10 +75,10 @@ void CameraContext::EndFrame()
 	m_camFrame = FrameId::Invalid;
 }
 
-void CameraContext::ApplyDrawTransforms(Graphics::Renderer *r)
+void CameraContext::ApplyDrawTransforms()
 {
-	r->SetPerspectiveProjection(m_fovAng, m_width / m_height, m_zNear, m_zFar);
-	r->SetTransform(matrix4x4f::Identity());
+	RendererLocator::getRenderer()->SetPerspectiveProjection(m_fovAng, m_width / m_height, m_zNear, m_zFar);
+	RendererLocator::getRenderer()->SetTransform(matrix4x4f::Identity());
 }
 
 bool Camera::BodyAttrs::sort_BodyAttrs(const BodyAttrs &a, const BodyAttrs &b)
@@ -97,16 +99,15 @@ bool Camera::BodyAttrs::sort_BodyAttrs(const BodyAttrs &a, const BodyAttrs &b)
 	return a.camDist > b.camDist;
 }
 
-Camera::Camera(RefCountedPtr<CameraContext> context, Graphics::Renderer *renderer) :
-	m_context(context),
-	m_renderer(renderer)
+Camera::Camera(RefCountedPtr<CameraContext> context) :
+	m_context(context)
 {
 	Graphics::MaterialDescriptor desc;
 	desc.effect = Graphics::EFFECT_BILLBOARD;
 	desc.textures = 1;
 
-	m_billboardMaterial.reset(m_renderer->CreateMaterial(desc));
-	m_billboardMaterial->texture0 = Graphics::TextureBuilder::Billboard("textures/planet_billboard.dds").GetOrCreateTexture(m_renderer, "billboard");
+	m_billboardMaterial.reset(RendererLocator::getRenderer()->CreateMaterial(desc));
+	m_billboardMaterial->texture0 = Graphics::TextureBuilder::Billboard("textures/planet_billboard.dds").GetOrCreateTexture(RendererLocator::getRenderer(), "billboard");
 }
 
 static void position_system_lights(Frame *camFrame, Frame *frame, std::vector<Camera::LightSource> &lights)
@@ -215,7 +216,7 @@ void Camera::Draw(const Body *excludeBody, ShipCockpit *cockpit)
 	Frame *camFrame = Frame::GetFrame(camFrameId);
 	Frame *rootFrame = Frame::GetRootFrame();
 
-	m_renderer->ClearScreen();
+	RendererLocator::getRenderer()->ClearScreen();
 
 	matrix4x4d trans2bg;
 	Frame::GetFrameTransform(rootFrameId, camFrameId, trans2bg);
@@ -270,7 +271,7 @@ void Camera::Draw(const Body *excludeBody, ShipCockpit *cockpit)
 		rendererLights.reserve(m_lightSources.size());
 		for (size_t i = 0; i < m_lightSources.size(); i++)
 			rendererLights.push_back(m_lightSources[i].GetLight());
-		m_renderer->SetLights(rendererLights.size(), &rendererLights[0]);
+		RendererLocator::getRenderer()->SetLights(rendererLights.size(), &rendererLights[0]);
 	}
 
 	for (std::list<BodyAttrs>::iterator i = m_sortedBodies.begin(); i != m_sortedBodies.end(); ++i) {
@@ -282,15 +283,15 @@ void Camera::Draw(const Body *excludeBody, ShipCockpit *cockpit)
 
 		// draw something!
 		if (attrs->billboard) {
-			Graphics::Renderer::MatrixTicket mt(m_renderer, Graphics::MatrixMode::MODELVIEW);
-			m_renderer->SetTransform(matrix4x4d::Identity());
+			Graphics::Renderer::MatrixTicket mt(RendererLocator::getRenderer(), Graphics::MatrixMode::MODELVIEW);
+			RendererLocator::getRenderer()->SetTransform(matrix4x4d::Identity());
 			m_billboardMaterial->diffuse = attrs->billboardColor;
-			m_renderer->DrawPointSprites(1, &attrs->billboardPos, SfxManager::additiveAlphaState, m_billboardMaterial.get(), attrs->billboardSize);
+			RendererLocator::getRenderer()->DrawPointSprites(1, &attrs->billboardPos, SfxManager::additiveAlphaState, m_billboardMaterial.get(), attrs->billboardSize);
 		} else
-			attrs->body->Render(m_renderer, this, attrs->viewCoords, attrs->viewTransform);
+			attrs->body->Render(this, attrs->viewCoords, attrs->viewTransform);
 	}
 
-	SfxManager::RenderAll(m_renderer, rootFrameId, camFrameId);
+	SfxManager::RenderAll(rootFrameId, camFrameId);
 
 	// NB: Do any screen space rendering after here:
 	// Things like the cockpit and AR features like hudtrails, space dust etc.
@@ -299,7 +300,7 @@ void Camera::Draw(const Body *excludeBody, ShipCockpit *cockpit)
 	// XXX only here because it needs a frame for lighting calc
 	// should really be in WorldView, immediately after camera draw
 	if (cockpit)
-		cockpit->RenderCockpit(m_renderer, this, camFrameId);
+		cockpit->RenderCockpit(this, camFrameId);
 }
 
 void Camera::CalcShadows(const int lightNum, const Body *b, std::vector<Shadow> &shadowsOut) const

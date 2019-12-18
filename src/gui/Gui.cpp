@@ -4,6 +4,7 @@
 #include "Gui.h"
 #include "graphics/Graphics.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 #include "graphics/RenderState.h"
 #include "libs.h"
 
@@ -113,9 +114,9 @@ namespace Gui {
 		Screen::Draw();
 	}
 
-	void Init(Graphics::Renderer *renderer, int screen_width, int screen_height, int ui_width, int ui_height)
+	void Init(int screen_width, int screen_height, int ui_width, int ui_height)
 	{
-		Screen::Init(renderer, screen_width, screen_height, ui_width, ui_height);
+		Screen::Init(screen_width, screen_height, ui_width, ui_height);
 	}
 
 	void Uninit()
@@ -166,7 +167,7 @@ namespace Gui {
 			// Upload data
 			// VertexBuffer
 			std::unique_ptr<Graphics::VertexBuffer> vb;
-			vb.reset(Screen::GetRenderer()->CreateVertexBuffer(vbd));
+			vb.reset(RendererLocator::getRenderer()->CreateVertexBuffer(vbd));
 			TPos *vtxPtr = vb->Map<TPos>(Graphics::BUFFER_MAP_WRITE);
 			assert(vb->GetDesc().stride == sizeof(TPos));
 			for (Uint32 i = 0; i < 8; i++) {
@@ -176,7 +177,7 @@ namespace Gui {
 
 			//create index buffer & copy
 			std::unique_ptr<Graphics::IndexBuffer> ib;
-			ib.reset(Screen::GetRenderer()->CreateIndexBuffer(24, Graphics::BUFFER_USAGE_STATIC));
+			ib.reset(RendererLocator::getRenderer()->CreateIndexBuffer(24, Graphics::BUFFER_USAGE_STATIC));
 			Uint32 *idxPtr = ib->Map(Graphics::BUFFER_MAP_WRITE);
 			for (Uint32 j = 0; j < 24; j++) {
 				idxPtr[j] = indices[j];
@@ -184,12 +185,12 @@ namespace Gui {
 			ib->Unmap();
 
 			Screen::flatColorMaterial->diffuse = color;
-			Screen::GetRenderer()->DrawBufferIndexed(vb.get(), ib.get(), state, Screen::flatColorMaterial);
+			RendererLocator::getRenderer()->DrawBufferIndexed(vb.get(), ib.get(), state, Screen::flatColorMaterial);
 		}
 
 		Graphics::IndexBuffer *CreateIndexBuffer(const Uint32 indices[], const Uint32 IndexStart, const Uint32 IndexEnd, const Uint32 NumIndices)
 		{
-			Graphics::IndexBuffer *ib = Screen::GetRenderer()->CreateIndexBuffer(NumIndices, Graphics::BUFFER_USAGE_STATIC);
+			Graphics::IndexBuffer *ib = RendererLocator::getRenderer()->CreateIndexBuffer(NumIndices, Graphics::BUFFER_USAGE_STATIC);
 			Uint32 *idxPtr = ib->Map(Graphics::BUFFER_MAP_WRITE);
 			for (Uint32 j = 0; j < NumIndices; j++) {
 				idxPtr[j] = indices[j + IndexStart];
@@ -248,7 +249,7 @@ namespace Gui {
 				vbd.usage = Graphics::BUFFER_USAGE_STATIC;
 
 				// Upload data
-				vb.Reset(Screen::GetRenderer()->CreateVertexBuffer(vbd));
+				vb.Reset(RendererLocator::getRenderer()->CreateVertexBuffer(vbd));
 				TPos *vtxPtr = vb->Map<TPos>(Graphics::BUFFER_MAP_WRITE);
 				assert(vb->GetDesc().stride == sizeof(TPos));
 				for (Uint32 i = 0; i < 8; i++) {
@@ -285,11 +286,11 @@ namespace Gui {
 
 			// Draw it!
 			Screen::flatColorMaterial->diffuse = Colors::bgShadow;
-			Screen::GetRenderer()->DrawBufferIndexed(vb.Get(), ib[0].Get(), state, Screen::flatColorMaterial);
+			RendererLocator::getRenderer()->DrawBufferIndexed(vb.Get(), ib[0].Get(), state, Screen::flatColorMaterial);
 			Screen::flatColorMaterial->diffuse = Color(153, 153, 153, 255);
-			Screen::GetRenderer()->DrawBufferIndexed(vb.Get(), ib[1].Get(), state, Screen::flatColorMaterial);
+			RendererLocator::getRenderer()->DrawBufferIndexed(vb.Get(), ib[1].Get(), state, Screen::flatColorMaterial);
 			Screen::flatColorMaterial->diffuse = Colors::bg;
-			Screen::GetRenderer()->DrawBufferIndexed(vb.Get(), ib[2].Get(), state, Screen::flatColorMaterial);
+			RendererLocator::getRenderer()->DrawBufferIndexed(vb.Get(), ib[2].Get(), state, Screen::flatColorMaterial);
 		}
 
 		struct TOutdentBuffers {
@@ -341,7 +342,7 @@ namespace Gui {
 				vbd.usage = Graphics::BUFFER_USAGE_STATIC;
 
 				// Upload data
-				vb.Reset(Screen::GetRenderer()->CreateVertexBuffer(vbd));
+				vb.Reset(RendererLocator::getRenderer()->CreateVertexBuffer(vbd));
 				TPos *vtxPtr = vb->Map<TPos>(Graphics::BUFFER_MAP_WRITE);
 				assert(vb->GetDesc().stride == sizeof(TPos));
 				for (Uint32 i = 0; i < 8; i++) {
@@ -378,11 +379,11 @@ namespace Gui {
 
 			// Draw it!
 			Screen::flatColorMaterial->diffuse = Color(153, 153, 153, 255);
-			Screen::GetRenderer()->DrawBufferIndexed(vb.Get(), ib[0].Get(), state, Screen::flatColorMaterial);
+			RendererLocator::getRenderer()->DrawBufferIndexed(vb.Get(), ib[0].Get(), state, Screen::flatColorMaterial);
 			Screen::flatColorMaterial->diffuse = Colors::bgShadow;
-			Screen::GetRenderer()->DrawBufferIndexed(vb.Get(), ib[1].Get(), state, Screen::flatColorMaterial);
+			RendererLocator::getRenderer()->DrawBufferIndexed(vb.Get(), ib[1].Get(), state, Screen::flatColorMaterial);
 			Screen::flatColorMaterial->diffuse = Colors::bg;
-			Screen::GetRenderer()->DrawBufferIndexed(vb.Get(), ib[2].Get(), state, Screen::flatColorMaterial);
+			RendererLocator::getRenderer()->DrawBufferIndexed(vb.Get(), ib[2].Get(), state, Screen::flatColorMaterial);
 		}
 	} // namespace Theme
 

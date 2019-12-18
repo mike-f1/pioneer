@@ -7,10 +7,6 @@
 #include "JsonFwd.h"
 #include "gui/GuiFixed.h"
 
-namespace Graphics {
-	class Renderer;
-}
-
 class ShipCpanel;
 
 /*
@@ -35,16 +31,11 @@ public:
 	void Attach();
 	void Detach();
 
-	void SetRenderer(Graphics::Renderer *r) { m_renderer = r; }
-
 	static void SetCpanel(ShipCpanel *cpan) { s_cpan = cpan; }
 
 protected:
 	virtual void OnSwitchTo() = 0;
 	virtual void OnSwitchFrom() {}
-
-	// each view can put some buttons in the bottom right of the cpanel
-	Graphics::Renderer *m_renderer;
 
 	static ShipCpanel *s_cpan;
 };

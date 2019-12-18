@@ -33,6 +33,8 @@
 #include "buildopts.h"
 #include "galaxy/Faction.h"
 #include "graphics/Graphics.h"
+#include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 #include "scenegraph/Model.h"
 #include "sound/Sound.h"
 #include "sound/SoundMusic.h"
@@ -226,8 +228,8 @@ static int l_engine_get_maximum_aa_samples(lua_State *l)
 {
 	LUA_DEBUG_START(l);
 
-	if (Pi::renderer != nullptr) {
-		int maxSamples = Pi::renderer->GetMaximumNumberAASamples();
+	if (RendererLocator::getRenderer() != nullptr) {
+		int maxSamples = RendererLocator::getRenderer()->GetMaximumNumberAASamples();
 		lua_pushinteger(l, maxSamples);
 	} else {
 		lua_pushinteger(l, 0);

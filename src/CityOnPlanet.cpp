@@ -14,6 +14,7 @@
 #include "collider/Geom.h"
 #include "graphics/Frustum.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 #include "scenegraph/Animation.h"
 #include "scenegraph/ModelSkin.h"
 #include "scenegraph/SceneGraph.h"
@@ -315,7 +316,7 @@ CityOnPlanet::CityOnPlanet(Planet *planet, SpaceStation *station, const Uint32 s
 	AddStaticGeomsToCollisionSpace();
 }
 
-void CityOnPlanet::Render(Graphics::Renderer *r, const Graphics::Frustum &frustum, const SpaceStation *station, const vector3d &viewCoords, const matrix4x4d &viewTransform)
+void CityOnPlanet::Render(const Graphics::Frustum &frustum, const SpaceStation *station, const vector3d &viewCoords, const matrix4x4d &viewTransform)
 {
 	// Early frustum test of whole city.
 	const vector3d stationPos = viewTransform * (station->GetPosition() + m_realCentre);
@@ -385,6 +386,6 @@ void CityOnPlanet::Render(Graphics::Renderer *r, const Graphics::Frustum &frustu
 			s_buildingList.buildings[i].resolvedModel->Render(transform[i]);
 	}
 
-	r->GetStats().AddToStatCount(Graphics::Stats::STAT_BUILDINGS, uCount);
-	r->GetStats().AddToStatCount(Graphics::Stats::STAT_CITIES, 1);
+	RendererLocator::getRenderer()->GetStats().AddToStatCount(Graphics::Stats::STAT_BUILDINGS, uCount);
+	RendererLocator::getRenderer()->GetStats().AddToStatCount(Graphics::Stats::STAT_CITIES, 1);
 }

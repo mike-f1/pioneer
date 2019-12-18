@@ -7,6 +7,9 @@
 #include "text/FontConfig.h"
 #include <typeinfo>
 
+#include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
+
 namespace UI {
 
 	// minimum screen height for scaling. if the screen has fewer vertical pixels
@@ -33,13 +36,12 @@ namespace UI {
 		1.8f // MONO_XLARGE
 	};
 
-	Context::Context(LuaManager *lua, Graphics::Renderer *renderer, int width, int height) :
-		Context(lua, renderer, width, height, std::min(float(height) / SCALE_CUTOFF_HEIGHT, 1.0f))
+	Context::Context(LuaManager *lua, int width, int height) :
+		Context(lua, width, height, std::min(float(height) / SCALE_CUTOFF_HEIGHT, 1.0f))
 	{}
 
-	Context::Context(LuaManager *lua, Graphics::Renderer *renderer, int width, int height, float scale) :
+	Context::Context(LuaManager *lua, int width, int height, float scale) :
 		Container(this),
-		m_renderer(renderer),
 		m_width(width),
 		m_height(height),
 		m_scale(scale),
@@ -47,7 +49,7 @@ namespace UI {
 		m_mousePointer(nullptr),
 		m_mousePointerEnabled(true),
 		m_eventDispatcher(this),
-		m_skin("ui/Skin.ini", renderer, scale),
+		m_skin("ui/Skin.ini", scale),
 		m_lua(lua)
 	{
 		lua_State *l = m_lua->GetLuaState();
@@ -65,19 +67,19 @@ namespace UI {
 		{
 			const Text::FontConfig config("UIFont");
 			for (int i = FONT_SMALLEST; i <= FONT_LARGEST; i++)
-				m_font[i] = RefCountedPtr<Text::TextureFont>(new Text::TextureFont(config, renderer, FONT_SCALE[i] * GetScale()));
+				m_font[i] = RefCountedPtr<Text::TextureFont>(new Text::TextureFont(config, FONT_SCALE[i] * GetScale()));
 		}
 
 		{
 			const Text::FontConfig config("UIHeadingFont");
 			for (int i = FONT_HEADING_SMALLEST; i <= FONT_HEADING_LARGEST; i++)
-				m_font[i] = RefCountedPtr<Text::TextureFont>(new Text::TextureFont(config, renderer, FONT_SCALE[i] * GetScale()));
+				m_font[i] = RefCountedPtr<Text::TextureFont>(new Text::TextureFont(config, FONT_SCALE[i] * GetScale()));
 		}
 
 		{
 			const Text::FontConfig config("UIMonoFont");
 			for (int i = FONT_MONO_SMALLEST; i <= FONT_MONO_LARGEST; i++)
-				m_font[i] = RefCountedPtr<Text::TextureFont>(new Text::TextureFont(config, renderer, FONT_SCALE[i] * GetScale()));
+				m_font[i] = RefCountedPtr<Text::TextureFont>(new Text::TextureFont(config, FONT_SCALE[i] * GetScale()));
 		}
 
 		m_scissorStack.push(std::make_pair(Point(0, 0), Point(m_width, m_height)));
@@ -158,7 +160,7 @@ namespace UI {
 
 	void Context::Draw()
 	{
-		Graphics::Renderer *r = GetRenderer();
+		Graphics::Renderer *r = RendererLocator::getRenderer();
 		r->ClearDepthBuffer();
 
 		// Ticket for the viewport mostly
@@ -236,11 +238,11 @@ namespace UI {
 
 		m_scissorStack.push(std::make_pair(newScissorPos, newScissorSize));
 
-		m_renderer->SetScissor(true, vector2f(newScissorPos.x, m_height - newScissorPos.y - newScissorSize.y), vector2f(newScissorSize.x, newScissorSize.y));
+		RendererLocator::RendererLocator::getRenderer()->SetScissor(true, vector2f(newScissorPos.x, m_height - newScissorPos.y - newScissorSize.y), vector2f(newScissorSize.x, newScissorSize.y));
 
 		m_drawWidgetPosition += drawOffset;
 
-		m_renderer->SetTransform(matrix4x4f::Translation(m_drawWidgetPosition.x, m_drawWidgetPosition.y, 0));
+		RendererLocator::RendererLocator::getRenderer()->SetTransform(matrix4x4f::Translation(m_drawWidgetPosition.x, m_drawWidgetPosition.y, 0));
 
 		float oldOpacity = m_opacityStack.empty() ? 1.0f : m_opacityStack.top();
 		float opacity = oldOpacity * w->GetAnimatedOpacity();

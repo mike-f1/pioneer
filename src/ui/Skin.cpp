@@ -4,6 +4,7 @@
 #include "Skin.h"
 #include "FileSystem.h"
 #include "IniConfig.h"
+#include "graphics/RendererLocator.h"
 #include "graphics/TextureBuilder.h"
 #include "graphics/VertexArray.h"
 #include "utils.h"
@@ -12,8 +13,7 @@ namespace UI {
 
 	static const float SKIN_SIZE = 512.0f;
 
-	Skin::Skin(const std::string &filename, Graphics::Renderer *renderer, float scale) :
-		m_renderer(renderer),
+	Skin::Skin(const std::string &filename, float scale) :
 		m_scale(scale),
 		m_opacity(1.0f)
 	{
@@ -26,28 +26,28 @@ namespace UI {
 		// load
 		cfg.Read(FileSystem::gameDataFiles, filename);
 
-		m_texture.Reset(Graphics::TextureBuilder::UI(cfg.String("TextureFile")).GetOrCreateTexture(m_renderer, "ui"));
+		m_texture.Reset(Graphics::TextureBuilder::UI(cfg.String("TextureFile")).GetOrCreateTexture(RendererLocator::getRenderer(), "ui"));
 
 		Graphics::MaterialDescriptor desc;
 		desc.textures = 1;
-		m_textureMaterial.Reset(m_renderer->CreateMaterial(desc));
+		m_textureMaterial.Reset(RendererLocator::getRenderer()->CreateMaterial(desc));
 		m_textureMaterial->texture0 = m_texture.Get();
 		m_textureMaterial->diffuse = Color::WHITE;
 
 		desc.textures = 0;
-		m_colorMaterial.Reset(m_renderer->CreateMaterial(desc));
+		m_colorMaterial.Reset(RendererLocator::getRenderer()->CreateMaterial(desc));
 
 		Graphics::RenderStateDesc rsd;
 		rsd.blendMode = Graphics::BLEND_ALPHA;
 		rsd.depthWrite = false;
 		rsd.depthTest = false;
-		m_alphaBlendState = m_renderer->CreateRenderState(rsd);
+		m_alphaBlendState = RendererLocator::getRenderer()->CreateRenderState(rsd);
 
 		rsd.blendMode = Graphics::BLEND_SET_ALPHA;
-		m_alphaSetState = m_renderer->CreateRenderState(rsd);
+		m_alphaSetState = RendererLocator::getRenderer()->CreateRenderState(rsd);
 
 		rsd.blendMode = Graphics::BLEND_DEST_ALPHA;
-		m_alphaMaskState = m_renderer->CreateRenderState(rsd);
+		m_alphaMaskState = RendererLocator::getRenderer()->CreateRenderState(rsd);
 
 		m_backgroundNormal = LoadBorderedRectElement(cfg.String("BackgroundNormal"));
 		m_backgroundActive = LoadBorderedRectElement(cfg.String("BackgroundActive"));
@@ -121,7 +121,7 @@ namespace UI {
 		va.Add(vector3f(pos.x + size.x, pos.y + size.y, 0.0f), scaled(vector2f(element.pos.x + element.size.x, element.pos.y + element.size.y)));
 
 		m_textureMaterial->diffuse = Color(Color::WHITE.r, Color::WHITE.g, Color::WHITE.b, m_opacity * Color::WHITE.a);
-		m_renderer->DrawTriangles(&va, GetRenderState(blendMode), m_textureMaterial.Get(), Graphics::TRIANGLE_STRIP);
+		RendererLocator::getRenderer()->DrawTriangles(&va, GetRenderState(blendMode), m_textureMaterial.Get(), Graphics::TRIANGLE_STRIP);
 	}
 
 	void Skin::DrawBorderedRectElement(const BorderedRectElement &element, const Point &pos, const Point &size, Graphics::BlendMode blendMode) const
@@ -167,7 +167,7 @@ namespace UI {
 		va.Add(vector3f(pos.x + size.x, pos.y + size.y, 0.0f), scaled(vector2f(element.pos.x + element.size.x, element.pos.y + element.size.y)));
 
 		m_textureMaterial->diffuse = Color(Color::WHITE.r, Color::WHITE.g, Color::WHITE.b, m_opacity * Color::WHITE.a);
-		m_renderer->DrawTriangles(&va, GetRenderState(blendMode), m_textureMaterial.Get(), Graphics::TRIANGLE_STRIP);
+		RendererLocator::getRenderer()->DrawTriangles(&va, GetRenderState(blendMode), m_textureMaterial.Get(), Graphics::TRIANGLE_STRIP);
 	}
 
 	void Skin::DrawVerticalEdgedRectElement(const EdgedRectElement &element, const Point &pos, const Point &size, Graphics::BlendMode blendMode) const
@@ -186,7 +186,7 @@ namespace UI {
 		va.Add(vector3f(pos.x, pos.y + size.y, 0.0f), scaled(vector2f(element.pos.x, element.pos.y + element.size.y)));
 
 		m_textureMaterial->diffuse = Color(Color::WHITE.r, Color::WHITE.g, Color::WHITE.b, m_opacity * Color::WHITE.a);
-		m_renderer->DrawTriangles(&va, GetRenderState(blendMode), m_textureMaterial.Get(), Graphics::TRIANGLE_STRIP);
+		RendererLocator::getRenderer()->DrawTriangles(&va, GetRenderState(blendMode), m_textureMaterial.Get(), Graphics::TRIANGLE_STRIP);
 	}
 
 	void Skin::DrawHorizontalEdgedRectElement(const EdgedRectElement &element, const Point &pos, const Point &size, Graphics::BlendMode blendMode) const
@@ -205,7 +205,7 @@ namespace UI {
 		va.Add(vector3f(pos.x + size.x, pos.y + size.y, 0.0f), scaled(vector2f(element.pos.x + element.size.x, element.pos.y + element.size.y)));
 
 		m_textureMaterial->diffuse = Color(Color::WHITE.r, Color::WHITE.g, Color::WHITE.b, m_opacity * Color::WHITE.a);
-		m_renderer->DrawTriangles(&va, GetRenderState(blendMode), m_textureMaterial.Get(), Graphics::TRIANGLE_STRIP);
+		RendererLocator::getRenderer()->DrawTriangles(&va, GetRenderState(blendMode), m_textureMaterial.Get(), Graphics::TRIANGLE_STRIP);
 	}
 
 	void Skin::DrawRectColor(const Color &col, const Point &pos, const Point &size) const
@@ -218,7 +218,7 @@ namespace UI {
 		va.Add(vector3f(pos.x + size.x, pos.y + size.y, 0.0f));
 
 		m_colorMaterial->diffuse = Color(col.r, col.g, col.b, m_opacity * col.a);
-		m_renderer->DrawTriangles(&va, GetAlphaBlendState(), m_colorMaterial.Get(), Graphics::TRIANGLE_STRIP);
+		RendererLocator::getRenderer()->DrawTriangles(&va, GetAlphaBlendState(), m_colorMaterial.Get(), Graphics::TRIANGLE_STRIP);
 	}
 
 	Skin::RectElement Skin::LoadRectElement(const std::string &spec)

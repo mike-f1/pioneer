@@ -20,6 +20,7 @@
 #include "galaxy/Polit.h"
 #include "graphics/Drawables.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 #include "graphics/RenderState.h"
 #include <functional>
 
@@ -297,7 +298,7 @@ void SystemInfoView::PutBodies(SystemBody *body, Gui::Fixed *container, int dir,
 		return;
 	}
 	if (body->GetType() != GalaxyEnums::BodyType::TYPE_GRAVPOINT) {
-		BodyIcon *ib = new BodyIcon(body->GetIcon(), m_renderer);
+		BodyIcon *ib = new BodyIcon(body->GetIcon());
 		if (body->GetSuperType() == GalaxyEnums::BodySuperType::SUPERTYPE_ROCKY_PLANET) {
 			for (const SystemBody *kid : body->GetChildren()) {
 				if (kid->GetType() == GalaxyEnums::BodyType::TYPE_STARPORT_SURFACE) {
@@ -512,8 +513,8 @@ void SystemInfoView::SystemChanged(const SystemPath &path)
 void SystemInfoView::Draw3D()
 {
 	PROFILE_SCOPED()
-	m_renderer->SetTransform(matrix4x4f::Identity());
-	m_renderer->ClearScreen();
+	RendererLocator::getRenderer()->SetTransform(matrix4x4f::Identity());
+	RendererLocator::getRenderer()->ClearScreen();
 	UIView::Draw3D();
 }
 
@@ -644,15 +645,14 @@ void SystemInfoView::UpdateIconSelections()
 	}
 }
 
-SystemInfoView::BodyIcon::BodyIcon(const char *img, Graphics::Renderer *r) :
+SystemInfoView::BodyIcon::BodyIcon(const char *img) :
 	Gui::ImageRadioButton(0, img, img),
-	m_renderer(r),
 	m_hasStarport(false),
 	m_selectColor(0, 255, 0, 255)
 {
 	//no blending
 	Graphics::RenderStateDesc rsd;
-	m_renderState = r->CreateRenderState(rsd);
+	m_renderState = RendererLocator::getRenderer()->CreateRenderState(rsd);
 
 	float size[2];
 	GetSize(size);
@@ -667,7 +667,7 @@ SystemInfoView::BodyIcon::BodyIcon(const char *img, Graphics::Renderer *r) :
 	static const Color portColor = Color(64, 128, 128, 255);
 	// The -0.1f offset seems to be the best compromise to make the circles closed (e.g. around Mars), symmetric, fitting with selection
 	// and not overlapping to much with asteroids
-	m_circle.reset(new Graphics::Drawables::Circle(m_renderer, size[0] * 0.5f, size[0] * 0.5f - 0.1f, size[1] * 0.5f, 0.f, portColor, m_renderState));
+	m_circle.reset(new Graphics::Drawables::Circle(RendererLocator::getRenderer(), size[0] * 0.5f, size[0] * 0.5f - 0.1f, size[1] * 0.5f, 0.f, portColor, m_renderState));
 }
 
 void SystemInfoView::BodyIcon::Draw()
@@ -677,10 +677,10 @@ void SystemInfoView::BodyIcon::Draw()
 	float size[2];
 	GetSize(size);
 	if (HasStarport()) {
-		m_circle->Draw(m_renderer);
+		m_circle->Draw(RendererLocator::getRenderer());
 	}
 	if (GetSelected()) {
-		m_selectBox.Draw(m_renderer, m_renderState, Graphics::LINE_LOOP);
+		m_selectBox.Draw(RendererLocator::getRenderer(), m_renderState, Graphics::LINE_LOOP);
 	}
 }
 

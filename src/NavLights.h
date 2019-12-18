@@ -3,22 +3,27 @@
 
 #ifndef _NAVLIGHTS_H
 #define _NAVLIGHTS_H
-/*
- * Blinking navigation lights for ships and stations
- */
+
+#include "SDL_stdinc.h"
 #include "JsonFwd.h"
+#include "RefCounted.h"
+
 #include "graphics/VertexArray.h"
-#include "graphics/VertexBuffer.h"
 
 namespace Graphics {
 	class Renderer;
 	class RenderState;
+	class VertexBuffer;
 } // namespace Graphics
+
 namespace SceneGraph {
 	class Model;
 	class Billboard;
 } // namespace SceneGraph
 
+/*
+ * Blinking navigation lights for ships and stations
+ */
 class NavLights {
 public:
 	enum LightColor {
@@ -44,11 +49,11 @@ public:
 
 	void SetEnabled(bool on) { m_enabled = on; }
 	void Update(float time);
-	void Render(Graphics::Renderer *renderer);
+	void Render();
 	void SetColor(unsigned int group, LightColor);
 	void SetMask(unsigned int group, uint8_t mask);
 
-	static void Init(Graphics::Renderer *);
+	static void Init();
 	static void Uninit();
 
 protected:

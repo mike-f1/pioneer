@@ -17,7 +17,6 @@ namespace FileSystem {
 }
 
 namespace Graphics {
-	class Renderer;
 	class RenderState;
 }
 
@@ -34,7 +33,7 @@ namespace Text {
 	class TextureFont : public RefCounted {
 
 	public:
-		TextureFont(const FontConfig &config, Graphics::Renderer *renderer, float scale = 1.0f);
+		TextureFont(const FontConfig &config, float scale = 1.0f);
 		~TextureFont();
 
 		void RenderBuffer(Graphics::VertexBuffer *vb, const Color &color = Color::WHITE);
@@ -91,7 +90,6 @@ namespace Text {
 		Uint32 CleanVertexBufferCache();
 
 		FontConfig m_config;
-		Graphics::Renderer *m_renderer;
 		float m_scale;
 
 		FT_Library m_ftLib;

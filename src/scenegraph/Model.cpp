@@ -13,6 +13,7 @@
 #include "graphics/Drawables.h"
 #include "graphics/RenderState.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 #include "graphics/TextureBuilder.h"
 #include "graphics/VertexArray.h"
 #include "scenegraph/Animation.h"
@@ -32,15 +33,14 @@ namespace SceneGraph {
 		std::string label;
 	};
 
-	Model::Model(Graphics::Renderer *r, const std::string &name) :
+	Model::Model(const std::string &name) :
 		m_boundingRadius(10.f),
-		m_renderer(r),
 		m_name(name),
 		m_curPatternIndex(0),
 		m_curPattern(0),
 		m_debugFlags(0)
 	{
-		m_root.Reset(new Group(m_renderer));
+		m_root.Reset(new Group());
 		m_root->SetName(name);
 		ClearDecals();
 	}
@@ -51,7 +51,6 @@ namespace SceneGraph {
 		m_patterns(model.m_patterns),
 		m_collMesh(model.m_collMesh) //might have to make this per-instance at some point
 		,
-		m_renderer(model.m_renderer),
 		m_name(model.m_name),
 		m_curPatternIndex(model.m_curPatternIndex),
 		m_curPattern(model.m_curPattern),
@@ -126,7 +125,7 @@ namespace SceneGraph {
 		//Override renderdata if this model is called from ModelNode
 		RenderData params = (rd != 0) ? (*rd) : m_renderData;
 
-		m_renderer->SetTransform(trans);
+		RendererLocator::getRenderer()->SetTransform(trans);
 
 		//using the entire model bounding radius for all nodes at the moment.
 		//BR could also be a property of Node.
@@ -134,7 +133,7 @@ namespace SceneGraph {
 
 		//render in two passes, if this is the top-level model
 		if (m_debugFlags & DEBUG_WIREFRAME)
-			m_renderer->SetWireFrameMode(true);
+			RendererLocator::getRenderer()->SetWireFrameMode(true);
 
 		if (params.nodemask & MASK_IGNORE) {
 			m_root->Render(trans, &params);
@@ -149,25 +148,25 @@ namespace SceneGraph {
 			return;
 
 		if (m_debugFlags & DEBUG_WIREFRAME)
-			m_renderer->SetWireFrameMode(false);
+			RendererLocator::getRenderer()->SetWireFrameMode(false);
 
 		if (m_debugFlags & DEBUG_BBOX) {
-			m_renderer->SetTransform(trans);
+			RendererLocator::getRenderer()->SetTransform(trans);
 			DrawAabb();
 		}
 
 		if (m_debugFlags & DEBUG_COLLMESH) {
-			m_renderer->SetTransform(trans);
+			RendererLocator::getRenderer()->SetTransform(trans);
 			DrawCollisionMesh();
 		}
 
 		if (m_debugFlags & DEBUG_TAGS) {
-			m_renderer->SetTransform(trans);
+			RendererLocator::getRenderer()->SetTransform(trans);
 			DrawAxisIndicators(m_tagPoints);
 		}
 
 		if (m_debugFlags & DEBUG_DOCKING) {
-			m_renderer->SetTransform(trans);
+			RendererLocator::getRenderer()->SetTransform(trans);
 			DrawAxisIndicators(m_dockingPoints);
 		}
 	}
@@ -200,7 +199,7 @@ namespace SceneGraph {
 
 		//render in two passes, if this is the top-level model
 		if (m_debugFlags & DEBUG_WIREFRAME)
-			m_renderer->SetWireFrameMode(true);
+			RendererLocator::getRenderer()->SetWireFrameMode(true);
 
 		if (params.nodemask & MASK_IGNORE) {
 			m_root->Render(trans, &params);
@@ -252,7 +251,7 @@ namespace SceneGraph {
 			}
 
 			Graphics::MaterialDescriptor desc;
-			m_aabbMat.Reset(m_renderer->CreateMaterial(desc));
+			m_aabbMat.Reset(RendererLocator::getRenderer()->CreateMaterial(desc));
 			m_aabbMat->diffuse = Color::GREEN;
 
 			//create buffer and upload data
@@ -261,11 +260,11 @@ namespace SceneGraph {
 			vbd.attrib[0].format = Graphics::ATTRIB_FORMAT_FLOAT3;
 			vbd.numVertices = va.GetNumVerts();
 			vbd.usage = Graphics::BUFFER_USAGE_STATIC;
-			m_aabbVB.Reset(m_renderer->CreateVertexBuffer(vbd));
+			m_aabbVB.Reset(RendererLocator::getRenderer()->CreateVertexBuffer(vbd));
 			m_aabbVB->Populate(va);
 		}
 
-		m_state = m_renderer->CreateRenderState(Graphics::RenderStateDesc());
+		m_state = RendererLocator::getRenderer()->CreateRenderState(Graphics::RenderStateDesc());
 	}
 
 	void Model::DrawAabb()
@@ -276,7 +275,7 @@ namespace SceneGraph {
 			CreateAabbVB();
 		}
 
-		m_renderer->DrawBuffer(m_aabbVB.Get(), m_state, m_aabbMat.Get(), Graphics::LINE_SINGLE);
+		RendererLocator::getRenderer()->DrawBuffer(m_aabbVB.Get(), m_state, m_aabbMat.Get(), Graphics::LINE_SINGLE);
 	}
 
 	// Draw collision mesh as a wireframe overlay
@@ -309,22 +308,22 @@ namespace SceneGraph {
 			vbd.attrib[1].format = Graphics::ATTRIB_FORMAT_UBYTE4;
 			vbd.numVertices = va.GetNumVerts();
 			vbd.usage = Graphics::BUFFER_USAGE_STATIC;
-			m_collisionMeshVB.Reset(m_renderer->CreateVertexBuffer(vbd));
+			m_collisionMeshVB.Reset(RendererLocator::getRenderer()->CreateVertexBuffer(vbd));
 			m_collisionMeshVB->Populate(va);
 		}
 
 		//might want to add some offset
-		m_renderer->SetWireFrameMode(true);
+		RendererLocator::getRenderer()->SetWireFrameMode(true);
 		Graphics::RenderStateDesc rsd;
 		rsd.cullMode = Graphics::CULL_NONE;
-		m_renderer->DrawBuffer(m_collisionMeshVB.Get(), m_renderer->CreateRenderState(rsd), Graphics::vtxColorMaterial);
-		m_renderer->SetWireFrameMode(false);
+		RendererLocator::getRenderer()->DrawBuffer(m_collisionMeshVB.Get(), RendererLocator::getRenderer()->CreateRenderState(rsd), Graphics::vtxColorMaterial);
+		RendererLocator::getRenderer()->SetWireFrameMode(false);
 	}
 
 	void Model::DrawAxisIndicators(std::vector<Graphics::Drawables::Line3D> &lines)
 	{
 		for (auto i = lines.begin(); i != lines.end(); ++i)
-			(*i).Draw(m_renderer, m_renderer->CreateRenderState(Graphics::RenderStateDesc()));
+			(*i).Draw(RendererLocator::getRenderer(), RendererLocator::getRenderer()->CreateRenderState(Graphics::RenderStateDesc()));
 	}
 
 	RefCountedPtr<CollMesh> Model::CreateCollisionMesh()
@@ -401,7 +400,7 @@ namespace SceneGraph {
 	void Model::SetColors(const std::vector<Color> &colors)
 	{
 		assert(colors.size() == 3); //primary, seconday, trim
-		m_colorMap.Generate(GetRenderer(), colors.at(0), colors.at(1), colors.at(2));
+		m_colorMap.Generate(RendererLocator::getRenderer(), colors.at(0), colors.at(1), colors.at(2));
 	}
 
 	void Model::SetDecalTexture(Graphics::Texture *t, unsigned int index)
@@ -425,7 +424,7 @@ namespace SceneGraph {
 
 	void Model::ClearDecals()
 	{
-		Graphics::Texture *t = Graphics::TextureBuilder::GetTransparentTexture(m_renderer);
+		Graphics::Texture *t = Graphics::TextureBuilder::GetTransparentTexture(RendererLocator::getRenderer());
 		for (unsigned int i = 0; i < MAX_DECAL_MATERIALS; i++)
 			m_curDecals[i] = t;
 	}
@@ -434,7 +433,7 @@ namespace SceneGraph {
 	{
 		index = std::min(index, MAX_DECAL_MATERIALS - 1);
 		if (m_decalMaterials[index])
-			m_curDecals[index] = Graphics::TextureBuilder::GetTransparentTexture(m_renderer);
+			m_curDecals[index] = Graphics::TextureBuilder::GetTransparentTexture(RendererLocator::getRenderer());
 	}
 
 	bool Model::SupportsDecals()

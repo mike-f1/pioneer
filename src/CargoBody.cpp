@@ -11,6 +11,8 @@
 #include "Space.h"
 #include "scenegraph/Model.h"
 #include "scenegraph/ModelSkin.h"
+#include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 
 CargoBody::CargoBody(const LuaRef &cargo, float selfdestructTimer) :
 	m_cargo(cargo)
@@ -121,9 +123,9 @@ bool CargoBody::OnCollision(Object *b, Uint32 flags, double relVel)
 	return DynamicBody::OnCollision(b, flags, relVel);
 }
 
-void CargoBody::Render(Graphics::Renderer *r, const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform)
+void CargoBody::Render(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform)
 {
-	RenderModel(r, camera, viewCoords, viewTransform);
+	RenderModel(camera, viewCoords, viewTransform);
 }
 
 void CargoBody::SetLabel(const std::string &label)

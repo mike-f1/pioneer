@@ -10,10 +10,6 @@
 #include "graphics/Material.h"
 #include "libs.h"
 
-namespace Graphics {
-	class Renderer;
-}
-
 namespace Serializer {
 	class Reader;
 	class Writer;
@@ -71,8 +67,8 @@ namespace SceneGraph {
 
 	class Node : public RefCounted {
 	public:
-		Node(Graphics::Renderer *r);
-		Node(Graphics::Renderer *r, unsigned int nodemask);
+		Node();
+		Node(unsigned int nodemask);
 		Node(const Node &, NodeCopyCache *);
 		virtual Node *Clone(NodeCopyCache *) = 0; //implement clone to return shallow or deep copy
 		virtual const char *GetTypeName() const { return "Node"; }
@@ -94,15 +90,12 @@ namespace SceneGraph {
 		unsigned int GetNodeFlags() const { return m_nodeFlags; }
 		void SetNodeFlags(unsigned int m) { m_nodeFlags = m; }
 
-		Graphics::Renderer *GetRenderer() const { return m_renderer; }
-
 	protected:
 		//can only to be deleted using DecRefCount
 		virtual ~Node();
 		std::string m_name;
 		unsigned int m_nodeMask;
 		unsigned int m_nodeFlags;
-		Graphics::Renderer *m_renderer;
 	};
 
 } // namespace SceneGraph

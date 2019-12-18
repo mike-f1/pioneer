@@ -27,7 +27,7 @@ public:
 	SpeedLines(Ship *);
 
 	void Update(float time);
-	void Render(Graphics::Renderer *);
+	void Render();
 
 	void SetTransform(const matrix4x4d &t) { m_transform = t; }
 
@@ -40,7 +40,7 @@ private:
 	static float SPACING;
 	static float MAX_VEL;
 
-	void CreateVertexBuffer(Graphics::Renderer *r, const Uint32 size);
+	void CreateVertexBuffer(const Uint32 size);
 
 	Ship *m_ship;
 

@@ -15,7 +15,7 @@ namespace Graphics {
 namespace SceneGraph {
 	class MatrixTransform : public Group {
 	public:
-		MatrixTransform(Graphics::Renderer *r, const matrix4x4f &m);
+		MatrixTransform(const matrix4x4f &m);
 		MatrixTransform(const MatrixTransform &, NodeCopyCache *cache = 0);
 
 		virtual Node *Clone(NodeCopyCache *cache = 0) override;

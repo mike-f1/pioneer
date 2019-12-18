@@ -8,7 +8,6 @@
 #include "SmartPtr.h"
 #include "graphics/Material.h"
 #include "graphics/RenderState.h"
-#include "graphics/Renderer.h"
 #include "libs.h"
 
 #include <SDL_stdinc.h>
@@ -17,7 +16,7 @@ namespace UI {
 
 	class Skin {
 	public:
-		Skin(const std::string &filename, Graphics::Renderer *renderer, float scale);
+		Skin(const std::string &filename, float scale);
 
 		void SetOpacity(float o) { m_opacity = o; }
 
@@ -265,8 +264,6 @@ namespace UI {
 		Graphics::RenderState *GetRenderState(Graphics::BlendMode) const;
 
 	private:
-		Graphics::Renderer *m_renderer;
-
 		float m_scale;
 
 		RefCountedPtr<Graphics::Texture> m_texture;

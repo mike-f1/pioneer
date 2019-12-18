@@ -4,6 +4,7 @@
 #include "Image.h"
 #include "Context.h"
 #include "graphics/TextureBuilder.h"
+#include "graphics/RendererLocator.h"
 
 namespace UI {
 
@@ -26,13 +27,13 @@ namespace UI {
 		m_needsRefresh(false)
 	{
 		Graphics::TextureBuilder b = Graphics::TextureBuilder::UI(filename);
-		m_texture.Reset(b.GetOrCreateTexture(GetContext()->GetRenderer(), "ui"));
+		m_texture.Reset(b.GetOrCreateTexture(RendererLocator::getRenderer(), "ui"));
 
 		m_initialSize = CalcDisplayDimensions(GetContext(), m_texture.Get());
 
 		Graphics::MaterialDescriptor material_desc;
 		material_desc.textures = 1;
-		m_material.Reset(GetContext()->GetRenderer()->CreateMaterial(material_desc));
+		m_material.Reset(RendererLocator::getRenderer()->CreateMaterial(material_desc));
 		m_material->texture0 = m_texture.Get();
 
 		SetSizeControlFlags(sizeControlFlags);
@@ -82,7 +83,7 @@ namespace UI {
 
 	void Image::Draw()
 	{
-		Graphics::Renderer *r = GetContext()->GetRenderer();
+		Graphics::Renderer *r = RendererLocator::getRenderer();
 		if (!m_quad || m_needsRefresh) {
 			m_needsRefresh = false;
 			const Point &offset = GetActiveOffset();

@@ -223,7 +223,7 @@ double Propulsion::GetSpeedReachedWithFuel() const
 	return m_effectiveExhaustVelocity * log(mass / (mass - fuelmass));
 }
 
-void Propulsion::Render(Graphics::Renderer *r, const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform)
+void Propulsion::Render(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform)
 {
 	/* TODO: allow Propulsion to know SceneGraph::Thruster and
 	 * to work directly with it (this could lead to movable

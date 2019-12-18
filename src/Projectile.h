@@ -27,7 +27,7 @@ public:
 	Projectile(Body *parent, const ProjectileData &prData, const vector3d &pos, const vector3d &baseVel, const vector3d &dirVel);
 	Projectile(const Json &jsonObj, Space *space);
 	virtual ~Projectile();
-	virtual void Render(Graphics::Renderer *r, const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform) override final;
+	virtual void Render(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform) override final;
 	void TimeStepUpdate(const float timeStep) override final;
 	void StaticUpdate(const float timeStep) override final;
 	virtual void NotifyRemoved(const Body *const removedBody) override final;

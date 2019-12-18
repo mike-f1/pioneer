@@ -60,7 +60,7 @@ public:
 	// as you can't test for collisions if different objects are on different 'steps'
 	virtual void StaticUpdate(const float timeStep) {}
 	virtual void TimeStepUpdate(const float timeStep) {}
-	virtual void Render(Graphics::Renderer *r, const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform) = 0;
+	virtual void Render(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform) = 0;
 
 	virtual void SetFrame(FrameId f) { m_frame = f; }
 	FrameId GetFrame() const { return m_frame; }

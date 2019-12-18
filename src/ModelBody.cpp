@@ -13,6 +13,7 @@
 #include "collider/CollisionSpace.h"
 #include "collider/Geom.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 #include "scenegraph/Animation.h"
 #include "scenegraph/CollisionGeometry.h"
 #include "scenegraph/NodeVisitor.h"
@@ -388,7 +389,7 @@ void ModelBody::CalcLighting(double &ambient, double &direct, const Camera *came
 // setLighting: set renderer lights according to current position and sun
 // positions. Original lighting is passed back in oldLights, oldAmbient, and
 // should be reset after rendering with ModelBody::ResetLighting.
-void ModelBody::SetLighting(Graphics::Renderer *r, const Camera *camera, std::vector<Graphics::Light> &oldLights, Color &oldAmbient)
+void ModelBody::SetLighting(const Camera *camera, std::vector<Graphics::Light> &oldLights, Color &oldAmbient)
 {
 	std::vector<Graphics::Light> newLights;
 	double ambient, direct;
@@ -422,25 +423,25 @@ void ModelBody::SetLighting(Graphics::Renderer *r, const Camera *camera, std::ve
 		newLights.push_back(Graphics::Light(Graphics::Light::LIGHT_DIRECTIONAL, vector3f(0.f), Color::WHITE, Color::WHITE));
 	}
 
-	oldAmbient = r->GetAmbientColor();
-	r->SetAmbientColor(Color(ambient * 255, ambient * 255, ambient * 255));
-	r->SetLights(newLights.size(), &newLights[0]);
+	oldAmbient = RendererLocator::getRenderer()->GetAmbientColor();
+	RendererLocator::getRenderer()->SetAmbientColor(Color(ambient * 255, ambient * 255, ambient * 255));
+	RendererLocator::getRenderer()->SetLights(newLights.size(), &newLights[0]);
 }
 
-void ModelBody::ResetLighting(Graphics::Renderer *r, const std::vector<Graphics::Light> &oldLights, const Color &oldAmbient)
+void ModelBody::ResetLighting(const std::vector<Graphics::Light> &oldLights, const Color &oldAmbient)
 {
 	// restore old lights
 	if (!oldLights.empty())
-		r->SetLights(oldLights.size(), &oldLights[0]);
-	r->SetAmbientColor(oldAmbient);
+		RendererLocator::getRenderer()->SetLights(oldLights.size(), &oldLights[0]);
+	RendererLocator::getRenderer()->SetAmbientColor(oldAmbient);
 }
 
-void ModelBody::RenderModel(Graphics::Renderer *r, const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform, const bool setLighting)
+void ModelBody::RenderModel(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform, const bool setLighting)
 {
 	std::vector<Graphics::Light> oldLights;
 	Color oldAmbient;
 	if (setLighting)
-		SetLighting(r, camera, oldLights, oldAmbient);
+		SetLighting(camera, oldLights, oldAmbient);
 
 	matrix4x4d m2 = GetInterpOrient();
 	m2.SetTranslate(GetInterpPosition());
@@ -458,7 +459,7 @@ void ModelBody::RenderModel(Graphics::Renderer *r, const Camera *camera, const v
 	m_model->Render(trans);
 
 	if (setLighting)
-		ResetLighting(r, oldLights, oldAmbient);
+		ResetLighting(oldLights, oldAmbient);
 }
 
 void ModelBody::TimeStepUpdate(const float timestep)

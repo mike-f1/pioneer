@@ -25,7 +25,6 @@ namespace Graphics {
 #endif
 
 namespace Graphics {
-	class Renderer;
 	class Frustum;
 	class VertexBuffer;
 }
@@ -49,7 +48,7 @@ public:
 		m_needUpdateVBOs = (nullptr != m_heights);
 	}
 
-	void UpdateVBOs(Graphics::Renderer *renderer);
+	void UpdateVBOs();
 
 	int GetChildIdx(const GeoPatch *child) const
 	{
@@ -66,7 +65,7 @@ public:
 		return (m_v0 + x * (1.0 - y) * (m_v1 - m_v0) + x * y * (m_v2 - m_v0) + (1.0 - x) * y * (m_v3 - m_v0)).Normalized();
 	}
 
-	void Render(Graphics::Renderer *r, const vector3d &campos, const matrix4x4d &modelView, const Graphics::Frustum &frustum);
+	void Render(const vector3d &campos, const matrix4x4d &modelView, const Graphics::Frustum &frustum);
 
 	inline bool canBeMerged() const
 	{

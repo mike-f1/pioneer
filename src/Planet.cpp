@@ -11,6 +11,7 @@
 #include "graphics/Material.h"
 #include "graphics/RenderState.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 #include "graphics/Texture.h"
 #include "graphics/VertexArray.h"
 #include "perlin.h"
@@ -164,7 +165,7 @@ void Planet::GetAtmosphericState(double dist, double *outPressure, double *outDe
 	*outDensity = (*outPressure / (PA_2_ATMOS * GAS_CONSTANT * temp)) * gasMolarMass;
 }
 
-void Planet::GenerateRings(Graphics::Renderer *renderer)
+void Planet::GenerateRings()
 {
 
 	m_ringVertices.Clear();
@@ -229,7 +230,7 @@ void Planet::GenerateRings(Graphics::Renderer *renderer)
 	const Graphics::TextureDescriptor texDesc(
 		Graphics::TEXTURE_RGBA_8888, texSize, Graphics::LINEAR_REPEAT, true, true, true, 0, Graphics::TEXTURE_2D);
 
-	m_ringTexture.Reset(renderer->CreateTexture(texDesc));
+	m_ringTexture.Reset(RendererLocator::getRenderer()->CreateTexture(texDesc));
 	m_ringTexture->Update(
 		static_cast<void *>(buf.get()), texSize,
 		Graphics::TEXTURE_RGBA_8888);
@@ -238,29 +239,28 @@ void Planet::GenerateRings(Graphics::Renderer *renderer)
 	desc.effect = Graphics::EFFECT_PLANETRING;
 	desc.lighting = true;
 	desc.textures = 1;
-	m_ringMaterial.reset(renderer->CreateMaterial(desc));
+	m_ringMaterial.reset(RendererLocator::getRenderer()->CreateMaterial(desc));
 	m_ringMaterial->texture0 = m_ringTexture.Get();
 
 	Graphics::RenderStateDesc rsd;
 	rsd.blendMode = Graphics::BLEND_ALPHA_PREMULT;
 	rsd.cullMode = Graphics::CULL_NONE;
-	m_ringState = renderer->CreateRenderState(rsd);
+	m_ringState = RendererLocator::getRenderer()->CreateRenderState(rsd);
 }
 
-void Planet::DrawGasGiantRings(Renderer *renderer, const matrix4x4d &modelView)
+void Planet::DrawGasGiantRings(const matrix4x4d &modelView)
 {
 	assert(SystemBodyHasRings());
 
-	if (!m_ringTexture)
-		GenerateRings(renderer);
+	if (!m_ringTexture)	GenerateRings();
 
-	renderer->SetTransform(modelView);
-	renderer->DrawTriangles(&m_ringVertices, m_ringState, m_ringMaterial.get(), TRIANGLE_STRIP);
+	RendererLocator::getRenderer()->SetTransform(modelView);
+	RendererLocator::getRenderer()->DrawTriangles(&m_ringVertices, m_ringState, m_ringMaterial.get(), TRIANGLE_STRIP);
 }
 
-void Planet::SubRender(Renderer *r, const matrix4x4d &viewTran, const vector3d &camPos)
+void Planet::SubRender(const matrix4x4d &viewTran, const vector3d &camPos)
 {
 	if (SystemBodyHasRings()) {
-		DrawGasGiantRings(r, viewTran);
+		DrawGasGiantRings(viewTran);
 	}
 }

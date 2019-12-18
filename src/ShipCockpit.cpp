@@ -10,6 +10,7 @@
 #include "Player.h"
 #include "WorldView.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 
 ShipCockpit::ShipCockpit(const std::string &modelName) :
 	m_shipDir(0.0),
@@ -35,10 +36,10 @@ ShipCockpit::~ShipCockpit()
 {
 }
 
-void ShipCockpit::Render(Graphics::Renderer *renderer, const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform)
+void ShipCockpit::Render(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform)
 {
 	PROFILE_SCOPED()
-	RenderModel(renderer, camera, viewCoords, viewTransform);
+	RenderModel(camera, viewCoords, viewTransform);
 }
 
 inline void ShipCockpit::resetInternalCameraController()
@@ -181,12 +182,12 @@ void ShipCockpit::Update(const Player *player, float timeStep)
 	}
 }
 
-void ShipCockpit::RenderCockpit(Graphics::Renderer *renderer, const Camera *camera, FrameId frameId)
+void ShipCockpit::RenderCockpit(const Camera *camera, FrameId frameId)
 {
 	PROFILE_SCOPED()
-	renderer->ClearDepthBuffer();
+	RendererLocator::getRenderer()->ClearDepthBuffer();
 	Body::SetFrame(frameId);
-	Render(renderer, camera, m_translate, m_transform);
+	Render(camera, m_translate, m_transform);
 	Body::SetFrame(FrameId::Invalid);
 }
 

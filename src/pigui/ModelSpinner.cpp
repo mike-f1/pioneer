@@ -2,10 +2,11 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "pigui/ModelSpinner.h"
-#include "Pi.h"
+
 #include "PiGui.h"
 #include "graphics/RenderTarget.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 #include "Shields.h"
 #include "scenegraph/Model.h"
 #include "scenegraph/ModelSkin.h"
@@ -38,7 +39,7 @@ void ModelSpinner::CreateRenderTarget()
 		Graphics::TextureFormat::TEXTURE_DEPTH, true
 	};
 
-	m_renderTarget.reset(Pi::renderer->CreateRenderTarget(rtDesc));
+	m_renderTarget.reset(RendererLocator::getRenderer()->CreateRenderTarget(rtDesc));
 	if (!m_renderTarget) Error("Error creating render target for model viewer.");
 
 	m_needsResize = false;
@@ -59,7 +60,7 @@ void ModelSpinner::Render()
 	if (m_needsResize) CreateRenderTarget();
 	if (!m_renderTarget) return;
 
-	Graphics::Renderer *r = Pi::renderer;
+	Graphics::Renderer *r = RendererLocator::getRenderer();
 
 	Graphics::Renderer::StateTicket ticket(r);
 

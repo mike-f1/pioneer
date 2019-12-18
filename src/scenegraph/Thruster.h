@@ -10,7 +10,6 @@
 #include "libs.h"
 
 namespace Graphics {
-	class Renderer;
 	class VertexBuffer;
 	class Material;
 	class RenderState;
@@ -20,7 +19,7 @@ namespace SceneGraph {
 
 	class Thruster : public Node {
 	public:
-		Thruster(Graphics::Renderer *, bool linear, const vector3f &pos, const vector3f &dir);
+		Thruster(bool linear, const vector3f &pos, const vector3f &dir);
 		Thruster(const Thruster &, NodeCopyCache *cache = 0);
 		Node *Clone(NodeCopyCache *cache = 0) override;
 		virtual void Accept(NodeVisitor &v) override;
@@ -32,8 +31,8 @@ namespace SceneGraph {
 		const vector3f &GetDirection() { return dir; }
 
 	private:
-		static Graphics::VertexBuffer *CreateThrusterGeometry(Graphics::Renderer *, Graphics::Material *);
-		static Graphics::VertexBuffer *CreateGlowGeometry(Graphics::Renderer *, Graphics::Material *);
+		static Graphics::VertexBuffer *CreateThrusterGeometry(Graphics::Material *);
+		static Graphics::VertexBuffer *CreateGlowGeometry(Graphics::Material *);
 		RefCountedPtr<Graphics::Material> m_tMat;
 		RefCountedPtr<Graphics::Material> m_glowMat;
 		RefCountedPtr<Graphics::VertexBuffer> m_tBuffer;

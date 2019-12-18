@@ -33,7 +33,6 @@ namespace Background {
 		void SetIntensity(float intensity);
 
 	protected:
-		Graphics::Renderer *m_renderer;
 		RefCountedPtr<Graphics::Material> m_material;
 		RefCountedPtr<Graphics::Material> m_materialStreaks;
 
@@ -47,7 +46,7 @@ namespace Background {
 
 	class UniverseBox : public BackgroundElement {
 	public:
-		UniverseBox(Graphics::Renderer *r);
+		UniverseBox();
 		~UniverseBox();
 
 		void Draw(Graphics::RenderState *);
@@ -65,7 +64,7 @@ namespace Background {
 	class Starfield : public BackgroundElement {
 	public:
 		//does not Fill the starfield
-		Starfield(Graphics::Renderer *r, Random &rand, float amount);
+		Starfield(Random &rand, float amount);
 		void Draw(Graphics::RenderState *);
 		//create or recreate the starfield
 		void Fill(Random &rand, float amount);
@@ -84,7 +83,7 @@ namespace Background {
 
 	class MilkyWay : public BackgroundElement {
 	public:
-		MilkyWay(Graphics::Renderer *);
+		MilkyWay();
 		void Draw(Graphics::RenderState *);
 
 	private:
@@ -100,7 +99,7 @@ namespace Background {
 			DRAW_SKYBOX = 1 << 2
 		};
 
-		Container(Graphics::Renderer *, Random &rand, float amountOfBackgroundStars);
+		Container(Random &rand, float amountOfBackgroundStars);
 		void Draw(const matrix4x4d &transform);
 
 		void SetIntensity(float intensity);
@@ -109,7 +108,6 @@ namespace Background {
 	private:
 		void Refresh(Random &rand, float amountOfBackgroundStars);
 
-		Graphics::Renderer *m_renderer;
 		MilkyWay m_milkyWay;
 		Starfield m_starField;
 		UniverseBox m_universeBox;

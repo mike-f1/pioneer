@@ -4,6 +4,7 @@
 #include "Gui.h"
 
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 #include "text/TextSupport.h"
 #include "utils.h"
 
@@ -90,7 +91,7 @@ namespace Gui {
 		float fontScale[2];
 		Gui::Screen::GetCoords2Pixels(fontScale);
 
-		Graphics::Renderer *r = Gui::Screen::GetRenderer();
+		Graphics::Renderer *r = RendererLocator::getRenderer();
 
 		const matrix4x4f &modelMatrix = r->GetCurrentModelView();
 		Graphics::Renderer::MatrixTicket ticket(r, Graphics::MatrixMode::MODELVIEW);
@@ -123,7 +124,7 @@ namespace Gui {
 		float fontScale[2];
 		Gui::Screen::GetCoords2Pixels(fontScale);
 
-		Graphics::Renderer *r = Gui::Screen::GetRenderer();
+		Graphics::Renderer *r = RendererLocator::getRenderer();
 		Graphics::Renderer::MatrixTicket ticket(r, Graphics::MatrixMode::MODELVIEW);
 
 		Graphics::VertexArray va(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE | Graphics::ATTRIB_UV0);

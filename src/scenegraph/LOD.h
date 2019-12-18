@@ -12,7 +12,7 @@ namespace SceneGraph {
 
 	class LOD : public Group {
 	public:
-		LOD(Graphics::Renderer *r);
+		LOD();
 		LOD(const LOD &, NodeCopyCache *cache = 0);
 		virtual Node *Clone(NodeCopyCache *cache = 0) override;
 		virtual const char *GetTypeName() const override { return "LOD"; }

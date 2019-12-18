@@ -70,7 +70,6 @@
 #include "Mount.h"
 
 namespace Graphics {
-	class Renderer;
 	class RenderState;
 	class VertexBuffer;
 	class Material;
@@ -101,7 +100,7 @@ namespace SceneGraph {
 		friend class Loader;
 		friend class ModelBinarizer;
 		friend class BinaryConverter;
-		Model(Graphics::Renderer *r, const std::string &name);
+		Model(const std::string &name);
 		~Model();
 
 		Model *MakeInstance() const;
@@ -152,8 +151,6 @@ namespace SceneGraph {
 		const std::vector<Animation *> GetAnimations() const { return m_animations; }
 		void UpdateAnimations();
 
-		Graphics::Renderer *GetRenderer() const { return m_renderer; }
-
 		//special for ship model use
 		void SetThrust(const vector3f &linear, const vector3f &angular);
 
@@ -178,7 +175,7 @@ namespace SceneGraph {
 		void SetDebugFlags(Uint32 flags);
 
 	private:
-		Model(const Model &);
+		Model(const Model &); // copy ctor: used in MakeInstance
 
 		static const unsigned int MAX_DECAL_MATERIALS = 4;
 		ColorMap m_colorMap;
@@ -188,7 +185,6 @@ namespace SceneGraph {
 		RefCountedPtr<CollMesh> m_collMesh;
 		RefCountedPtr<Graphics::Material> m_decalMaterials[MAX_DECAL_MATERIALS]; //spaceship insignia, advertising billboards
 		RefCountedPtr<Group> m_root;
-		Graphics::Renderer *m_renderer;
 		std::string m_name;
 		std::vector<Animation *> m_animations;
 		TagContainer m_tags; //named attachment points

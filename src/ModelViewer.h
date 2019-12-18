@@ -7,7 +7,6 @@
 #include "NavLights.h"
 #include "Shields.h"
 #include "graphics/Drawables.h"
-#include "graphics/Renderer.h"
 #include "graphics/Texture.h"
 #include "libs.h"
 #include "scenegraph/SceneGraph.h"
@@ -15,7 +14,7 @@
 
 class ModelViewer {
 public:
-	ModelViewer(Graphics::Renderer *r, LuaManager *l);
+	ModelViewer(LuaManager *l);
 	~ModelViewer();
 
 	static void Run(const std::string &modelName);
@@ -88,7 +87,6 @@ private:
 	bool m_settingColourSliders;
 	float m_shieldHitPan;
 	double m_frameTime;
-	Graphics::Renderer *m_renderer;
 	Graphics::Texture *m_decalTexture;
 	vector3f m_viewPos;
 	matrix3x3f m_viewRot;

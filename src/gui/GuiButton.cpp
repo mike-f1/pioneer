@@ -3,6 +3,7 @@
 
 #include "Gui.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 
 static const float BUTTON_SIZE = 16.f;
 
@@ -127,7 +128,7 @@ namespace Gui {
 			Theme::DrawOutdent(size, Screen::alphaBlendState);
 		}
 
-		Graphics::Renderer *r = Gui::Screen::GetRenderer();
+		Graphics::Renderer *r = RendererLocator::getRenderer();
 		Graphics::Renderer::MatrixTicket ticket(r, Graphics::MatrixMode::MODELVIEW);
 
 		r->Translate(m_padding, m_padding * 0.5, 0);

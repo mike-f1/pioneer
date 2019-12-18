@@ -55,7 +55,7 @@ public:
 	}
 
 	// apply projection and modelview transforms to the renderer
-	void ApplyDrawTransforms(Graphics::Renderer *r);
+	void ApplyDrawTransforms();
 
 private:
 	float m_width;
@@ -75,7 +75,7 @@ private:
 
 class Camera {
 public:
-	Camera(RefCountedPtr<CameraContext> context, Graphics::Renderer *renderer);
+	Camera(RefCountedPtr<CameraContext> context);
 
 	const CameraContext *GetContext() const { return m_context.Get(); }
 
@@ -115,7 +115,6 @@ public:
 
 private:
 	RefCountedPtr<CameraContext> m_context;
-	Graphics::Renderer *m_renderer;
 
 	std::unique_ptr<Graphics::Material> m_billboardMaterial;
 

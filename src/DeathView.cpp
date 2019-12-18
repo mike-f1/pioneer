@@ -14,12 +14,11 @@
 #include "ShipCpanel.h"
 #include "graphics/Graphics.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 
-DeathView::DeathView(Graphics::Renderer *r) :
+DeathView::DeathView() :
 	View()
 {
-	m_renderer = r;
-
 	float size[2];
 	GetSizeRequested(size);
 
@@ -27,11 +26,11 @@ DeathView::DeathView(Graphics::Renderer *r) :
 
 	float znear;
 	float zfar;
-	m_renderer->GetNearFarRange(znear, zfar);
+	RendererLocator::getRenderer()->GetNearFarRange(znear, zfar);
 
 	const float fovY = GameConfSingleton::getInstance().Float("FOVVertical");
 	m_cameraContext.Reset(new CameraContext(Graphics::GetScreenWidth(), Graphics::GetScreenHeight(), fovY, znear, zfar));
-	m_camera.reset(new Camera(m_cameraContext, m_renderer));
+	m_camera.reset(new Camera(m_cameraContext));
 }
 
 DeathView::~DeathView() {}
@@ -62,7 +61,7 @@ void DeathView::Update(const float frameTime)
 void DeathView::Draw3D()
 {
 	PROFILE_SCOPED()
-	m_cameraContext->ApplyDrawTransforms(Pi::renderer);
+	m_cameraContext->ApplyDrawTransforms();
 	m_camera->Draw();
 	m_cameraContext->EndFrame();
 }

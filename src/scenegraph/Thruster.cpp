@@ -9,6 +9,7 @@
 #include "graphics/Material.h"
 #include "graphics/RenderState.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 #include "graphics/TextureBuilder.h"
 #include "graphics/VertexArray.h"
 #include "graphics/VertexBuffer.h"
@@ -19,8 +20,8 @@ namespace SceneGraph {
 	static const std::string thrusterGlowTextureFilename("textures/halo.dds");
 	static Color baseColor(178, 153, 255, 255);
 
-	Thruster::Thruster(Graphics::Renderer *r, bool _linear, const vector3f &_pos, const vector3f &_dir) :
-		Node(r, NODE_TRANSPARENT),
+	Thruster::Thruster(bool _linear, const vector3f &_pos, const vector3f &_dir) :
+		Node(NODE_TRANSPARENT),
 		linearOnly(_linear),
 		dir(_dir),
 		pos(_pos),
@@ -29,6 +30,8 @@ namespace SceneGraph {
 		//set up materials
 		Graphics::MaterialDescriptor desc;
 		desc.textures = 1;
+
+		Graphics::Renderer *r = RendererLocator::getRenderer();
 
 		m_tMat.Reset(r->CreateMaterial(desc));
 		m_tMat->texture0 = Graphics::TextureBuilder::Billboard(thrusterTextureFilename).GetOrCreateTexture(r, "billboard");
@@ -103,10 +106,10 @@ namespace SceneGraph {
 		m_glowMat->diffuse.a = Easing::Circ::EaseIn(Clamp(vdir.Dot(cdir), 0.f, 1.f), 0.f, 1.f, 1.f) * 255;
 		m_tMat->diffuse.a = 255 - m_glowMat->diffuse.a;
 
-		Graphics::Renderer *r = GetRenderer();
+		Graphics::Renderer *r = RendererLocator::getRenderer();
 		if (!m_tBuffer.Valid()) {
-			m_tBuffer.Reset(CreateThrusterGeometry(r, m_tMat.Get()));
-			m_glowBuffer.Reset(CreateGlowGeometry(r, m_glowMat.Get()));
+			m_tBuffer.Reset(CreateThrusterGeometry(m_tMat.Get()));
+			m_glowBuffer.Reset(CreateGlowGeometry(m_glowMat.Get()));
 		}
 
 		r->SetTransform(trans);
@@ -127,11 +130,11 @@ namespace SceneGraph {
 		const bool linear = db.rd->Bool();
 		const vector3f dir = db.rd->Vector3f();
 		const vector3f pos = db.rd->Vector3f();
-		Thruster *t = new Thruster(db.loader->GetRenderer(), linear, pos, dir);
+		Thruster *t = new Thruster(linear, pos, dir);
 		return t;
 	}
 
-	Graphics::VertexBuffer *Thruster::CreateThrusterGeometry(Graphics::Renderer *r, Graphics::Material *mat)
+	Graphics::VertexBuffer *Thruster::CreateThrusterGeometry(Graphics::Material *mat)
 	{
 		Graphics::VertexArray verts(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_UV0);
 
@@ -176,13 +179,13 @@ namespace SceneGraph {
 		vbd.attrib[1].format = Graphics::ATTRIB_FORMAT_FLOAT2;
 		vbd.numVertices = verts.GetNumVerts();
 		vbd.usage = Graphics::BUFFER_USAGE_STATIC;
-		Graphics::VertexBuffer *vb = r->CreateVertexBuffer(vbd);
+		Graphics::VertexBuffer *vb = RendererLocator::getRenderer()->CreateVertexBuffer(vbd);
 		vb->Populate(verts);
 
 		return vb;
 	}
 
-	Graphics::VertexBuffer *Thruster::CreateGlowGeometry(Graphics::Renderer *r, Graphics::Material *mat)
+	Graphics::VertexBuffer *Thruster::CreateGlowGeometry(Graphics::Material *mat)
 	{
 		Graphics::VertexArray verts(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_UV0);
 
@@ -221,7 +224,7 @@ namespace SceneGraph {
 		vbd.attrib[1].format = Graphics::ATTRIB_FORMAT_FLOAT2;
 		vbd.numVertices = verts.GetNumVerts();
 		vbd.usage = Graphics::BUFFER_USAGE_STATIC;
-		Graphics::VertexBuffer *vb = r->CreateVertexBuffer(vbd);
+		Graphics::VertexBuffer *vb = RendererLocator::getRenderer()->CreateVertexBuffer(vbd);
 		vb->Populate(verts);
 
 		return vb;

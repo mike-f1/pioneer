@@ -47,9 +47,6 @@
 #include <stack>
 
 class LuaManager;
-namespace Graphics {
-	class Renderer;
-}
 
 namespace UI {
 
@@ -72,8 +69,8 @@ namespace UI {
 
 	class Context : public Container {
 	public:
-		Context(LuaManager *lua, Graphics::Renderer *renderer, int width, int height);
-		Context(LuaManager *lua, Graphics::Renderer *renderer, int width, int height, float scale);
+		Context(LuaManager *lua, int width, int height);
+		Context(LuaManager *lua, int width, int height, float scale);
 
 		// general purpose containers
 		UI::HBox *HBox(float spacing = 0.0f) { return new UI::HBox(this, spacing); }
@@ -156,7 +153,6 @@ namespace UI {
 		Widget *CallTemplate(const char *name, const LuaTable &args);
 		Widget *CallTemplate(const char *name);
 
-		Graphics::Renderer *GetRenderer() const { return m_renderer; }
 		const Skin &GetSkin() const { return m_skin; }
 
 		const float &GetScale() const { return m_scale; }
@@ -170,7 +166,6 @@ namespace UI {
 	private:
 		virtual Point PreferredSize() { return Point(); }
 
-		Graphics::Renderer *m_renderer;
 		int m_width;
 		int m_height;
 

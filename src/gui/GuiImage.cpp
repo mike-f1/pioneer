@@ -4,6 +4,7 @@
 #include "GuiImage.h"
 #include "GuiScreen.h"
 #include "graphics/TextureBuilder.h"
+#include "graphics/RendererLocator.h"
 #include "libs.h"
 
 namespace Gui {
@@ -34,7 +35,7 @@ namespace Gui {
 	void Image::InitTexture(const char *filename)
 	{
 		Graphics::TextureBuilder b = Graphics::TextureBuilder::UI(filename);
-		m_quad.reset(new TexturedQuad(b.GetOrCreateTexture(Gui::Screen::GetRenderer(), "ui")));
+		m_quad.reset(new TexturedQuad(b.GetOrCreateTexture(RendererLocator::getRenderer(), "ui")));
 	}
 
 	void Image::GetSizeRequested(float size[2])
@@ -55,7 +56,7 @@ namespace Gui {
 		float allocSize[2];
 		GetSize(allocSize);
 
-		Graphics::Renderer *r = Gui::Screen::GetRenderer();
+		Graphics::Renderer *r = RendererLocator::getRenderer();
 		m_quad->Draw(r, vector2f(0.0f), vector2f(allocSize[0], allocSize[1]), m_color);
 	}
 

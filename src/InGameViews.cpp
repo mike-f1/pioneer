@@ -5,7 +5,6 @@
 #include "DeathView.h"
 #include "Game.h"
 #include "ObjectViewerView.h"
-#include "Pi.h"
 #include "SectorView.h"
 #include "ShipCpanel.h"
 #include "SystemInfoView.h"
@@ -21,17 +20,16 @@ InGameViews::InGameViews(Game *game, const SystemPath &path, unsigned int cacheR
 	m_systemInfoView(new SystemInfoView(game)),
 	m_systemView(new SystemView()),
 	m_worldView(new WorldView(game)),
-	m_deathView(new DeathView(Pi::renderer)),
+	m_deathView(new DeathView()),
 	m_spaceStationView(new UIView("StationView")),
 	m_infoView(new UIView("InfoView")),
-	m_cpan(new ShipCpanel(Pi::renderer)),
+	m_cpan(new ShipCpanel()),
 #if WITH_OBJECTVIEWER
 	m_objectViewerView(new ObjectViewerView(game)),
 #endif
 	m_currentView(nullptr),
 	m_currentViewType(ViewType::NONE)
 {
-	SetRenderer(Pi::renderer);
 }
 
 InGameViews::InGameViews(const Json &jsonObj, Game *game, const SystemPath &path, unsigned int cacheRadius) :
@@ -44,17 +42,15 @@ InGameViews::InGameViews(const Json &jsonObj, Game *game, const SystemPath &path
 	m_systemInfoView = new SystemInfoView(game);
 	m_spaceStationView = new UIView("StationView");
 	m_infoView = new UIView("InfoView");
-	m_deathView = new DeathView(Pi::renderer);
+	m_deathView = new DeathView();
 
 #if WITH_OBJECTVIEWER
 	m_objectViewerView = new ObjectViewerView(game);
 #endif
 
-	m_cpan = new ShipCpanel(jsonObj, Pi::renderer);
+	m_cpan = new ShipCpanel(jsonObj);
 	m_sectorView = new SectorView(jsonObj, game->GetGalaxy(), cacheRadius);
 	m_worldView = new WorldView(jsonObj, game);
-
-	SetRenderer(Pi::renderer);
 }
 
 void InGameViews::SaveToJson(Json &jsonObj)
@@ -79,21 +75,6 @@ InGameViews::~InGameViews()
 	delete m_worldView;
 	delete m_sectorView;
 	delete m_cpan;
-}
-
-void InGameViews::SetRenderer(Graphics::Renderer *r)
-{
-	// view manager will handle setting this probably
-	m_infoView->SetRenderer(r);
-	m_sectorView->SetRenderer(r);
-	m_systemInfoView->SetRenderer(r);
-	m_systemView->SetRenderer(r);
-	m_worldView->SetRenderer(r);
-	m_deathView->SetRenderer(r);
-
-#if WITH_OBJECTVIEWER
-	m_objectViewerView->SetRenderer(r);
-#endif
 }
 
 #if WITH_OBJECTVIEWER

@@ -9,13 +9,13 @@
 
 namespace SceneGraph {
 
-	CollisionGeometry::CollisionGeometry(Graphics::Renderer *r, const std::vector<vector3f> &vts, const std::vector<Uint32> &idx,
+	CollisionGeometry::CollisionGeometry(const std::vector<vector3f> &vts, const std::vector<Uint32> &idx,
 		unsigned int geomflag) :
-		Node(r),
+		Node(),
 		m_triFlag(geomflag),
 		m_dynamic(false),
-		m_geomTree(0),
-		m_geom(0)
+		m_geomTree(nullptr),
+		m_geom(nullptr)
 	{
 		PROFILE_SCOPED()
 		CopyData(vts, idx);
@@ -32,7 +32,7 @@ namespace SceneGraph {
 			PROFILE_SCOPED()
 		}
 
-		CollisionGeometry::~CollisionGeometry()
+	CollisionGeometry::~CollisionGeometry()
 	{
 	}
 
@@ -87,7 +87,7 @@ namespace SceneGraph {
 		const Uint32 flag = rd.Int32();
 		const bool dynamic = rd.Bool();
 
-		CollisionGeometry *cg = new CollisionGeometry(db.loader->GetRenderer(), pos, idx, flag);
+		CollisionGeometry *cg = new CollisionGeometry(pos, idx, flag);
 		cg->SetDynamic(dynamic);
 
 		return cg;

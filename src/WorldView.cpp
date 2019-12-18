@@ -24,6 +24,7 @@
 #include "graphics/Frustum.h"
 #include "graphics/Graphics.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 #include "matrix4x4.h"
 #include "ship/PlayerShipController.h"
 #include "sound/Sound.h"
@@ -101,7 +102,7 @@ void WorldView::InitObject(Game *game)
 	rsd.blendMode = Graphics::BLEND_ALPHA;
 	rsd.depthWrite = false;
 	rsd.depthTest = false;
-	m_blendState = Pi::renderer->CreateRenderState(rsd); //XXX m_renderer not set yet
+	m_blendState = RendererLocator::getRenderer()->CreateRenderState(rsd); //XXX m_renderer not set yet
 	m_navTunnel = new NavTunnelWidget(this, m_blendState);
 	Add(m_navTunnel, 0, 0);
 
@@ -140,12 +141,12 @@ void WorldView::InitObject(Game *game)
 	//XXX m_renderer not set yet
 	float znear;
 	float zfar;
-	Pi::renderer->GetNearFarRange(znear, zfar);
+	RendererLocator::getRenderer()->GetNearFarRange(znear, zfar);
 
 	const float fovY = GameConfSingleton::getInstance().Float("FOVVertical");
 
 	m_cameraContext.Reset(new CameraContext(Graphics::GetScreenWidth(), Graphics::GetScreenHeight(), fovY, znear, zfar));
-	m_camera.reset(new Camera(m_cameraContext, Pi::renderer));
+	m_camera.reset(new Camera(m_cameraContext));
 	shipView.Init(game->GetPlayer());
 
 	m_onPlayerChangeTargetCon = game->GetPlayer()->onPlayerChangeTarget.connect(sigc::mem_fun(this, &WorldView::OnPlayerChangeTarget));
@@ -191,7 +192,7 @@ void WorldView::Draw3D()
 	assert(GameLocator::getGame()->GetPlayer());
 	assert(!GameLocator::getGame()->GetPlayer()->IsDead());
 
-	m_cameraContext->ApplyDrawTransforms(m_renderer);
+	m_cameraContext->ApplyDrawTransforms();
 
 	Body *excludeBody = nullptr;
 	ShipCockpit *cockpit = nullptr;
@@ -204,12 +205,12 @@ void WorldView::Draw3D()
 
 	// Speed lines
 	if (GameConfSingleton::AreSpeedLinesDisplayed())
-		m_speedLines->Render(m_renderer);
+		m_speedLines->Render();
 
 	// Contact trails
 	if (GameConfSingleton::AreHudTrailsDisplayed()) {
 		for (auto &contact : GameLocator::getGame()->GetPlayer()->GetSensors()->GetContacts())
-			contact.trail->Render(m_renderer);
+			contact.trail->Render();
 	}
 
 	m_cameraContext->EndFrame();
@@ -683,7 +684,7 @@ void WorldView::Draw()
 	assert(GameLocator::getGame());
 	assert(GameLocator::getGame()->GetPlayer());
 
-	m_renderer->ClearDepthBuffer();
+	RendererLocator::getRenderer()->ClearDepthBuffer();
 
 	View::Draw();
 
@@ -700,7 +701,7 @@ void WorldView::Draw()
 	DrawCombatTargetIndicator(m_combatTargetIndicator, m_targetLeadIndicator, red);
 
 	// glLineWidth(1.0f);
-	m_renderer->CheckRenderErrors(__FUNCTION__, __LINE__);
+	RendererLocator::getRenderer()->CheckRenderErrors(__FUNCTION__, __LINE__);
 }
 
 void WorldView::DrawCombatTargetIndicator(const Indicator &target, const Indicator &lead, const Color &c)
@@ -753,7 +754,7 @@ void WorldView::DrawCombatTargetIndicator(const Indicator &target, const Indicat
 		} else {
 			m_indicator.SetData(8, vts, c);
 		}
-		m_indicator.Draw(m_renderer, m_blendState);
+		m_indicator.Draw(RendererLocator::getRenderer(), m_blendState);
 	} else {
 		DrawEdgeMarker(target, c);
 	}
@@ -768,7 +769,7 @@ void WorldView::DrawEdgeMarker(const Indicator &marker, const Color &c)
 	m_edgeMarker.SetColor(c);
 	m_edgeMarker.SetStart(vector3f(marker.pos, 0.0f));
 	m_edgeMarker.SetEnd(vector3f(marker.pos + dir, 0.0f));
-	m_edgeMarker.Draw(m_renderer, m_blendState);
+	m_edgeMarker.Draw(RendererLocator::getRenderer(), m_blendState);
 }
 
 NavTunnelWidget::NavTunnelWidget(WorldView *worldview, Graphics::RenderState *rs) :
@@ -842,7 +843,7 @@ void NavTunnelWidget::DrawTargetGuideSquare(const vector2f &pos, const float siz
 
 	m_vbuffer->Populate(va);
 
-	m_worldView->m_renderer->DrawBuffer(m_vbuffer.get(), m_renderState, m_material.Get(), Graphics::LINE_LOOP);
+	RendererLocator::getRenderer()->DrawBuffer(m_vbuffer.get(), m_renderState, m_material.Get(), Graphics::LINE_LOOP);
 }
 
 void NavTunnelWidget::GetSizeRequested(float size[2])
@@ -853,7 +854,7 @@ void NavTunnelWidget::GetSizeRequested(float size[2])
 
 void NavTunnelWidget::CreateVertexBuffer(const Uint32 size)
 {
-	Graphics::Renderer *r = m_worldView->m_renderer;
+	Graphics::Renderer *r = RendererLocator::getRenderer();
 
 	Graphics::MaterialDescriptor desc;
 	desc.vertexColors = true;

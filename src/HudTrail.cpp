@@ -5,9 +5,9 @@
 
 #include "Body.h"
 #include "Frame.h"
-#include "Pi.h"
 #include "graphics/RenderState.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 
 const float UPDATE_INTERVAL = 0.1f;
 const Uint16 MAX_POINTS = 100;
@@ -22,7 +22,7 @@ HudTrail::HudTrail(Body *b, const Color &c) :
 	Graphics::RenderStateDesc rsd;
 	rsd.blendMode = Graphics::BLEND_ALPHA_ONE;
 	rsd.depthWrite = false;
-	m_renderState = Pi::renderer->CreateRenderState(rsd);
+	m_renderState = RendererLocator::getRenderer()->CreateRenderState(rsd);
 }
 
 void HudTrail::Update(float time)
@@ -48,7 +48,7 @@ void HudTrail::Update(float time)
 		m_trailPoints.pop_front();
 }
 
-void HudTrail::Render(Graphics::Renderer *r)
+void HudTrail::Render()
 {
 	PROFILE_SCOPED();
 	//render trail
@@ -78,9 +78,9 @@ void HudTrail::Render(Graphics::Renderer *r)
 			colors.back().a = Uint8(alpha * 255);
 		}
 
-		r->SetTransform(m_transform);
+		RendererLocator::getRenderer()->SetTransform(m_transform);
 		m_lines.SetData(tvts.size(), &tvts[0], &colors[0]);
-		m_lines.Draw(r, m_renderState, Graphics::LINE_STRIP);
+		m_lines.Draw(RendererLocator::getRenderer(), m_renderState, Graphics::LINE_STRIP);
 	}
 }
 

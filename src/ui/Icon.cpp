@@ -5,6 +5,7 @@
 #include "Context.h"
 #include "FileSystem.h"
 #include "graphics/TextureBuilder.h"
+#include "graphics/RendererLocator.h"
 
 static const char CONFIG_FILE[] = "ui/Icons.ini";
 static const char FALLBACK_ICON[] = "Blank";
@@ -46,14 +47,14 @@ namespace UI {
 		if (!s_texture) {
 			s_config.Read(FileSystem::gameDataFiles, CONFIG_FILE);
 
-			s_texture.Reset(Graphics::TextureBuilder::UI(s_config.String("TextureFile")).GetOrCreateTexture(GetContext()->GetRenderer(), "ui"));
+			s_texture.Reset(Graphics::TextureBuilder::UI(s_config.String("TextureFile")).GetOrCreateTexture(RendererLocator::getRenderer(), "ui"));
 
 			const Graphics::TextureDescriptor &texDesc = s_texture->GetDescriptor();
 			s_texScale = vector2f(1.0f / texDesc.dataSize.x, 1.0f / texDesc.dataSize.y);
 
 			Graphics::MaterialDescriptor matDesc;
 			matDesc.textures = 1;
-			s_material.Reset(GetContext()->GetRenderer()->CreateMaterial(matDesc));
+			s_material.Reset(RendererLocator::getRenderer()->CreateMaterial(matDesc));
 			s_material->texture0 = s_texture.Get();
 		}
 
@@ -75,7 +76,7 @@ namespace UI {
 
 	void Icon::Draw()
 	{
-		Graphics::Renderer *r = GetContext()->GetRenderer();
+		Graphics::Renderer *r = RendererLocator::getRenderer();
 		if (!m_quad) {
 			const Point &offset = GetActiveOffset();
 			const Point &area = GetActiveArea();

@@ -6,30 +6,28 @@
 #include "Serializer.h"
 #include "graphics/Drawables.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 
 namespace SceneGraph {
 
-	Node::Node(Graphics::Renderer *r) :
+	Node::Node() :
 		m_name(""),
 		m_nodeMask(NODE_SOLID),
-		m_nodeFlags(0),
-		m_renderer(r)
+		m_nodeFlags(0)
 	{
 	}
 
-	Node::Node(Graphics::Renderer *r, unsigned int nodemask) :
+	Node::Node(unsigned int nodemask) :
 		m_name(""),
 		m_nodeMask(nodemask),
-		m_nodeFlags(0),
-		m_renderer(r)
+		m_nodeFlags(0)
 	{
 	}
 
 	Node::Node(const Node &node, NodeCopyCache *cache) :
 		m_name(node.m_name),
 		m_nodeMask(node.m_nodeMask),
-		m_nodeFlags(node.m_nodeFlags),
-		m_renderer(node.m_renderer)
+		m_nodeFlags(node.m_nodeFlags)
 	{
 	}
 
@@ -56,8 +54,8 @@ namespace SceneGraph {
 
 	void Node::DrawAxes()
 	{
-		Graphics::Drawables::Axes3D *axes = Graphics::Drawables::GetAxes3DDrawable(m_renderer);
-		axes->Draw(m_renderer);
+		Graphics::Drawables::Axes3D *axes = Graphics::Drawables::GetAxes3DDrawable(RendererLocator::getRenderer());
+		axes->Draw(RendererLocator::getRenderer());
 	}
 
 	void Node::Save(NodeDatabase &db)

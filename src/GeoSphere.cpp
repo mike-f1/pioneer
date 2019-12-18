@@ -14,6 +14,7 @@
 #include "graphics/Material.h"
 #include "graphics/RenderState.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 #include "graphics/Texture.h"
 #include "graphics/TextureBuilder.h"
 #include "graphics/VertexArray.h"
@@ -367,7 +368,7 @@ void GeoSphere::ProcessQuadSplitRequests()
 	mQuadSplitRequests.clear();
 }
 
-void GeoSphere::Render(Graphics::Renderer *renderer, const matrix4x4d &modelView, vector3d campos, const float radius, const std::vector<Camera::Shadow> &shadows)
+void GeoSphere::Render(const matrix4x4d &modelView, vector3d campos, const float radius, const std::vector<Camera::Shadow> &shadows)
 {
 	PROFILE_SCOPED()
 	// store this for later usage in the update method.
@@ -379,11 +380,11 @@ void GeoSphere::Render(Graphics::Renderer *renderer, const matrix4x4d &modelView
 
 	matrix4x4d trans = modelView;
 	trans.Translate(-campos.x, -campos.y, -campos.z);
-	renderer->SetTransform(trans); //need to set this for the following line to work
+	RendererLocator::getRenderer()->SetTransform(trans); //need to set this for the following line to work
 	matrix4x4d modv;
 	matrix4x4d proj;
-	matrix4x4ftod(renderer->GetCurrentModelView(), modv);
-	matrix4x4ftod(renderer->GetCurrentProjection(), proj);
+	matrix4x4ftod(RendererLocator::getRenderer()->GetCurrentModelView(), modv);
+	matrix4x4ftod(RendererLocator::getRenderer()->GetCurrentProjection(), proj);
 	Graphics::Frustum frustum(modv, proj);
 	m_tempFrustum = frustum;
 
@@ -413,7 +414,7 @@ void GeoSphere::Render(Graphics::Renderer *renderer, const matrix4x4d &modelView
 			// make atmosphere sphere slightly bigger than required so
 			// that the edges of the pixel shader atmosphere jizz doesn't
 			// show ugly polygonal angles
-			DrawAtmosphereSurface(renderer, trans, campos,
+			DrawAtmosphereSurface(trans, campos,
 				m_materialParameters.atmosphere.atmosRadius * 1.01,
 				m_atmosRenderState, m_atmosphereMaterial);
 		}
@@ -423,7 +424,7 @@ void GeoSphere::Render(Graphics::Renderer *renderer, const matrix4x4d &modelView
 	Color &emission = m_surfaceMaterial->emissive;
 
 	// save old global ambient
-	const Color oldAmbient = renderer->GetAmbientColor();
+	const Color oldAmbient = RendererLocator::getRenderer()->GetAmbientColor();
 
 	if (IsSuperType(GalaxyEnums::BodySuperType::SUPERTYPE_STAR) || IsType(GalaxyEnums::BodyType::TYPE_BROWN_DWARF)) {
 		// stars should emit light and terrain should be visible from distance
@@ -441,30 +442,30 @@ void GeoSphere::Render(Graphics::Renderer *renderer, const matrix4x4d &modelView
 		ambient.a = 255;
 	}
 
-	renderer->SetAmbientColor(ambient);
+	RendererLocator::getRenderer()->SetAmbientColor(ambient);
 
-	renderer->SetTransform(modelView);
+	RendererLocator::getRenderer()->SetTransform(modelView);
 
 	for (int i = 0; i < NUM_PATCHES; i++) {
-		m_patches[i]->Render(renderer, campos, modelView, frustum);
+		m_patches[i]->Render(campos, modelView, frustum);
 	}
 
-	renderer->SetAmbientColor(oldAmbient);
+	RendererLocator::getRenderer()->SetAmbientColor(oldAmbient);
 
-	renderer->GetStats().AddToStatCount(Graphics::Stats::STAT_PLANETS, 1);
+	RendererLocator::getRenderer()->GetStats().AddToStatCount(Graphics::Stats::STAT_PLANETS, 1);
 }
 
 void GeoSphere::SetUpMaterials()
 {
 	//solid
 	Graphics::RenderStateDesc rsd;
-	m_surfRenderState = Pi::renderer->CreateRenderState(rsd);
+	m_surfRenderState = RendererLocator::getRenderer()->CreateRenderState(rsd);
 
 	//blended
 	rsd.blendMode = Graphics::BLEND_ALPHA_ONE;
 	rsd.cullMode = Graphics::CULL_NONE;
 	rsd.depthWrite = false;
-	m_atmosRenderState = Pi::renderer->CreateRenderState(rsd);
+	m_atmosRenderState = RendererLocator::getRenderer()->CreateRenderState(rsd);
 
 	// Request material for this star or planet, with or without
 	// atmosphere. Separate material for surface and sky.
@@ -499,10 +500,10 @@ void GeoSphere::SetUpMaterials()
 	}
 
 	surfDesc.quality |= Graphics::HAS_ECLIPSES;
-	m_surfaceMaterial.Reset(Pi::renderer->CreateMaterial(surfDesc));
+	m_surfaceMaterial.Reset(RendererLocator::getRenderer()->CreateMaterial(surfDesc));
 
-	m_texHi.Reset(Graphics::TextureBuilder::Model("textures/high.dds").GetOrCreateTexture(Pi::renderer, "model"));
-	m_texLo.Reset(Graphics::TextureBuilder::Model("textures/low.dds").GetOrCreateTexture(Pi::renderer, "model"));
+	m_texHi.Reset(Graphics::TextureBuilder::Model("textures/high.dds").GetOrCreateTexture(RendererLocator::getRenderer(), "model"));
+	m_texLo.Reset(Graphics::TextureBuilder::Model("textures/low.dds").GetOrCreateTexture(RendererLocator::getRenderer(), "model"));
 	m_surfaceMaterial->texture0 = m_texHi.Get();
 	m_surfaceMaterial->texture1 = m_texLo.Get();
 
@@ -511,7 +512,7 @@ void GeoSphere::SetUpMaterials()
 		skyDesc.effect = Graphics::EFFECT_GEOSPHERE_SKY;
 		skyDesc.lighting = true;
 		skyDesc.quality |= Graphics::HAS_ECLIPSES;
-		m_atmosphereMaterial.Reset(Pi::renderer->CreateMaterial(skyDesc));
+		m_atmosphereMaterial.Reset(RendererLocator::getRenderer()->CreateMaterial(skyDesc));
 		m_atmosphereMaterial->texture0 = nullptr;
 		m_atmosphereMaterial->texture1 = nullptr;
 	}

@@ -21,6 +21,7 @@
 #include "galaxy/StarSystem.h"
 #include "graphics/Material.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 #include "graphics/TextureBuilder.h"
 
 #include "gui/GuiLabel.h"
@@ -43,15 +44,14 @@ SystemView::SystemView() :
 	UIView(),
 	m_gridDrawing(GridDrawing::OFF),
 	m_shipDrawing(ShipDrawing::OFF),
-	m_showL4L5(ShowLagrange::LAG_OFF)
+	m_showL4L5(ShowLagrange::LAG_OFF),
+	m_realtime(true),
+	m_unexplored(true)
 {
 	SetTransparency(true);
 
 	Graphics::RenderStateDesc rsd;
-	m_lineState = Pi::renderer->CreateRenderState(rsd); //m_renderer not set yet
-
-	m_realtime = true;
-	m_unexplored = true;
+	m_lineState = RendererLocator::getRenderer()->CreateRenderState(rsd); //m_renderer not set yet
 
 	Gui::Screen::PushFont("OverlayFont");
 	m_objectLabels = new Gui::LabelSet();
@@ -244,14 +244,14 @@ SystemView::SystemView() :
 		Pi::input.onMouseWheel.connect(sigc::mem_fun(this, &SystemView::MouseWheel));
 
 	Graphics::TextureBuilder b1 = Graphics::TextureBuilder::UI("icons/periapsis.png");
-	m_periapsisIcon.reset(new Gui::TexturedQuad(b1.GetOrCreateTexture(Gui::Screen::GetRenderer(), "ui")));
+	m_periapsisIcon.reset(new Gui::TexturedQuad(b1.GetOrCreateTexture(RendererLocator::getRenderer(), "ui")));
 	Graphics::TextureBuilder b2 = Graphics::TextureBuilder::UI("icons/apoapsis.png");
-	m_apoapsisIcon.reset(new Gui::TexturedQuad(b2.GetOrCreateTexture(Gui::Screen::GetRenderer(), "ui")));
+	m_apoapsisIcon.reset(new Gui::TexturedQuad(b2.GetOrCreateTexture(RendererLocator::getRenderer(), "ui")));
 
 	Graphics::TextureBuilder l4 = Graphics::TextureBuilder::UI("icons/l4.png");
-	m_l4Icon.reset(new Gui::TexturedQuad(l4.GetOrCreateTexture(Gui::Screen::GetRenderer(), "ui")));
+	m_l4Icon.reset(new Gui::TexturedQuad(l4.GetOrCreateTexture(RendererLocator::getRenderer(), "ui")));
 	Graphics::TextureBuilder l5 = Graphics::TextureBuilder::UI("icons/l5.png");
-	m_l5Icon.reset(new Gui::TexturedQuad(l5.GetOrCreateTexture(Gui::Screen::GetRenderer(), "ui")));
+	m_l5Icon.reset(new Gui::TexturedQuad(l5.GetOrCreateTexture(RendererLocator::getRenderer(), "ui")));
 
 	ResetViewpoint();
 
@@ -391,31 +391,31 @@ void SystemView::PutOrbit(const Orbit *orbit, const vector3d &offset, const Colo
 
 		// don't close the loop for hyperbolas and parabolas and crashed ellipses
 		if (maxT < 1. || (orbit->GetEccentricity() > 1.0)) {
-			m_orbits.Draw(m_renderer, m_lineState, LINE_STRIP);
+			m_orbits.Draw(RendererLocator::getRenderer(), m_lineState, LINE_STRIP);
 		} else {
-			m_orbits.Draw(m_renderer, m_lineState, LINE_LOOP);
+			m_orbits.Draw(RendererLocator::getRenderer(), m_lineState, LINE_LOOP);
 		}
 	}
 
 	Gui::Screen::EnterOrtho();
 	vector3d pos;
 	if (Gui::Screen::Project(offset + orbit->Perigeum() * double(m_zoom), pos))
-		m_periapsisIcon->Draw(Pi::renderer, vector2f(pos.x - 3, pos.y - 5), vector2f(6, 10), color);
+		m_periapsisIcon->Draw(RendererLocator::getRenderer(), vector2f(pos.x - 3, pos.y - 5), vector2f(6, 10), color);
 	if (Gui::Screen::Project(offset + orbit->Apogeum() * double(m_zoom), pos))
-		m_apoapsisIcon->Draw(Pi::renderer, vector2f(pos.x - 3, pos.y - 5), vector2f(6, 10), color);
+		m_apoapsisIcon->Draw(RendererLocator::getRenderer(), vector2f(pos.x - 3, pos.y - 5), vector2f(6, 10), color);
 
 	if (showLagrange && m_showL4L5 != LAG_OFF) {
 		const Color LPointColor(0x00d6e2ff);
 		const vector3d posL4 = orbit->EvenSpacedPosTrajectory((1.0 / 360.0) * 60.0, tMinust0);
 		if (Gui::Screen::Project(offset + posL4 * double(m_zoom), pos)) {
-			m_l4Icon->Draw(Pi::renderer, vector2f(pos.x - 2, pos.y - 2), vector2f(4, 4), LPointColor);
+			m_l4Icon->Draw(RendererLocator::getRenderer(), vector2f(pos.x - 2, pos.y - 2), vector2f(4, 4), LPointColor);
 			if (m_showL4L5 == LAG_ICONTEXT)
 				m_objectLabels->Add(std::string("L4"), sigc::mem_fun(this, &SystemView::OnClickLagrange), pos.x, pos.y);
 		}
 
 		const vector3d posL5 = orbit->EvenSpacedPosTrajectory((1.0 / 360.0) * 300.0, tMinust0);
 		if (Gui::Screen::Project(offset + posL5 * double(m_zoom), pos)) {
-			m_l5Icon->Draw(Pi::renderer, vector2f(pos.x - 2, pos.y - 2), vector2f(4, 4), LPointColor);
+			m_l5Icon->Draw(RendererLocator::getRenderer(), vector2f(pos.x - 2, pos.y - 2), vector2f(4, 4), LPointColor);
 			if (m_showL4L5 == LAG_ICONTEXT)
 				m_objectLabels->Add(std::string("L5"), sigc::mem_fun(this, &SystemView::OnClickLagrange), pos.x, pos.y);
 		}
@@ -561,8 +561,8 @@ void SystemView::PutBody(const SystemBody *b, const vector3d &offset, const matr
 	if (b->GetType() != GalaxyEnums::BodyType::TYPE_GRAVPOINT) {
 		if (!m_bodyIcon) {
 			Graphics::RenderStateDesc rsd;
-			auto solidState = m_renderer->CreateRenderState(rsd);
-			m_bodyIcon.reset(new Graphics::Drawables::Disk(m_renderer, solidState, Color::WHITE, 1.0f));
+			auto solidState = RendererLocator::getRenderer()->CreateRenderState(rsd);
+			m_bodyIcon.reset(new Graphics::Drawables::Disk(RendererLocator::getRenderer(), solidState, Color::WHITE, 1.0f));
 		}
 
 		const double radius = b->GetRadius() * m_zoom;
@@ -574,10 +574,10 @@ void SystemView::PutBody(const SystemBody *b, const vector3d &offset, const matr
 		matrix4x4f bodyTrans = trans;
 		bodyTrans.Translate(vector3f(offset));
 		bodyTrans.Scale(radius);
-		m_renderer->SetTransform(bodyTrans * invRot);
-		m_bodyIcon->Draw(m_renderer);
+		RendererLocator::getRenderer()->SetTransform(bodyTrans * invRot);
+		m_bodyIcon->Draw(RendererLocator::getRenderer());
 
-		m_renderer->SetTransform(trans);
+		RendererLocator::getRenderer()->SetTransform(trans);
 
 		PutLabel(b, offset);
 	}
@@ -665,7 +665,7 @@ void SystemView::PutSelectionBox(const vector3d &worldPos, const Color &col)
 			vector3f(x1, y2, 0.f)
 		};
 		m_selectBox.SetData(4, &verts[0], col);
-		m_selectBox.Draw(m_renderer, m_lineState, Graphics::LINE_LOOP);
+		m_selectBox.Draw(RendererLocator::getRenderer(), m_lineState, Graphics::LINE_LOOP);
 	}
 
 	Gui::Screen::LeaveOrtho();
@@ -682,8 +682,8 @@ void SystemView::GetTransformTo(const SystemBody *b, vector3d &pos)
 void SystemView::Draw3D()
 {
 	PROFILE_SCOPED()
-	m_renderer->SetPerspectiveProjection(50.f, m_renderer->GetDisplayAspect(), 1.f, 1000.f);
-	m_renderer->ClearScreen();
+	RendererLocator::getRenderer()->SetPerspectiveProjection(50.f, RendererLocator::getRenderer()->GetDisplayAspect(), 1.f, 1000.f);
+	RendererLocator::getRenderer()->ClearScreen();
 
 	SystemPath path = Pi::GetInGameViews()->GetSectorView()->GetSelected().SystemOnly();
 	if (m_system) {
@@ -710,7 +710,7 @@ void SystemView::Draw3D()
 	trans.Translate(0, 0, -DEFAULT_VIEW_DISTANCE);
 	trans.Rotate(DEG2RAD(m_rot_x), 1, 0, 0);
 	trans.Rotate(DEG2RAD(m_rot_y), 0, 1, 0);
-	m_renderer->SetTransform(trans);
+	RendererLocator::getRenderer()->SetTransform(trans);
 
 	vector3d pos(0, 0, 0);
 	if (m_selectedObject) GetTransformTo(m_selectedObject, pos);
@@ -945,5 +945,5 @@ void SystemView::DrawGrid()
 	}
 
 	m_lines.SetData(m_lineVerts->GetNumVerts(), &m_lineVerts->position[0], &m_lineVerts->diffuse[0]);
-	m_lines.Draw(Pi::renderer, m_lineState);
+	m_lines.Draw(RendererLocator::getRenderer(), m_lineState);
 }

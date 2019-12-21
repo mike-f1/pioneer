@@ -10,6 +10,7 @@
 #include "Json.h"
 #include "Space.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 
 TerrainBody::TerrainBody(SystemBody *sbody) :
 	Body(),
@@ -65,14 +66,14 @@ TerrainBody::TerrainBody(const Json &jsonObj, Space *space) :
 	InitTerrainBody();
 }
 
-void TerrainBody::Render(Graphics::Renderer *renderer, const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform)
+void TerrainBody::Render(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform)
 {
 	matrix4x4d ftran = viewTransform;
 	vector3d fpos = viewCoords;
 	double rad = SystemBodyWrapper::GetSystemBodyRadius();
 
 	float znear, zfar;
-	renderer->GetNearFarRange(znear, zfar);
+	RendererLocator::getRenderer()->GetNearFarRange(znear, zfar);
 
 	//stars very far away are downscaled, because they cannot be
 	//accurately drawn using actual distances
@@ -113,14 +114,14 @@ void TerrainBody::Render(Graphics::Renderer *renderer, const Camera *camera, con
 	ftran.Scale(rad);
 
 	// translation not applied until patch render to fix jitter
-	m_baseSphere->Render(renderer, ftran, -campos, SystemBodyWrapper::GetSystemBodyRadius(), shadows);
+	m_baseSphere->Render(ftran, -campos, SystemBodyWrapper::GetSystemBodyRadius(), shadows);
 
 	ftran.Translate(campos.x, campos.y, campos.z);
-	SubRender(renderer, ftran, campos);
+	SubRender(ftran, campos);
 
 	//clear depth buffer, shrunken objects should not interact with foreground
 	if (shrink)
-		renderer->ClearDepthBuffer();
+		RendererLocator::getRenderer()->ClearDepthBuffer();
 }
 
 void TerrainBody::SetFrame(FrameId fId)

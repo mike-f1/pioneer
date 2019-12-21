@@ -5,6 +5,7 @@
 
 #include "Gui.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 
 #include <SDL_stdinc.h>
 
@@ -192,7 +193,7 @@ namespace Gui {
 	{
 		PROFILE_SCOPED()
 
-		Graphics::Renderer *r = Gui::Screen::GetRenderer();
+		Graphics::Renderer *r = RendererLocator::getRenderer();
 		r->SetRenderState(Gui::Screen::alphaBlendState);
 
 		float size[2];
@@ -200,11 +201,11 @@ namespace Gui {
 		if (!m_transparent) {
 			PROFILE_SCOPED_RAW("Container::Draw - !m_transparent")
 			if (!m_rect) {
-				m_rect.reset(new Graphics::Drawables::Rect(Screen::GetRenderer(), vector2f(0.f), vector2f(size[0], size[0]), m_bgcol, Screen::alphaBlendState, false));
+				m_rect.reset(new Graphics::Drawables::Rect(RendererLocator::getRenderer(), vector2f(0.f), vector2f(size[0], size[0]), m_bgcol, Screen::alphaBlendState, false));
 			} else {
 				m_rect->Update(vector2f(0.f), vector2f(size[0], size[1]), m_bgcol);
 			}
-			m_rect->Draw(Screen::GetRenderer());
+			m_rect->Draw(RendererLocator::getRenderer());
 		}
 
 		for (WidgetList::iterator i = m_children.begin(), itEnd = m_children.end(); i != itEnd; ++i) {

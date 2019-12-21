@@ -8,11 +8,10 @@
 #include "vector3.h"
 #include "galaxy/AtmosphereParameters.h"
 #include "galaxy/SystemBodyWrapper.h"
-#include "graphics/Material.h"
+#include "graphics/Material.h" // <- For some inlined function...
 #include "terrain/Terrain.h"
 
 namespace Graphics {
-	class Renderer;
 	class RenderState;
 	namespace Drawables {
 		class Sphere3D;
@@ -25,7 +24,7 @@ public:
 	virtual ~BaseSphere();
 
 	virtual void Update() = 0;
-	virtual void Render(Graphics::Renderer *renderer, const matrix4x4d &modelView, vector3d campos, const float radius, const std::vector<Camera::Shadow> &shadows) = 0;
+	virtual void Render(const matrix4x4d &modelView, vector3d campos, const float radius, const std::vector<Camera::Shadow> &shadows) = 0;
 
 	virtual double GetHeight(const vector3d &p) const { return 0.0; }
 
@@ -34,8 +33,7 @@ public:
 	static void UpdateAllBaseSphereDerivatives();
 	static void OnChangeDetailLevel(int new_detail);
 
-	void DrawAtmosphereSurface(Graphics::Renderer *renderer,
-		const matrix4x4d &modelView, const vector3d &campos, float rad,
+	void DrawAtmosphereSurface(const matrix4x4d &modelView, const vector3d &campos, float rad,
 		Graphics::RenderState *rs, RefCountedPtr<Graphics::Material> mat);
 
 	// in sbody radii

@@ -132,6 +132,7 @@ function ui.child(id, size, flags, fun)
 	fun()
 	pigui.EndChild()
 end
+
 function ui.withFont(name, size, fun)
 	-- allow `withFont(fontObj, fun)`
 	if type(name) == "table" and type(size) == "function" then
@@ -228,127 +229,6 @@ ui.circleSegments = function(radius)
 		return 128
 	end
 end
-
-ui.Format = {
-	Latitude = function(decimal_degrees)
-		local prefix = lc.LATITUDE_NORTH_ABBREV
-		if decimal_degrees < 0 then
-			prefix = lc.LATITUDE_SOUTH_ABBREV
-			decimal_degrees = math.abs(decimal_degrees)
-		end
-		local deg = math.floor(decimal_degrees)
-		local min = (decimal_degrees - deg) * 60
-		local sec = (min - math.floor(min)) * 60
-		return string.format('%s %03i°%02i\'%02i"', prefix, deg, min, sec)
-	end,
-	Longitude = function(decimal_degrees)
-		local prefix = lc.LONGITUDE_EAST_ABBREV
-		if decimal_degrees < 0 then
-			prefix = lc.LONGITUDE_WEST_ABBREV
-			decimal_degrees = math.abs(decimal_degrees)
-		end
-		local deg = math.floor(decimal_degrees)
-		local min = (decimal_degrees - deg) * 60
-		local sec = (min - math.floor(min)) * 60
-		return string.format('%s %03i°%02i\'%02i"', prefix, deg, min, sec)
-	end,
-	Duration = function(duration, elements)
-		-- shown elements items (2 -> wd or dh, 3 -> dhm or hms)
-		local negative = false
-		if duration < 0 then
-			duration = math.abs(duration)
-			negative = true
-		end
-		local seconds = math.floor(duration % 60)
-		local minutes = math.floor(duration / 60 % 60)
-		local hours = math.floor(duration / 60 / 60 % 24)
-		local days = math.floor(duration / 60 / 60 / 24 % 7)
-		local weeks = math.floor(duration / 60 / 60 / 24 / 7)
-		local i = elements or 5
-		local count = false
-		local result = ""
-		if i > 0 then
-			if weeks ~= 0 then
-				result = result .. weeks .. "w"
-				count = true
-			end
-			if count then
-				i = i - 1
-			end
-		end
-		if i > 0 then
-			if days ~= 0 then
-				result = result .. days .. "d"
-				count = true
-			end
-			if count then
-				i = i - 1
-			end
-		end
-		if i > 0 then
-			if hours ~= 0 then
-				result = result .. hours .. "h"
-				count = true
-			end
-			if count then
-				i = i - 1
-			end
-		end
-		if i > 0 then
-			if minutes ~= 0 then
-				result = result .. minutes .. "m"
-				count = true
-			end
-			if count then
-				i = i - 1
-			end
-		end
-		if i > 0 then
-			if seconds ~= 0 then
-				result = result .. seconds .. "s"
-				count = true
-			end
-			if result == "" then
-				result = "0s"
-			end
-			if count then
-				i = i - 1
-			end
-		end
-		if negative then
-			result = "-" .. result
-		end
-		return result
-	end,
-	Distance = function(distance)
-		local d = math.abs(distance)
-		if d < 1000 then
-			return math.floor(distance), lc.UNIT_METERS
-		end
-		if d < 1000*1000 then
-			return string.format("%0.2f", distance / 1000), lc.UNIT_KILOMETERS
-		end
-		if d < 1000*1000*1000 then
-			return string.format("%0.2f", distance / 1000 / 1000), lc.UNIT_MILLION_METERS
-		end
-		return string.format("%0.2f", distance / 1.4960e11), lc.UNIT_AU
-	end,
-	Speed = function(distance)
-		local d = math.abs(distance)
-		if d < 1000 then
-			return math.floor(distance), lc.UNIT_METERS_PER_SECOND
-		end
-		if d < 1000*1000 then
-			return string.format("%0.2f", distance / 1000), lc.UNIT_KILOMETERS_PER_SECOND
-		end
-		return string.format("%0.2f", distance / 1000 / 1000), lc.UNIT_MILLION_METERS_PER_SECOND
-		-- no need for au/s
-	end,
-  Datetime = function(date)
-		local second, minute, hour, day, month, year = Game.GetPartsFromDateTime(date)
-		return string.format("%4i-%02i-%02i %02i:%02i:%02i", year, month, day, hour, minute, second)
-  end
-}
 
 ui.addIcon = function(position, icon, color, size, anchor_horizontal, anchor_vertical, tooltip, angle_rad)
 	local pos = ui.calcTextAlignment(position, size, anchor_horizontal, anchor_vertical)
@@ -805,6 +685,7 @@ ui.coloredSelectedButton = function(label, thesize, is_selected, bg_color, toolt
 	end
 	return res
 end
+
 ui.coloredSelectedIconButton = function(icon, thesize, is_selected, frame_padding, bg_color, fg_color, tooltip, img_size)
 	if is_selected then
 		pigui.PushStyleColor("Button", bg_color)

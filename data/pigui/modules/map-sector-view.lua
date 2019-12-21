@@ -7,6 +7,7 @@ local lui = Lang.GetResource("ui-core");
 local utils = import("utils")
 local Event = import("Event")
 local SystemPath = import("SystemPath")
+local Format = import("Format")
 
 local player = nil
 local colors = ui.theme.colors
@@ -28,7 +29,7 @@ local function showSystemInfo(label, current_systempath, systempath, othersystem
 								local jumpData = ""
 								if not current_systempath:IsSameSystem(systempath) then
 									local jumpStatus, distance, fuelRequired, duration = player:GetHyperspaceDetails(current_systempath, systempath)
-									jumpData = "\n" .. jumpStatus .. "  " .. string.format("%.2f", distance) .. lc.UNIT_LY .. "  " .. fuelRequired .. lc.UNIT_TONNES .. "  " .. ui.Format.Duration(duration, 2)
+									jumpData = "\n" .. jumpStatus .. "  " .. string.format("%.2f", distance) .. lc.UNIT_LY .. "  " .. fuelRequired .. lc.UNIT_TONNES .. "  " .. Format.Duration(duration, 2)
 								end
 								if ui.collapsingHeader(label .. ': ' .. starsystem.name .. '  ' .. jumpData .. " (" .. math.floor(systempath.sectorX) .. ", " .. math.floor(systempath.sectorY) .. ", " .. math.floor(systempath.sectorZ) .. ")", { "DefaultOpen" }) then
 									local stars = starsystem:GetStars()
@@ -60,7 +61,7 @@ local function showSystemInfo(label, current_systempath, systempath, othersystem
 									if othersystempath and not othersystempath:IsSameSystem(systempath) then
 										local otherstarsystem = othersystempath:GetStarSystem()
 										local jumpStatus, distance, fuelRequired, duration = player:GetHyperspaceDetails(systempath, othersystempath)
-										ui.text('Relative to ' .. otherstarsystem.name .. ': ' .. jumpStatus .. "  " .. string.format("%.2f", distance) .. lc.UNIT_LY .. "  " .. fuelRequired .. lc.UNIT_TONNES .. "  " .. ui.Format.Duration(duration, 2))
+										ui.text('Relative to ' .. otherstarsystem.name .. ': ' .. jumpStatus .. "  " .. string.format("%.2f", distance) .. lc.UNIT_LY .. "  " .. fuelRequired .. lc.UNIT_TONNES .. "  " .. Format.Duration(duration, 2))
 									end
 								end
 		end)
@@ -146,7 +147,7 @@ local function showSearch()
 									 for _,item in pairs(data) do
 										 local system = item.path:GetStarSystem()
 										 local label = system.name
-										 label = label .. '  ' .. item.jumpStatus .. ", " .. string.format("%.2f", item.distance) .. lc.UNIT_LY .. ", " .. item.fuelRequired .. lc.UNIT_TONNES .. ", " .. ui.Format.Duration(item.duration, 2)
+										 label = label .. '  ' .. item.jumpStatus .. ", " .. string.format("%.2f", item.distance) .. lc.UNIT_LY .. ", " .. item.fuelRequired .. lc.UNIT_TONNES .. ", " .. Format.Duration(item.duration, 2)
 
 										 if ui.selectable(label, false, {}) then
 											 Engine.SetSectorMapSelected(item.path)

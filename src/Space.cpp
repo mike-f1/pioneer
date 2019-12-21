@@ -16,7 +16,6 @@
 #include "Lang.h"
 #include "LuaEvent.h"
 #include "MathUtil.h"
-#include "Pi.h"
 #include "Planet.h"
 #include "Player.h"
 #include "Random.h"
@@ -73,7 +72,7 @@ Space::Space() :
 	m_processingFinalizationQueue(false)
 #endif
 {
-	m_background.reset(new Background::Container(Pi::renderer, RandomSingleton::getInstance(), GameConfSingleton::GetAmountBackgroundStars()));
+	m_background.reset(new Background::Container(RandomSingleton::getInstance(), GameConfSingleton::GetAmountBackgroundStars()));
 
 	m_rootFrameId = Frame::CreateFrame(FrameId::Invalid, Lang::SYSTEM, Frame::FLAG_DEFAULT, FLT_MAX);
 }
@@ -90,7 +89,7 @@ Space::Space(double total_time, float time_step, RefCountedPtr<StarSystem> stars
 {
 	Uint32 _init[5] = { path.systemIndex, Uint32(path.sectorX), Uint32(path.sectorY), Uint32(path.sectorZ), UNIVERSE_SEED };
 	Random rand(_init, 5);
-	m_background.reset(new Background::Container(Pi::renderer, rand, GameConfSingleton::GetAmountBackgroundStars()));
+	m_background.reset(new Background::Container(rand, GameConfSingleton::GetAmountBackgroundStars()));
 
 	CityOnPlanet::SetCityModelPatterns(m_starSystem->GetPath());
 
@@ -116,7 +115,7 @@ Space::Space(RefCountedPtr<StarSystem> starsystem, const Json &jsonObj, double a
 	const SystemPath &path = m_starSystem->GetPath();
 	Uint32 _init[5] = { path.systemIndex, Uint32(path.sectorX), Uint32(path.sectorY), Uint32(path.sectorZ), UNIVERSE_SEED };
 	Random rand(_init, 5);
-	m_background.reset(new Background::Container(Pi::renderer, rand, GameConfSingleton::GetAmountBackgroundStars()));
+	m_background.reset(new Background::Container(rand, GameConfSingleton::GetAmountBackgroundStars()));
 
 	RebuildSystemBodyIndex();
 
@@ -180,7 +179,7 @@ void Space::RefreshBackground()
 	const SystemPath &path = m_starSystem->GetPath();
 	Uint32 _init[5] = { path.systemIndex, Uint32(path.sectorX), Uint32(path.sectorY), Uint32(path.sectorZ), UNIVERSE_SEED };
 	Random rand(_init, 5);
-	m_background.reset(new Background::Container(Pi::renderer, rand, GameConfSingleton::GetAmountBackgroundStars()));
+	m_background.reset(new Background::Container(rand, GameConfSingleton::GetAmountBackgroundStars()));
 }
 
 RefCountedPtr<StarSystem> Space::GetStarSystem() const

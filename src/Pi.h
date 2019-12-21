@@ -9,6 +9,7 @@
 #include "gameconsts.h"
 
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -19,7 +20,6 @@ class LuaNameGen;
 class ObjectViewerView;
 class PiGui;
 class SystemPath;
-class View;
 
 class AsyncJobQueue;
 class SyncJobQueue;
@@ -30,7 +30,6 @@ class ServerAgent;
 #endif
 
 namespace Graphics {
-	class Renderer;
 	class Texture;
 	class RenderState;
 	class RenderTarget;
@@ -38,10 +37,6 @@ namespace Graphics {
 		class TexturedQuad;
 	}
 } // namespace Graphics
-
-namespace Sound {
-	class MusicPlayer;
-}
 
 namespace UI {
 	class Context;
@@ -88,6 +83,8 @@ public:
 	static void NewInGameViews(InGameViews *newInGameViews);
 	static void SaveInGameViews(Json &rootNode);
 
+	static Cutscene *GetCutscene();
+
 	static RefCountedPtr<UI::Context> ui;
 	static RefCountedPtr<PiGui> pigui;
 
@@ -107,8 +104,6 @@ public:
 
 	static Input input;
 	static LuaConsole *luaConsole;
-	static Graphics::Renderer *renderer;
-	static std::unique_ptr<Cutscene> cutscene;
 
 	static JobQueue *GetAsyncJobQueue();
 	static JobQueue *GetSyncJobQueue();
@@ -150,6 +145,7 @@ private:
 	static float gameTickAlpha;
 	static float frameTime;
 
+	static std::unique_ptr<Cutscene> m_cutscene;
 	static std::unique_ptr<InGameViews> m_inGameViews;
 
 	static Graphics::RenderTarget *renderTarget;

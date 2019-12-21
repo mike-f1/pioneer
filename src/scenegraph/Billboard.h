@@ -19,7 +19,7 @@ namespace SceneGraph {
 
 	class Billboard : public Node {
 	public:
-		Billboard(Graphics::VertexArray &bbVA, Graphics::Renderer *r, float size);
+		Billboard(Graphics::VertexArray &bbVA, float size);
 		Billboard(const Billboard &, NodeCopyCache *cache = 0);
 		virtual Node *Clone(NodeCopyCache *cache = 0);
 		virtual void Accept(NodeVisitor &v);

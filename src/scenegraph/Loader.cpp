@@ -11,6 +11,7 @@
 #include "scenegraph/Animation.h"
 #include "StringF.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 #include "graphics/RenderState.h"
 #include "graphics/TextureBuilder.h"
 #include "utils.h"
@@ -115,8 +116,8 @@ namespace {
 } // anonymous namespace
 
 namespace SceneGraph {
-	Loader::Loader(Graphics::Renderer *r, bool logWarnings, bool loadSGMfiles) :
-		BaseLoader(r),
+	Loader::Loader(bool logWarnings, bool loadSGMfiles) :
+		BaseLoader(),
 		m_doLog(logWarnings),
 		m_loadSGMs(loadSGMfiles),
 		m_mostDetailedLod(false)
@@ -157,7 +158,7 @@ namespace SceneGraph {
 			for (auto &sgmname : list_sgm) {
 				if (sgmname == shortname) {
 					//binary loader expects extension-less name. Might want to change this.
-					SceneGraph::BinaryConverter bc(m_renderer);
+					SceneGraph::BinaryConverter bc;
 					m_model = bc.Load(shortname);
 					if (m_model)
 						return m_model;
@@ -208,12 +209,12 @@ namespace SceneGraph {
 		if (def.matDefs.empty()) return 0;
 		if (def.lodDefs.empty()) return 0;
 
-		Model *model = new Model(m_renderer, def.name);
+		Model *model = new Model(def.name);
 		m_model = model;
 		bool patternsUsed = false;
 
-		m_thrustersRoot.Reset(new Group(m_renderer));
-		m_billboardsRoot.Reset(new Group(m_renderer));
+		m_thrustersRoot.Reset(new Group());
+		m_billboardsRoot.Reset(new Group());
 
 		//create materials from definitions
 		for (std::vector<MaterialDefinition>::const_iterator it = def.matDefs.begin();
@@ -229,7 +230,7 @@ namespace SceneGraph {
 		std::map<std::string, RefCountedPtr<Node>> meshCache;
 		LOD *lodNode = 0;
 		if (def.lodDefs.size() > 1) { //don't bother with a lod node if only one level
-			lodNode = new LOD(m_renderer);
+			lodNode = new LOD;
 			model->GetRoot()->AddChild(lodNode);
 		}
 		for (std::vector<LodDefinition>::const_iterator lod = def.lodDefs.begin();
@@ -239,7 +240,7 @@ namespace SceneGraph {
 			//does a detail level have multiple meshes? If so, we need a Group.
 			Group *group = 0;
 			if (lodNode && (*lod).meshNames.size() > 1) {
-				group = new Group(m_renderer);
+				group = new Group;
 				lodNode->AddLevel((*lod).pixelSize, group);
 			}
 			for (std::vector<std::string>::const_iterator it = (*lod).meshNames.begin();
@@ -356,7 +357,7 @@ namespace SceneGraph {
 
 		// Recursive structure conversion. Matrix needs to be accumulated for
 		// special features that are absolute-positioned (thrusters)
-		RefCountedPtr<Node> meshRoot(new Group(m_renderer));
+		RefCountedPtr<Node> meshRoot(new Group());
 
 		ConvertNodes(scene->mRootNode, static_cast<Group *>(meshRoot.Get()), geoms, matrix4x4f::Identity());
 		ConvertAnimations(scene, animDefs, static_cast<Group *>(meshRoot.Get()));
@@ -450,7 +451,7 @@ namespace SceneGraph {
 			const aiMesh *mesh = scene->mMeshes[i];
 			assert(mesh->HasNormals());
 
-			RefCountedPtr<StaticGeometry> geom(new StaticGeometry(m_renderer));
+			RefCountedPtr<StaticGeometry> geom(new StaticGeometry());
 			geom->SetName(stringf("sgMesh%0{u}", i));
 
 			const bool hasUVs = mesh->HasTextureCoords(0);
@@ -486,7 +487,7 @@ namespace SceneGraph {
 				rsd.depthWrite = false;
 			}
 
-			geom->SetRenderState(m_renderer->CreateRenderState(rsd));
+			geom->SetRenderState(RendererLocator::getRenderer()->CreateRenderState(rsd));
 
 			Graphics::VertexBufferDesc vbd;
 			vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
@@ -507,7 +508,7 @@ namespace SceneGraph {
 			vbd.numVertices = mesh->mNumVertices;
 			vbd.usage = Graphics::BUFFER_USAGE_STATIC;
 
-			RefCountedPtr<Graphics::VertexBuffer> vb(m_renderer->CreateVertexBuffer(vbd));
+			RefCountedPtr<Graphics::VertexBuffer> vb(RendererLocator::getRenderer()->CreateVertexBuffer(vbd));
 
 			// huge meshes are split by the importer so this should not exceed 65K indices
 			std::vector<Uint32> indices;
@@ -530,7 +531,7 @@ namespace SceneGraph {
 			assert(indices.size() > 0);
 
 			//create buffer & copy
-			RefCountedPtr<Graphics::IndexBuffer> ib(m_renderer->CreateIndexBuffer(indices.size(), Graphics::BUFFER_USAGE_STATIC));
+			RefCountedPtr<Graphics::IndexBuffer> ib(RendererLocator::getRenderer()->CreateIndexBuffer(indices.size(), Graphics::BUFFER_USAGE_STATIC));
 			Uint32 *idxPtr = ib->Map(Graphics::BUFFER_MAP_WRITE);
 			for (Uint32 j = 0; j < indices.size(); j++)
 				idxPtr[j] = indices[j];
@@ -741,8 +742,8 @@ namespace SceneGraph {
 	void Loader::CreateLabel(Group *parent, const matrix4x4f &m)
 	{
 		PROFILE_SCOPED()
-		MatrixTransform *trans = new MatrixTransform(m_renderer, m);
-		Label3D *label = new Label3D(m_renderer, m_labelFont);
+		MatrixTransform *trans = new MatrixTransform(m);
+		Label3D *label = new Label3D(m_labelFont);
 		label->SetText("Bananas");
 		trans->AddChild(label);
 		parent->AddChild(trans);
@@ -757,14 +758,14 @@ namespace SceneGraph {
 
 		matrix4x4f transform = m;
 
-		MatrixTransform *trans = new MatrixTransform(m_renderer, transform);
+		MatrixTransform *trans = new MatrixTransform(transform);
 
 		const vector3f pos = transform.GetTranslate();
 		transform.ClearToRotOnly();
 
 		const vector3f direction = transform * vector3f(0.f, 0.f, 1.f);
 
-		Thruster *thruster = new Thruster(m_renderer, linear,
+		Thruster *thruster = new Thruster(linear,
 			pos, direction.Normalized());
 
 		thruster->SetName(name);
@@ -782,7 +783,7 @@ namespace SceneGraph {
 		//we only really need the final position, so this is
 		//a waste of transform
 		const matrix4x4f lightPos = matrix4x4f::Translation(m.GetTranslate());
-		MatrixTransform *lightPoint = new MatrixTransform(m_renderer, lightPos);
+		MatrixTransform *lightPoint = new MatrixTransform(lightPos);
 		lightPoint->SetNodeMask(0x0); //don't render
 		lightPoint->SetName(name);
 
@@ -820,7 +821,7 @@ namespace SceneGraph {
 		for (Uint32 i = 0; i < numIdx; i++)
 			idx.push_back(idxPtr[i]);
 		mesh.indexBuffer->Unmap();
-		RefCountedPtr<CollisionGeometry> cgeom(new CollisionGeometry(m_renderer, pos, idx, collFlag));
+		RefCountedPtr<CollisionGeometry> cgeom(new CollisionGeometry(pos, idx, collFlag));
 		return cgeom;
 	}
 
@@ -841,20 +842,20 @@ namespace SceneGraph {
 			} else if (starts_with(nodename, "label_")) {
 				CreateLabel(parent, m);
 			} else if (starts_with(nodename, "tag_")) {
-				m_model->AddTag(nodename, new MatrixTransform(m_renderer, accum * m));
+				m_model->AddTag(nodename, new MatrixTransform(accum * m));
 			} else if (starts_with(nodename, "entrance_")) {
-				m_model->AddTag(nodename, new MatrixTransform(m_renderer, m));
+				m_model->AddTag(nodename, new MatrixTransform(m));
 			} else if (starts_with(nodename, "loc_")) {
-				m_model->AddTag(nodename, new MatrixTransform(m_renderer, m));
+				m_model->AddTag(nodename, new MatrixTransform(m));
 			} else if (starts_with(nodename, "exit_")) {
-				m_model->AddTag(nodename, new MatrixTransform(m_renderer, m));
+				m_model->AddTag(nodename, new MatrixTransform(m));
 			}
 			return;
 		}
 
 		//if the transform is identity and the node is not animated,
 		//could just add a group
-		parent = new MatrixTransform(m_renderer, m);
+		parent = new MatrixTransform(m);
 		_parent->AddChild(parent);
 		parent->SetName(nodename);
 
@@ -892,7 +893,7 @@ namespace SceneGraph {
 					rsd.blendMode = Graphics::BLEND_ALPHA;
 					rsd.depthWrite = false;
 					//XXX add polygon offset to decal state
-					geom->SetRenderState(m_renderer->CreateRenderState(rsd));
+					geom->SetRenderState(RendererLocator::getRenderer()->CreateRenderState(rsd));
 				}
 
 				parent->AddChild(geom.Get());
@@ -962,7 +963,7 @@ namespace SceneGraph {
 		assert(!vertices.empty() && !indices.empty());
 
 		//add pre-transformed geometry at the top level
-		m_model->GetRoot()->AddChild(new CollisionGeometry(m_renderer, vertices, indices, 0));
+		m_model->GetRoot()->AddChild(new CollisionGeometry(vertices, indices, 0));
 	}
 
 	unsigned int Loader::GetGeomFlagForNodeName(const std::string &nodename)

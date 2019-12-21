@@ -15,6 +15,7 @@
 #include "KeyBindings.h"
 #include "Lang.h"
 #include "LuaConstants.h"
+#include "LuaManager.h"
 #include "LuaObject.h"
 #include "LuaPiGui.h"
 #include "LuaUtils.h"
@@ -32,6 +33,8 @@
 #include "buildopts.h"
 #include "galaxy/Faction.h"
 #include "graphics/Graphics.h"
+#include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 #include "scenegraph/Model.h"
 #include "sound/Sound.h"
 #include "sound/SoundMusic.h"
@@ -225,8 +228,8 @@ static int l_engine_get_maximum_aa_samples(lua_State *l)
 {
 	LUA_DEBUG_START(l);
 
-	if (Pi::renderer != nullptr) {
-		int maxSamples = Pi::renderer->GetMaximumNumberAASamples();
+	if (RendererLocator::getRenderer() != nullptr) {
+		int maxSamples = RendererLocator::getRenderer()->GetMaximumNumberAASamples();
 		lua_pushinteger(l, maxSamples);
 	} else {
 		lua_pushinteger(l, 0);
@@ -677,7 +680,7 @@ static int l_engine_set_gpu_jobs_enabled(lua_State *l)
 
 static int l_engine_is_intro_zooming(lua_State *l)
 {
-	Intro *intro = dynamic_cast<Intro *>(Pi::cutscene.get());
+	Intro *intro = dynamic_cast<Intro *>(Pi::GetCutscene());
 	if (intro) {
 		LuaPush(l, intro->isZooming());
 		return 1;
@@ -689,7 +692,7 @@ static int l_engine_is_intro_zooming(lua_State *l)
 
 static int l_engine_get_intro_current_model_name(lua_State *l)
 {
-	Intro *intro = dynamic_cast<Intro *>(Pi::cutscene.get());
+	Intro *intro = dynamic_cast<Intro *>(Pi::GetCutscene());
 	if (intro) {
 		SceneGraph::Model *m = intro->getCurrentModel();
 		if (m) {

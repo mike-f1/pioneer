@@ -14,6 +14,7 @@
 #include <cmath>
 #include <cstdio>
 #include <sstream>
+#include <iomanip>
 
 std::string format_money(double cents, bool showCents)
 {
@@ -217,6 +218,60 @@ std::string format_distance(double dist, int precision)
 			ss << (dist / AU) << " " << Lang::UNIT_AU;
 		else
 			ss << (dist / LY) << " " << Lang::UNIT_LY;
+	}
+	return ss.str();
+}
+
+static std::string format_angle(double abs_degrees)
+{
+	std::ostringstream ss;
+	ss.precision(3);
+	float deg, dec = std::modf(abs_degrees, &deg);
+	float min, sec = std::modf(dec * 60., &min);
+	ss << std::setfill('0') << std::setw(3) << deg << "°"
+		<< std::setfill('0') << std::setw(2) << min << "'"
+		<< std::setfill('0') << std::setw(2) << std::lround(sec * 60.) << "\"";
+	return ss.str();
+}
+
+std::string format_latitude(double decimal_degree)
+{
+	std::ostringstream ss;
+	if (decimal_degree > 0.) {
+		ss << Lang::LATITUDE_NORTH_ABBREV << " ";
+	} else {
+		ss << Lang::LATITUDE_SOUTH_ABBREV << " ";
+	}
+	ss << format_angle(std::abs(decimal_degree));
+	return ss.str();
+}
+
+std::string format_longitude(double decimal_degree)
+{
+	std::ostringstream ss;
+	if (decimal_degree > 0.) {
+		ss << Lang::LONGITUDE_EAST_ABBREV << " ";
+	} else {
+		ss << Lang::LONGITUDE_WEST_ABBREV << " ";
+	}
+	ss << format_angle(std::abs(decimal_degree));
+	return ss.str();
+}
+
+std::string format_speed(double speed, int precision)
+{
+	std::ostringstream ss;
+	ss.setf(std::ios::fixed, std::ios::floatfield);
+	if (speed < 1e3) {
+		ss.precision(0);
+		ss << speed << Lang::UNIT_METERS_PER_SECOND;
+	} else {
+		ss.precision(precision);
+
+		if (speed < 1e6)
+			ss << (speed * 1e-3) << Lang::UNIT_KILOMETERS_PER_SECOND;
+		else if (speed < AU * 0.01)
+			ss << (speed * 1e-6) << Lang::UNIT_MILLION_METERS_PER_SECOND;
 	}
 	return ss.str();
 }

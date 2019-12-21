@@ -3,23 +3,20 @@
 
 #ifndef _MODELCACHE_H
 #define _MODELCACHE_H
-/*
- * This class is a quick thoughtless hack
- * Also it only deals in New Models
- * Made Singleton (...until there's need for something else...)
- */
+
 #include <map>
 #include <stdexcept>
 #include <string>
-
-namespace Graphics {
-	class Renderer;
-}
 
 namespace SceneGraph {
 	class Model;
 }
 
+/*
+ * This class is a quick thoughtless hack
+ * Also it only deals in New Models
+ * Made Singleton (...until there's need for something else...)
+ */
 class ModelCache {
 public:
 	ModelCache() = delete;
@@ -29,7 +26,7 @@ public:
 		ModelNotFoundException() :
 			std::runtime_error("Could not find model") {}
 	};
-	static void Init(Graphics::Renderer *r);
+	static void Init();
 	static SceneGraph::Model *FindModel(const std::string &name, bool allowPlaceholder = true);
 
 private:
@@ -39,7 +36,6 @@ private:
 
 	typedef std::map<std::string, SceneGraph::Model *> ModelMap;
 	static ModelMap s_models;
-	static Graphics::Renderer *s_renderer;
 };
 
 #endif

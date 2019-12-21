@@ -15,6 +15,7 @@
 #include "galaxy/Sector.h"
 #include "galaxy/StarSystem.h"
 #include "graphics/Drawables.h"
+#include "graphics/RendererLocator.h"
 #include "graphics/RenderState.h"
 #include "graphics/TextureBuilder.h"
 #include "graphics/VertexArray.h"
@@ -75,9 +76,8 @@ namespace Background {
 		m_material->emissive = Color(intensity * 255, intensity * 255, intensity * 255);
 	}
 
-	UniverseBox::UniverseBox(Graphics::Renderer *renderer)
+	UniverseBox::UniverseBox()
 	{
-		m_renderer = renderer;
 		Init();
 	}
 
@@ -90,7 +90,7 @@ namespace Background {
 		// Load default cubemap
 		if (!s_defaultCubeMap.Valid()) {
 			TextureBuilder texture_builder = TextureBuilder::Cube("textures/skybox/default.dds");
-			s_defaultCubeMap.Reset(texture_builder.GetOrCreateTexture(m_renderer, std::string("cube")));
+			s_defaultCubeMap.Reset(texture_builder.GetOrCreateTexture(RendererLocator::getRenderer(), std::string("cube")));
 		}
 
 		// Create skybox geometry
@@ -141,7 +141,7 @@ namespace Background {
 
 		Graphics::MaterialDescriptor desc;
 		desc.effect = EFFECT_SKYBOX;
-		m_material.Reset(m_renderer->CreateMaterial(desc));
+		m_material.Reset(RendererLocator::getRenderer()->CreateMaterial(desc));
 		m_material->texture0 = nullptr;
 
 		//create buffer and upload data
@@ -153,7 +153,7 @@ namespace Background {
 		vbd.numVertices = box->GetNumVerts();
 		vbd.usage = Graphics::BUFFER_USAGE_STATIC;
 
-		m_vertexBuffer.reset(m_renderer->CreateVertexBuffer(vbd));
+		m_vertexBuffer.reset(RendererLocator::getRenderer()->CreateVertexBuffer(vbd));
 
 		SkyboxVert *vtxPtr = m_vertexBuffer->Map<SkyboxVert>(Graphics::BUFFER_MAP_WRITE);
 		assert(m_vertexBuffer->GetDesc().stride == sizeof(SkyboxVert));
@@ -171,7 +171,7 @@ namespace Background {
 	void UniverseBox::Draw(Graphics::RenderState *rs)
 	{
 		if (m_material->texture0)
-			m_renderer->DrawBuffer(m_vertexBuffer.get(), rs, m_material.Get());
+			RendererLocator::getRenderer()->DrawBuffer(m_vertexBuffer.get(), rs, m_material.Get());
 	}
 
 	void UniverseBox::LoadCubeMap(Random &rand)
@@ -182,7 +182,7 @@ namespace Background {
 				// Load new one
 				const std::string os = stringf("textures/skybox/ub%0{d}.dds", (new_ubox_index - 1));
 				TextureBuilder texture_builder = TextureBuilder::Cube(os.c_str());
-				m_cubemap.Reset(texture_builder.GetOrCreateTexture(m_renderer, std::string("cube")));
+				m_cubemap.Reset(texture_builder.GetOrCreateTexture(RendererLocator::getRenderer(), std::string("cube")));
 				m_material->texture0 = m_cubemap.Get();
 			}
 		} else {
@@ -192,9 +192,8 @@ namespace Background {
 		}
 	}
 
-	Starfield::Starfield(Graphics::Renderer *renderer, Random &rand, float amount)
+	Starfield::Starfield(Random &rand, float amount)
 	{
-		m_renderer = renderer;
 		Init();
 		Fill(rand, amount);
 	}
@@ -205,14 +204,14 @@ namespace Background {
 		desc.effect = Graphics::EFFECT_STARFIELD;
 		desc.textures = 1;
 		desc.vertexColors = true;
-		m_material.Reset(m_renderer->CreateMaterial(desc));
+		m_material.Reset(RendererLocator::getRenderer()->CreateMaterial(desc));
 		m_material->emissive = Color::WHITE;
-		m_material->texture0 = Graphics::TextureBuilder::Billboard("textures/star_point.png").GetOrCreateTexture(m_renderer, "billboard");
+		m_material->texture0 = Graphics::TextureBuilder::Billboard("textures/star_point.png").GetOrCreateTexture(RendererLocator::getRenderer(), "billboard");
 
 		Graphics::MaterialDescriptor descStreaks;
 		descStreaks.effect = Graphics::EFFECT_VTXCOLOR;
 		descStreaks.vertexColors = true;
-		m_materialStreaks.Reset(m_renderer->CreateMaterial(descStreaks));
+		m_materialStreaks.Reset(RendererLocator::getRenderer()->CreateMaterial(descStreaks));
 		m_materialStreaks->emissive = Color::WHITE;
 
 		IniConfig cfg;
@@ -241,7 +240,7 @@ namespace Background {
 			vbd.attrib[1].format = Graphics::ATTRIB_FORMAT_UBYTE4;
 			vbd.usage = Graphics::BUFFER_USAGE_DYNAMIC;
 			vbd.numVertices = NUM_BG_STARS * 2;
-			m_animBuffer.reset(m_renderer->CreateVertexBuffer(vbd));
+			m_animBuffer.reset(RendererLocator::getRenderer()->CreateVertexBuffer(vbd));
 		}
 
 		m_pointSprites.reset(new Graphics::Drawables::PointSprites);
@@ -343,14 +342,14 @@ namespace Background {
 		rsd.depthTest = false;
 		rsd.depthWrite = false;
 		rsd.blendMode = Graphics::BLEND_ALPHA;
-		m_renderState = m_renderer->CreateRenderState(rsd);
+		m_renderState = RendererLocator::getRenderer()->CreateRenderState(rsd);
 	}
 
 	void Starfield::Draw(Graphics::RenderState *rs)
 	{
 		// XXX would be nice to get rid of the Pi:: stuff here
 		if (!GameLocator::getGame() || GameLocator::getGame()->GetPlayer()->GetFlightState() != Ship::HYPERSPACE) {
-			m_pointSprites->Draw(m_renderer, m_renderState);
+			m_pointSprites->Draw(RendererLocator::getRenderer(), m_renderState);
 		} else {
 			assert(sizeof(StarVert) == 16);
 			assert(m_animBuffer->GetDesc().stride == sizeof(StarVert));
@@ -377,14 +376,12 @@ namespace Background {
 				vtxPtr[i * 2 + 1].col = m_hyperCol[i * 2 + 1] = c;
 			}
 			m_animBuffer->Unmap();
-			m_renderer->DrawBuffer(m_animBuffer.get(), rs, m_materialStreaks.Get(), Graphics::LINE_SINGLE);
+			RendererLocator::getRenderer()->DrawBuffer(m_animBuffer.get(), rs, m_materialStreaks.Get(), Graphics::LINE_SINGLE);
 		}
 	}
 
-	MilkyWay::MilkyWay(Graphics::Renderer *renderer)
+	MilkyWay::MilkyWay()
 	{
-		m_renderer = renderer;
-
 		//build milky way model in two strips (about 256 verts)
 		std::unique_ptr<Graphics::VertexArray> bottom(new VertexArray(ATTRIB_POSITION | ATTRIB_DIFFUSE));
 		std::unique_ptr<Graphics::VertexArray> top(new VertexArray(ATTRIB_POSITION | ATTRIB_DIFFUSE));
@@ -429,7 +426,7 @@ namespace Background {
 		Graphics::MaterialDescriptor desc;
 		desc.effect = Graphics::EFFECT_STARFIELD;
 		desc.vertexColors = true;
-		m_material.Reset(m_renderer->CreateMaterial(desc));
+		m_material.Reset(RendererLocator::getRenderer()->CreateMaterial(desc));
 		m_material->emissive = Color::WHITE;
 
 		Graphics::VertexBufferDesc vbd;
@@ -441,7 +438,7 @@ namespace Background {
 		vbd.usage = Graphics::BUFFER_USAGE_STATIC;
 
 		//two strips in one buffer, but seems to work ok without degenerate triangles
-		m_vertexBuffer.reset(renderer->CreateVertexBuffer(vbd));
+		m_vertexBuffer.reset(RendererLocator::getRenderer()->CreateVertexBuffer(vbd));
 		assert(m_vertexBuffer->GetDesc().stride == sizeof(MilkyWayVert));
 		auto vtxPtr = m_vertexBuffer->Map<MilkyWayVert>(Graphics::BUFFER_MAP_WRITE);
 		for (Uint32 i = 0; i < top->GetNumVerts(); i++) {
@@ -461,20 +458,19 @@ namespace Background {
 	{
 		assert(m_vertexBuffer);
 		assert(m_material);
-		m_renderer->DrawBuffer(m_vertexBuffer.get(), rs, m_material.Get(), Graphics::TRIANGLE_STRIP);
+		RendererLocator::getRenderer()->DrawBuffer(m_vertexBuffer.get(), rs, m_material.Get(), Graphics::TRIANGLE_STRIP);
 	}
 
-	Container::Container(Graphics::Renderer *renderer, Random &rand, float amountOfBackgroundStars) :
-		m_renderer(renderer),
-		m_milkyWay(renderer),
-		m_starField(renderer, rand, amountOfBackgroundStars),
-		m_universeBox(renderer),
+	Container::Container(Random &rand, float amountOfBackgroundStars) :
+		m_milkyWay(),
+		m_starField(rand, amountOfBackgroundStars),
+		m_universeBox(),
 		m_drawFlags(DRAW_SKYBOX | DRAW_STARS)
 	{
 		Graphics::RenderStateDesc rsd;
 		rsd.depthTest = false;
 		rsd.depthWrite = false;
-		m_renderState = renderer->CreateRenderState(rsd);
+		m_renderState = RendererLocator::getRenderer()->CreateRenderState(rsd);
 	}
 
 	void Container::Refresh(Random &rand, float amountOfBackgroundStars)
@@ -487,7 +483,7 @@ namespace Background {
 	void Container::Draw(const matrix4x4d &transform)
 	{
 		PROFILE_SCOPED()
-		m_renderer->SetTransform(transform);
+		RendererLocator::getRenderer()->SetTransform(transform);
 		if (DRAW_SKYBOX & m_drawFlags) {
 			m_universeBox.Draw(m_renderState);
 		}
@@ -495,7 +491,7 @@ namespace Background {
 			m_milkyWay.Draw(m_renderState);
 		}
 		if (DRAW_STARS & m_drawFlags) {
-			m_renderer->SetTransform(transform);
+			RendererLocator::getRenderer()->SetTransform(transform);
 			m_starField.Draw(m_renderState);
 		}
 	}

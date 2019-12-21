@@ -1,5 +1,6 @@
 #include "GameLog.h"
 
+#include "LuaManager.h"
 #include "LuaObject.h"
 
 void GameLog::Add(const std::string &msg)

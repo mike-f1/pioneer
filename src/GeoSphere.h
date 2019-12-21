@@ -13,7 +13,6 @@
 #include <deque>
 
 namespace Graphics {
-	class Renderer;
 	class Texture;
 }
 
@@ -32,7 +31,7 @@ public:
 	virtual ~GeoSphere();
 
 	virtual void Update() override;
-	virtual void Render(Graphics::Renderer *renderer, const matrix4x4d &modelView, vector3d campos, const float radius, const std::vector<Camera::Shadow> &shadows) override;
+	virtual void Render(const matrix4x4d &modelView, vector3d campos, const float radius, const std::vector<Camera::Shadow> &shadows) override;
 
 	virtual double GetHeight(const vector3d &p) const override final
 	{

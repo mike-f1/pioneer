@@ -11,14 +11,15 @@
 #include "graphics/Material.h"
 #include "graphics/RenderState.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 #include "graphics/VertexArray.h"
 #include "graphics/VertexBuffer.h"
 #include "utils.h"
 
 namespace SceneGraph {
 
-	StaticGeometry::StaticGeometry(Graphics::Renderer *r) :
-		Node(r, NODE_SOLID),
+	StaticGeometry::StaticGeometry() :
+		Node(NODE_SOLID),
 		m_blendMode(Graphics::BLEND_SOLID),
 		m_renderState(nullptr)
 	{
@@ -51,7 +52,7 @@ namespace SceneGraph {
 	{
 		PROFILE_SCOPED()
 		SDL_assert(m_renderState);
-		Graphics::Renderer *r = GetRenderer();
+		Graphics::Renderer *r = RendererLocator::getRenderer();
 		r->SetTransform(trans);
 		for (auto &it : m_meshes)
 			r->DrawBufferIndexed(it.vertexBuffer.Get(), it.indexBuffer.Get(), m_renderState, it.material.Get());
@@ -63,7 +64,7 @@ namespace SceneGraph {
 	{
 		PROFILE_SCOPED()
 		SDL_assert(m_renderState);
-		Graphics::Renderer *r = GetRenderer();
+		Graphics::Renderer *r = RendererLocator::getRenderer();
 
 		const size_t numTrans = trans.size();
 		if (!m_instBuffer.Valid() || (numTrans > m_instBuffer->GetSize())) {
@@ -189,7 +190,7 @@ namespace SceneGraph {
 		PROFILE_SCOPED()
 		using namespace Graphics;
 
-		StaticGeometry *sg = new StaticGeometry(db.loader->GetRenderer());
+		StaticGeometry *sg = new StaticGeometry();
 		Serializer::Reader &rd = *db.rd;
 
 		sg->m_blendMode = static_cast<Graphics::BlendMode>(rd.Int32());
@@ -199,7 +200,7 @@ namespace SceneGraph {
 		Graphics::RenderStateDesc rsd;
 		rsd.blendMode = sg->m_blendMode;
 		rsd.depthWrite = rsd.blendMode == Graphics::BLEND_SOLID;
-		sg->SetRenderState(sg->GetRenderer()->CreateRenderState(rsd));
+		sg->SetRenderState(RendererLocator::getRenderer()->CreateRenderState(rsd));
 
 		const Uint32 numMeshes = rd.Int32();
 		for (Uint32 mesh = 0; mesh < numMeshes; mesh++) {
@@ -235,7 +236,7 @@ namespace SceneGraph {
 			vbDesc.usage = Graphics::BUFFER_USAGE_STATIC;
 			vbDesc.numVertices = db.rd->Int32();
 
-			RefCountedPtr<Graphics::VertexBuffer> vtxBuffer(db.loader->GetRenderer()->CreateVertexBuffer(vbDesc));
+			RefCountedPtr<Graphics::VertexBuffer> vtxBuffer(RendererLocator::getRenderer()->CreateVertexBuffer(vbDesc));
 			const Uint32 posOffset = vtxBuffer->GetDesc().GetOffset(Graphics::ATTRIB_POSITION);
 			const Uint32 nrmOffset = vtxBuffer->GetDesc().GetOffset(Graphics::ATTRIB_NORMAL);
 			const Uint32 uv0Offset = vtxBuffer->GetDesc().GetOffset(Graphics::ATTRIB_UV0);
@@ -264,7 +265,7 @@ namespace SceneGraph {
 
 			//index buffer
 			const Uint32 numIndices = db.rd->Int32();
-			RefCountedPtr<Graphics::IndexBuffer> idxBuffer(db.loader->GetRenderer()->CreateIndexBuffer(numIndices, Graphics::BUFFER_USAGE_STATIC));
+			RefCountedPtr<Graphics::IndexBuffer> idxBuffer(RendererLocator::getRenderer()->CreateIndexBuffer(numIndices, Graphics::BUFFER_USAGE_STATIC));
 			Uint32 *idxPtr = idxBuffer->Map(BUFFER_MAP_WRITE);
 			for (Uint32 i = 0; i < numIndices; i++)
 				idxPtr[i] = db.rd->Int32();
@@ -363,7 +364,7 @@ namespace SceneGraph {
 		vts->Add(ftr, c); //3
 		vts->Add(rtr, c); //5
 
-		Graphics::Renderer *r = GetRenderer();
+		Graphics::Renderer *r = RendererLocator::getRenderer();
 
 		Graphics::RenderStateDesc rsd;
 		rsd.cullMode = Graphics::CULL_NONE;
@@ -377,7 +378,7 @@ namespace SceneGraph {
 		vbd.attrib[1].format = Graphics::ATTRIB_FORMAT_UBYTE4;
 		vbd.numVertices = vts->GetNumVerts();
 		vbd.usage = Graphics::BUFFER_USAGE_STATIC;
-		vb.Reset(m_renderer->CreateVertexBuffer(vbd));
+		vb.Reset(r->CreateVertexBuffer(vbd));
 		vb->Populate(*vts);
 
 		r->SetWireFrameMode(true);

@@ -9,8 +9,8 @@
 
 namespace SceneGraph {
 
-	Group::Group(Graphics::Renderer *r) :
-		Node(r, NODE_SOLID | NODE_TRANSPARENT)
+	Group::Group() :
+		Node(NODE_SOLID | NODE_TRANSPARENT)
 	{
 	}
 
@@ -45,7 +45,7 @@ namespace SceneGraph {
 
 	Group *Group::Load(NodeDatabase &db)
 	{
-		return new Group(db.loader->GetRenderer());
+		return new Group();
 		//children are loaded by Loader
 	}
 

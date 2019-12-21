@@ -8,7 +8,7 @@
 
 class Tombstone : public Cutscene {
 public:
-	Tombstone(Graphics::Renderer *r, int width, int height);
+	Tombstone(int width, int height);
 	virtual void Draw(float time);
 private:
 	float m_total_time;

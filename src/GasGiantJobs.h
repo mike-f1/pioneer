@@ -4,20 +4,24 @@
 #ifndef _GASGIANTJOBS_H
 #define _GASGIANTJOBS_H
 
+#include "build/buildopts.h"
 #include <SDL_stdinc.h>
 
 #include "JobQueue.h"
-#include "graphics/Material.h"
 #include "graphics/opengl/GenGasGiantColourMaterial.h"
-#include "graphics/VertexBuffer.h"
 #include "terrain/Terrain.h"
 #include "vector3.h"
 
 #include <deque>
 
+#ifdef PIONEER_PROFILER
+#include "Profiler.h"
+#endif // PIONEER_PROFILER
+
 namespace Graphics {
-	class Renderer;
+	class Material;
 	class RenderState;
+	class VertexBuffer;
 }
 
 namespace GasGiantJobs {
@@ -89,7 +93,9 @@ namespace GasGiantJobs {
 
 		void addResult(Color *c_, Sint32 uvDims_)
 		{
+			#ifdef PIONEER_PROFILER
 			PROFILE_SCOPED()
+			#endif // PIONEER_PROFILER
 			mData = STextureFaceData(c_, uvDims_);
 		}
 
@@ -140,8 +146,8 @@ namespace GasGiantJobs {
 	// a quad with reversed winding
 	class GenFaceQuad {
 	public:
-		GenFaceQuad(Graphics::Renderer *r, const vector2f &size, Graphics::RenderState *state, const Uint32 GGQuality);
-		virtual void Draw(Graphics::Renderer *r);
+		GenFaceQuad(const vector2f &size, Graphics::RenderState *state, const Uint32 GGQuality);
+		virtual void Draw();
 
 		void SetMaterial(Graphics::Material *mat)
 		{

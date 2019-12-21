@@ -13,7 +13,6 @@ class Geom;
 class Camera;
 
 namespace Graphics {
-	class Renderer;
 	class Light;
 } // namespace Graphics
 
@@ -44,15 +43,15 @@ public:
 
 	void SetModel(const char *modelName);
 
-	void RenderModel(Graphics::Renderer *r, const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform, const bool setLighting = true);
+	void RenderModel(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform, const bool setLighting = true);
 
 	virtual void TimeStepUpdate(const float timeStep) override;
 
 protected:
 	virtual void SaveToJson(Json &jsonObj, Space *space) override;
 
-	void SetLighting(Graphics::Renderer *r, const Camera *camera, std::vector<Graphics::Light> &oldLights, Color &oldAmbient);
-	void ResetLighting(Graphics::Renderer *r, const std::vector<Graphics::Light> &oldLights, const Color &oldAmbient);
+	void SetLighting(const Camera *camera, std::vector<Graphics::Light> &oldLights, Color &oldAmbient);
+	void ResetLighting(const std::vector<Graphics::Light> &oldLights, const Color &oldAmbient);
 
 	Shields *GetShields() const { return m_shields.get(); }
 

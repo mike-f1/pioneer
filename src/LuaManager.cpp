@@ -2,7 +2,9 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "LuaManager.h"
-#include "FileSystem.h"
+
+#include "LuaUtils.h"
+
 #include <cstdlib>
 
 bool instantiated = false;

@@ -28,10 +28,10 @@ namespace Graphics {
 class Game {
 	friend class GameState;
 	// start docked in station referenced by path or nearby to body if it is no station
-	Game(const SystemPath &path, const double startDateTime = 0.0);
+	Game(const SystemPath &path, const double startDateTime, unsigned int cacheRadius);
 
 	// load game
-	Game(const Json &jsonObj);
+	Game(const Json &jsonObj, unsigned int cacheRadius);
 
 	~Game();
 
@@ -107,14 +107,16 @@ public:
 
 	float GetTimeStep() const { return s_timeAccelRates[m_timeAccel] * (1.0f / PHYSICS_HZ); }
 
-	GameLog *log;
+	GameLog &GetGameLog() const { return *m_log.get(); };
 
 	static void EmitPauseState(bool paused);
 
 private:
-	void GenCaches(const SystemPath *here, int cacheRadius,
+	unsigned int m_cacheRadius;
+
+	void GenCaches(const SystemPath *here, unsigned int cacheRadius,
 		StarSystemCache::CacheFilledCallback callback = StarSystemCache::CacheFilledCallback());
-	void UpdateStarSystemCache(const SystemPath *here, int cacheRadius);
+	void UpdateStarSystemCache(const SystemPath *here, unsigned int cacheRadius);
 
 	RefCountedPtr<SectorCache::Slave> m_sectorCache;
 	RefCountedPtr<StarSystemCache::Slave> m_starSystemCache;
@@ -128,6 +130,8 @@ private:
 
 	std::unique_ptr<Player> m_player;
 	std::unique_ptr<LuaTimer> m_luaTimer;
+
+	std::unique_ptr<GameLog> m_log;
 
 	enum class State {
 		NORMAL,

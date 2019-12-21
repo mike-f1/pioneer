@@ -3,18 +3,18 @@
 
 #include "BaseLoader.h"
 #include "FileSystem.h"
+#include "graphics/RendererLocator.h"
 #include "graphics/TextureBuilder.h"
 #include "utils.h"
 
 using namespace SceneGraph;
 
-BaseLoader::BaseLoader(Graphics::Renderer *r) :
-	m_renderer(r),
+BaseLoader::BaseLoader() :
 	m_model(nullptr)
 {
 	Graphics::Texture *sdfTex = Graphics::TextureBuilder("fonts/label3d.dds",
 		Graphics::LINEAR_CLAMP, true, true, true)
-									.GetOrCreateTexture(r, "model");
+									.GetOrCreateTexture(RendererLocator::getRenderer(), "model");
 	m_labelFont.Reset(new Text::DistanceFieldFont("fonts/sdf_definition.txt", sdfTex));
 }
 
@@ -42,7 +42,7 @@ void BaseLoader::ConvertMaterialDefinition(const MaterialDefinition &mdef)
 	matDesc.quality = Graphics::HAS_HEAT_GRADIENT;
 
 	//Create material and set parameters
-	RefCountedPtr<Graphics::Material> mat(m_renderer->CreateMaterial(matDesc));
+	RefCountedPtr<Graphics::Material> mat(RendererLocator::getRenderer()->CreateMaterial(matDesc));
 	mat->diffuse = mdef.diffuse;
 	mat->specular = mdef.specular;
 	mat->emissive = mdef.emissive;
@@ -55,19 +55,19 @@ void BaseLoader::ConvertMaterialDefinition(const MaterialDefinition &mdef)
 		mat->diffuse.a = (float(mdef.opacity) / 100.f) * 255;
 
 	if (!diffTex.empty())
-		mat->texture0 = Graphics::TextureBuilder::Model(diffTex).GetOrCreateTexture(m_renderer, "model");
+		mat->texture0 = Graphics::TextureBuilder::Model(diffTex).GetOrCreateTexture(RendererLocator::getRenderer(), "model");
 	else
-		mat->texture0 = Graphics::TextureBuilder::GetWhiteTexture(m_renderer);
+		mat->texture0 = Graphics::TextureBuilder::GetWhiteTexture(RendererLocator::getRenderer());
 	if (!specTex.empty())
-		mat->texture1 = Graphics::TextureBuilder::Model(specTex).GetOrCreateTexture(m_renderer, "model");
+		mat->texture1 = Graphics::TextureBuilder::Model(specTex).GetOrCreateTexture(RendererLocator::getRenderer(), "model");
 	if (!glowTex.empty())
-		mat->texture2 = Graphics::TextureBuilder::Model(glowTex).GetOrCreateTexture(m_renderer, "model");
+		mat->texture2 = Graphics::TextureBuilder::Model(glowTex).GetOrCreateTexture(RendererLocator::getRenderer(), "model");
 	if (!ambiTex.empty())
-		mat->texture3 = Graphics::TextureBuilder::Model(ambiTex).GetOrCreateTexture(m_renderer, "model");
+		mat->texture3 = Graphics::TextureBuilder::Model(ambiTex).GetOrCreateTexture(RendererLocator::getRenderer(), "model");
 	//texture4 is reserved for pattern
 	//texture5 is reserved for color gradient
 	if (!normTex.empty())
-		mat->texture6 = Graphics::TextureBuilder::Normal(normTex).GetOrCreateTexture(m_renderer, "model");
+		mat->texture6 = Graphics::TextureBuilder::Normal(normTex).GetOrCreateTexture(RendererLocator::getRenderer(), "model");
 
 	m_model->m_materials.push_back(std::make_pair(mdef.name, mat));
 }
@@ -80,8 +80,8 @@ RefCountedPtr<Graphics::Material> BaseLoader::GetDecalMaterial(unsigned int inde
 		Graphics::MaterialDescriptor matDesc;
 		matDesc.textures = 1;
 		matDesc.lighting = true;
-		decMat.Reset(m_renderer->CreateMaterial(matDesc));
-		decMat->texture0 = Graphics::TextureBuilder::GetTransparentTexture(m_renderer);
+		decMat.Reset(RendererLocator::getRenderer()->CreateMaterial(matDesc));
+		decMat->texture0 = Graphics::TextureBuilder::GetTransparentTexture(RendererLocator::getRenderer());
 		decMat->specular = Color::BLACK;
 		decMat->diffuse = Color::WHITE;
 	}
@@ -96,7 +96,7 @@ void BaseLoader::FindPatterns(PatternContainer &output)
 			const std::string &name = info.GetName();
 			if (starts_with(name, "pattern")) {
 				if (ends_with_ci(name, ".png") || ends_with_ci(name, ".dds"))
-					output.push_back(Pattern(name, m_curPath, m_renderer));
+					output.push_back(Pattern(name, m_curPath, RendererLocator::getRenderer()));
 			}
 		}
 	}
@@ -110,7 +110,7 @@ void BaseLoader::SetUpPatterns()
 		m_model->m_patterns.push_back(Pattern());
 		Pattern &dumpat = m_model->m_patterns.back();
 		dumpat.name = "Dummy";
-		dumpat.texture = RefCountedPtr<Graphics::Texture>(Graphics::TextureBuilder::GetWhiteTexture(m_renderer));
+		dumpat.texture = RefCountedPtr<Graphics::Texture>(Graphics::TextureBuilder::GetWhiteTexture(RendererLocator::getRenderer()));
 	}
 
 	//set up some noticeable default colors

@@ -7,7 +7,7 @@
 namespace SceneGraph {
 
 	ModelNode::ModelNode(Model *m) :
-		Node(m->GetRenderer()),
+		Node(),
 		m_model(m)
 	{
 	}

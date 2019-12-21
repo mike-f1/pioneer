@@ -171,19 +171,19 @@ void Player::SetAlertState(Ship::AlertState as)
 	switch (as) {
 	case ALERT_NONE:
 		if (prev != ALERT_NONE)
-			GameLocator::getGame()->log->Add(Lang::ALERT_CANCELLED);
+			GameLocator::getGame()->GetGameLog().Add(Lang::ALERT_CANCELLED);
 		break;
 
 	case ALERT_SHIP_NEARBY:
 		if (prev == ALERT_NONE)
-			GameLocator::getGame()->log->Add(Lang::SHIP_DETECTED_NEARBY);
+			GameLocator::getGame()->GetGameLog().Add(Lang::SHIP_DETECTED_NEARBY);
 		else
-			GameLocator::getGame()->log->Add(Lang::DOWNGRADING_ALERT_STATUS);
+			GameLocator::getGame()->GetGameLog().Add(Lang::DOWNGRADING_ALERT_STATUS);
 		Sound::PlaySfx("OK");
 		break;
 
 	case ALERT_SHIP_FIRING:
-		GameLocator::getGame()->log->Add(Lang::LASER_FIRE_DETECTED);
+		GameLocator::getGame()->GetGameLog().Add(Lang::LASER_FIRE_DETECTED);
 		Sound::PlaySfx("warning", 0.2f, 0.2f, 0);
 		break;
 	}

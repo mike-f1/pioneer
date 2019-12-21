@@ -21,6 +21,7 @@
 #include "StringF.h"
 #include "galaxy/SystemBody.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 #include "scenegraph/Animation.h"
 #include "scenegraph/MatrixTransform.h"
 #include "scenegraph/ModelSkin.h"
@@ -525,7 +526,7 @@ void SpaceStation::DockingUpdate(const double timeStep)
 
 			if (dt.stagePos >= 1.0) {
 				if (dt.ship == GameLocator::getGame()->GetPlayer())
-					GameLocator::getGame()->log->Add(GetLabel(), Lang::DOCKING_CLEARANCE_EXPIRED, GameLog::PRIORITY_IMPORTANT);
+					GameLocator::getGame()->GetGameLog().Add(GetLabel(), Lang::DOCKING_CLEARANCE_EXPIRED, GameLog::PRIORITY_IMPORTANT);
 				dt.ship = 0;
 				dt.stage = 0;
 				m_doorAnimationStep = -0.3; // close door
@@ -721,16 +722,16 @@ bool SpaceStation::IsGroundStation() const
 //            Lighting is done by manipulating global lights or setting uniforms in atmospheric models shader
 static const double SQRMAXCITYDIST = 1e5 * 1e5;
 
-void SpaceStation::Render(Graphics::Renderer *r, const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform)
+void SpaceStation::Render(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform)
 {
 	Body *b = Frame::GetFrame(GetFrame())->GetBody();
 	assert(b);
 
 	if (!b->IsType(Object::PLANET)) {
 		// orbital spaceport -- don't make city turds or change lighting based on atmosphere
-		RenderModel(r, camera, viewCoords, viewTransform);
-		m_navLights->Render(r);
-		r->GetStats().AddToStatCount(Graphics::Stats::STAT_SPACESTATIONS, 1);
+		RenderModel(camera, viewCoords, viewTransform);
+		m_navLights->Render();
+		RendererLocator::getRenderer()->GetStats().AddToStatCount(Graphics::Stats::STAT_SPACESTATIONS, 1);
 	} else {
 		// don't render city if too far away
 		if (viewCoords.LengthSqr() >= SQRMAXCITYDIST) {
@@ -738,19 +739,19 @@ void SpaceStation::Render(Graphics::Renderer *r, const Camera *camera, const vec
 		}
 		std::vector<Graphics::Light> oldLights;
 		Color oldAmbient;
-		SetLighting(r, camera, oldLights, oldAmbient);
+		SetLighting(camera, oldLights, oldAmbient);
 
 		if (!m_adjacentCity) {
 			m_adjacentCity = new CityOnPlanet(static_cast<Planet *>(b), this, m_sbody->GetSeed());
 		}
-		m_adjacentCity->Render(r, camera->GetContext()->GetFrustum(), this, viewCoords, viewTransform);
+		m_adjacentCity->Render(camera->GetContext()->GetFrustum(), this, viewCoords, viewTransform);
 
-		RenderModel(r, camera, viewCoords, viewTransform, false);
-		m_navLights->Render(r);
+		RenderModel(camera, viewCoords, viewTransform, false);
+		m_navLights->Render();
 
-		ResetLighting(r, oldLights, oldAmbient);
+		ResetLighting(oldLights, oldAmbient);
 
-		r->GetStats().AddToStatCount(Graphics::Stats::STAT_GROUNDSTATIONS, 1);
+		RendererLocator::getRenderer()->GetStats().AddToStatCount(Graphics::Stats::STAT_GROUNDSTATIONS, 1);
 	}
 }
 

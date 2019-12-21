@@ -2,9 +2,11 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "TextureFont.h"
+
 #include "FileSystem.h"
 #include "TextSupport.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 #include "graphics/RenderState.h"
 #include "graphics/VertexArray.h"
 #include "graphics/VertexBuffer.h"
@@ -190,7 +192,7 @@ namespace Text {
 	{
 		if (vb && vb->GetSize() > 0) {
 			m_mat->diffuse = color;
-			m_renderer->DrawBuffer(vb, m_renderState, m_mat.get());
+			RendererLocator::getRenderer()->DrawBuffer(vb, m_renderState, m_mat.get());
 		}
 	}
 
@@ -321,7 +323,7 @@ namespace Text {
 			vbd.attrib[2].format = Graphics::ATTRIB_FORMAT_FLOAT2;
 			vbd.numVertices = va.GetNumVerts();
 			vbd.usage = bIsStatic ? Graphics::BUFFER_USAGE_STATIC : Graphics::BUFFER_USAGE_DYNAMIC; // we could be updating this per-frame
-			Graphics::VertexBuffer *vbuffer = m_renderer->CreateVertexBuffer(vbd);
+			Graphics::VertexBuffer *vbuffer = RendererLocator::getRenderer()->CreateVertexBuffer(vbd);
 			vbuffer->Populate(va);
 
 			return vbuffer;
@@ -576,9 +578,8 @@ namespace Text {
 		return glyph;
 	}
 
-	TextureFont::TextureFont(const FontConfig &config, Graphics::Renderer *renderer, float scale) :
+	TextureFont::TextureFont(const FontConfig &config, float scale) :
 		m_config(config),
-		m_renderer(renderer),
 		m_scale(scale),
 		m_ftLib(nullptr),
 		m_stroker(nullptr),
@@ -587,7 +588,7 @@ namespace Text {
 		m_atlasVIncrement(0),
 		m_lfLastCacheCleanTime(0.0)
 	{
-		renderer->CheckRenderErrors(__FUNCTION__, __LINE__);
+		RendererLocator::getRenderer()->CheckRenderErrors(__FUNCTION__, __LINE__);
 
 		FT_Error err; // used to store freetype error return codes
 
@@ -607,25 +608,25 @@ namespace Text {
 			FT_Stroker_Set(m_stroker, 1 * 64, FT_STROKER_LINECAP_ROUND, FT_STROKER_LINEJOIN_ROUND, 0);
 		}
 
-		renderer->CheckRenderErrors(__FUNCTION__, __LINE__);
+		RendererLocator::getRenderer()->CheckRenderErrors(__FUNCTION__, __LINE__);
 
 		m_texFormat = m_config.IsOutline() ? Graphics::TEXTURE_LUMINANCE_ALPHA_88 : Graphics::TEXTURE_INTENSITY_8;
 		m_bpp = m_config.IsOutline() ? 2 : 1;
 
-		renderer->CheckRenderErrors(__FUNCTION__, __LINE__);
+		RendererLocator::getRenderer()->CheckRenderErrors(__FUNCTION__, __LINE__);
 
 		Graphics::RenderStateDesc rsd;
 		rsd.blendMode = Graphics::BLEND_ALPHA_PREMULT;
 		rsd.depthWrite = false;
-		m_renderState = m_renderer->CreateRenderState(rsd);
+		m_renderState = RendererLocator::getRenderer()->CreateRenderState(rsd);
 
 		Graphics::MaterialDescriptor desc;
 		desc.effect = Graphics::EFFECT_UI;
 		desc.vertexColors = true; //to allow per-character colors
 		desc.textures = 1;
-		m_mat.reset(m_renderer->CreateMaterial(desc));
+		m_mat.reset(RendererLocator::getRenderer()->CreateMaterial(desc));
 		Graphics::TextureDescriptor textureDescriptor(m_texFormat, vector2f(ATLAS_SIZE), Graphics::NEAREST_CLAMP, false, false, false, 0, Graphics::TEXTURE_2D);
-		m_texture.Reset(m_renderer->CreateTexture(textureDescriptor));
+		m_texture.Reset(RendererLocator::getRenderer()->CreateTexture(textureDescriptor));
 		{
 			const size_t sz = m_bpp * ATLAS_SIZE * ATLAS_SIZE;
 			char *buf = static_cast<char *>(malloc(sz));

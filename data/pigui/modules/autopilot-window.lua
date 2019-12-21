@@ -9,6 +9,7 @@ local lc = Lang.GetResource("core");
 local lui = Lang.GetResource("ui-core");
 local utils = import("utils")
 local Event = import("Event")
+local Format = import("Format")
 
 local player = nil
 local colors = ui.theme.colors
@@ -121,8 +122,8 @@ local function button_flight_control()
 	elseif flightcontrolstate == "CONTROL_FIXSPEED" then
 		local speed = player:GetSetSpeed()
 		if speed then
-			local distance, unit = ui.Format.Speed(speed)
-			tooltip = tooltip .. " " .. distance .. unit
+			local distance = Format.Speed(speed)
+			tooltip = tooltip .. " " .. distance
 		end
   end
 	if mainMenuButton(icon, false, tooltip) or (flightstate == "FLYING" and ui.noModifierHeld() and ui.isKeyReleased(ui.keys.f5)) then

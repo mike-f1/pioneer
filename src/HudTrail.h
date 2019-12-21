@@ -13,7 +13,6 @@
 // trail drawn after an object to track motion
 
 namespace Graphics {
-	class Renderer;
 	class RenderState;
 } // namespace Graphics
 
@@ -24,7 +23,7 @@ class HudTrail {
 public:
 	HudTrail(Body *b, const Color &);
 	void Update(float time);
-	void Render(Graphics::Renderer *r);
+	void Render();
 	void Reset(const FrameId newFrame);
 
 	void SetColor(const Color &c) { m_color = c; }

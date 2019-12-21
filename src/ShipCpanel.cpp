@@ -12,10 +12,10 @@
 #include "gui/GuiScreen.h"
 #include "gui/GuiImage.h"
 
-ShipCpanel::ShipCpanel(Graphics::Renderer *r) :
+ShipCpanel::ShipCpanel() :
 	Gui::Fixed(float(Gui::Screen::GetWidth()), 80)
 {
-	m_radar = new RadarWidget(r);
+	m_radar = new RadarWidget();
 
 	InitObject();
 
@@ -23,13 +23,13 @@ ShipCpanel::ShipCpanel(Graphics::Renderer *r) :
 	m_radar->ShowAll();
 }
 
-ShipCpanel::ShipCpanel(const Json &jsonObj, Graphics::Renderer *r) :
+ShipCpanel::ShipCpanel(const Json &jsonObj) :
 	Gui::Fixed(float(Gui::Screen::GetWidth()), 80)
 {
 	if (jsonObj["ship_c_panel"].is_null()) throw SavedGameCorruptException();
 	Json shipCPanelObj = jsonObj["ship_c_panel"];
 
-	m_radar = new RadarWidget(r, shipCPanelObj);
+	m_radar = new RadarWidget(shipCPanelObj);
 
 	InitObject();
 

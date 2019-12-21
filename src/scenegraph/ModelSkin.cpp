@@ -8,6 +8,7 @@
 #include "Serializer.h"
 #include "StringF.h"
 #include "graphics/TextureBuilder.h"
+#include "graphics/RendererLocator.h"
 
 #include "RandomColor.h"
 
@@ -27,7 +28,7 @@ namespace SceneGraph {
 			if (m_decals[i].empty())
 				model->ClearDecal(i);
 			else
-				model->SetDecalTexture(Graphics::TextureBuilder::Decal(stringf("textures/decals/%0.dds", m_decals[i])).GetOrCreateTexture(model->GetRenderer(), "decal"), i);
+				model->SetDecalTexture(Graphics::TextureBuilder::Decal(stringf("textures/decals/%0.dds", m_decals[i])).GetOrCreateTexture(RendererLocator::getRenderer(), "decal"), i);
 		}
 		model->SetLabel(m_label);
 	}

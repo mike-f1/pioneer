@@ -4,6 +4,7 @@
 #include "FontCache.h"
 #include "FileSystem.h"
 #include "Lang.h"
+#include "graphics/RendererLocator.h"
 #include "gui/GuiScreen.h"
 #include "text/TextureFont.h"
 
@@ -17,7 +18,7 @@ RefCountedPtr<Text::TextureFont> FontCache::GetTextureFont(const std::string &na
 	Gui::Screen::GetCoords2Pixels(scale);
 
 	const Text::FontConfig config(name, scale[0], scale[1]);
-	RefCountedPtr<Text::TextureFont> font(new Text::TextureFont(config, Gui::Screen::GetRenderer()));
+	RefCountedPtr<Text::TextureFont> font(new Text::TextureFont(config));
 	m_textureFonts.insert(std::pair<std::string, RefCountedPtr<Text::TextureFont>>(name, font));
 
 	return font;

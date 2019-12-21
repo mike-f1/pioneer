@@ -9,8 +9,8 @@
 #include "graphics/Renderer.h"
 namespace SceneGraph {
 
-	MatrixTransform::MatrixTransform(Graphics::Renderer *r, const matrix4x4f &m) :
-		Group(r),
+	MatrixTransform::MatrixTransform(const matrix4x4f &m) :
+		Group(),
 		m_transform(m)
 	{
 	}
@@ -69,7 +69,7 @@ namespace SceneGraph {
 		matrix4x4f matrix;
 		for (Uint32 i = 0; i < 16; i++)
 			matrix[i] = db.rd->Float();
-		MatrixTransform *mt = new MatrixTransform(db.loader->GetRenderer(), matrix);
+		MatrixTransform *mt = new MatrixTransform(matrix);
 		return mt;
 	}
 

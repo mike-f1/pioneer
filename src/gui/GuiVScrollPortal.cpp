@@ -4,6 +4,7 @@
 #include "Gui.h"
 
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 #include "vector2.h"
 
 static const float MINIMUM_HEIGHT = 100.0f;
@@ -127,7 +128,7 @@ namespace Gui {
 		float scale[2];
 		Screen::GetCoords2Pixels(scale);
 
-		Graphics::Renderer *r = Gui::Screen::GetRenderer();
+		Graphics::Renderer *r = RendererLocator::getRenderer();
 		Graphics::Renderer::MatrixTicket ticket(r, Graphics::MatrixMode::MODELVIEW);
 
 		// scroll to whole pixel locations whatever the resolution

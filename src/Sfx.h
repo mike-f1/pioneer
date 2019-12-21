@@ -14,7 +14,6 @@ class Body;
 class Frame;
 
 namespace Graphics {
-	class Renderer;
 	class RenderState;
 }
 
@@ -56,12 +55,12 @@ public:
 	static void AddExplosion(Body *);
 	static void AddThrustSmoke(const Body *b, float speed, const vector3d &adjustpos);
 	static void TimeStepAll(const float timeStep, FrameId f);
-	static void RenderAll(Graphics::Renderer *r, FrameId f, const FrameId camFrame);
+	static void RenderAll(FrameId f, const FrameId camFrame);
 	static void ToJson(Json &jsonObj, const FrameId f);
 	static void FromJson(const Json &jsonObj, FrameId f);
 
 	//create shared models
-	static void Init(Graphics::Renderer *r);
+	static void Init();
 	static void Uninit();
 	static std::unique_ptr<Graphics::Material> damageParticle;
 	static std::unique_ptr<Graphics::Material> ecmParticle;

@@ -5,6 +5,7 @@
 
 #include "FileSystem.h"
 #include "JsonUtils.h"
+#include "LuaManager.h"
 #include "LuaObject.h"
 #include "LuaUtils.h"
 

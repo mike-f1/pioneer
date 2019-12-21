@@ -15,9 +15,11 @@
 #include "graphics/Graphics.h"
 #include "graphics/Material.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 #include "graphics/RenderState.h"
 #include "graphics/Texture.h"
 #include "graphics/VertexArray.h"
+#include "graphics/VertexBuffer.h"
 #include "graphics/opengl/GenGasGiantColourMaterial.h"
 #include "perlin.h"
 #include "vcacheopt/vcacheopt.h"
@@ -176,7 +178,7 @@ public:
 		assert(0 == res);
 
 		//create buffer & copy
-		indexBuffer.Reset(Pi::renderer->CreateIndexBuffer(pl_short.size(), Graphics::BUFFER_USAGE_STATIC));
+		indexBuffer.Reset(RendererLocator::getRenderer()->CreateIndexBuffer(pl_short.size(), Graphics::BUFFER_USAGE_STATIC));
 		Uint32 *idxPtr = indexBuffer->Map(Graphics::BUFFER_MAP_WRITE);
 		for (Uint32 j = 0; j < pl_short.size(); j++) {
 			idxPtr[j] = pl_short[j];
@@ -235,7 +237,7 @@ public:
 		vbd.attrib[1].format = Graphics::ATTRIB_FORMAT_FLOAT3;
 		vbd.numVertices = ctx->NUMVERTICES();
 		vbd.usage = Graphics::BUFFER_USAGE_STATIC;
-		m_vertexBuffer.reset(Pi::renderer->CreateVertexBuffer(vbd));
+		m_vertexBuffer.reset(RendererLocator::getRenderer()->CreateVertexBuffer(vbd));
 
 		GasPatchContext::VBOVertex *vtxPtr = m_vertexBuffer->Map<GasPatchContext::VBOVertex>(Graphics::BUFFER_MAP_WRITE);
 		assert(m_vertexBuffer->GetDesc().stride == sizeof(GasPatchContext::VBOVertex));
@@ -441,7 +443,7 @@ bool GasGiant::AddTextureFaceResult(GasGiantJobs::STextureFaceResult *res)
 			Graphics::TEXTURE_RGBA_8888,
 			dataSize, texSize, Graphics::LINEAR_CLAMP,
 			true, false, false, 0, Graphics::TEXTURE_CUBE_MAP);
-		m_surfaceTexture.Reset(Pi::renderer->CreateTexture(texDesc));
+		m_surfaceTexture.Reset(RendererLocator::getRenderer()->CreateTexture(texDesc));
 
 		// update with buffer from above
 		Graphics::TextureCubeData tcd;
@@ -544,7 +546,7 @@ void GasGiant::GenerateTexture()
 			Graphics::TEXTURE_RGBA_8888,
 			dataSize, texSize, Graphics::LINEAR_CLAMP,
 			false, false, false, 0, Graphics::TEXTURE_CUBE_MAP);
-		m_surfaceTextureSmall.Reset(Pi::renderer->CreateTexture(texDesc));
+		m_surfaceTextureSmall.Reset(RendererLocator::getRenderer()->CreateTexture(texDesc));
 
 		const Terrain *pTerrain = GetTerrain();
 		const double fracStep = 1.0 / double(s_texture_size_small - 1);
@@ -603,7 +605,7 @@ void GasGiant::GenerateTexture()
 			Graphics::TEXTURE_RGBA_8888,
 			dataSize, texSize, Graphics::LINEAR_CLAMP,
 			true, false, false, 0, Graphics::TEXTURE_CUBE_MAP);
-		m_builtTexture.Reset(Pi::renderer->CreateTexture(texDesc));
+		m_builtTexture.Reset(RendererLocator::getRenderer()->CreateTexture(texDesc));
 
 		const std::string ColorFracName = GetTerrain()->GetColorFractalName();
 		Output("Color Fractal name: %s\n", ColorFracName.c_str());
@@ -631,7 +633,7 @@ void GasGiant::GenerateTexture()
 		const std::string parentname = GetSystemBody()->GetParent()->GetName();
 		const float hueShift = (parentname == "Sol") ? 0.0f : float(((rng.Double() * 2.0) - 1.0) * 0.9);
 
-		GasGiantJobs::GenFaceQuad *pQuad = new GasGiantJobs::GenFaceQuad(Pi::renderer, vector2f(s_texture_size_gpu[m_detail], s_texture_size_gpu[m_detail]), s_quadRenderState, GasGiantType);
+		GasGiantJobs::GenFaceQuad *pQuad = new GasGiantJobs::GenFaceQuad(vector2f(s_texture_size_gpu[m_detail], s_texture_size_gpu[m_detail]), s_quadRenderState, GasGiantType);
 
 		GasGiantJobs::SGPUGenRequest *pGPUReq = new GasGiantJobs::SGPUGenRequest(GetSystemBodyPath(), s_texture_size_gpu[m_detail], GetTerrain(), GetSystemBodyRadius(), hueShift, pQuad, m_builtTexture.Get());
 		m_gpuJob = Pi::GetSyncJobQueue()->Queue(new GasGiantJobs::SingleGPUGenJob(pGPUReq));
@@ -656,7 +658,7 @@ void GasGiant::Update()
 	}
 }
 
-void GasGiant::Render(Graphics::Renderer *renderer, const matrix4x4d &modelView, vector3d campos, const float radius, const std::vector<Camera::Shadow> &shadows)
+void GasGiant::Render(const matrix4x4d &modelView, vector3d campos, const float radius, const std::vector<Camera::Shadow> &shadows)
 {
 	PROFILE_SCOPED()
 	if (!m_surfaceTexture.Valid()) {
@@ -672,11 +674,11 @@ void GasGiant::Render(Graphics::Renderer *renderer, const matrix4x4d &modelView,
 
 	matrix4x4d trans = modelView;
 	trans.Translate(-campos.x, -campos.y, -campos.z);
-	renderer->SetTransform(trans); //need to set this for the following line to work
+	RendererLocator::getRenderer()->SetTransform(trans); //need to set this for the following line to work
 	matrix4x4d modv;
 	matrix4x4d proj;
-	matrix4x4ftod(renderer->GetCurrentModelView(), modv);
-	matrix4x4ftod(renderer->GetCurrentProjection(), proj);
+	matrix4x4ftod(RendererLocator::getRenderer()->GetCurrentModelView(), modv);
+	matrix4x4ftod(RendererLocator::getRenderer()->GetCurrentProjection(), proj);
 	Graphics::Frustum frustum(modv, proj);
 
 	// no frustum test of entire gasSphere, since Space::Render does this
@@ -703,14 +705,14 @@ void GasGiant::Render(Graphics::Renderer *renderer, const matrix4x4d &modelView,
 			// make atmosphere sphere slightly bigger than required so
 			// that the edges of the pixel shader atmosphere jizz doesn't
 			// show ugly polygonal angles
-			DrawAtmosphereSurface(renderer, trans, campos, m_materialParameters.atmosphere.atmosRadius * 1.01, m_atmosRenderState, m_atmosphereMaterial);
+			DrawAtmosphereSurface(trans, campos, m_materialParameters.atmosphere.atmosRadius * 1.01, m_atmosRenderState, m_atmosphereMaterial);
 		}
 	}
 
 	Color ambient;
 
 	// save old global ambient
-	const Color oldAmbient = renderer->GetAmbientColor();
+	const Color oldAmbient = RendererLocator::getRenderer()->GetAmbientColor();
 
 	{
 		// give planet some ambient lighting if the viewer is close to it
@@ -723,32 +725,32 @@ void GasGiant::Render(Graphics::Renderer *renderer, const matrix4x4d &modelView,
 		ambient.a = 255;
 	}
 
-	renderer->SetAmbientColor(ambient);
+	RendererLocator::getRenderer()->SetAmbientColor(ambient);
 
-	renderer->SetTransform(modelView);
+	RendererLocator::getRenderer()->SetTransform(modelView);
 
 	for (int i = 0; i < NUM_PATCHES; i++) {
-		m_patches[i]->Render(renderer, campos, modelView, frustum);
+		m_patches[i]->Render(RendererLocator::getRenderer(), campos, modelView, frustum);
 	}
 
 	m_surfaceMaterial->Unapply();
 
-	renderer->SetAmbientColor(oldAmbient);
+	RendererLocator::getRenderer()->SetAmbientColor(oldAmbient);
 
-	renderer->GetStats().AddToStatCount(Graphics::Stats::STAT_GASGIANTS, 1);
+	RendererLocator::getRenderer()->GetStats().AddToStatCount(Graphics::Stats::STAT_GASGIANTS, 1);
 }
 
 void GasGiant::SetUpMaterials()
 {
 	//solid
 	Graphics::RenderStateDesc rsd;
-	m_surfRenderState = Pi::renderer->CreateRenderState(rsd);
+	m_surfRenderState = RendererLocator::getRenderer()->CreateRenderState(rsd);
 
 	//blended
 	rsd.blendMode = Graphics::BLEND_ALPHA_ONE;
 	rsd.cullMode = Graphics::CULL_NONE;
 	rsd.depthWrite = false;
-	m_atmosRenderState = Pi::renderer->CreateRenderState(rsd);
+	m_atmosRenderState = RendererLocator::getRenderer()->CreateRenderState(rsd);
 
 	// Request material for this planet, with atmosphere.
 	// Separate materials for surface and sky.
@@ -767,7 +769,7 @@ void GasGiant::SetUpMaterials()
 	surfDesc.textures = 1;
 
 	assert(m_surfaceTextureSmall.Valid() || m_surfaceTexture.Valid());
-	m_surfaceMaterial.Reset(Pi::renderer->CreateMaterial(surfDesc));
+	m_surfaceMaterial.Reset(RendererLocator::getRenderer()->CreateMaterial(surfDesc));
 	m_surfaceMaterial->texture0 = m_surfaceTexture.Valid() ? m_surfaceTexture.Get() : m_surfaceTextureSmall.Get();
 
 	{
@@ -775,7 +777,7 @@ void GasGiant::SetUpMaterials()
 		skyDesc.effect = Graphics::EFFECT_GEOSPHERE_SKY;
 		skyDesc.lighting = true;
 		skyDesc.quality |= Graphics::HAS_ECLIPSES;
-		m_atmosphereMaterial.Reset(Pi::renderer->CreateMaterial(skyDesc));
+		m_atmosphereMaterial.Reset(RendererLocator::getRenderer()->CreateMaterial(skyDesc));
 	}
 }
 
@@ -845,7 +847,7 @@ void GasGiant::CreateRenderTarget(const Uint16 width, const Uint16 height)
 	rsd.depthTest = false;
 	rsd.depthWrite = false;
 	rsd.blendMode = Graphics::BLEND_ALPHA;
-	s_quadRenderState = Pi::renderer->CreateRenderState(rsd);
+	s_quadRenderState = RendererLocator::getRenderer()->CreateRenderState(rsd);
 
 	// Complete the RT description so we can request a buffer.
 	// NB: we don't want it to create use a texture because we share it with the textured quad created above.
@@ -855,7 +857,7 @@ void GasGiant::CreateRenderTarget(const Uint16 width, const Uint16 height)
 		Graphics::TEXTURE_NONE, // don't create a texture
 		Graphics::TEXTURE_NONE, // don't create a depth buffer
 		false);
-	s_renderTarget = Pi::renderer->CreateRenderTarget(rtDesc);
+	s_renderTarget = RendererLocator::getRenderer()->CreateRenderTarget(rtDesc);
 }
 
 //static
@@ -867,11 +869,11 @@ void GasGiant::SetRenderTargetCubemap(const Uint32 face, Graphics::Texture *pTex
 //static
 void GasGiant::BeginRenderTarget()
 {
-	Pi::renderer->SetRenderTarget(s_renderTarget);
+	RendererLocator::getRenderer()->SetRenderTarget(s_renderTarget);
 }
 
 //static
 void GasGiant::EndRenderTarget()
 {
-	Pi::renderer->SetRenderTarget(nullptr);
+	RendererLocator::getRenderer()->SetRenderTarget(nullptr);
 }

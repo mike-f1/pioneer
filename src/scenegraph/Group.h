@@ -11,7 +11,7 @@ namespace SceneGraph {
 
 	class Group : public Node {
 	public:
-		Group(Graphics::Renderer *r);
+		Group();
 		Group(const Group &, NodeCopyCache *cache = 0);
 		virtual Node *Clone(NodeCopyCache *cache = 0) override;
 		virtual const char *GetTypeName() const override { return "Group"; }

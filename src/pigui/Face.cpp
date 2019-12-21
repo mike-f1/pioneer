@@ -5,8 +5,8 @@
 
 #include "FileSystem.h"
 #include "SDLWrappers.h"
-#include "Pi.h"
 #include "graphics/Drawables.h"
+#include "graphics/RendererLocator.h"
 #include "graphics/Texture.h"
 #include "graphics/TextureBuilder.h"
 
@@ -26,12 +26,12 @@ namespace PiGUI {
 		FaceParts::PickFaceParts(face, m_seed);
 		FaceParts::BuildFaceImage(faceim.Get(), face);
 
-		m_texture.Reset(Graphics::TextureBuilder(faceim, Graphics::LINEAR_CLAMP, true, true).GetOrCreateTexture(Pi::renderer, std::string("face")));
+		m_texture.Reset(Graphics::TextureBuilder(faceim, Graphics::LINEAR_CLAMP, true, true).GetOrCreateTexture(RendererLocator::getRenderer(), std::string("face")));
 
 		if (!s_material) {
 			Graphics::MaterialDescriptor matDesc;
 			matDesc.textures = 1;
-			s_material.Reset(Pi::renderer->CreateMaterial(matDesc));
+			s_material.Reset(RendererLocator::getRenderer()->CreateMaterial(matDesc));
 		}
 	}
 

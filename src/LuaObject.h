@@ -6,6 +6,7 @@
 
 #include "DeleteEmitter.h"
 #include "Lua.h"
+#include "LuaManager.h"
 #include "LuaPushPull.h"
 #include "LuaRef.h"
 #include "LuaUtils.h"

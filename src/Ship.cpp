@@ -20,7 +20,7 @@
 #include "LuaUtils.h"
 #include "Missile.h"
 #include "NavLights.h"
-#include "Pi.h" // <-- Only for 1 occurence of Pi::renderer
+#include "Pi.h" // <-- Only for 2 occurence of Pi::GetInGameViews :P
 #include "Planet.h"
 #include "Player.h" // <-- Here only for 1 occurence of "GameLocator::getGame()->GetPlayer()" in Ship::Explode
 #include "Random.h"
@@ -35,6 +35,7 @@
 #include "WorldView.h"
 #include "collider/CollisionContact.h"
 #include "galaxy/StarSystem.h"
+#include "graphics/RendererLocator.h"
 #include "graphics/TextureBuilder.h"
 #include "scenegraph/Animation.h"
 #include "scenegraph/MatrixTransform.h"
@@ -343,7 +344,7 @@ void Ship::InitMaterials()
 	const Uint32 numMats = pModel->GetNumMaterials();
 	for (Uint32 m = 0; m < numMats; m++) {
 		RefCountedPtr<Graphics::Material> mat = pModel->GetMaterialByIndex(m);
-		mat->heatGradient = Graphics::TextureBuilder::Decal("textures/heat_gradient.dds").GetOrCreateTexture(Pi::renderer, "model");
+		mat->heatGradient = Graphics::TextureBuilder::Decal("textures/heat_gradient.dds").GetOrCreateTexture(RendererLocator::getRenderer(), "model");
 		mat->specialParameter0 = &s_heatGradientParams;
 	}
 	s_heatGradientParams.heatingAmount = 0.0f;
@@ -540,13 +541,13 @@ bool Ship::OnCollision(Object *b, Uint32 flags, double relVel)
 		if (LuaObject<Ship>::CallMethod<int>(this, "AddEquip", item) > 0) { // try to add it to the ship cargo.
 			GameLocator::getGame()->GetSpace()->KillBody(dynamic_cast<Body *>(b));
 			if (this->IsType(Object::PLAYER))
-				GameLocator::getGame()->log->Add(stringf(Lang::CARGO_SCOOP_ACTIVE_1_TONNE_X_COLLECTED, formatarg("item", ScopedTable(item).CallMethod<std::string>("GetName"))));
+				GameLocator::getGame()->GetGameLog().Add(stringf(Lang::CARGO_SCOOP_ACTIVE_1_TONNE_X_COLLECTED, formatarg("item", ScopedTable(item).CallMethod<std::string>("GetName"))));
 			// XXX SfxManager::Add(this, TYPE_SCOOP);
 			UpdateEquipStats();
 			return true;
 		}
 		if (this->IsType(Object::PLAYER))
-			GameLocator::getGame()->log->Add(Lang::CARGO_SCOOP_ATTEMPTED);
+			GameLocator::getGame()->GetGameLog().Add(Lang::CARGO_SCOOP_ATTEMPTED);
 	}
 
 	if (b->IsType(Object::PLANET)) {
@@ -1216,7 +1217,7 @@ void Ship::StaticUpdate(const float timeStep)
 						LuaObject<Ship>::CallMethod(this, "AddEquip", hydrogen);
 						UpdateEquipStats();
 						if (this->IsType(Object::PLAYER)) {
-							GameLocator::getGame()->log->Add(stringf(Lang::FUEL_SCOOP_ACTIVE_N_TONNES_H_COLLECTED,
+							GameLocator::getGame()->GetGameLog().Add(stringf(Lang::FUEL_SCOOP_ACTIVE_N_TONNES_H_COLLECTED,
 								formatarg("quantity", LuaObject<Ship>::CallMethod<int>(this, "CountEquip", hydrogen))));
 						}
 						lua_pop(l, 3);
@@ -1243,7 +1244,7 @@ void Ship::StaticUpdate(const float timeStep)
 			if (LuaObject<Ship>::CallMethod<int>(this, "RemoveEquip", cargo.Sub(t))) {
 				LuaObject<Ship>::CallMethod<int>(this, "AddEquip", cargo.Sub("fertilizer"));
 				if (this->IsType(Object::PLAYER)) {
-					GameLocator::getGame()->log->Add(Lang::CARGO_BAY_LIFE_SUPPORT_LOST);
+					GameLocator::getGame()->GetGameLog().Add(Lang::CARGO_BAY_LIFE_SUPPORT_LOST);
 				}
 				lua_pop(l, 4);
 			} else
@@ -1382,11 +1383,11 @@ bool Ship::SetWheelState(bool down)
 	return true;
 }
 
-void Ship::Render(Graphics::Renderer *renderer, const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform)
+void Ship::Render(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform)
 {
 	if (IsDead()) return;
 
-	GetPropulsion()->Render(renderer, camera, viewCoords, viewTransform);
+	GetPropulsion()->Render(camera, viewCoords, viewTransform);
 
 	matrix3x3f mt;
 	matrix3x3dtof(viewTransform.Inverse().GetOrient(), mt);
@@ -1400,9 +1401,9 @@ void Ship::Render(Graphics::Renderer *renderer, const Camera *camera, const vect
 	GetShields()->Update(m_shieldCooldown, 0.01f * GetPercentShields());
 
 	//strncpy(params.pText[0], GetLabel().c_str(), sizeof(params.pText));
-	RenderModel(renderer, camera, viewCoords, viewTransform);
-	m_navLights->Render(renderer);
-	renderer->GetStats().AddToStatCount(Graphics::Stats::STAT_SHIPS, 1);
+	RenderModel(camera, viewCoords, viewTransform);
+	m_navLights->Render();
+	RendererLocator::getRenderer()->GetStats().AddToStatCount(Graphics::Stats::STAT_SHIPS, 1);
 
 	if (m_ecmRecharge > 0.0f) {
 		// ECM effect: a cloud of particles for a sparkly effect
@@ -1429,11 +1430,12 @@ void Ship::Render(Graphics::Renderer *renderer, const Camera *camera, const vect
 		t[14] = viewCoords.z;
 		t[15] = 1.0f;
 
-		renderer->SetTransform(t);
-		renderer->DrawPointSprites(100, v, SfxManager::additiveAlphaState, SfxManager::ecmParticle.get(), 50.f);
+		RendererLocator::getRenderer()->SetTransform(t);
+		RendererLocator::getRenderer()->DrawPointSprites(100, v, SfxManager::additiveAlphaState, SfxManager::ecmParticle.get(), 50.f);
 	}
 }
 
+/// XXX Why there's need for such function: it only copies data receiving a (non const) pointer...
 bool Ship::SpawnCargo(CargoBody *c_body) const
 {
 	if (m_flightState != FLYING) return false;

@@ -6,7 +6,6 @@
 #include "Game.h"
 #include "GameLocator.h"
 #include "LabelOverlay.h"
-#include "Pi.h"
 #include "galaxy/Galaxy.h"
 #include "matrix4x4.h"
 

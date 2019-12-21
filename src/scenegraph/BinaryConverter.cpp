@@ -67,8 +67,8 @@ public:
 	NodeDatabase db;
 };
 
-BinaryConverter::BinaryConverter(Graphics::Renderer *r) :
-	BaseLoader(r),
+BinaryConverter::BinaryConverter() :
+	BaseLoader(),
 	m_patternsUsed(false)
 {
 	//register core loaders
@@ -251,7 +251,7 @@ Model *BinaryConverter::CreateModel(const std::string &filename, Serializer::Rea
 
 	const std::string modelName = rd.String();
 
-	m_model = new Model(m_renderer, modelName);
+	m_model = new Model(modelName);
 
 	m_patternsUsed = false;
 	LoadMaterials(rd);
@@ -452,7 +452,7 @@ Node *BinaryConverter::LoadNode(Serializer::Reader &rd)
 	auto loadFuncIt = m_loaders.find(ntype);
 	if (loadFuncIt == m_loaders.end()) {
 		Output("No loader for: %s\n", ntype.c_str());
-		return new Group(m_renderer);
+		return new Group();
 	}
 
 	node = loadFuncIt->second(db);
@@ -481,7 +481,7 @@ void BinaryConverter::LoadChildren(Serializer::Reader &rd, Group *parent)
 Label3D *BinaryConverter::LoadLabel3D(NodeDatabase &db)
 {
 	PROFILE_SCOPED()
-	Label3D *lbl = new Label3D(db.loader->GetRenderer(), db.loader->GetLabel3DFont());
+	Label3D *lbl = new Label3D(db.loader->GetLabel3DFont());
 	lbl->SetText("NCC-1982");
 	return lbl;
 }

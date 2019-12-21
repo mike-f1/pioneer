@@ -347,18 +347,6 @@ local splitName = function (name)
 	return names
 end
 
-local decToDegMinSec = function (coord_orig)
-	-- Converts geographic coordinates from decimal to degree/minutes/seconds format
-	-- and returns a string.
-	local coord = math.abs(coord_orig)
-	local degrees = math.floor(coord)
-	local minutes = math.floor(60*(coord - degrees))
-	local seconds = math.floor(3600 * ((coord - degrees) - minutes / 60))
-	if coord_orig < 0 then degrees = degrees * -1 end
-	local str = string.format("%i° %i' %i\"", degrees, minutes, seconds)
-	return str
-end
-
 local getAircontrolChar = function (station)
 	-- Get the correct aircontrol character for the supplied station. If it does not exist
 	-- create one and store it.
@@ -852,8 +840,8 @@ local onChat = function (form, ref, option)
 			                                   sectory      = ad.system_target.sectorY,
 			                                   sectorz      = ad.system_target.sectorZ,
 			                                   dist         = dist,
-			                                   lat          = decToDegMinSec(math.rad2deg(ad.lat)),
-			                                   long         = decToDegMinSec(math.rad2deg(ad.long)),
+			                                   lat          = Format.Latitude(ad.lat),
+			                                   long         = Format.Longitude(ad.long),
 			                                   planet       = ad.planet_target:GetSystemBody().name
 		})
 		form:SetMessage(locationtext)
@@ -2168,8 +2156,8 @@ local onClick = function (mission)
 		location_for_text = mission.planet_target:GetSystemBody().name.."\n"..l.ORBIT
 	else
 		location_for_text = mission.planet_target:GetSystemBody().name.."\n"..
-			l.LAT.." "..decToDegMinSec(math.rad2deg(mission.lat)).." / "..
-			l.LON.." "..decToDegMinSec(math.rad2deg(mission.long))
+			l.LAT.." "..Format.Latitude(mission.lat).." / "..
+			l.LON.." "..Format.Longitude(mission.long)
 	end
 
 	local payment_address, payment_system, navbutton

@@ -4,6 +4,7 @@
 #include "Gui.h"
 
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 
 namespace Gui {
 
@@ -64,7 +65,7 @@ namespace Gui {
 		const int age = SDL_GetTicks() - m_createdTime;
 		const float alpha = std::min(age / FADE_TIME_MS, 0.75f);
 
-		Graphics::Renderer *r = Gui::Screen::GetRenderer();
+		Graphics::Renderer *r = RendererLocator::getRenderer();
 
 		GetSize(size);
 		const Color color(Color4f(0.2f, 0.2f, 0.6f, alpha));

@@ -17,7 +17,6 @@ class StarSystem;
 class SystemBody;
 
 namespace Graphics {
-	class Renderer;
 	class RenderState;
 }
 
@@ -41,7 +40,7 @@ protected:
 private:
 	class BodyIcon : public Gui::ImageRadioButton {
 	public:
-		BodyIcon(const char *img, Graphics::Renderer *);
+		BodyIcon(const char *img);
 		virtual void Draw();
 		virtual void OnActivate();
 		bool HasStarport() { return m_hasStarport; }
@@ -49,7 +48,6 @@ private:
 		void SetSelectColor(const Color &color) { m_selectColor = color; }
 
 	private:
-		Graphics::Renderer *m_renderer;
 		Graphics::RenderState *m_renderState;
 		Graphics::Drawables::Lines m_selectBox;
 		std::unique_ptr<Graphics::Drawables::Circle> m_circle;

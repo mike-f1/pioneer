@@ -6,9 +6,9 @@
 #include "FileSystem.h"
 #include "Frame.h"
 #include "IniConfig.h"
-#include "Pi.h"
 #include "Ship.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 #include "graphics/RenderState.h"
 #include "graphics/VertexArray.h"
 #include "graphics/VertexBuffer.h"
@@ -46,9 +46,9 @@ SpeedLines::SpeedLines(Ship *s) :
 	Graphics::RenderStateDesc rsd;
 	rsd.blendMode = Graphics::BLEND_ALPHA_ONE;
 	rsd.depthWrite = false;
-	m_renderState = Pi::renderer->CreateRenderState(rsd);
+	m_renderState = RendererLocator::getRenderer()->CreateRenderState(rsd);
 
-	CreateVertexBuffer(Pi::renderer, doubleNumPoints);
+	CreateVertexBuffer(doubleNumPoints);
 }
 
 void SpeedLines::Update(float time)
@@ -111,7 +111,7 @@ void SpeedLines::Update(float time)
 	}
 }
 
-void SpeedLines::Render(Graphics::Renderer *r)
+void SpeedLines::Render()
 {
 	PROFILE_SCOPED();
 	if (!m_visible || m_points.empty()) return;
@@ -132,16 +132,16 @@ void SpeedLines::Render(Graphics::Renderer *r)
 
 	m_vbuffer->Populate(*m_varray);
 
-	r->SetTransform(m_transform);
-	r->DrawBuffer(m_vbuffer.get(), m_renderState, m_material.Get(), Graphics::LINE_SINGLE);
+	RendererLocator::getRenderer()->SetTransform(m_transform);
+	RendererLocator::getRenderer()->DrawBuffer(m_vbuffer.get(), m_renderState, m_material.Get(), Graphics::LINE_SINGLE);
 }
 
-void SpeedLines::CreateVertexBuffer(Graphics::Renderer *r, const Uint32 size)
+void SpeedLines::CreateVertexBuffer(const Uint32 size)
 {
 	PROFILE_SCOPED();
 	Graphics::MaterialDescriptor desc;
 	desc.vertexColors = true;
-	m_material.Reset(r->CreateMaterial(desc));
+	m_material.Reset(RendererLocator::getRenderer()->CreateMaterial(desc));
 
 	Graphics::VertexBufferDesc vbd;
 	vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
@@ -150,7 +150,7 @@ void SpeedLines::CreateVertexBuffer(Graphics::Renderer *r, const Uint32 size)
 	vbd.attrib[1].format = Graphics::ATTRIB_FORMAT_UBYTE4;
 	vbd.usage = Graphics::BUFFER_USAGE_DYNAMIC;
 	vbd.numVertices = size;
-	m_vbuffer.reset(r->CreateVertexBuffer(vbd));
+	m_vbuffer.reset(RendererLocator::getRenderer()->CreateVertexBuffer(vbd));
 }
 
 void SpeedLines::Init()

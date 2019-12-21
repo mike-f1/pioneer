@@ -2,18 +2,20 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "LOD.h"
+
 #include "BaseLoader.h"
 #include "NodeCopyCache.h"
 #include "NodeVisitor.h"
 #include "Serializer.h"
 #include "StringF.h"
 #include "graphics/Graphics.h"
+#include "graphics/RendererLocator.h"
 #include "graphics/VertexBuffer.h"
 
 namespace SceneGraph {
 
-	LOD::LOD(Graphics::Renderer *r) :
-		Group(r)
+	LOD::LOD() :
+		Group()
 	{
 	}
 
@@ -65,7 +67,7 @@ namespace SceneGraph {
 			return;
 
 		// got something to draw with
-		Graphics::Renderer *r = GetRenderer();
+		Graphics::Renderer *r = RendererLocator::getRenderer();
 		if (r != nullptr) {
 			const size_t count = m_pixelSizes.size();
 			const size_t tsize = trans.size();
@@ -114,7 +116,7 @@ namespace SceneGraph {
 
 	LOD *LOD::Load(NodeDatabase &db)
 	{
-		LOD *lod = new LOD(db.loader->GetRenderer());
+		LOD *lod = new LOD();
 		const Uint32 numLevels = db.rd->Int32();
 		for (Uint32 i = 0; i < numLevels; i++)
 			lod->m_pixelSizes.push_back(db.rd->Int32());

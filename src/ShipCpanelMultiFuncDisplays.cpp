@@ -12,6 +12,7 @@
 #include "Player.h"
 #include "Space.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 #include "graphics/RenderState.h"
 #include "graphics/VertexArray.h"
 
@@ -35,8 +36,7 @@ static const Color radarPlayerMissileColour = Color(243, 237, 29);
 static const Color radarCargoColour = Color(166, 166, 166);
 static const Color radarCloudColour = Color(128, 128, 255);
 
-RadarWidget::RadarWidget(Graphics::Renderer *r) :
-	m_renderer(r)
+RadarWidget::RadarWidget()
 {
 	m_mode = RADAR_MODE_AUTO;
 	m_currentRange = m_manualRange = m_targetRange = RADAR_RANGE_MIN;
@@ -44,8 +44,7 @@ RadarWidget::RadarWidget(Graphics::Renderer *r) :
 	InitObject();
 }
 
-RadarWidget::RadarWidget(Graphics::Renderer *r, const Json &jsonObj) :
-	m_renderer(r)
+RadarWidget::RadarWidget(const Json &jsonObj)
 {
 	try {
 		// Radar used to be called "scanner" for Frontier-reasons
@@ -76,7 +75,7 @@ void RadarWidget::InitObject()
 	rsd.depthWrite = false;
 	rsd.depthTest = false;
 	rsd.cullMode = CULL_NONE;
-	m_renderState = m_renderer->CreateRenderState(rsd);
+	m_renderState = RendererLocator::getRenderer()->CreateRenderState(rsd);
 
 	GenerateRingsAndSpokes();
 }
@@ -137,13 +136,13 @@ void RadarWidget::Draw()
 		va.Add(vector3f(RADAR_XSHRINK * m_x + m_x * sin(a), m_y + RADAR_YSHRINK * m_y * cos(a), 0.f), green);
 	}
 	va.Add(vector3f(RADAR_XSHRINK * m_x, m_y + RADAR_YSHRINK * m_y, 0.f), green);
-	m_renderer->DrawTriangles(&va, m_renderState, Graphics::vtxColorMaterial, TRIANGLE_FAN);
+	RendererLocator::getRenderer()->DrawTriangles(&va, m_renderState, Graphics::vtxColorMaterial, TRIANGLE_FAN);
 
 	// circles and spokes
 	{
-		Graphics::Renderer::MatrixTicket ticket(m_renderer, Graphics::MatrixMode::MODELVIEW);
-		m_renderer->Translate(RADAR_XSHRINK * m_x, m_y, 0);
-		m_renderer->Scale(m_x, m_y, 1.0f);
+		Graphics::Renderer::MatrixTicket ticket(RendererLocator::getRenderer(), Graphics::MatrixMode::MODELVIEW);
+		RendererLocator::getRenderer()->Translate(RADAR_XSHRINK * m_x, m_y, 0);
+		RendererLocator::getRenderer()->Scale(m_x, m_y, 1.0f);
 		DrawRingsAndSpokes(false);
 	}
 
@@ -370,10 +369,10 @@ void RadarWidget::DrawBlobs(bool below)
 
 	if (!vts.empty()) {
 		m_contactLines.SetData(vts.size(), &vts[0], &colors[0]);
-		m_contactLines.Draw(m_renderer, m_renderState);
+		m_contactLines.Draw(RendererLocator::getRenderer(), m_renderState);
 
-		m_contactBlobs.SetData(m_renderer, blobs.size(), &blobs[0], &blobcolors[0], matrix4x4f::Identity(), 3.f);
-		m_contactBlobs.Draw(m_renderer, m_renderState);
+		m_contactBlobs.SetData(RendererLocator::getRenderer(), blobs.size(), &blobs[0], &blobcolors[0], matrix4x4f::Identity(), 3.f);
+		m_contactBlobs.Draw(RendererLocator::getRenderer(), m_renderState);
 	}
 }
 
@@ -457,8 +456,8 @@ void RadarWidget::GenerateRingsAndSpokes()
 
 void RadarWidget::DrawRingsAndSpokes(bool blend)
 {
-	m_scanLines.Draw(m_renderer, m_renderState);
-	m_edgeLines.Draw(m_renderer, m_renderState);
+	m_scanLines.Draw(RendererLocator::getRenderer(), m_renderState);
+	m_edgeLines.Draw(RendererLocator::getRenderer(), m_renderState);
 }
 
 void RadarWidget::TimeStepUpdate(float step)

@@ -11,14 +11,11 @@
 #include <list>
 #include <stack>
 
-namespace Graphics {
-	class Renderer;
-}
 
 namespace Gui {
 	class Screen {
 	public:
-		static void Init(Graphics::Renderer *renderer, int real_width, int real_height, int ui_width, int ui_height);
+		static void Init(int real_width, int real_height, int ui_width, int ui_height);
 		static void Uninit();
 		static void Draw();
 		static void AddBaseWidget(Widget *w, int x, int y);
@@ -65,8 +62,6 @@ namespace Gui {
 		static int PickCharacterInString(const std::string &s, float x, float y, Text::TextureFont *font = 0);
 		static void MeasureCharacterPos(const std::string &s, int charIndex, float &x, float &y, Text::TextureFont *font = 0);
 
-		static Graphics::Renderer *GetRenderer() { return s_renderer; }
-
 		static Graphics::RenderState *alphaBlendState;
 		static Graphics::Material *flatColorMaterial;
 
@@ -93,7 +88,6 @@ namespace Gui {
 		static std::stack<RefCountedPtr<Text::TextureFont>> s_fontStack;
 		static RefCountedPtr<Text::TextureFont> s_defaultFont;
 
-		static Graphics::Renderer *s_renderer;
 	};
 } // namespace Gui
 

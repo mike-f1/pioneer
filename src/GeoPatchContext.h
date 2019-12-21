@@ -6,13 +6,18 @@
 
 #include <SDL_stdinc.h>
 
+#include "Color.h"
+#include "RefCounted.h"
 #include "vector3.h"
-#include "graphics/VertexBuffer.h"
 
 #include <deque>
 
 // maximumpatch depth
 #define GEOPATCH_MAX_DEPTH 15
+
+namespace Graphics {
+	class IndexBuffer;
+}
 
 class GeoPatchContext : public RefCounted {
 public:

@@ -4,6 +4,7 @@
 #include "LuaFormat.h"
 
 #include "Lang.h"
+#include "LuaManager.h"
 #include "LuaObject.h"
 #include "LuaUtils.h"
 #include "StringF.h"
@@ -81,6 +82,36 @@ static int l_format_distance(lua_State *l)
 }
 
 /*
+ * Function: Speed
+ *
+ * Create a string representation of the given speed value.
+ *
+ * > string = Format.Speed(speed)
+ *
+ * Parameters:
+ *
+ *   speed - a speed in metres/second
+ *
+ * Return:
+ *
+ *   string - the string representation
+ *
+ * Availability:
+ *
+ *   Dec 2019
+ *
+ * Status:
+ *
+ *   stable
+ */
+static int l_format_speed(lua_State *l)
+{
+	double t = luaL_checknumber(l, 1);
+	lua_pushstring(l, format_speed(t).c_str());
+	return 1;
+}
+
+/*
  * Function: Money
  *
  * Create a string representation of the given money value.
@@ -145,6 +176,20 @@ static int l_format_duration(lua_State *l)
 	return 1;
 }
 
+static int l_format_latitude(lua_State *l)
+{
+	double lat = luaL_checknumber(l, 1);
+	lua_pushstring(l, format_latitude(lat).c_str());
+	return 1;
+}
+
+static int l_format_longitude(lua_State *l)
+{
+	double longi = luaL_checknumber(l, 1);
+	lua_pushstring(l, format_longitude(longi).c_str());
+	return 1;
+}
+
 void LuaFormat::Register()
 {
 	lua_State *l = Lua::manager->GetLuaState();
@@ -154,10 +199,13 @@ void LuaFormat::Register()
 	static const luaL_Reg l_methods[] = {
 		{ "Date", l_format_date },
 		{ "Distance", l_format_distance },
+		{ "Speed", l_format_speed },
 		{ "Money", l_format_money },
 		{ "AccelG", l_format_accel_g },
 		{ "MassTonnes", l_format_mass_tonnes },
 		{ "Duration", l_format_duration },
+		{ "Latitude", l_format_latitude },
+		{ "Longitude", l_format_longitude },
 		{ 0, 0 }
 	};
 

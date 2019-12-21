@@ -6,6 +6,8 @@
 #include "text/TextSupport.h"
 #include "text/TextureFont.h"
 
+#include "graphics/RendererLocator.h"
+
 namespace Gui {
 
 	TextEntry::TextEntry()
@@ -209,7 +211,7 @@ namespace Gui {
 		PROFILE_SCOPED()
 		m_justFocused = false;
 
-		Graphics::Renderer *pRenderer = Screen::GetRenderer();
+		Graphics::Renderer *pRenderer = RendererLocator::getRenderer();
 
 		float size[2];
 		GetSize(size);

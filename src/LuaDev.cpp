@@ -4,6 +4,7 @@
 #include "LuaDev.h"
 
 #include "InGameViews.h"
+#include "LuaManager.h"
 #include "LuaObject.h"
 #include "Pi.h"
 #include "WorldView.h"

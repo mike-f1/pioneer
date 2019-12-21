@@ -5,6 +5,8 @@
 #include "Gui.h"
 #include "libs.h"
 
+#include "graphics/RendererLocator.h"
+
 namespace Gui {
 
 	static const float TAB_BAR_HEIGHT = 20.0f;
@@ -158,9 +160,9 @@ namespace Gui {
 		unsigned int index = 0;
 
 		if (!m_rectBGShadow) {
-			m_rectBGShadow.reset(new Graphics::Drawables::Rect(Screen::GetRenderer(), vector2f(0.f), vector2f(size[0], TAB_BAR_HEIGHT), Theme::Colors::bgShadow, Screen::alphaBlendState));
+			m_rectBGShadow.reset(new Graphics::Drawables::Rect(RendererLocator::getRenderer(), vector2f(0.f), vector2f(size[0], TAB_BAR_HEIGHT), Theme::Colors::bgShadow, Screen::alphaBlendState));
 		}
-		m_rectBGShadow->Draw(Screen::GetRenderer());
+		m_rectBGShadow->Draw(RendererLocator::getRenderer());
 
 		for (pagecontainer_t::iterator i = m_pages.begin(), iEnd = m_pages.end(); i != iEnd; ++i, index++) {
 			float csize[2];
@@ -172,11 +174,11 @@ namespace Gui {
 				if (!BGVBTracker_.m_rectBG || !BGVBTracker_.prevPos_.ExactlyEqual(newpos) || !BGVBTracker_.prevSize_.ExactlyEqual(newsize)) {
 					BGVBTracker_.prevPos_ = newpos;
 					BGVBTracker_.prevSize_ = newsize;
-					BGVBTracker_.m_rectBG.reset(new Graphics::Drawables::Rect(Screen::GetRenderer(), newpos, newsize, Theme::Colors::bg, Screen::alphaBlendState, false));
+					BGVBTracker_.m_rectBG.reset(new Graphics::Drawables::Rect(RendererLocator::getRenderer(), newpos, newsize, Theme::Colors::bg, Screen::alphaBlendState, false));
 				} else {
 					BGVBTracker_.m_rectBG->Update(newpos, newsize, Theme::Colors::bg);
 				}
-				BGVBTracker_.m_rectBG->Draw(Screen::GetRenderer());
+				BGVBTracker_.m_rectBG->Draw(RendererLocator::getRenderer());
 			}
 			xpos += csize[0];
 		}

@@ -80,7 +80,11 @@
 #include "sound/Sound.h"
 #include "sound/SoundMusic.h"
 
+#include "gui/Gui.h"
+
+#include "graphics/opengl/RendererGL.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 
 #if WITH_DEVKEYS
 #include "graphics/Graphics.h"
@@ -127,10 +131,9 @@ bool Pi::doProfileOne = false;
 #endif
 int Pi::statSceneTris = 0;
 int Pi::statNumPatches = 0;
-Graphics::Renderer *Pi::renderer;
 RefCountedPtr<UI::Context> Pi::ui;
 RefCountedPtr<PiGui> Pi::pigui;
-std::unique_ptr<Cutscene> Pi::cutscene;
+std::unique_ptr<Cutscene> Pi::m_cutscene;
 Graphics::RenderTarget *Pi::renderTarget;
 RefCountedPtr<Graphics::Texture> Pi::renderTexture;
 std::unique_ptr<Graphics::Drawables::TexturedQuad> Pi::renderQuad;
@@ -170,15 +173,15 @@ void Pi::CreateRenderTarget(const Uint16 width, const Uint16 height)
 	rsd.depthTest = false;
 	rsd.depthWrite = false;
 	rsd.blendMode = Graphics::BLEND_SOLID;
-	quadRenderState = Pi::renderer->CreateRenderState(rsd);
+	quadRenderState = RendererLocator::getRenderer()->CreateRenderState(rsd);
 
 	Graphics::TextureDescriptor texDesc(
 		Graphics::TEXTURE_RGBA_8888,
 		vector2f(width, height),
 		Graphics::LINEAR_CLAMP, false, false, 0);
-	Pi::renderTexture.Reset(Pi::renderer->CreateTexture(texDesc));
+	Pi::renderTexture.Reset(RendererLocator::getRenderer()->CreateTexture(texDesc));
 	Pi::renderQuad.reset(new Graphics::Drawables::TexturedQuad(
-		Pi::renderer, Pi::renderTexture.Get(),
+		RendererLocator::getRenderer(), Pi::renderTexture.Get(),
 		vector2f(0.0f, 0.0f), vector2f(float(Graphics::GetScreenWidth()), float(Graphics::GetScreenHeight())),
 		quadRenderState));
 
@@ -190,7 +193,7 @@ void Pi::CreateRenderTarget(const Uint16 width, const Uint16 height)
 		Graphics::TEXTURE_NONE, // don't create a texture
 		Graphics::TEXTURE_DEPTH,
 		false);
-	Pi::renderTarget = Pi::renderer->CreateRenderTarget(rtDesc);
+	Pi::renderTarget = RendererLocator::getRenderer()->CreateRenderTarget(rtDesc);
 
 	Pi::renderTarget->SetColorTexture(Pi::renderTexture.Get());
 #endif
@@ -200,29 +203,29 @@ void Pi::CreateRenderTarget(const Uint16 width, const Uint16 height)
 void Pi::DrawRenderTarget()
 {
 #if USE_RTT
-	Pi::renderer->BeginFrame();
-	Pi::renderer->SetViewport(0, 0, Graphics::GetScreenWidth(), Graphics::GetScreenHeight());
-	Pi::renderer->SetTransform(matrix4x4f::Identity());
+	RendererLocator::getRenderer()->BeginFrame();
+	RendererLocator::getRenderer()->SetViewport(0, 0, Graphics::GetScreenWidth(), Graphics::GetScreenHeight());
+	RendererLocator::getRenderer()->SetTransform(matrix4x4f::Identity());
 
 	{
-		Pi::renderer->SetMatrixMode(Graphics::MatrixMode::PROJECTION);
-		Pi::renderer->PushMatrix();
-		Pi::renderer->SetOrthographicProjection(0, Graphics::GetScreenWidth(), Graphics::GetScreenHeight(), 0, -1, 1);
-		Pi::renderer->SetMatrixMode(Graphics::MatrixMode::MODELVIEW);
-		Pi::renderer->PushMatrix();
-		Pi::renderer->LoadIdentity();
+		RendererLocator::getRenderer()->SetMatrixMode(Graphics::MatrixMode::PROJECTION);
+		RendererLocator::getRenderer()->PushMatrix();
+		RendererLocator::getRenderer()->SetOrthographicProjection(0, Graphics::GetScreenWidth(), Graphics::GetScreenHeight(), 0, -1, 1);
+		RendererLocator::getRenderer()->SetMatrixMode(Graphics::MatrixMode::MODELVIEW);
+		RendererLocator::getRenderer()->PushMatrix();
+		RendererLocator::getRenderer()->LoadIdentity();
 	}
 
-	Pi::renderQuad->Draw(Pi::renderer);
+	Pi::renderQuad->Draw(RendererLocator::getRenderer());
 
 	{
-		Pi::renderer->SetMatrixMode(Graphics::MatrixMode::PROJECTION);
-		Pi::renderer->PopMatrix();
-		Pi::renderer->SetMatrixMode(Graphics::MatrixMode::MODELVIEW);
-		Pi::renderer->PopMatrix();
+		RendererLocator::getRenderer()->SetMatrixMode(Graphics::MatrixMode::PROJECTION);
+		RendererLocator::getRenderer()->PopMatrix();
+		RendererLocator::getRenderer()->SetMatrixMode(Graphics::MatrixMode::MODELVIEW);
+		RendererLocator::getRenderer()->PopMatrix();
 	}
 
-	Pi::renderer->EndFrame();
+	RendererLocator::getRenderer()->EndFrame();
 #endif
 }
 
@@ -230,8 +233,8 @@ void Pi::DrawRenderTarget()
 void Pi::BeginRenderTarget()
 {
 #if USE_RTT
-	Pi::renderer->SetRenderTarget(Pi::renderTarget);
-	Pi::renderer->ClearScreen();
+	RendererLocator::getRenderer()->SetRenderTarget(Pi::renderTarget);
+	RendererLocator::getRenderer()->ClearScreen();
 #endif
 }
 
@@ -239,7 +242,7 @@ void Pi::BeginRenderTarget()
 void Pi::EndRenderTarget()
 {
 #if USE_RTT
-	Pi::renderer->SetRenderTarget(nullptr);
+	RendererLocator::getRenderer()->SetRenderTarget(nullptr);
 #endif
 }
 
@@ -258,6 +261,12 @@ void Pi::NewInGameViews(InGameViews *newInGameViews)
 void Pi::SaveInGameViews(Json &rootNode)
 {
 	m_inGameViews->SaveToJson(rootNode);
+}
+
+//static
+Cutscene *Pi::GetCutscene()
+{
+	return m_cutscene.get();
 }
 
 static void LuaInit()
@@ -349,7 +358,7 @@ void TestGPUJobsSupport()
 			desc.effect = Graphics::EFFECT_GEN_GASGIANT_TEXTURE;
 			desc.quality = (octaves << 16) | i;
 			desc.textures = 3;
-			material.reset(Pi::renderer->CreateMaterial(desc));
+			material.reset(RendererLocator::getRenderer()->CreateMaterial(desc));
 			supportsGPUJobs &= material->IsProgramLoaded();
 		}
 		if (!supportsGPUJobs) {
@@ -366,7 +375,7 @@ void TestGPUJobsSupport()
 				desc.effect = Graphics::EFFECT_GEN_GASGIANT_TEXTURE;
 				desc.quality = (octaves << 16) | i;
 				desc.textures = 3;
-				material.reset(Pi::renderer->CreateMaterial(desc));
+				material.reset(RendererLocator::getRenderer()->CreateMaterial(desc));
 				supportsGPUJobs &= material->IsProgramLoaded();
 			}
 
@@ -392,10 +401,10 @@ void RegisterInputBindings()
 
 static void draw_progress(float progress)
 {
-	Pi::renderer->ClearScreen();
-	PiGui::NewFrame(Pi::renderer->GetSDLWindow());
+	RendererLocator::getRenderer()->ClearScreen();
+	PiGui::NewFrame(RendererLocator::getRenderer()->GetSDLWindow());
 	Pi::DrawPiGui(progress, "INIT");
-	Pi::renderer->SwapBuffers();
+	RendererLocator::getRenderer()->SwapBuffers();
 }
 
 void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
@@ -475,7 +484,7 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 	videoSettings.iconFile = OS::GetIconFilename();
 	videoSettings.title = "Pioneer";
 
-	Pi::renderer = Graphics::Init(videoSettings);
+	RendererLocator::provideRenderer(Graphics::Init(videoSettings));
 
 	Pi::CreateRenderTarget(videoSettings.width, videoSettings.height);
 	RandomSingleton::Init(time(0));
@@ -512,7 +521,7 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 	Lua::Init();
 
 	Pi::pigui.Reset(new PiGui);
-	Pi::pigui->Init(Pi::renderer->GetSDLWindow());
+	Pi::pigui->Init(RendererLocator::getRenderer()->GetSDLWindow());
 
 	float ui_scale = GameConfSingleton::getInstance().Float("UIScaleFactor", 1.0f);
 	if (Graphics::GetScreenHeight() < 768) {
@@ -521,7 +530,6 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 
 	Pi::ui.Reset(new UI::Context(
 		Lua::manager,
-		Pi::renderer,
 		Graphics::GetScreenWidth(),
 		Graphics::GetScreenHeight(),
 		ui_scale));
@@ -543,7 +551,7 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 
 	LuaInit();
 
-	Gui::Init(renderer, Graphics::GetScreenWidth(), Graphics::GetScreenHeight(), 800, 600);
+	Gui::Init(Graphics::GetScreenWidth(), Graphics::GetScreenHeight(), 800, 600);
 
 	// twice, to initialize the font correctly
 	draw_progress(0.01f);
@@ -563,11 +571,11 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 	draw_progress(0.2f);
 
 	Output("ModelCache::Init()\n");
-	ModelCache::Init(Pi::renderer);
+	ModelCache::Init();
 	draw_progress(0.3f);
 
 	Output("Shields::Init()\n");
-	Shields::Init(Pi::renderer);
+	Shields::Init();
 	draw_progress(0.4f);
 
 	//unsigned int control_word;
@@ -588,11 +596,11 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 	draw_progress(0.7f);
 
 	Output("NavLights::Init()\n");
-	NavLights::Init(Pi::renderer);
+	NavLights::Init();
 	draw_progress(0.75f);
 
 	Output("Sfx::Init()\n");
-	SfxManager::Init(Pi::renderer);
+	SfxManager::Init();
 	draw_progress(0.8f);
 
 	if (!no_gui && !GameConfSingleton::getInstance().Int("DisableSound")) {
@@ -700,7 +708,7 @@ void Pi::Quit()
 	Pi::pigui.Reset(nullptr);
 	LuaUninit();
 	Gui::Uninit();
-	delete Pi::renderer;
+	delete RendererLocator::getRenderer();
 	GalaxyGenerator::Uninit();
 	SDL_Quit();
 	FileSystem::Uninit();
@@ -712,6 +720,32 @@ void Pi::Quit()
 void Pi::OnChangeDetailLevel()
 {
 	BaseSphere::OnChangeDetailLevel(GameConfSingleton::getDetail().planets);
+}
+
+void Pi::HandleEscKey()
+{
+	if (!m_inGameViews) return;
+
+	if (!m_inGameViews->IsEmptyView()) {
+		if (m_inGameViews->IsSectorView()) {
+			m_inGameViews->SetView(ViewType::WORLD);
+		} else if ((m_inGameViews->IsSystemView()) || (m_inGameViews->IsSystemInfoView())) {
+			m_inGameViews->SetView(ViewType::SECTOR);
+		} else {
+			UIView *view = dynamic_cast<UIView *>(m_inGameViews->GetView());
+			if (view) {
+				// checks the template name
+				const char *tname = view->GetTemplateName();
+				if (tname) {
+					if (!strcmp(tname, "GalacticView")) {
+						m_inGameViews->SetView(ViewType::SECTOR);
+					} else if (!strcmp(tname, "InfoView") || !strcmp(tname, "StationView")) {
+						m_inGameViews->SetView(ViewType::WORLD);
+					}
+				}
+			}
+		}
+	}
 }
 
 void Pi::HandleKeyDown(SDL_Keysym *key)
@@ -739,7 +773,7 @@ void Pi::HandleKeyDown(SDL_Keysym *key)
 			struct tm *_tm = localtime(&t);
 			strftime(buf, sizeof(buf), "screenshot-%Y%m%d-%H%M%S.png", _tm);
 			Graphics::ScreendumpState sd;
-			Pi::renderer->Screendump(sd);
+			RendererLocator::getRenderer()->Screendump(sd);
 			write_screenshot(sd, buf);
 			break;
 		}
@@ -861,25 +895,25 @@ void Pi::HandleKeyDown(SDL_Keysym *key)
 			// XXX only works on X11
 			//SDL_WM_ToggleFullScreen(Pi::scrSurface);
 #if WITH_DEVKEYS
-			renderer->ReloadShaders();
+			RendererLocator::getRenderer()->ReloadShaders();
 #endif
 			break;
 		case SDLK_F9: // Quicksave
 		{
 			if (GameLocator::getGame()) {
 				if (GameLocator::getGame()->IsHyperspace()) {
-					GameLocator::getGame()->log->Add(Lang::CANT_SAVE_IN_HYPERSPACE);
+					GameLocator::getGame()->GetGameLog().Add(Lang::CANT_SAVE_IN_HYPERSPACE);
 				} else {
 					const std::string name = "_quicksave";
 					const std::string path = FileSystem::JoinPath(GameConfSingleton::GetSaveDirFull(), name);
 					try {
 						GameState::SaveGame(name);
 						Output("Quick save: %s\n", name.c_str());
-						GameLocator::getGame()->log->Add(Lang::GAME_SAVED_TO + path);
+						GameLocator::getGame()->GetGameLog().Add(Lang::GAME_SAVED_TO + path);
 					} catch (CouldNotOpenFileException) {
-						GameLocator::getGame()->log->Add(stringf(Lang::COULD_NOT_OPEN_FILENAME, formatarg("path", path)));
+						GameLocator::getGame()->GetGameLog().Add(stringf(Lang::COULD_NOT_OPEN_FILENAME, formatarg("path", path)));
 					} catch (CouldNotWriteToFileException) {
-						GameLocator::getGame()->log->Add(Lang::GAME_SAVE_CANNOT_WRITE);
+						GameLocator::getGame()->GetGameLog().Add(Lang::GAME_SAVE_CANNOT_WRITE);
 					}
 				}
 			}
@@ -887,30 +921,6 @@ void Pi::HandleKeyDown(SDL_Keysym *key)
 		}
 		default:
 			break; // This does nothing but it stops the compiler warnings
-		}
-	}
-}
-
-void Pi::HandleEscKey()
-{
-	if (!m_inGameViews->IsEmptyView()) {
-		if (m_inGameViews->IsSectorView()) {
-			m_inGameViews->SetView(ViewType::WORLD);
-		} else if ((m_inGameViews->IsSystemView()) || (m_inGameViews->IsSystemInfoView())) {
-			m_inGameViews->SetView(ViewType::SECTOR);
-		} else {
-			UIView *view = dynamic_cast<UIView *>(m_inGameViews->GetView());
-			if (view) {
-				// checks the template name
-				const char *tname = view->GetTemplateName();
-				if (tname) {
-					if (!strcmp(tname, "GalacticView")) {
-						m_inGameViews->SetView(ViewType::SECTOR);
-					} else if (!strcmp(tname, "InfoView") || !strcmp(tname, "StationView")) {
-						m_inGameViews->SetView(ViewType::WORLD);
-					}
-				}
-			}
 		}
 	}
 }
@@ -970,7 +980,7 @@ void Pi::HandleEvents()
 		bool consoleActive = Pi::IsConsoleActive();
 		if (!consoleActive) {
 			KeyBindings::DispatchSDLEvent(&event);
-			if (GameLocator::getGame()) m_inGameViews->HandleSDLEvent(event);
+			if (m_inGameViews) m_inGameViews->HandleSDLEvent(event);
 		} else {
 			KeyBindings::toggleLuaConsole.CheckSDLEventAndDispatch(&event);
 		}
@@ -1005,7 +1015,7 @@ void Pi::HandleRequests()
 	internalRequests.clear();
 }
 
-void Pi::CutSceneLoop(double step, Cutscene *cutscene)
+void Pi::CutSceneLoop(double step, Cutscene *m_cutscene)
 {
 	// XXX hack
 	// if we hit our exit conditions then ignore further queued events
@@ -1017,11 +1027,11 @@ void Pi::CutSceneLoop(double step, Cutscene *cutscene)
 	}
 
 	Pi::BeginRenderTarget();
-	Pi::renderer->BeginFrame();
-	cutscene->Draw(step);
-	Pi::renderer->EndFrame();
+	RendererLocator::getRenderer()->BeginFrame();
+	m_cutscene->Draw(step);
+	RendererLocator::getRenderer()->EndFrame();
 
-	Pi::renderer->ClearDepthBuffer();
+	RendererLocator::getRenderer()->ClearDepthBuffer();
 
 	// Mainly for Console
 	Pi::ui->Update();
@@ -1031,8 +1041,8 @@ void Pi::CutSceneLoop(double step, Cutscene *cutscene)
 
 	Gui::Draw();
 
-	if (dynamic_cast<Intro *>(cutscene) != nullptr) {
-		PiGui::NewFrame(Pi::renderer->GetSDLWindow());
+	if (dynamic_cast<Intro *>(m_cutscene) != nullptr) {
+		PiGui::NewFrame(RendererLocator::getRenderer()->GetSDLWindow());
 		DrawPiGui(step, "MAINMENU");
 	}
 
@@ -1040,7 +1050,7 @@ void Pi::CutSceneLoop(double step, Cutscene *cutscene)
 
 	// render the rendertarget texture
 	Pi::DrawRenderTarget();
-	Pi::renderer->SwapBuffers();
+	RendererLocator::getRenderer()->SwapBuffers();
 
 	Pi::HandleRequests();
 
@@ -1098,7 +1108,7 @@ void Pi::Start(const SystemPath &startPath)
 
 	//XXX global ambient colour hack to make explicit the old default ambient colour dependency
 	// for some models
-	Pi::renderer->SetAmbientColor(Color(51, 51, 51, 255));
+	RendererLocator::getRenderer()->SetAmbientColor(Color(51, 51, 51, 255));
 
 	float time = 0.0;
 	Uint32 last_time = SDL_GetTicks();
@@ -1109,7 +1119,7 @@ void Pi::Start(const SystemPath &startPath)
 
 		switch (m_mainState) {
 		case MainState::MAIN_MENU:
-			CutSceneLoop(frameTime, cutscene.get());
+			CutSceneLoop(frameTime, m_cutscene.get());
 			if (GameLocator::getGame() != nullptr) {
 				m_mainState = MainState::TO_GAME_START;
 			}
@@ -1119,14 +1129,13 @@ void Pi::Start(const SystemPath &startPath)
 			// no m_mainState set as it can be either TO_TOMBSTONE or TO_GAME_START
 		break;
 		case MainState::TO_GAME_START:
-			cutscene.reset();
+			m_cutscene.reset();
 			InitGame();
 			StartGame();
 			m_mainState = MainState::GAME_START;
 		break;
 		case MainState::TO_MAIN_MENU:
-			cutscene.reset(new Intro(Pi::renderer,
-				Graphics::GetScreenWidth(),
+			m_cutscene.reset(new Intro(Graphics::GetScreenWidth(),
 				Graphics::GetScreenHeight(),
 				GameConfSingleton::GetAmountBackgroundStars()
 				));
@@ -1134,8 +1143,7 @@ void Pi::Start(const SystemPath &startPath)
 		break;
 		case MainState::TO_TOMBSTONE:
 			EndGame();
-			cutscene.reset(new Tombstone(Pi::renderer,
-				Graphics::GetScreenWidth(),
+			m_cutscene.reset(new Tombstone(Graphics::GetScreenWidth(),
 				Graphics::GetScreenHeight()
 				));
 			time = 0.0;
@@ -1143,9 +1151,9 @@ void Pi::Start(const SystemPath &startPath)
 		break;
 		case MainState::TOMBSTONE:
 			time += frameTime;
-			CutSceneLoop(frameTime, cutscene.get());
+			CutSceneLoop(frameTime, m_cutscene.get());
 			if ((time > 2.0) && ((input.MouseButtonState(SDL_BUTTON_LEFT)) || input.KeyState(SDLK_SPACE))) {
-				cutscene.reset();
+				m_cutscene.reset();
 				m_mainState = MainState::TO_MAIN_MENU;
 			}
 		break;
@@ -1279,9 +1287,9 @@ void Pi::MainLoop()
 		}
 
 		Pi::BeginRenderTarget();
-		Pi::renderer->SetViewport(0, 0, Graphics::GetScreenWidth(), Graphics::GetScreenHeight());
-		Pi::renderer->BeginFrame();
-		Pi::renderer->SetTransform(matrix4x4f::Identity());
+		RendererLocator::getRenderer()->SetViewport(0, 0, Graphics::GetScreenWidth(), Graphics::GetScreenHeight());
+		RendererLocator::getRenderer()->BeginFrame();
+		RendererLocator::getRenderer()->SetTransform(matrix4x4f::Identity());
 
 		/* Calculate position for this rendered frame (interpolated between two physics ticks */
 		// XXX should this be here? what is this anyway?
@@ -1306,9 +1314,9 @@ void Pi::MainLoop()
 		Pi::luaConsole->HandleTCPDebugConnections();
 #endif
 
-		Pi::renderer->EndFrame();
+		RendererLocator::getRenderer()->EndFrame();
 
-		Pi::renderer->ClearDepthBuffer();
+		RendererLocator::getRenderer()->ClearDepthBuffer();
 		if (m_inGameViews->DrawGui()) {
 			Gui::Draw();
 		}
@@ -1328,7 +1336,7 @@ void Pi::MainLoop()
 			// FIXME: Always begin a camera frame because WorldSpaceToScreenSpace
 			// requires it and is exposed to pigui.
 			m_inGameViews->GetWorldView()->BeginCameraFrame();
-			PiGui::NewFrame(Pi::renderer->GetSDLWindow(), m_inGameViews->DrawGui());
+			PiGui::NewFrame(RendererLocator::getRenderer()->GetSDLWindow(), m_inGameViews->DrawGui());
 			DrawPiGui(Pi::frameTime, "GAME");
 			m_inGameViews->GetWorldView()->EndCameraFrame();
 		}
@@ -1346,7 +1354,7 @@ void Pi::MainLoop()
 		}
 #endif
 
-		Pi::renderer->SwapBuffers();
+		RendererLocator::getRenderer()->SwapBuffers();
 
 		// game exit will have cleared GameLocator::getGame(). we can't continue.
 		if (!GameLocator::getGame()) {
@@ -1378,7 +1386,7 @@ void Pi::MainLoop()
 			int lua_memB = int(lua_mem & ((1u << 10) - 1));
 			int lua_memKB = int(lua_mem >> 10) % 1024;
 			int lua_memMB = int(lua_mem >> 20);
-			const Graphics::Stats::TFrameData &stats = Pi::renderer->GetStats().FrameStatsPrevious();
+			const Graphics::Stats::TFrameData &stats = RendererLocator::getRenderer()->GetStats().FrameStatsPrevious();
 			const Uint32 numDrawCalls = stats.m_stats[Graphics::Stats::STAT_DRAWCALL];
 			const Uint32 numBuffersCreated = stats.m_stats[Graphics::Stats::STAT_CREATE_BUFFER];
 			const Uint32 numDrawTris = stats.m_stats[Graphics::Stats::STAT_DRAWTRIS];
@@ -1440,8 +1448,8 @@ void Pi::MainLoop()
 
 		if (isRecordingVideo && (Pi::ffmpegFile != nullptr)) {
 			Graphics::ScreendumpState sd;
-			Pi::renderer->FrameGrab(sd);
-			fwrite(sd.pixels.get(), sizeof(uint32_t) * Pi::renderer->GetWindowWidth() * Pi::renderer->GetWindowHeight(), 1, Pi::ffmpegFile);
+			RendererLocator::getRenderer()->FrameGrab(sd);
+			fwrite(sd.pixels.get(), sizeof(uint32_t) * RendererLocator::getRenderer()->GetWindowWidth() * RendererLocator::getRenderer()->GetWindowHeight(), 1, Pi::ffmpegFile);
 		}
 
 #ifdef PIONEER_PROFILER
@@ -1454,11 +1462,11 @@ void Pi::MainLoop()
 void Pi::SetMouseGrab(bool on)
 {
 	if (!doingMouseGrab && on) {
-		Pi::renderer->SetGrab(true);
+		RendererLocator::getRenderer()->SetGrab(true);
 		Pi::ui->SetMousePointerEnabled(false);
 		doingMouseGrab = true;
 	} else if (doingMouseGrab && !on) {
-		Pi::renderer->SetGrab(false);
+		RendererLocator::getRenderer()->SetGrab(false);
 		Pi::ui->SetMousePointerEnabled(true);
 		doingMouseGrab = false;
 	}

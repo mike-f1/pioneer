@@ -5,6 +5,7 @@
 
 #include "vector2.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 
 namespace Gui {
 
@@ -52,9 +53,9 @@ namespace Gui {
 			assert(scissorPos.x >= 0.0f && scissorPos.y >= 0.0f);
 			assert(scissorSize.x >= 0.0f && scissorSize.y >= 0.0f);
 
-			Gui::Screen::GetRenderer()->SetScissor(true, scissorPos, scissorSize);
+			RendererLocator::getRenderer()->SetScissor(true, scissorPos, scissorSize);
 		} else
-			Gui::Screen::GetRenderer()->SetScissor(false);
+			RendererLocator::getRenderer()->SetScissor(false);
 	}
 
 	void Widget::GrabFocus()

@@ -91,8 +91,8 @@ private:
 	ShipDrawing m_shipDrawing;
 	GridDrawing m_gridDrawing;
 	int m_grid_lines;
-	float m_rot_x, m_rot_z;
-	float m_rot_x_to, m_rot_z_to;
+	float m_rot_x, m_rot_y;
+	float m_rot_x_to, m_rot_y_to;
 	float m_zoom, m_zoomTo;
 	double m_time;
 	bool m_realtime;

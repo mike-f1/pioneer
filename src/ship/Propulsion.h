@@ -101,7 +101,7 @@ public:
 	void UpdateFuel(const float timeStep);
 	inline bool IsFuelStateChanged() { return m_fuelStateChange; }
 
-	void Render(Graphics::Renderer *r, const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform);
+	void Render(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform);
 
 	// AI on Propulsion
 	void AIModelCoordsMatchAngVel(const vector3d &desiredAngVel, double softness);

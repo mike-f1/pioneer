@@ -6,8 +6,11 @@
 #include "LuaRef.h"
 #include "LuaTable.h"
 #include "RefCounted.h"
-#include "graphics/opengl/RendererGL.h"
 #include "imgui/imgui.h"
+
+namespace Graphics {
+	class Texture;
+}
 
 class PiFace {
 	friend class PiGui; // need acces to some private data

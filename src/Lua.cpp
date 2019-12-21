@@ -3,9 +3,11 @@
 
 #include "Lua.h"
 
+#include "LuaManager.h"
+
 namespace Lua {
 
-	LuaManager *manager = 0;
+	LuaManager *manager = nullptr;
 
 	void Init()
 	{
@@ -15,7 +17,7 @@ namespace Lua {
 	void Uninit()
 	{
 		delete manager;
-		manager = 0;
+		manager = nullptr;
 	}
 
 } // namespace Lua

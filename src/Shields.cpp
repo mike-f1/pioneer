@@ -6,6 +6,7 @@
 #include "GameSaveError.h"
 #include "JsonUtils.h"
 #include "Ship.h"
+#include "graphics/RendererLocator.h"
 #include "graphics/RenderState.h"
 #include "graphics/TextureBuilder.h"
 #include "scenegraph/CollisionGeometry.h"
@@ -71,7 +72,7 @@ Shields::Hits::Hits(const vector3d &_pos, const Uint32 _start, const Uint32 _end
 	end(_end)
 {}
 
-void Shields::Init(Graphics::Renderer *renderer)
+void Shields::Init()
 {
 	assert(!s_initialised);
 
@@ -81,7 +82,7 @@ void Shields::Init(Graphics::Renderer *renderer)
 	desc.lighting = true;
 	desc.alphaTest = false;
 	desc.effect = Graphics::EffectType::EFFECT_SHIELD;
-	s_matShield.Reset(renderer->CreateMaterial(desc));
+	s_matShield.Reset(RendererLocator::getRenderer()->CreateMaterial(desc));
 	s_matShield->diffuse = Color(1.0f, 1.0f, 1.0f, 1.0f);
 
 	s_initialised = true;
@@ -90,8 +91,6 @@ void Shields::Init(Graphics::Renderer *renderer)
 void Shields::ReparentShieldNodes(SceneGraph::Model *model)
 {
 	assert(s_initialised);
-
-	Graphics::Renderer *renderer = model->GetRenderer();
 
 	using SceneGraph::Group;
 	using SceneGraph::MatrixTransform;
@@ -111,7 +110,7 @@ void Shields::ReparentShieldNodes(SceneGraph::Model *model)
 		const Uint32 NumChildren = mt->GetNumChildren();
 		if (NumChildren > 0) {
 			// Group to contain all of the shields we might find
-			Group *shieldGroup = new Group(renderer);
+			Group *shieldGroup = new Group();
 			shieldGroup->SetName(s_shieldGroupName);
 
 			// go through all of this MatrixTransforms children to extract all of the shield meshes
@@ -134,7 +133,7 @@ void Shields::ReparentShieldNodes(SceneGraph::Model *model)
 					Graphics::RenderStateDesc rsd;
 					rsd.blendMode = Graphics::BLEND_ALPHA;
 					rsd.depthWrite = false;
-					sg->SetRenderState(renderer->CreateRenderState(rsd));
+					sg->SetRenderState(RendererLocator::getRenderer()->CreateRenderState(rsd));
 
 					for (Uint32 iMesh = 0; iMesh < sg->GetNumMeshes(); ++iMesh) {
 						StaticGeometry::Mesh &rMesh = sg->GetMeshAt(iMesh);
@@ -146,7 +145,7 @@ void Shields::ReparentShieldNodes(SceneGraph::Model *model)
 					model->GetRoot()->Accept(mav);
 
 					// set our nodes transformation to be the accumulated transform
-					MatrixTransform *sg_transform_parent = new MatrixTransform(renderer, mav.outMat);
+					MatrixTransform *sg_transform_parent = new MatrixTransform(mav.outMat);
 					std::stringstream nodeStream;
 					nodeStream << iChild << s_matrixTransformName;
 					sg_transform_parent->SetName(nodeStream.str());
@@ -202,7 +201,7 @@ Shields::Shields(SceneGraph::Model *model) :
 				Graphics::RenderStateDesc rsd;
 				rsd.blendMode = Graphics::BLEND_ALPHA;
 				rsd.depthWrite = false;
-				sg->SetRenderState(sg->GetRenderer()->CreateRenderState(rsd));
+				sg->SetRenderState(RendererLocator::getRenderer()->CreateRenderState(rsd));
 
 				// set the material
 				for (Uint32 iMesh = 0; iMesh < sg->GetNumMeshes(); ++iMesh) {

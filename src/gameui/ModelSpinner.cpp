@@ -8,6 +8,9 @@
 #include "Ship.h"
 #include "scenegraph/Model.h"
 
+#include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
+
 using namespace UI;
 
 namespace GameUI {
@@ -52,7 +55,7 @@ namespace GameUI {
 
 	void ModelSpinner::Draw()
 	{
-		Graphics::Renderer *r = GetContext()->GetRenderer();
+		Graphics::Renderer *r = RendererLocator::getRenderer();
 
 		Graphics::Renderer::StateTicket ticket(r);
 

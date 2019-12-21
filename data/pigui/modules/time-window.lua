@@ -9,13 +9,12 @@ local lc = Lang.GetResource("core");
 local lui = Lang.GetResource("ui-core");
 local utils = import("utils")
 local Event = import("Event")
+local Format = import("Format")
 
 local player = nil
 local pionillium = ui.fonts.pionillium
 local colors = ui.theme.colors
 local icons = ui.theme.icons
--- names of the keys in lang/core/
-local months = {"MONTH_JAN", "MONTH_FEB", "MONTH_MAR", "MONTH_APR", "MONTH_MAY", "MONTH_JUN", "MONTH_JUL", "MONTH_AUG", "MONTH_SEP", "MONTH_OCT", "MONTH_NOV", "MONTH_DEC"}
 
 local button_size = Vector2(32,32) * (ui.screenHeight / 1200)
 local frame_padding = 3
@@ -25,9 +24,8 @@ local fg_color = colors.white
 
 local function displayTimeWindow()
 	player = Game.player
-	local year, month_num, day, hour, minute, second = Game.GetDateTime()
-	local month = lc[months[month_num]]
-	local date = string.format("%04i %s %i - %02i:%02i:%02i", year, month, day, hour, minute, second)
+	local date = Format.Date(Game.time)
+
 	local current = Game.GetTimeAcceleration()
 	local requested = Game.GetRequestedTimeAcceleration()
 	function accelButton(name, key)

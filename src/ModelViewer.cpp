@@ -9,6 +9,8 @@
 #include "ModManager.h"
 #include "OS.h"
 #include "StringF.h"
+#include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 #include "graphics/Drawables.h"
 #include "graphics/Graphics.h"
 #include "graphics/Light.h"
@@ -92,14 +94,13 @@ namespace {
 	}
 } // namespace
 
-ModelViewer::ModelViewer(Graphics::Renderer *r, LuaManager *lm) :
+ModelViewer::ModelViewer(LuaManager *lm) :
 	m_done(false),
 	m_screenshotQueued(false),
 	m_shieldIsHit(false),
 	m_settingColourSliders(false),
 	m_shieldHitPan(-1.48f),
 	m_frameTime(0.0),
-	m_renderer(r),
 	m_decalTexture(0),
 	m_rotX(0),
 	m_rotY(0),
@@ -111,7 +112,8 @@ ModelViewer::ModelViewer(Graphics::Renderer *r, LuaManager *lm) :
 	m_modelName("")
 {
 	OS::RedirectStdio();
-	m_ui.Reset(new UI::Context(lm, r, Graphics::GetScreenWidth(), Graphics::GetScreenHeight()));
+
+	m_ui.Reset(new UI::Context(lm, Graphics::GetScreenWidth(), Graphics::GetScreenHeight()));
 	m_ui->SetMousePointer("icons/cursors/mouse_cursor_2.png", UI::Point(15, 8));
 
 	m_log = m_ui->MultiLineText("");
@@ -132,7 +134,8 @@ ModelViewer::ModelViewer(Graphics::Renderer *r, LuaManager *lm) :
 	Graphics::RenderStateDesc rsd;
 	rsd.depthWrite = false;
 	rsd.cullMode = Graphics::CULL_NONE;
-	m_bgState = m_renderer->CreateRenderState(rsd);
+	m_bgState = RendererLocator::getRenderer()->CreateRenderState(rsd);
+
 }
 
 ModelViewer::~ModelViewer()
@@ -177,13 +180,13 @@ void ModelViewer::Run(const std::string &modelName)
 	videoSettings.useAnisotropicFiltering = (config->Int("UseAnisotropicFiltering") != 0);
 	videoSettings.iconFile = OS::GetIconFilename();
 	videoSettings.title = "Model viewer";
-	Graphics::Renderer *renderer = Graphics::Init(videoSettings);
+		RendererLocator::provideRenderer(Graphics::Init(videoSettings));
 
-	NavLights::Init(renderer);
-	Shields::Init(renderer);
+	NavLights::Init();
+	Shields::Init();
 
 	//run main loop until quit
-	ModelViewer *viewer = new ModelViewer(renderer, Lua::manager);
+	ModelViewer *viewer = new ModelViewer(Lua::manager);
 	viewer->SetModel(modelName);
 	viewer->ResetCamera();
 	viewer->MainLoop();
@@ -191,7 +194,7 @@ void ModelViewer::Run(const std::string &modelName)
 	//uninit components
 	delete viewer;
 	Lua::Uninit();
-	delete renderer;
+	delete RendererLocator::getRenderer();
 	Shields::Uninit();
 	NavLights::Uninit();
 	Graphics::Uninit();
@@ -407,7 +410,7 @@ void ModelViewer::ChangeCameraPreset(SDL_Keycode key, SDL_Keymod mod)
 void ModelViewer::ToggleViewControlMode()
 {
 	m_options.mouselookEnabled = !m_options.mouselookEnabled;
-	m_renderer->SetGrab(m_options.mouselookEnabled);
+	RendererLocator::getRenderer()->SetGrab(m_options.mouselookEnabled);
 
 	if (m_options.mouselookEnabled) {
 		m_viewRot = matrix3x3f::RotateY(DEG2RAD(m_rotY)) * matrix3x3f::RotateX(DEG2RAD(Clamp(m_rotX, -90.0f, 90.0f)));
@@ -431,7 +434,7 @@ void ModelViewer::ClearModel()
 	m_scaleModel.reset();
 
 	m_options.mouselookEnabled = false;
-	m_renderer->SetGrab(false);
+	RendererLocator::getRenderer()->SetGrab(false);
 	m_viewPos = vector3f(0.0f, 0.0f, 10.0f);
 	ResetCamera();
 }
@@ -440,7 +443,7 @@ void ModelViewer::CreateTestResources()
 {
 	//load gun model for attachment test
 	//landingpad model for scale test
-	SceneGraph::Loader loader(m_renderer);
+	SceneGraph::Loader loader(RendererLocator::getRenderer());
 	try {
 		SceneGraph::Model *m = loader.LoadModel("test_gun");
 		m_gunModel.reset(m);
@@ -454,8 +457,8 @@ void ModelViewer::CreateTestResources()
 
 void ModelViewer::DrawBackground()
 {
-	m_renderer->SetOrthographicProjection(0.f, 1.f, 0.f, 1.f, -1.f, 1.f);
-	m_renderer->SetTransform(matrix4x4f::Identity());
+	RendererLocator::getRenderer()->SetOrthographicProjection(0.f, 1.f, 0.f, 1.f, -1.f, 1.f);
+	RendererLocator::getRenderer()->SetTransform(matrix4x4f::Identity());
 
 	if (!m_bgBuffer.Valid()) {
 		const Color top = Color::BLACK;
@@ -479,11 +482,11 @@ void ModelViewer::DrawBackground()
 		vbd.usage = Graphics::BUFFER_USAGE_STATIC;
 
 		// VertexBuffer
-		m_bgBuffer.Reset(m_renderer->CreateVertexBuffer(vbd));
+		m_bgBuffer.Reset(RendererLocator::getRenderer()->CreateVertexBuffer(vbd));
 		m_bgBuffer->Populate(bgArr);
 	}
 
-	m_renderer->DrawBuffer(m_bgBuffer.Get(), m_bgState, Graphics::vtxColorMaterial, Graphics::TRIANGLES);
+	RendererLocator::getRenderer()->DrawBuffer(m_bgBuffer.Get(), m_bgState, Graphics::vtxColorMaterial, Graphics::TRIANGLES);
 }
 
 //Draw grid and axes
@@ -515,13 +518,13 @@ void ModelViewer::DrawGrid(const matrix4x4f &trans, float radius)
 		points.push_back(vector3f(max, 0, x));
 	}
 
-	m_renderer->SetTransform(trans);
+	RendererLocator::getRenderer()->SetTransform(trans);
 	m_gridLines.SetData(points.size(), &points[0], Color(128, 128, 128));
-	m_gridLines.Draw(m_renderer, m_bgState);
+	m_gridLines.Draw(RendererLocator::getRenderer(), m_bgState);
 
 	// industry-standard red/green/blue XYZ axis indiactor
-	m_renderer->SetTransform(trans * matrix4x4f::ScaleMatrix(radius));
-	Graphics::Drawables::GetAxes3DDrawable(m_renderer)->Draw(m_renderer);
+	RendererLocator::getRenderer()->SetTransform(trans * matrix4x4f::ScaleMatrix(radius));
+	Graphics::Drawables::GetAxes3DDrawable(RendererLocator::getRenderer())->Draw(RendererLocator::getRenderer());
 }
 
 void ModelViewer::DrawModel(const matrix4x4f &mv)
@@ -538,7 +541,7 @@ void ModelViewer::DrawModel(const matrix4x4f &mv)
 		(m_options.wireframe ? SceneGraph::Model::DEBUG_WIREFRAME : 0x0));
 
 	m_model->Render(mv);
-	m_navLights->Render(m_renderer);
+	m_navLights->Render();
 }
 
 void ModelViewer::MainLoop()
@@ -552,7 +555,7 @@ void ModelViewer::MainLoop()
 		// logic update
 		PollEvents();
 
-		m_renderer->ClearScreen();
+		RendererLocator::getRenderer()->ClearScreen();
 		UpdateLights();
 		UpdateCamera();
 		UpdateShield();
@@ -575,7 +578,7 @@ void ModelViewer::MainLoop()
 
 			// setup rendering
 			if (!m_options.orthoView) {
-				m_renderer->SetPerspectiveProjection(85, Graphics::GetScreenWidth() / float(Graphics::GetScreenHeight()), 0.1f, 100000.f);
+				RendererLocator::getRenderer()->SetPerspectiveProjection(85, Graphics::GetScreenWidth() / float(Graphics::GetScreenHeight()), 0.1f, 100000.f);
 			} else {
 				/* TODO: Zoom in ortho mode seems don't work as in perspective mode,
                  / I change "screen dimensions" to avoid the problem.
@@ -586,10 +589,10 @@ void ModelViewer::MainLoop()
 				float screenH = Graphics::GetScreenHeight() * m_zoom / 10;
 				matrix4x4f orthoMat = matrix4x4f::OrthoFrustum(-screenW, screenW, -screenH, screenH, 0.1f, 100000.0f);
 				orthoMat.ClearToRotOnly();
-				m_renderer->SetProjection(orthoMat);
+				RendererLocator::getRenderer()->SetProjection(orthoMat);
 			}
 
-			m_renderer->SetTransform(matrix4x4f::Identity());
+			RendererLocator::getRenderer()->SetTransform(matrix4x4f::Identity());
 
 			// calc camera info
 			matrix4x4f mv;
@@ -632,7 +635,7 @@ void ModelViewer::MainLoop()
 		}
 
 		// end scene
-		m_renderer->SwapBuffers();
+		RendererLocator::getRenderer()->SwapBuffers();
 
 		// if we've requested a different model then switch too it
 		if (!m_requestedModelName.empty()) {
@@ -672,7 +675,7 @@ void ModelViewer::OnDecalChanged(unsigned int index, const std::string &texname)
 {
 	if (!m_model) return;
 
-	m_decalTexture = Graphics::TextureBuilder::Decal(stringf("textures/decals/%0.dds", texname)).GetOrCreateTexture(m_renderer, "decal");
+	m_decalTexture = Graphics::TextureBuilder::Decal(stringf("textures/decals/%0.dds", texname)).GetOrCreateTexture(RendererLocator::getRenderer(), "decal");
 
 	m_model->SetDecalTexture(m_decalTexture, 0);
 	m_model->SetDecalTexture(m_decalTexture, 1);
@@ -804,7 +807,7 @@ void ModelViewer::PollEvents()
 				break;
 			case SDLK_F11:
 				if (event.key.keysym.mod & KMOD_SHIFT)
-					m_renderer->ReloadShaders();
+					RendererLocator::getRenderer()->ReloadShaders();
 				break;
 			case SDLK_KP_1:
 			case SDLK_m:
@@ -898,7 +901,7 @@ void ModelViewer::Screenshot()
 	const struct tm *_tm = localtime(&t);
 	strftime(buf, sizeof(buf), "modelviewer-%Y%m%d-%H%M%S.png", _tm);
 	Graphics::ScreendumpState sd;
-	m_renderer->Screendump(sd);
+	RendererLocator::getRenderer()->Screendump(sd);
 	write_screenshot(sd, buf);
 	AddLog(stringf("Screenshot %0 saved", buf));
 }
@@ -913,7 +916,7 @@ void ModelViewer::SaveModelToBinary()
 
 	std::unique_ptr<SceneGraph::Model> model;
 	try {
-		SceneGraph::Loader ld(m_renderer);
+		SceneGraph::Loader ld;
 		model.reset(ld.LoadModel(m_modelName));
 	} catch (...) {
 		//minimal error handling, this is not expected to happen since we got this far.
@@ -922,7 +925,7 @@ void ModelViewer::SaveModelToBinary()
 	}
 
 	try {
-		SceneGraph::BinaryConverter bc(m_renderer);
+		SceneGraph::BinaryConverter bc;
 		bc.Save(m_modelName, model.get());
 		AddLog("Saved binary model file");
 	} catch (const CouldNotOpenFileException &) {
@@ -937,7 +940,7 @@ void ModelViewer::SetModel(const std::string &filename)
 	AddLog(stringf("Loading model %0...", filename));
 
 	//this is necessary to reload textures
-	m_renderer->RemoveAllCachedTextures();
+	RendererLocator::getRenderer()->RemoveAllCachedTextures();
 
 	ClearModel();
 
@@ -945,11 +948,11 @@ void ModelViewer::SetModel(const std::string &filename)
 		if (ends_with_ci(filename, ".sgm")) {
 			//binary loader expects extension-less name. Might want to change this.
 			m_modelName = filename.substr(0, filename.size() - 4);
-			SceneGraph::BinaryConverter bc(m_renderer);
+			SceneGraph::BinaryConverter bc;
 			m_model = bc.Load(m_modelName);
 		} else {
 			m_modelName = filename;
-			SceneGraph::Loader loader(m_renderer, true);
+			SceneGraph::Loader loader(true);
 			m_model = loader.LoadModel(filename);
 
 			//dump warnings
@@ -1324,7 +1327,7 @@ void ModelViewer::UpdateLights()
 		break;
 	};
 
-	m_renderer->SetLights(int(lights.size()), &lights[0]);
+	RendererLocator::getRenderer()->SetLights(int(lights.size()), &lights[0]);
 }
 
 void ModelViewer::UpdatePatternList()

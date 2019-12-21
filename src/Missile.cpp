@@ -219,12 +219,12 @@ void Missile::Disarm()
 	Properties().Set("isArmed", false);
 }
 
-void Missile::Render(Graphics::Renderer *renderer, const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform)
+void Missile::Render(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform)
 {
 	if (IsDead()) return;
 
-	GetPropulsion()->Render(renderer, camera, viewCoords, viewTransform);
-	RenderModel(renderer, camera, viewCoords, viewTransform);
+	GetPropulsion()->Render(camera, viewCoords, viewTransform);
+	RenderModel(camera, viewCoords, viewTransform);
 }
 
 void Missile::AIKamikaze(Body *target)

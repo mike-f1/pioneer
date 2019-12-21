@@ -3,6 +3,11 @@
 
 #include "LabelOverlay.h"
 
+#include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
+
+#include "ui/Context.h"
+
 namespace {
 
 	static vector2f label_offset(const GameUI::LabelOverlay::Marker &m)
@@ -38,7 +43,7 @@ namespace GameUI {
 	{
 		SetSizeControlFlags(UI::Widget::NO_WIDTH | UI::Widget::NO_HEIGHT);
 		m_markerDot.reset(new Graphics::Drawables::TexturedQuad(
-			context->GetRenderer(), "icons/marker_dot.png"));
+			RendererLocator::getRenderer(), "icons/marker_dot.png"));
 	}
 
 	void LabelOverlay::Draw()
@@ -72,7 +77,7 @@ namespace GameUI {
 		if (m.style == MARKER_NONE) {
 			return;
 		}
-		Graphics::Renderer *r = GetContext()->GetRenderer();
+		Graphics::Renderer *r = RendererLocator::getRenderer();
 		Graphics::Renderer::MatrixTicket saveModelView(r, Graphics::MatrixMode::MODELVIEW);
 		r->Translate(screen_pos.x, screen_pos.y, 0.0f);
 		switch (m.style) {
@@ -85,7 +90,7 @@ namespace GameUI {
 
 	void LabelOverlay::DrawLabelText(const Marker &m, const vector2f &screen_pos)
 	{
-		Graphics::Renderer *r = GetContext()->GetRenderer();
+		Graphics::Renderer *r = RendererLocator::getRenderer();
 		Graphics::Renderer::MatrixTicket saveModelView(r, Graphics::MatrixMode::MODELVIEW);
 
 		vector2f text_size, text_pos = screen_pos;

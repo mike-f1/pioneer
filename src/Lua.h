@@ -4,7 +4,7 @@
 #ifndef _LUA_H
 #define _LUA_H
 
-#include "LuaManager.h"
+class LuaManager;
 
 // home for the global Lua context. here so its shareable between pioneer and
 // modelviewer. probably sucks in the long term

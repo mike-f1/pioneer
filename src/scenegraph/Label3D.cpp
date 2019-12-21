@@ -2,16 +2,18 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "Label3D.h"
+
 #include "NodeVisitor.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 #include "graphics/RenderState.h"
 #include "graphics/VertexArray.h"
 #include "graphics/VertexBuffer.h"
 
 namespace SceneGraph {
 
-	Label3D::Label3D(Graphics::Renderer *r, RefCountedPtr<Text::DistanceFieldFont> font) :
-		Node(r, NODE_TRANSPARENT),
+	Label3D::Label3D(RefCountedPtr<Text::DistanceFieldFont> font) :
+		Node(NODE_TRANSPARENT),
 		m_font(font)
 	{
 		Graphics::MaterialDescriptor matdesc;
@@ -19,7 +21,7 @@ namespace SceneGraph {
 		matdesc.alphaTest = true;
 		matdesc.lighting = true;
 		m_geometry.reset(font->CreateVertexArray());
-		m_material.Reset(r->CreateMaterial(matdesc));
+		m_material.Reset(RendererLocator::getRenderer()->CreateMaterial(matdesc));
 		m_material->texture0 = font->GetTexture();
 		m_material->diffuse = Color::WHITE;
 		m_material->emissive = Color(38, 38, 38);
@@ -27,7 +29,7 @@ namespace SceneGraph {
 
 		Graphics::RenderStateDesc rsd;
 		rsd.depthWrite = false;
-		m_renderState = r->CreateRenderState(rsd);
+		m_renderState = RendererLocator::getRenderer()->CreateRenderState(rsd);
 	}
 
 	Label3D::Label3D(const Label3D &label, NodeCopyCache *cache) :
@@ -69,7 +71,7 @@ namespace SceneGraph {
 			vbd.numVertices = m_geometry->GetNumVerts();
 			vbd.usage = Graphics::BUFFER_USAGE_STATIC;
 
-			m_vbuffer.reset(m_renderer->CreateVertexBuffer(vbd));
+			m_vbuffer.reset(RendererLocator::getRenderer()->CreateVertexBuffer(vbd));
 			m_vbuffer->Populate(*m_geometry);
 		}
 	}
@@ -78,7 +80,7 @@ namespace SceneGraph {
 	{
 		PROFILE_SCOPED()
 		if (m_vbuffer.get()) {
-			Graphics::Renderer *r = GetRenderer();
+			Graphics::Renderer *r = RendererLocator::getRenderer();
 			r->SetTransform(trans);
 			r->DrawBuffer(m_vbuffer.get(), m_renderState, m_material.Get());
 		}

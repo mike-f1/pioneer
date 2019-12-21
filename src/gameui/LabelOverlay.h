@@ -8,7 +8,10 @@
 #include "graphics/Frustum.h"
 #include "text/TextureFont.h"
 #include "ui/Align.h"
-#include "ui/Context.h"
+
+namespace UI {
+	class Context;
+}
 
 namespace GameUI {
 

@@ -4,6 +4,7 @@
 #include "Gui.h"
 
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 
 static const float METERBAR_PADDING = 5.0f;
 static const float METERBAR_BAR_HEIGHT = 8.0f;
@@ -28,7 +29,7 @@ namespace Gui {
 		GetSize(fsize);
 		vector2f size(fsize[0], fsize[1]);
 
-		Graphics::Renderer *r = Gui::Screen::GetRenderer();
+		Graphics::Renderer *r = RendererLocator::getRenderer();
 
 		if (!m_outer)
 			m_outer.reset(new Graphics::Drawables::RoundEdgedRect(r, size, 5.0f, OUTER_COLOUR, Screen::alphaBlendState, false));

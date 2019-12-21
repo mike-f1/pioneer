@@ -20,6 +20,7 @@
 #include "graphics/Graphics.h"
 #include "graphics/Light.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 #include "graphics/Texture.h"
 #include "graphics/TextureBuilder.h"
 #include "graphics/VertexArray.h"
@@ -30,7 +31,6 @@
 #include <sstream>
 
 std::unique_ptr<GameConfig> s_config;
-std::unique_ptr<Graphics::Renderer> s_renderer;
 
 //#define USES_THREADS
 #ifdef USES_THREADS
@@ -96,7 +96,7 @@ void SetupRenderer()
 	videoSettings.useAnisotropicFiltering = true;
 	videoSettings.iconFile = OS::GetIconFilename();
 	videoSettings.title = "Model Compiler";
-	s_renderer.reset(Graphics::Init(videoSettings));
+	RendererLocator::provideRenderer(Graphics::Init(videoSettings));
 
 #ifdef USES_THREADS
 	// get threads up
@@ -121,7 +121,7 @@ void RunCompiler(const std::string &modelName, const std::string &filepath, cons
 	//and then save it into binary
 	std::unique_ptr<SceneGraph::Model> model;
 	try {
-		SceneGraph::Loader ld(s_renderer.get(), true, false);
+		SceneGraph::Loader ld(true, false);
 		model.reset(ld.LoadModel(modelName));
 		//dump warnings
 		for (std::vector<std::string>::const_iterator it = ld.GetLogMessages().begin();
@@ -135,7 +135,7 @@ void RunCompiler(const std::string &modelName, const std::string &filepath, cons
 
 	try {
 		const std::string DataPath = FileSystem::NormalisePath(filepath.substr(0, filepath.size() - 6));
-		SceneGraph::BinaryConverter bc(s_renderer.get());
+		SceneGraph::BinaryConverter bc;
 		bc.Save(modelName, DataPath, model.get(), bInPlace);
 	} catch (const CouldNotOpenFileException &) {
 	} catch (const CouldNotWriteToFileException &) {

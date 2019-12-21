@@ -3,14 +3,15 @@
 
 #include "Image.h"
 #include "FileSystem.h"
-#include "Pi.h"
+
 #include "graphics/TextureBuilder.h"
+#include "graphics/RendererLocator.h"
 
 namespace PiGUI {
 
 	Image::Image(const std::string &filename)
 	{
-		m_texture.Reset(Graphics::TextureBuilder::Model(filename).GetOrCreateTexture(Pi::renderer, "model"));
+		m_texture.Reset(Graphics::TextureBuilder::Model(filename).GetOrCreateTexture(RendererLocator::getRenderer(), "model"));
 	}
 
 	Uint32 Image::GetId()

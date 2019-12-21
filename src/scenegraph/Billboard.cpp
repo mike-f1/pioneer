@@ -9,14 +9,15 @@
 #include "graphics/Material.h"
 #include "graphics/RenderState.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 #include "graphics/Stats.h"
 #include "graphics/VertexArray.h"
 #include "graphics/VertexBuffer.h"
 
 namespace SceneGraph {
 
-	Billboard::Billboard(Graphics::VertexArray &bbVA, Graphics::Renderer *r, float size) :
-		Node(r, NODE_TRANSPARENT),
+	Billboard::Billboard(Graphics::VertexArray &bbVA, float size) :
+		Node(NODE_TRANSPARENT),
 		m_bbVA(bbVA),
 		m_size(size)
 	{

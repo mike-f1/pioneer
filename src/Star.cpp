@@ -3,9 +3,9 @@
 
 #include "Star.h"
 
-#include "Pi.h"
 #include "graphics/RenderState.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 #include "graphics/VertexArray.h"
 #include "graphics/VertexBuffer.h"
 
@@ -39,10 +39,10 @@ void Star::InitStar()
 	Graphics::RenderStateDesc rsd;
 	rsd.blendMode = Graphics::BLEND_ALPHA;
 	rsd.depthWrite = false;
-	m_haloState = Pi::renderer->CreateRenderState(rsd);
+	m_haloState = RendererLocator::getRenderer()->CreateRenderState(rsd);
 }
 
-void Star::BuildHaloBuffer(Graphics::Renderer *renderer, double rad)
+void Star::BuildHaloBuffer(double rad)
 {
 	// build halo vertex buffer
 	Random rand;
@@ -64,12 +64,12 @@ void Star::BuildHaloBuffer(Graphics::Renderer *renderer, double rad)
 	vbd.attrib[1].format = Graphics::ATTRIB_FORMAT_UBYTE4;
 	vbd.numVertices = va.GetNumVerts();
 	vbd.usage = Graphics::BUFFER_USAGE_STATIC;
-	m_haloBuffer.reset(renderer->CreateVertexBuffer(vbd));
+	m_haloBuffer.reset(RendererLocator::getRenderer()->CreateVertexBuffer(vbd));
 
 	m_haloBuffer->Populate(va);
 }
 
-void Star::Render(Graphics::Renderer *renderer, const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform)
+void Star::Render(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform)
 {
 	double rad = GetClipRadius();
 	vector3d fpos = viewCoords;
@@ -92,15 +92,15 @@ void Star::Render(Graphics::Renderer *renderer, const Camera *camera, const vect
 
 	// Generate the halo if we don't have one
 	if (!m_haloBuffer) {
-		BuildHaloBuffer(renderer, rad);
+		BuildHaloBuffer(rad);
 	}
 	// scale the halo by the new radius from it's unit size
-	renderer->SetTransform(trans * matrix4x4d::ScaleMatrix(rad) * rot);
+	RendererLocator::getRenderer()->SetTransform(trans * matrix4x4d::ScaleMatrix(rad) * rot);
 	//render star halo
-	renderer->DrawBuffer(m_haloBuffer.get(), m_haloState, Graphics::vtxColorMaterial, Graphics::TRIANGLE_FAN);
+	RendererLocator::getRenderer()->DrawBuffer(m_haloBuffer.get(), m_haloState, Graphics::vtxColorMaterial, Graphics::TRIANGLE_FAN);
 
 	// the transform will be reset within TerrainBody::Render or it's subsequent calls
-	TerrainBody::Render(renderer, camera, viewCoords, viewTransform);
+	TerrainBody::Render(camera, viewCoords, viewTransform);
 
-	renderer->GetStats().AddToStatCount(Graphics::Stats::STAT_STARS, 1);
+	RendererLocator::getRenderer()->GetStats().AddToStatCount(Graphics::Stats::STAT_STARS, 1);
 }

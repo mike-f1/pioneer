@@ -9,7 +9,6 @@
 #include "graphics/VertexArray.h"
 
 namespace Graphics {
-	class Renderer;
 	class RenderState;
 	class Texture;
 	class Material;
@@ -22,7 +21,7 @@ public:
 	Planet(SystemBody *);
 	Planet(const Json &jsonObj, Space *space);
 
-	virtual void SubRender(Graphics::Renderer *r, const matrix4x4d &viewTran, const vector3d &camPos) override;
+	virtual void SubRender(const matrix4x4d &viewTran, const vector3d &camPos) override;
 
 	void GetAtmosphericState(double dist, double *outPressure, double *outDensity) const;
 	double GetAtmosphereRadius() const { return m_atmosphereRadius; }
@@ -32,8 +31,8 @@ public:
 protected:
 private:
 	void InitParams();
-	void GenerateRings(Graphics::Renderer *renderer);
-	void DrawGasGiantRings(Graphics::Renderer *r, const matrix4x4d &modelView);
+	void GenerateRings();
+	void DrawGasGiantRings(const matrix4x4d &modelView);
 
 	double m_atmosphereRadius;
 	double m_surfaceGravity_g;

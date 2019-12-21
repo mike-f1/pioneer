@@ -5,6 +5,7 @@
 #include "FileSystem.h"
 #include "SDLWrappers.h"
 #include "graphics/TextureBuilder.h"
+#include "graphics/RendererLocator.h"
 
 using namespace UI;
 
@@ -25,12 +26,12 @@ namespace GameUI {
 		FaceParts::PickFaceParts(face, m_seed);
 		FaceParts::BuildFaceImage(faceim.Get(), face);
 
-		m_texture.Reset(Graphics::TextureBuilder(faceim, Graphics::LINEAR_CLAMP, true, true).GetOrCreateTexture(GetContext()->GetRenderer(), std::string("face")));
+		m_texture.Reset(Graphics::TextureBuilder(faceim, Graphics::LINEAR_CLAMP, true, true).GetOrCreateTexture(RendererLocator::getRenderer(), std::string("face")));
 
 		if (!s_material) {
 			Graphics::MaterialDescriptor matDesc;
 			matDesc.textures = 1;
-			s_material.Reset(GetContext()->GetRenderer()->CreateMaterial(matDesc));
+			s_material.Reset(RendererLocator::getRenderer()->CreateMaterial(matDesc));
 		}
 
 		m_preferredSize = UI::Point(FaceParts::FACE_WIDTH, FaceParts::FACE_HEIGHT);
@@ -57,7 +58,7 @@ namespace GameUI {
 
 	void Face::Draw()
 	{
-		Graphics::Renderer *r = GetContext()->GetRenderer();
+		Graphics::Renderer *r = RendererLocator::getRenderer();
 		if (!m_quad) {
 			const Point &offset = GetActiveOffset();
 			const Point &area = GetActiveArea();

@@ -14,7 +14,6 @@
 namespace Graphics {
 	class IndexBuffer;
 	class InstanceBuffer;
-	class Renderer;
 	class RenderState;
 	class VertexBuffer;
 }
@@ -30,7 +29,7 @@ namespace SceneGraph {
 			RefCountedPtr<Graphics::IndexBuffer> indexBuffer;
 			RefCountedPtr<Graphics::Material> material;
 		};
-		StaticGeometry(Graphics::Renderer *r);
+		StaticGeometry();
 		StaticGeometry(const StaticGeometry &, NodeCopyCache *cache = 0);
 		virtual Node *Clone(NodeCopyCache *cache = 0) override;
 		virtual const char *GetTypeName() const override { return "StaticGeometry"; }

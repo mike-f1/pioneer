@@ -6,6 +6,8 @@
 #include "text/TextSupport.h"
 #include "text/TextureFont.h"
 
+#include "graphics/RendererLocator.h"
+
 namespace UI {
 
 	TextEntry::TextEntry(Context *context, const std::string &text) :
@@ -80,7 +82,7 @@ namespace UI {
 
 		if (IsSelected()) {
 			m_lines.SetData(2, &m_cursorVertices[0], Color::WHITE);
-			m_lines.Draw(GetContext()->GetRenderer(), GetContext()->GetSkin().GetAlphaBlendState());
+			m_lines.Draw(RendererLocator::getRenderer(), GetContext()->GetSkin().GetAlphaBlendState());
 		}
 	}
 

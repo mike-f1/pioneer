@@ -11,7 +11,6 @@
 #include "GameSaveError.h"
 #include "Json.h"
 #include "LuaEvent.h"
-#include "Pi.h"
 #include "Planet.h"
 #include "Sfx.h"
 #include "Ship.h"
@@ -22,6 +21,7 @@
 #include "graphics/Graphics.h"
 #include "graphics/Material.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 #include "graphics/RenderState.h"
 #include "graphics/TextureBuilder.h"
 #include "graphics/VertexArray.h"
@@ -37,10 +37,10 @@ void Projectile::BuildModel()
 	//set up materials
 	Graphics::MaterialDescriptor desc;
 	desc.textures = 1;
-	s_sideMat.reset(Pi::renderer->CreateMaterial(desc));
-	s_glowMat.reset(Pi::renderer->CreateMaterial(desc));
-	s_sideMat->texture0 = Graphics::TextureBuilder::Billboard("textures/projectile_l.dds").GetOrCreateTexture(Pi::renderer, "billboard");
-	s_glowMat->texture0 = Graphics::TextureBuilder::Billboard("textures/projectile_w.dds").GetOrCreateTexture(Pi::renderer, "billboard");
+	s_sideMat.reset(RendererLocator::getRenderer()->CreateMaterial(desc));
+	s_glowMat.reset(RendererLocator::getRenderer()->CreateMaterial(desc));
+	s_sideMat->texture0 = Graphics::TextureBuilder::Billboard("textures/projectile_l.dds").GetOrCreateTexture(RendererLocator::getRenderer(), "billboard");
+	s_glowMat->texture0 = Graphics::TextureBuilder::Billboard("textures/projectile_w.dds").GetOrCreateTexture(RendererLocator::getRenderer(), "billboard");
 
 	//zero at projectile position
 	//+x down
@@ -99,7 +99,7 @@ void Projectile::BuildModel()
 	rsd.blendMode = Graphics::BLEND_ALPHA_ONE;
 	rsd.depthWrite = false;
 	rsd.cullMode = Graphics::CULL_NONE;
-	s_renderState = Pi::renderer->CreateRenderState(rsd);
+	s_renderState = RendererLocator::getRenderer()->CreateRenderState(rsd);
 }
 
 void Projectile::FreeModel()
@@ -267,7 +267,7 @@ void Projectile::StaticUpdate(const float timeStep)
 	}
 }
 
-void Projectile::Render(Graphics::Renderer *renderer, const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform)
+void Projectile::Render(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform)
 {
 	PROFILE_SCOPED()
 	vector3d _from = viewTransform * GetInterpPosition();
@@ -303,7 +303,7 @@ void Projectile::Render(Graphics::Renderer *renderer, const Camera *camera, cons
 	const float length = m_length + dist_scale;
 	const float width = m_width + dist_scale;
 
-	renderer->SetTransform(m * matrix4x4f::ScaleMatrix(width, width, length));
+	RendererLocator::getRenderer()->SetTransform(m * matrix4x4f::ScaleMatrix(width, width, length));
 
 	Color color = m_color;
 	// fade them out as they age so they don't suddenly disappear
@@ -315,7 +315,7 @@ void Projectile::Render(Graphics::Renderer *renderer, const Camera *camera, cons
 
 	if (color.a > 3) {
 		s_sideMat->diffuse = color;
-		renderer->DrawTriangles(s_sideVerts.get(), s_renderState, s_sideMat.get());
+		RendererLocator::getRenderer()->DrawTriangles(s_sideVerts.get(), s_renderState, s_sideMat.get());
 	}
 
 	// fade out glow quads when viewing nearly edge on
@@ -325,7 +325,7 @@ void Projectile::Render(Graphics::Renderer *renderer, const Camera *camera, cons
 
 	if (color.a > 3) {
 		s_glowMat->diffuse = color;
-		renderer->DrawTriangles(s_glowVerts.get(), s_renderState, s_glowMat.get());
+		RendererLocator::getRenderer()->DrawTriangles(s_glowVerts.get(), s_renderState, s_glowMat.get());
 	}
 }
 

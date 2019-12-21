@@ -8,12 +8,13 @@
 #include "GameSaveError.h"
 #include "Json.h"
 #include "Lang.h"
-#include "Pi.h"
+#include "Pi.h" // <- For GameTickAlpha
 #include "Player.h"
 #include "Ship.h"
 #include "Space.h"
 #include "graphics/RenderState.h"
 #include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
 #include "graphics/VertexArray.h"
 #include "perlin.h"
 
@@ -155,7 +156,7 @@ void HyperspaceCloud::UpdateInterpTransform(double alpha)
 	m_interpPos = alpha * GetPosition() + (1.0 - alpha) * oldPos;
 }
 
-void HyperspaceCloud::Render(Renderer *renderer, const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform)
+void HyperspaceCloud::Render(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform)
 {
 	if (m_isBeingKilled)
 		return;
@@ -168,7 +169,7 @@ void HyperspaceCloud::Render(Renderer *renderer, const Camera *camera, const vec
 	vector3d xaxis = vector3d(0, 1, 0).Cross(zaxis).Normalized();
 	vector3d yaxis = zaxis.Cross(xaxis);
 	matrix4x4d rot = matrix4x4d::MakeRotMatrix(xaxis, yaxis, zaxis).Inverse();
-	renderer->SetTransform(trans * rot);
+	RendererLocator::getRenderer()->SetTransform(trans * rot);
 
 	// precise to the rendered frame (better than PHYSICS_HZ granularity)
 	const double preciseTime = GameLocator::getGame()->GetTime() + Pi::GetGameTickAlpha() * GameLocator::getGame()->GetTimeStep();
@@ -180,7 +181,7 @@ void HyperspaceCloud::Render(Renderer *renderer, const Camera *camera, const vec
 	Color outerColor = m_isArrival ? Color::BLUE : Color::RED;
 	outerColor.a = 0;
 	make_circle_thing(*m_graphic.vertices.get(), radius, Color::WHITE, outerColor);
-	renderer->DrawTriangles(m_graphic.vertices.get(), m_graphic.renderState, m_graphic.material.get(), TRIANGLE_FAN);
+	RendererLocator::getRenderer()->DrawTriangles(m_graphic.vertices.get(), m_graphic.renderState, m_graphic.material.get(), TRIANGLE_FAN);
 }
 
 void HyperspaceCloud::InitGraphics()
@@ -189,10 +190,10 @@ void HyperspaceCloud::InitGraphics()
 
 	Graphics::MaterialDescriptor desc;
 	desc.vertexColors = true;
-	m_graphic.material.reset(Pi::renderer->CreateMaterial(desc));
+	m_graphic.material.reset(RendererLocator::getRenderer()->CreateMaterial(desc));
 
 	Graphics::RenderStateDesc rsd;
 	rsd.blendMode = BLEND_ALPHA_ONE;
 	rsd.depthWrite = false;
-	m_graphic.renderState = Pi::renderer->CreateRenderState(rsd);
+	m_graphic.renderState = RendererLocator::getRenderer()->CreateRenderState(rsd);
 }

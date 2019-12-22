@@ -11,7 +11,6 @@
 #include "GameConfSingleton.h"
 #include "GameLocator.h"
 #include "InGameViews.h"
-#include "Intro.h"
 #include "KeyBindings.h"
 #include "Lang.h"
 #include "LuaConstants.h"
@@ -678,36 +677,6 @@ static int l_engine_set_gpu_jobs_enabled(lua_State *l)
 	return 0;
 }
 
-static int l_engine_is_intro_zooming(lua_State *l)
-{
-	Intro *intro = dynamic_cast<Intro *>(Pi::GetCutscene());
-	if (intro) {
-		LuaPush(l, intro->isZooming());
-		return 1;
-	} else {
-		LuaPush(l, false);
-		return 1;
-	}
-}
-
-static int l_engine_get_intro_current_model_name(lua_State *l)
-{
-	Intro *intro = dynamic_cast<Intro *>(Pi::GetCutscene());
-	if (intro) {
-		SceneGraph::Model *m = intro->getCurrentModel();
-		if (m) {
-			LuaPush(l, m->GetName());
-			return 1;
-		} else {
-			lua_pushnil(l);
-			return 1;
-		}
-	} else {
-		lua_pushnil(l);
-		return 1;
-	}
-}
-
 /*
  * Method: ShipSpaceToScreenSpace
  *
@@ -1170,9 +1139,6 @@ void LuaEngine::Register()
 		{ "OpenBrowseUserFolder", l_browse_user_folders },
 
 		{ "GetModel", l_engine_get_model },
-
-		{ "IsIntroZooming", l_engine_is_intro_zooming },
-		{ "GetIntroCurrentModelName", l_engine_get_intro_current_model_name },
 
 		{ "GetSectorMapZoomLevel", l_engine_get_sector_map_zoom_level },
 		{ "SectorMapZoomIn", l_engine_sector_map_zoom_in },

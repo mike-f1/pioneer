@@ -18,12 +18,17 @@ namespace PiGUI {
 		{
 			auto *obj = LuaObject<ModelSpinner>::CheckFromLua(1);
 			const std::string name(luaL_checkstring(l, 2));
-			SceneGraph::ModelSkin *skin = LuaObject<SceneGraph::ModelSkin>::CheckFromLua(3);
-			unsigned int pattern = 0;
-			if (lua_gettop(l) > 3 && !lua_isnoneornil(l, 4))
-				pattern = luaL_checkinteger(l, 4) - 1; // Lua counts from 1
 			SceneGraph::Model *model = ModelCache::FindModel(name);
-			obj->SetModel(model, *skin, pattern);
+
+			SceneGraph::ModelSkin *skin = nullptr;
+			if (lua_gettop(l) > 2 && !lua_isnoneornil(l, 3)) {
+				skin = LuaObject<SceneGraph::ModelSkin>::CheckFromLua(3);
+			}
+			unsigned int pattern = 0;
+			if (lua_gettop(l) > 3 && !lua_isnoneornil(l, 4)) {
+				pattern = luaL_checkinteger(l, 4) - 1; // Lua counts from 1
+			}
+			obj->SetModel(model, skin, pattern);
 
 			return 0;
 		}

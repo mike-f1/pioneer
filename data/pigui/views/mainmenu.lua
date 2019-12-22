@@ -11,11 +11,17 @@ local Format = import("Format")
 local ui = import('pigui/pigui.lua')
 local Event = import('Event')
 local Lang = import("Lang")
+local ModelSpinner = import("PiGui.Modules.ModelSpinner")
+
 local lc = Lang.GetResource("core")
 local lui = Lang.GetResource("ui-core")
 local qlc = Lang.GetResource("quitconfirmation-core")
 local elc = Lang.GetResource("equipment-core")
 local clc = Lang.GetResource("commodity")
+
+local modelSpinner = ModelSpinner()
+local cachedShip = nil
+local cachedPattern = nil
 
 local cargo = Equipment.cargo
 local misc = Equipment.misc
@@ -67,6 +73,35 @@ local startLocations = {
 		{misc.radar,1},
 		{cargo.hydrogen,2}}}
 }
+
+local function shipSpinner()
+	local spinnerWidth = _OLD_LAYOUT and ui.getColumnWidth() or ui.getContentRegion().x
+	modelSpinner:setSize(Vector2(spinnerWidth, spinnerWidth / 1.5))
+
+--	local player = Game.player
+	local shipDef = ShipDef["kanara"]
+
+	if shipDef.modelName ~= cachedShip then
+		cachedShip = shipDef.modelName
+		cachedPattern = 1
+		modelSpinner:setModel(cachedShip)
+	end
+
+	ui.group(function ()
+		local font = ui.fonts.orbiteer.large
+		ui.withFont(font.name, font.size, function()
+			ui.text(shipDef.name)
+			ui.sameLine()
+			ui.pushItemWidth(-1.0)
+			local entry, apply = ui.inputText("##ShipNameEntry", shipDef.modelName, ui.InputTextFlags {"EnterReturnsTrue"})
+			ui.popItemWidth()
+
+			if (apply) then player:SetShipName(entry) end
+		end)
+
+		modelSpinner:draw()
+	end)
+end
 
 local function dialogTextButton(label, enabled, callback)
 	local bgcolor = enabled and colors.buttonBlue or colors.grey
@@ -168,6 +203,8 @@ local function showMainMenu()
 			ui.withFont("orbiteer",36 * (ui.screenHeight/1200),function() ui.text("Pioneer") end)
 		end)
 	end)
+	shipSpinner()
+--[[
 	if Engine.IsIntroZooming() then
 		ui.setNextWindowPos(Vector2(0,0),'Always')
 		ui.setNextWindowSize(Vector2(ui.screenWidth, ui.screenHeight), 'Always')
@@ -184,6 +221,8 @@ local function showMainMenu()
 			end)
 		end)
 	end
+--]]
+	
 	local build_text = Engine.version
 	ui.withFont("orbiteer", 16 * (ui.screenHeight/1200),
 							function()

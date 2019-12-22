@@ -21,7 +21,7 @@ local clc = Lang.GetResource("commodity")
 
 local modelSpinner = ModelSpinner()
 local cachedShip = nil
-local cachedPattern = nil
+local cachedTime = 0
 
 local cargo = Equipment.cargo
 local misc = Equipment.misc
@@ -37,6 +37,7 @@ local icons = ui.theme.icons
 local mainButtonSize = Vector2(400,46) * (ui.screenHeight / 1200)
 local dialogButtonSize = Vector2(150,46) * (ui.screenHeight / 1200)
 local mainButtonFontSize = 24 * (ui.screenHeight / 1200)
+local spinnerWidth = 800 * (ui.screenHeight / 1200)
 
 local showQuitConfirm = false
 local quitConfirmMsg
@@ -75,32 +76,42 @@ local startLocations = {
 }
 
 local function shipSpinner()
-	local spinnerWidth = _OLD_LAYOUT and ui.getColumnWidth() or ui.getContentRegion().x
-	modelSpinner:setSize(Vector2(spinnerWidth, spinnerWidth / 1.5))
-
---	local player = Game.player
-	local shipDef = ShipDef["kanara"]
-
-	if shipDef.modelName ~= cachedShip then
-		cachedShip = shipDef.modelName
-		cachedPattern = 1
-		modelSpinner:setModel(cachedShip)
+	if cachedShip == nil then
+		cachedShip = modelSpinner:setRandomModel()
 	end
 
-	ui.group(function ()
-		local font = ui.fonts.orbiteer.large
-		ui.withFont(font.name, font.size, function()
-			ui.text(shipDef.name)
-			ui.sameLine()
-			ui.pushItemWidth(-1.0)
-			local entry, apply = ui.inputText("##ShipNameEntry", shipDef.modelName, ui.InputTextFlags {"EnterReturnsTrue"})
-			ui.popItemWidth()
+	-- TODO: Need a (better) way to handle time during intro
+	local time = Engine.ticks - cachedTime
+	local zooming = false
 
-			if (apply) then player:SetShipName(entry) end
+	if time >= 12000 then
+		cachedTime = Engine.ticks
+		cachedShip = modelSpinner:setRandomModel()
+	end
+
+	if time <= 3000 then
+		-- Zoom in:
+		modelSpinner:setSize(Vector2(spinnerWidth, spinnerWidth / 1.5) * (time + 10) / 3000)
+		zooming = true
+	end
+
+	if time >= 9000 then
+		-- Zoom out:
+		modelSpinner:setSize(Vector2(spinnerWidth, spinnerWidth / 1.5) * (12000 - time + 10) / 3000 )
+		zooming = true
+	end
+
+	modelSpinner:draw()
+	if not zooming then
+		ui.group(function ()
+			local font = ui.fonts.orbiteer.large
+			ui.withFont(font.name, font.size, function()
+				ui.text(cachedShip)
+				ui.sameLine()
+				ui.pushItemWidth(-1.0)
+			end)
 		end)
-
-		modelSpinner:draw()
-	end)
+	end
 end
 
 local function dialogTextButton(label, enabled, callback)
@@ -200,29 +211,16 @@ local function showMainMenu()
 	ui.setNextWindowPos(Vector2(110,65),'Always')
 	ui.withStyleColors({["WindowBg"]=colors.transparent}, function()
 		ui.window("headingWindow", {"NoTitleBar","NoResize","NoFocusOnAppearing","NoBringToFrontOnFocus","AlwaysAutoResize"}, function()
-			ui.withFont("orbiteer",36 * (ui.screenHeight/1200),function() ui.text("Pioneer") end)
+			ui.withFont("orbiteer", 36 * (ui.screenHeight/1200),function() ui.text("Pioneer") end)
 		end)
 	end)
-	shipSpinner()
---[[
-	if Engine.IsIntroZooming() then
-		ui.setNextWindowPos(Vector2(0,0),'Always')
-		ui.setNextWindowSize(Vector2(ui.screenWidth, ui.screenHeight), 'Always')
-		ui.withStyleColors({["WindowBg"]=colors.transparent}, function()
-			ui.window("shipinfoWindow", {"NoTitleBar","NoResize","NoFocusOnAppearing","NoBringToFrontOnFocus","AlwaysAutoResize"}, function()
-				local mn = Engine.GetIntroCurrentModelName()
-				if mn then
-					local sd = ShipDef[mn]
-					if sd then
-						ui.addFancyText(Vector2(ui.screenWidth / 3, ui.screenHeight / 5.0 * 4), ui.anchor.center, ui.anchor.bottom, {{text=sd.name, color=colors.white, font=orbiteer.medlarge}}, colors.transparent)
-						ui.addFancyText(Vector2(ui.screenWidth / 3, ui.screenHeight / 5.0 * 4.02), ui.anchor.center, ui.anchor.top, {{text=lui[sd.shipClass:upper()], color=colors.white, font=orbiteer.medium}}, colors.transparent)
-					end
-				end
-			end)
+	ui.setNextWindowPos(Vector2(110,120),'Always')
+	ui.withStyleColors({["WindowBg"]=colors.transparent}, function()
+		ui.window("modelSpinnerWindow", {"NoTitleBar","NoResize", "AlwaysAutoResize"}, function()
+			shipSpinner()
 		end)
-	end
---]]
-	
+	end)
+
 	local build_text = Engine.version
 	ui.withFont("orbiteer", 16 * (ui.screenHeight/1200),
 							function()

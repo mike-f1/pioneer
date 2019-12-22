@@ -17,7 +17,9 @@
 using namespace PiGUI;
 
 ModelSpinner::ModelSpinner() :
-	m_rot(vector2f(DEG2RAD(-15.0), DEG2RAD(180.0)))
+	m_rot(vector2f(DEG2RAD(-15.0), DEG2RAD(180.0))),
+	m_pauseTime(0.),
+	m_wantInteraction(true)
 {
 	Color lc(Color::WHITE);
 	m_light.SetDiffuse(lc);
@@ -52,6 +54,8 @@ void ModelSpinner::SetModel(SceneGraph::Model *model, SceneGraph::ModelSkin *ski
 	if (skin) {
 		skin->Apply(m_model.get());
 	} else {
+		// Random skin, which means also we are in "intro" and we should stop interaction:
+		m_wantInteraction = false;
 		skin = new SceneGraph::ModelSkin();
 		skin->SetRandomColors(RandomSingleton::getInstance());
 		skin->Apply(m_model.get());
@@ -122,7 +126,7 @@ void ModelSpinner::DrawPiGui()
 	}
 
 	const ImGuiIO &io = ImGui::GetIO();
-	if (ImGui::IsItemHovered(ImGuiHoveredFlags_None) && ImGui::IsMouseDown(0)) {
+	if (m_wantInteraction && ImGui::IsItemHovered(ImGuiHoveredFlags_None) && ImGui::IsMouseDown(0)) {
 		m_rot.x -= 0.005 * io.MouseDelta.y;
 		m_rot.y -= 0.005 * io.MouseDelta.x;
 		m_pauseTime = 1.0f;

@@ -76,6 +76,10 @@ namespace PiGUI {
 		// frame while visible.
 		float m_pauseTime;
 
+		// HACK: Actually this class is used both in intro and in info view,
+		// so there's needs to avoid interation when in intro:
+		bool m_wantInteraction;
+
 		// The rotation of the model.
 		vector2f m_rot;
 	};

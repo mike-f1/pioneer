@@ -93,6 +93,8 @@ struct ShipType {
 		else
 			return &(*t).second;
 	}
+
+	static const std::string GetRandom();
 };
 
 #endif /* _SHIPTYPE_H */

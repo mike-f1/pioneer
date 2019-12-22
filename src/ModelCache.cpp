@@ -10,8 +10,14 @@
 
 ModelCache::ModelMap ModelCache::s_models;
 
-void ModelCache::Init()
+void ModelCache::Init(const ShipType::t_mapTypes &types)
 {
+	for (auto const &type : types) {
+		// Skim only ships or it doesn't start as it search a 'missile_guided' which doesn't exist
+		if (type.second.tag == ShipType::Tag::TAG_SHIP) {
+			findmodel(type.first);
+		}
+	}
 }
 
 SceneGraph::Model *ModelCache::findmodel(const std::string &name)
@@ -26,7 +32,7 @@ SceneGraph::Model *ModelCache::findmodel(const std::string &name)
 			s_models[name] = m;
 			return m;
 		} catch (SceneGraph::LoadingError &) {
-			throw ModelNotFoundException();
+			throw ModelNotFoundException(name);
 		}
 	}
 	return it->second;

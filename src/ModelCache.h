@@ -8,6 +8,8 @@
 #include <stdexcept>
 #include <string>
 
+#include "ShipType.h"
+
 namespace SceneGraph {
 	class Model;
 }
@@ -23,10 +25,11 @@ public:
 	~ModelCache() = delete;
 
 	struct ModelNotFoundException : public std::runtime_error {
-		ModelNotFoundException() :
-			std::runtime_error("Could not find model") {}
+		ModelNotFoundException(std::string name) :
+			std::runtime_error("Could not find model '" + name + "'\n") {}
 	};
-	static void Init();
+
+	static void Init(const ShipType::t_mapTypes &types);
 	static SceneGraph::Model *FindModel(const std::string &name, bool allowPlaceholder = true);
 
 private:

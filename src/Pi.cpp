@@ -263,12 +263,6 @@ void Pi::SaveInGameViews(Json &rootNode)
 	m_inGameViews->SaveToJson(rootNode);
 }
 
-//static
-Cutscene *Pi::GetCutscene()
-{
-	return m_cutscene.get();
-}
-
 static void LuaInit()
 {
 	PROFILE_SCOPED()
@@ -332,7 +326,7 @@ static void LuaInit()
 	pi_lua_import_recursive(l, "pigui/views");
 	pi_lua_import_recursive(l, "modules");
 
-	Pi::luaNameGen = new LuaNameGen(Lua::manager);
+	Pi::luaNameGen = new LuaNameGen();
 }
 
 static void LuaUninit()
@@ -748,6 +742,23 @@ void Pi::HandleEscKey()
 	}
 }
 
+static void DebugSpawnShip(Ship *ship)
+{
+	lua_State *l = Lua::manager->GetLuaState();
+	pi_lua_import(l, "Equipment");
+	LuaTable equip(l, -1);
+	LuaObject<Ship>::CallMethod<>(ship, "AddEquip", equip.Sub("laser").Sub("pulsecannon_dual_1mw"));
+	LuaObject<Ship>::CallMethod<>(ship, "AddEquip", equip.Sub("misc").Sub("laser_cooling_booster"));
+	LuaObject<Ship>::CallMethod<>(ship, "AddEquip", equip.Sub("misc").Sub("atmospheric_shielding"));
+	lua_pop(l, 5);
+	ship->SetFrame(GameLocator::getGame()->GetPlayer()->GetFrame());
+	vector3d dir = -GameLocator::getGame()->GetPlayer()->GetOrient().VectorZ();
+	ship->SetPosition(GameLocator::getGame()->GetPlayer()->GetPosition() + 100.0 * dir);
+	ship->SetVelocity(GameLocator::getGame()->GetPlayer()->GetVelocity());
+	ship->UpdateEquipStats();
+	GameLocator::getGame()->GetSpace()->AddBody(ship);
+}
+
 void Pi::HandleKeyDown(SDL_Keysym *key)
 {
 	if (key->sym == SDLK_ESCAPE) {
@@ -778,7 +789,7 @@ void Pi::HandleKeyDown(SDL_Keysym *key)
 			break;
 		}
 
-		case SDLK_SCROLLLOCK: // toggle video recording
+		case SDLK_KP_DIVIDE: // toggle video recording
 			Pi::isRecordingVideo = !Pi::isRecordingVideo;
 			if (Pi::isRecordingVideo) {
 				char videoName[256];
@@ -818,6 +829,7 @@ void Pi::HandleKeyDown(SDL_Keysym *key)
 			Pi::showDebugInfo = !Pi::showDebugInfo;
 			break;
 
+#endif /* DEVKEYS */
 #ifdef PIONEER_PROFILER
 		case SDLK_p: // alert it that we want to profile
 			if (input.KeyState(SDLK_LSHIFT) || input.KeyState(SDLK_RSHIFT))
@@ -828,20 +840,16 @@ void Pi::HandleKeyDown(SDL_Keysym *key)
 			}
 			break;
 #endif
-
+#if WITH_DEVKEYS
 		case SDLK_F12: {
 			if (GameLocator::getGame()) {
 				vector3d dir = -GameLocator::getGame()->GetPlayer()->GetOrient().VectorZ();
 				/* add test object */
 				if (input.KeyState(SDLK_RSHIFT)) {
-					Missile *missile =
-						new Missile(ShipType::MISSILE_GUIDED, GameLocator::getGame()->GetPlayer());
-					missile->SetOrient(GameLocator::getGame()->GetPlayer()->GetOrient());
-					missile->SetFrame(GameLocator::getGame()->GetPlayer()->GetFrame());
-					missile->SetPosition(GameLocator::getGame()->GetPlayer()->GetPosition() + 50.0 * dir);
-					missile->SetVelocity(GameLocator::getGame()->GetPlayer()->GetVelocity());
-					GameLocator::getGame()->GetSpace()->AddBody(missile);
-					missile->AIKamikaze(GameLocator::getGame()->GetPlayer()->GetCombatTarget());
+					Missile *missile = GameLocator::getGame()->GetPlayer()->SpawnMissile(ShipType::MISSILE_GUIDED, 1000);
+					if (GameLocator::getGame()->GetPlayer()->GetCombatTarget()) {
+						missile->AIKamikaze(GameLocator::getGame()->GetPlayer()->GetCombatTarget());
+					}
 				} else if (input.KeyState(SDLK_LSHIFT)) {
 					SpaceStation *s = static_cast<SpaceStation *>(GameLocator::getGame()->GetPlayer()->GetNavTarget());
 					if (s) {
@@ -850,10 +858,9 @@ void Pi::HandleKeyDown(SDL_Keysym *key)
 						if (port != -1) {
 							Output("Putting ship into station\n");
 							// Make police ship intent on killing the player
+							DebugSpawnShip(ship);
 							ship->AIKill(GameLocator::getGame()->GetPlayer());
-							ship->SetFrame(GameLocator::getGame()->GetPlayer()->GetFrame());
 							ship->SetDockedWith(s, port);
-							GameLocator::getGame()->GetSpace()->AddBody(ship);
 						} else {
 							delete ship;
 							Output("No docking ports free dude\n");
@@ -863,24 +870,13 @@ void Pi::HandleKeyDown(SDL_Keysym *key)
 					}
 				} else {
 					Ship *ship = new Ship(ShipType::POLICE);
+					DebugSpawnShip(ship);
 					if (!input.KeyState(SDLK_LALT)) { //Left ALT = no AI
 						if (!input.KeyState(SDLK_LCTRL))
 							ship->AIFlyTo(GameLocator::getGame()->GetPlayer()); // a less lethal option
 						else
 							ship->AIKill(GameLocator::getGame()->GetPlayer()); // a really lethal option!
 					}
-					lua_State *l = Lua::manager->GetLuaState();
-					pi_lua_import(l, "Equipment");
-					LuaTable equip(l, -1);
-					LuaObject<Ship>::CallMethod<>(ship, "AddEquip", equip.Sub("laser").Sub("pulsecannon_dual_1mw"));
-					LuaObject<Ship>::CallMethod<>(ship, "AddEquip", equip.Sub("misc").Sub("laser_cooling_booster"));
-					LuaObject<Ship>::CallMethod<>(ship, "AddEquip", equip.Sub("misc").Sub("atmospheric_shielding"));
-					lua_pop(l, 5);
-					ship->SetFrame(GameLocator::getGame()->GetPlayer()->GetFrame());
-					ship->SetPosition(GameLocator::getGame()->GetPlayer()->GetPosition() + 100.0 * dir);
-					ship->SetVelocity(GameLocator::getGame()->GetPlayer()->GetVelocity());
-					ship->UpdateEquipStats();
-					GameLocator::getGame()->GetSpace()->AddBody(ship);
 				}
 			}
 			break;
@@ -890,13 +886,13 @@ void Pi::HandleKeyDown(SDL_Keysym *key)
 		case SDLK_F10:
 			m_inGameViews->SetView(ViewType::OBJECT);
 			break;
-#endif
+#endif /* WITH_OBJECTVIEWER */
 		case SDLK_F11:
 			// XXX only works on X11
 			//SDL_WM_ToggleFullScreen(Pi::scrSurface);
 #if WITH_DEVKEYS
 			RendererLocator::getRenderer()->ReloadShaders();
-#endif
+#endif /* DEVKEYS */
 			break;
 		case SDLK_F9: // Quicksave
 		{
@@ -1196,11 +1192,6 @@ void Pi::EndGame()
 void Pi::MainLoop()
 {
 	double time_player_died = 0;
-#ifdef MAKING_VIDEO
-	Uint32 last_screendump = SDL_GetTicks();
-	int dumpnum = 0;
-#endif /* MAKING_VIDEO */
-
 #if WITH_DEVKEYS
 	Uint32 last_stats = SDL_GetTicks();
 	int frame_stat = 0;
@@ -1427,6 +1418,7 @@ void Pi::MainLoop()
 		Pi::statSceneTris = 0;
 		Pi::statNumPatches = 0;
 
+#endif // WITH_DEVKEYS
 #ifdef PIONEER_PROFILER
 		const Uint32 profTicks = SDL_GetTicks();
 		if (Pi::doProfileOne || (Pi::doProfileSlow && (profTicks - newTicks) > 100)) { // slow: < ~10fps
@@ -1434,17 +1426,7 @@ void Pi::MainLoop()
 			Profiler::dumphtml(profilerPath.c_str());
 			Pi::doProfileOne = false;
 		}
-#endif
-
-#endif
-
-#ifdef MAKING_VIDEO
-		if (SDL_GetTicks() - last_screendump > 50) {
-			last_screendump = SDL_GetTicks();
-			std::string fname = stringf(Lang::SCREENSHOT_FILENAME_TEMPLATE, formatarg("index", dumpnum++));
-			Screendump(fname.c_str(), Graphics::GetScreenWidth(), Graphics::GetScreenHeight());
-		}
-#endif /* MAKING_VIDEO */
+#endif // PIONEER_PROFILER
 
 		if (isRecordingVideo && (Pi::ffmpegFile != nullptr)) {
 			Graphics::ScreendumpState sd;

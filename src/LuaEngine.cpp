@@ -1,18 +1,16 @@
 // Copyright © 2008-2019 Pioneer Developers. See AUTHORS.txt for details
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
+#include "buildopts.h"
+
 #include "LuaEngine.h"
 
 #include "EnumStrings.h"
-#include "FileSystem.h"
-#include "FloatComparison.h"
 #include "Game.h"
 #include "GameConfig.h"
 #include "GameConfSingleton.h"
 #include "GameLocator.h"
 #include "InGameViews.h"
-#include "KeyBindings.h"
-#include "Lang.h"
 #include "LuaConstants.h"
 #include "LuaManager.h"
 #include "LuaObject.h"
@@ -29,12 +27,9 @@
 #include "RandomSingleton.h"
 #include "SectorView.h"
 #include "WorldView.h"
-#include "buildopts.h"
 #include "galaxy/Faction.h"
-#include "graphics/Graphics.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
-#include "scenegraph/Model.h"
 #include "sound/Sound.h"
 #include "sound/SoundMusic.h"
 #include "ui/Context.h"
@@ -484,7 +479,7 @@ static int l_engine_set_cockpit_enabled(lua_State *l)
 	const bool enabled = lua_toboolean(l, 1);
 	GameConfSingleton::getInstance().SetInt("EnableCockpit", (enabled ? 1 : 0));
 	GameConfSingleton::getInstance().Save();
-	if (GameLocator::getGame()->GetPlayer()) {
+	if (GameLocator::getGame()) {
 		GameLocator::getGame()->GetPlayer()->InitCockpit();
 		if (enabled) GameLocator::getGame()->GetPlayer()->OnCockpitActivated();
 	}

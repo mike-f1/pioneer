@@ -83,8 +83,6 @@ public:
 	static void NewInGameViews(InGameViews *newInGameViews);
 	static void SaveInGameViews(Json &rootNode);
 
-	static Cutscene *GetCutscene();
-
 	static RefCountedPtr<UI::Context> ui;
 	static RefCountedPtr<PiGui> pigui;
 

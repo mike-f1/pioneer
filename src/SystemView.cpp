@@ -9,6 +9,7 @@
 #include "GameLocator.h"
 #include "GameLog.h"
 #include "InGameViews.h"
+#include "InGameViewsLocator.h"
 #include "Lang.h"
 #include "LuaObject.h"
 #include "Pi.h"
@@ -685,7 +686,7 @@ void SystemView::Draw3D()
 	RendererLocator::getRenderer()->SetPerspectiveProjection(50.f, RendererLocator::getRenderer()->GetDisplayAspect(), 1.f, 1000.f);
 	RendererLocator::getRenderer()->ClearScreen();
 
-	SystemPath path = Pi::GetInGameViews()->GetSectorView()->GetSelected().SystemOnly();
+	SystemPath path = InGameViewsLocator::getInGameViews()->GetSectorView()->GetSelected().SystemOnly();
 	if (m_system) {
 		if (m_system->GetUnexplored() != m_unexplored || !m_system->GetPath().IsSameSystem(path)) {
 			m_system.Reset();
@@ -827,7 +828,7 @@ void SystemView::Update(const float frameTime)
 
 void SystemView::MouseWheel(bool up)
 {
-	if (Pi::GetInGameViews()->IsSystemView()) {
+	if (InGameViewsLocator::getInGameViews()->IsSystemView()) {
 		if (!up)
 			m_zoomTo *= ((ZOOM_OUT_SPEED - 1) * WHEEL_SENSITIVITY + 1) / Pi::input.GetMoveSpeedShiftModifier();
 		else
@@ -838,10 +839,10 @@ void SystemView::MouseWheel(bool up)
 void SystemView::RefreshShips()
 {
 	m_contacts.clear();
-	if (!Pi::GetInGameViews()) return;
-	if (!Pi::GetInGameViews()->GetSectorView()) return;
+	if (!InGameViewsLocator::getInGameViews()) return;
+	if (!InGameViewsLocator::getInGameViews()->GetSectorView()) return;
 
-	SystemPath sectorPath = Pi::GetInGameViews()->GetSectorView()->GetSelected().SystemOnly();
+	SystemPath sectorPath = InGameViewsLocator::getInGameViews()->GetSectorView()->GetSelected().SystemOnly();
 	if (!GameLocator::getGame()->GetSpace()->GetStarSystem()->GetPath().IsSameSystem(sectorPath)) {
 		return;
 	}

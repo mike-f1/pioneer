@@ -6,7 +6,7 @@
 #include "CameraController.h"
 #include "Easing.h"
 #include "InGameViews.h"
-#include "Pi.h"
+#include "InGameViewsLocator.h"
 #include "Player.h"
 #include "WorldView.h"
 #include "graphics/Renderer.h"
@@ -44,7 +44,8 @@ void ShipCockpit::Render(const Camera *camera, const vector3d &viewCoords, const
 
 inline void ShipCockpit::resetInternalCameraController()
 {
-	m_icc = static_cast<InternalCameraController *>(Pi::GetInGameViews()->GetWorldView()->shipView.GetCameraController());
+	m_icc = static_cast<InternalCameraController *>(InGameViewsLocator::getInGameViews()
+		->GetWorldView()->shipView.GetCameraController());
 }
 
 void ShipCockpit::Update(const Player *player, float timeStep)

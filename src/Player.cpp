@@ -11,12 +11,12 @@
 #include "GameLog.h"
 #include "HyperspaceCloud.h"
 #include "InGameViews.h"
+#include "InGameViewsLocator.h"
 #include "KeyBindings.h"
 #include "Lang.h"
 #include "LuaObject.h"
 #include "ModelCache.h"
 #include "Orbit.h"
-#include "Pi.h"
 #include "Random.h"
 #include "RandomSingleton.h"
 #include "SectorView.h"
@@ -222,7 +222,7 @@ void Player::OnEnterSystem()
 {
 	m_controller->SetFlightControlState(CONTROL_MANUAL);
 	//XXX don't call sectorview from here, use signals instead
-	Pi::GetInGameViews()->GetSectorView()->ResetHyperspaceTarget();
+	InGameViewsLocator::getInGameViews()->GetSectorView()->ResetHyperspaceTarget();
 }
 
 //temporary targeting stuff
@@ -306,7 +306,7 @@ void Player::StaticUpdate(const float timeStep)
 
 int Player::GetManeuverTime() const
 {
-	const TransferPlanner *planner = Pi::GetInGameViews()->GetSystemView()->GetPlanner();
+	const TransferPlanner *planner = InGameViewsLocator::getInGameViews()->GetSystemView()->GetPlanner();
 	if (planner->GetOffsetVel().ExactlyEqual(vector3d(0, 0, 0))) {
 		return 0;
 	}
@@ -315,7 +315,7 @@ int Player::GetManeuverTime() const
 
 vector3d Player::GetManeuverVelocity() const
 {
-	const TransferPlanner *planner = Pi::GetInGameViews()->GetSystemView()->GetPlanner();
+	const TransferPlanner *planner = InGameViewsLocator::getInGameViews()->GetSystemView()->GetPlanner();
 	Frame *frame = Frame::GetFrame(GetFrame());
 
 	if (frame->IsRotFrame())

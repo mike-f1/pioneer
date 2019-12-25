@@ -7,7 +7,7 @@
 #include "Game.h"
 #include "GameLocator.h"
 #include "InGameViews.h"
-#include "Pi.h"
+#include "InGameViewsLocator.h"
 #include "Planet.h"
 #include "Player.h"
 #include "Sound.h"
@@ -70,7 +70,7 @@ static sigc::connection onChangeCamTypeConnection;
 
 void AmbientSounds::Init()
 {
-	onChangeCamTypeConnection = Pi::GetInGameViews()->GetWorldView()->shipView.onChangeCamType.connect(sigc::ptr_fun(&AmbientSounds::UpdateForCamType));
+	onChangeCamTypeConnection = InGameViewsLocator::getInGameViews()->GetWorldView()->shipView.onChangeCamType.connect(sigc::ptr_fun(&AmbientSounds::UpdateForCamType));
 }
 
 void AmbientSounds::Uninit()
@@ -80,7 +80,7 @@ void AmbientSounds::Uninit()
 
 void AmbientSounds::Update()
 {
-	const float v_env = (Pi::GetInGameViews()->GetWorldView()->shipView.GetCameraController()->IsExternal() ? 1.0f : 0.5f) * Sound::GetSfxVolume();
+	const float v_env = (InGameViewsLocator::getInGameViews()->GetWorldView()->shipView.GetCameraController()->IsExternal() ? 1.0f : 0.5f) * Sound::GetSfxVolume();
 
 	if (GameLocator::getGame()->GetPlayer()->GetFlightState() == Ship::DOCKED) {
 		if (s_starNoise.IsPlaying()) {
@@ -272,7 +272,7 @@ void AmbientSounds::Update()
 
 void AmbientSounds::UpdateForCamType()
 {
-	const ShipViewController::CamType cam = Pi::GetInGameViews()->GetWorldView()->shipView.GetCamType();
+	const ShipViewController::CamType cam = InGameViewsLocator::getInGameViews()->GetWorldView()->shipView.GetCamType();
 	float v_env = (cam == ShipViewController::CAM_EXTERNAL ? 1.0f : 0.5f) * Sound::GetSfxVolume();
 
 	if (s_stationNoise.IsPlaying())

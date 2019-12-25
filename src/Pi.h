@@ -14,7 +14,6 @@
 #include <vector>
 
 class Cutscene;
-class InGameViews;
 class LuaConsole;
 class LuaNameGen;
 class ObjectViewerView;
@@ -72,16 +71,6 @@ public:
 #if ENABLE_SERVER_AGENT
 	static ServerAgent *serverAgent;
 #endif
-
-	static InGameViews *GetInGameViews();
-
-	// TODO: These are needed because Pi doesn't know how a new
-	// game is made (either be it loaded or created) and it doesn't
-	// know if that game would be saved. Until now these functionality
-	// are delegated to Game(Mono)State, which will use below methods
-	// to set m_InGameViews
-	static void NewInGameViews(InGameViews *newInGameViews);
-	static void SaveInGameViews(Json &rootNode);
 
 	static RefCountedPtr<UI::Context> ui;
 	static RefCountedPtr<PiGui> pigui;
@@ -144,7 +133,6 @@ private:
 	static float frameTime;
 
 	static std::unique_ptr<Cutscene> m_cutscene;
-	static std::unique_ptr<InGameViews> m_inGameViews;
 
 	static Graphics::RenderTarget *renderTarget;
 	static RefCountedPtr<Graphics::Texture> renderTexture;

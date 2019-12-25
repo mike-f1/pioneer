@@ -11,6 +11,7 @@
 #include "GameConfSingleton.h"
 #include "GameLocator.h"
 #include "InGameViews.h"
+#include "InGameViewsLocator.h"
 #include "LuaConstants.h"
 #include "LuaManager.h"
 #include "LuaObject.h"
@@ -695,7 +696,7 @@ static int l_engine_set_gpu_jobs_enabled(lua_State *l)
 static int l_engine_ship_space_to_screen_space(lua_State *l)
 {
 	vector3d pos = LuaPull<vector3d>(l, 1);
-	vector3d cam = Pi::GetInGameViews()->GetWorldView()->ShipSpaceToScreenSpace(pos);
+	vector3d cam = InGameViewsLocator::getInGameViews()->GetWorldView()->ShipSpaceToScreenSpace(pos);
 	LuaPush<vector3d>(l, cam);
 	return 1;
 }
@@ -723,7 +724,7 @@ static int l_engine_ship_space_to_screen_space(lua_State *l)
 static int l_engine_camera_space_to_screen_space(lua_State *l)
 {
 	vector3d pos = LuaPull<vector3d>(l, 1);
-	vector3d cam = Pi::GetInGameViews()->GetWorldView()->CameraSpaceToScreenSpace(pos);
+	vector3d cam = InGameViewsLocator::getInGameViews()->GetWorldView()->CameraSpaceToScreenSpace(pos);
 	LuaPush(l, cam);
 	return 1;
 }
@@ -795,14 +796,14 @@ static int l_engine_get_model(lua_State *l)
 
 static int l_engine_sector_map_clear_route(lua_State *l)
 {
-	SectorView *sv = Pi::GetInGameViews()->GetSectorView();
+	SectorView *sv = InGameViewsLocator::getInGameViews()->GetSectorView();
 	sv->ClearRoute();
 	return 0;
 }
 
 static int l_engine_sector_map_add_to_route(lua_State *l)
 {
-	SectorView *sv = Pi::GetInGameViews()->GetSectorView();
+	SectorView *sv = InGameViewsLocator::getInGameViews()->GetSectorView();
 	SystemPath *path = LuaObject<SystemPath>::CheckFromLua(1);
 	sv->AddToRoute(path);
 	return 0;
@@ -810,49 +811,49 @@ static int l_engine_sector_map_add_to_route(lua_State *l)
 
 static int l_engine_get_sector_map_zoom_level(lua_State *l)
 {
-	SectorView *sv = Pi::GetInGameViews()->GetSectorView();
+	SectorView *sv = InGameViewsLocator::getInGameViews()->GetSectorView();
 	LuaPush(l, sv->GetZoomLevel());
 	return 1;
 }
 
 static int l_engine_get_sector_map_center_distance(lua_State *l)
 {
-	SectorView *sv = Pi::GetInGameViews()->GetSectorView();
+	SectorView *sv = InGameViewsLocator::getInGameViews()->GetSectorView();
 	LuaPush(l, sv->GetCenterDistance());
 	return 1;
 }
 
 static int l_engine_get_sector_map_center_sector(lua_State *l)
 {
-	SectorView *sv = Pi::GetInGameViews()->GetSectorView();
+	SectorView *sv = InGameViewsLocator::getInGameViews()->GetSectorView();
 	LuaPush<vector3d>(l, vector3d(sv->GetCenterSector()));
 	return 1;
 }
 
 static int l_engine_get_sector_map_current_system_path(lua_State *l)
 {
-	SectorView *sv = Pi::GetInGameViews()->GetSectorView();
+	SectorView *sv = InGameViewsLocator::getInGameViews()->GetSectorView();
 	LuaObject<SystemPath>::PushToLua(sv->GetCurrent());
 	return 1;
 }
 
 static int l_engine_get_sector_map_selected_system_path(lua_State *l)
 {
-	SectorView *sv = Pi::GetInGameViews()->GetSectorView();
+	SectorView *sv = InGameViewsLocator::getInGameViews()->GetSectorView();
 	LuaObject<SystemPath>::PushToLua(sv->GetSelected());
 	return 1;
 }
 
 static int l_engine_get_sector_map_hyperspace_target_system_path(lua_State *l)
 {
-	SectorView *sv = Pi::GetInGameViews()->GetSectorView();
+	SectorView *sv = InGameViewsLocator::getInGameViews()->GetSectorView();
 	LuaObject<SystemPath>::PushToLua(sv->GetHyperspaceTarget());
 	return 1;
 }
 
 static int l_engine_set_sector_map_draw_uninhabited_labels(lua_State *l)
 {
-	SectorView *sv = Pi::GetInGameViews()->GetSectorView();
+	SectorView *sv = InGameViewsLocator::getInGameViews()->GetSectorView();
 	bool value = LuaPull<bool>(l, 1);
 	sv->SetDrawUninhabitedLabels(value);
 	return 0;
@@ -860,7 +861,7 @@ static int l_engine_set_sector_map_draw_uninhabited_labels(lua_State *l)
 
 static int l_engine_set_sector_map_draw_out_range_labels(lua_State *l)
 {
-	SectorView *sv = Pi::GetInGameViews()->GetSectorView();
+	SectorView *sv = InGameViewsLocator::getInGameViews()->GetSectorView();
 	bool value = LuaPull<bool>(l, 1);
 	sv->SetDrawOutRangeLabels(value);
 	return 0;
@@ -868,7 +869,7 @@ static int l_engine_set_sector_map_draw_out_range_labels(lua_State *l)
 
 static int l_engine_set_sector_map_lock_hyperspace_target(lua_State *l)
 {
-	SectorView *sv = Pi::GetInGameViews()->GetSectorView();
+	SectorView *sv = InGameViewsLocator::getInGameViews()->GetSectorView();
 	bool value = LuaPull<bool>(l, 1);
 	sv->LockHyperspaceTarget(value);
 	return 0;
@@ -876,7 +877,7 @@ static int l_engine_set_sector_map_lock_hyperspace_target(lua_State *l)
 
 static int l_engine_set_sector_map_draw_vertical_lines(lua_State *l)
 {
-	SectorView *sv = Pi::GetInGameViews()->GetSectorView();
+	SectorView *sv = InGameViewsLocator::getInGameViews()->GetSectorView();
 	bool value = LuaPull<bool>(l, 1);
 	sv->SetDrawVerticalLines(value);
 	return 0;
@@ -884,7 +885,7 @@ static int l_engine_set_sector_map_draw_vertical_lines(lua_State *l)
 
 static int l_engine_set_sector_map_automatic_system_selection(lua_State *l)
 {
-	SectorView *sv = Pi::GetInGameViews()->GetSectorView();
+	SectorView *sv = InGameViewsLocator::getInGameViews()->GetSectorView();
 	bool value = LuaPull<bool>(l, 1);
 	sv->SetAutomaticSystemSelection(value);
 	return 0;
@@ -892,7 +893,7 @@ static int l_engine_set_sector_map_automatic_system_selection(lua_State *l)
 
 static int l_engine_sector_map_get_route(lua_State *l)
 {
-	SectorView *sv = Pi::GetInGameViews()->GetSectorView();
+	SectorView *sv = InGameViewsLocator::getInGameViews()->GetSectorView();
 	std::vector<SystemPath> route = sv->GetRoute();
 
 	lua_newtable(l);
@@ -907,7 +908,7 @@ static int l_engine_sector_map_get_route(lua_State *l)
 
 static int l_engine_sector_map_get_route_size(lua_State *l)
 {
-	SectorView *sv = Pi::GetInGameViews()->GetSectorView();
+	SectorView *sv = InGameViewsLocator::getInGameViews()->GetSectorView();
 	std::vector<SystemPath> route = sv->GetRoute();
 	const int size = route.size();
 	LuaPush(l, size);
@@ -916,7 +917,7 @@ static int l_engine_sector_map_get_route_size(lua_State *l)
 
 static int l_engine_sector_map_auto_route(lua_State *l)
 {
-	SectorView *sv = Pi::GetInGameViews()->GetSectorView();
+	SectorView *sv = InGameViewsLocator::getInGameViews()->GetSectorView();
 	SystemPath current_path = sv->GetCurrent();
 	SystemPath target_path = sv->GetSelected();
 
@@ -932,7 +933,7 @@ static int l_engine_sector_map_auto_route(lua_State *l)
 
 static int l_engine_sector_map_move_route_item_up(lua_State *l)
 {
-	SectorView *sv = Pi::GetInGameViews()->GetSectorView();
+	SectorView *sv = InGameViewsLocator::getInGameViews()->GetSectorView();
 	int element = LuaPull<int>(l, 1);
 
 	// lua indexes start at 1
@@ -945,7 +946,7 @@ static int l_engine_sector_map_move_route_item_up(lua_State *l)
 
 static int l_engine_sector_map_move_route_item_down(lua_State *l)
 {
-	SectorView *sv = Pi::GetInGameViews()->GetSectorView();
+	SectorView *sv = InGameViewsLocator::getInGameViews()->GetSectorView();
 	int element = LuaPull<int>(l, 1);
 
 	// lua indexes start at 1
@@ -958,7 +959,7 @@ static int l_engine_sector_map_move_route_item_down(lua_State *l)
 
 static int l_engine_sector_map_remove_route_item(lua_State *l)
 {
-	SectorView *sv = Pi::GetInGameViews()->GetSectorView();
+	SectorView *sv = InGameViewsLocator::getInGameViews()->GetSectorView();
 	int element = LuaPull<int>(l, 1);
 
 	// lua indexes start at 1
@@ -971,7 +972,7 @@ static int l_engine_sector_map_remove_route_item(lua_State *l)
 
 static int l_engine_set_sector_map_selected(lua_State *l)
 {
-	SectorView *sv = Pi::GetInGameViews()->GetSectorView();
+	SectorView *sv = InGameViewsLocator::getInGameViews()->GetSectorView();
 	SystemPath *path = LuaObject<SystemPath>::CheckFromLua(1);
 	sv->SetSelected(*path);
 	return 0;
@@ -979,7 +980,7 @@ static int l_engine_set_sector_map_selected(lua_State *l)
 
 static int l_engine_sector_map_goto_sector_path(lua_State *l)
 {
-	SectorView *sv = Pi::GetInGameViews()->GetSectorView();
+	SectorView *sv = InGameViewsLocator::getInGameViews()->GetSectorView();
 	SystemPath *path = LuaObject<SystemPath>::CheckFromLua(1);
 	sv->GotoSector(*path);
 	return 0;
@@ -987,7 +988,7 @@ static int l_engine_sector_map_goto_sector_path(lua_State *l)
 
 static int l_engine_sector_map_goto_system_path(lua_State *l)
 {
-	SectorView *sv = Pi::GetInGameViews()->GetSectorView();
+	SectorView *sv = InGameViewsLocator::getInGameViews()->GetSectorView();
 	SystemPath *path = LuaObject<SystemPath>::CheckFromLua(1);
 	sv->GotoSystem(*path);
 	return 0;
@@ -995,7 +996,7 @@ static int l_engine_sector_map_goto_system_path(lua_State *l)
 
 static int l_engine_search_nearby_star_systems_by_name(lua_State *l)
 {
-	SectorView *sv = Pi::GetInGameViews()->GetSectorView();
+	SectorView *sv = InGameViewsLocator::getInGameViews()->GetSectorView();
 	std::string pattern = LuaPull<std::string>(l, 1);
 
 	std::vector<SystemPath> matches = sv->GetNearbyStarSystemsByName(pattern);
@@ -1011,19 +1012,19 @@ static int l_engine_search_nearby_star_systems_by_name(lua_State *l)
 
 static int l_engine_sector_map_zoom_in(lua_State *l)
 {
-	Pi::GetInGameViews()->GetSectorView()->ZoomIn();
+	InGameViewsLocator::getInGameViews()->GetSectorView()->ZoomIn();
 	return 0;
 }
 
 static int l_engine_sector_map_zoom_out(lua_State *l)
 {
-	Pi::GetInGameViews()->GetSectorView()->ZoomOut();
+	InGameViewsLocator::getInGameViews()->GetSectorView()->ZoomOut();
 	return 0;
 }
 
 static int l_engine_set_sector_map_faction_visible(lua_State *l)
 {
-	SectorView *sv = Pi::GetInGameViews()->GetSectorView();
+	SectorView *sv = InGameViewsLocator::getInGameViews()->GetSectorView();
 	Faction *faction = LuaObject<Faction>::CheckFromLua(1);
 	bool visible = LuaPull<bool>(l, 2);
 	sv->SetFactionVisible(faction, visible);
@@ -1032,7 +1033,7 @@ static int l_engine_set_sector_map_faction_visible(lua_State *l)
 
 static int l_engine_get_sector_map_factions(lua_State *l)
 {
-	SectorView *sv = Pi::GetInGameViews()->GetSectorView();
+	SectorView *sv = InGameViewsLocator::getInGameViews()->GetSectorView();
 	const std::set<const Faction *> visible = sv->GetVisibleFactions();
 	const std::set<const Faction *> hidden = sv->GetHiddenFactions();
 	lua_newtable(l); // outer table

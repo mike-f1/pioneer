@@ -13,12 +13,12 @@
 #include "GameSaveError.h"
 #include "HyperspaceCloud.h"
 #include "InGameViews.h"
+#include "InGameViewsLocator.h"
 #include "LuaEvent.h"
 #include "LuaSerializer.h"
 #include "LuaTimer.h"
 #include "MathUtil.h"
 #include "Object.h"
-#include "Pi.h"
 #include "Player.h"
 #include "Sfx.h"
 #include "Space.h"
@@ -224,8 +224,8 @@ void Game::ToJson(Json &jsonObj)
 	jsonObj["hyperspace_end_time"] = m_hyperspaceEndTime;
 
 	// Delete camera frame from frame structure:
-	bool have_cam_frame = Pi::GetInGameViews()->GetWorldView()->GetCameraContext()->GetCamFrame();
-	if (have_cam_frame)	Pi::GetInGameViews()->GetWorldView()->EndCameraFrame();
+	bool have_cam_frame = InGameViewsLocator::getInGameViews()->GetWorldView()->GetCameraContext()->GetCamFrame();
+	if (have_cam_frame)	InGameViewsLocator::getInGameViews()->GetWorldView()->EndCameraFrame();
 
 	// space, all the bodies and things
 	m_space->ToJson(jsonObj);
@@ -287,7 +287,7 @@ void Game::ToJson(Json &jsonObj)
 	luaSerializer->UninitTableRefs();
 
 	// Bring back camera frame:
-	if (have_cam_frame)	Pi::GetInGameViews()->GetWorldView()->BeginCameraFrame();
+	if (have_cam_frame)	InGameViewsLocator::getInGameViews()->GetWorldView()->BeginCameraFrame();
 }
 
 RefCountedPtr<Galaxy> Game::GetGalaxy() const { return m_galaxy; }
@@ -491,7 +491,7 @@ void Game::SwitchToHyperspace()
 	m_space->GetBackground()->SetDrawFlags(Background::Container::DRAW_STARS);
 
 	// Reset planner
-	Pi::GetInGameViews()->GetSystemView()->ResetPlanner();
+	InGameViewsLocator::getInGameViews()->GetSystemView()->ResetPlanner();
 
 	// Update caches:
 	assert(m_starSystemCache && m_sectorCache);

@@ -70,7 +70,6 @@
 #include "Random.h"
 #include "RandomSingleton.h"
 #include "Tombstone.h"
-#include "UIView.h"
 #include "WorldView.h"
 #include "galaxy/GalaxyGenerator.h"
 #include "gameui/Lua.h"
@@ -113,12 +112,12 @@
 #endif
 
 float Pi::gameTickAlpha;
-LuaNameGen *Pi::luaNameGen;
+std::unique_ptr<LuaNameGen> Pi::luaNameGen;
 #ifdef ENABLE_SERVER_AGENT
 ServerAgent *Pi::serverAgent;
 #endif
 Input Pi::input;
-LuaConsole *Pi::luaConsole;
+std::unique_ptr<LuaConsole> Pi::luaConsole;
 float Pi::frameTime;
 bool Pi::doingMouseGrab;
 #if WITH_DEVKEYS
@@ -309,12 +308,12 @@ static void LuaInit()
 	pi_lua_import_recursive(l, "pigui/views");
 	pi_lua_import_recursive(l, "modules");
 
-	Pi::luaNameGen = new LuaNameGen();
+	Pi::luaNameGen.reset(new LuaNameGen());
 }
 
 static void LuaUninit()
 {
-	delete Pi::luaNameGen;
+	Pi::luaNameGen.reset();
 
 	Lua::Uninit();
 }
@@ -644,8 +643,8 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 	}
 #endif
 
-	luaConsole = new LuaConsole();
-	KeyBindings::toggleLuaConsole.onPress.connect(sigc::mem_fun(Pi::luaConsole, &LuaConsole::Toggle));
+	luaConsole.reset(new LuaConsole());
+	KeyBindings::toggleLuaConsole.onPress.connect(sigc::mem_fun(Pi::luaConsole.get(), &LuaConsole::Toggle));
 
 	draw_progress(1.0f);
 
@@ -671,7 +670,6 @@ void Pi::Quit()
 	}
 	Projectile::FreeModel();
 	Beam::FreeModel();
-	delete Pi::luaConsole;
 	NavLights::Uninit();
 	Shields::Uninit();
 	SfxManager::Uninit();
@@ -703,26 +701,18 @@ void Pi::HandleEscKey()
 {
 	if (!InGameViewsLocator::getInGameViews()) return;
 
-	if (!InGameViewsLocator::getInGameViews()->IsEmptyView()) {
-		if (InGameViewsLocator::getInGameViews()->IsSectorView()) {
-			InGameViewsLocator::getInGameViews()->SetView(ViewType::WORLD);
-		} else if ((InGameViewsLocator::getInGameViews()->IsSystemView()) || (InGameViewsLocator::getInGameViews()->IsSystemInfoView())) {
-			InGameViewsLocator::getInGameViews()->SetView(ViewType::SECTOR);
-		} else {
-			UIView *view = dynamic_cast<UIView *>(InGameViewsLocator::getInGameViews()->GetView());
-			if (view) {
-				// checks the template name
-				const char *tname = view->GetTemplateName();
-				if (tname) {
-					if (!strcmp(tname, "GalacticView")) {
-						InGameViewsLocator::getInGameViews()->SetView(ViewType::SECTOR);
-					} else if (!strcmp(tname, "InfoView") || !strcmp(tname, "StationView")) {
-						InGameViewsLocator::getInGameViews()->SetView(ViewType::WORLD);
-					}
-				}
-			}
-		}
-	}
+	switch (InGameViewsLocator::getInGameViews()->GetViewType()) {
+	case ViewType::OBJECT:
+	case ViewType::SPACESTATION:
+	case ViewType::INFO:
+	case ViewType::SECTOR: InGameViewsLocator::getInGameViews()->SetView(ViewType::WORLD); break;
+	case ViewType::GALACTIC:
+	case ViewType::SYSTEMINFO:
+	case ViewType::SYSTEM: InGameViewsLocator::getInGameViews()->SetView(ViewType::SECTOR); break;
+	case ViewType::NONE:
+	case ViewType::WORLD:
+	case ViewType::DEATH: return;
+	};
 }
 
 static void DebugSpawnShip(Ship *ship)
@@ -753,154 +743,153 @@ void Pi::HandleKeyDown(SDL_Keysym *key)
 	}
 	const bool CTRL = input.KeyState(SDLK_LCTRL) || input.KeyState(SDLK_RCTRL);
 
+	if (!CTRL) return;
 	// special keys.
-	if (CTRL) {
-		switch (key->sym) {
-		case SDLK_q: // Quit
-			Pi::RequestQuit();
-			break;
-		case SDLK_PRINTSCREEN: // print
-		case SDLK_KP_MULTIPLY: // screen
-		{
-			char buf[256];
+	switch (key->sym) {
+	case SDLK_q: // Quit
+		Pi::RequestQuit();
+		break;
+	case SDLK_PRINTSCREEN: // print
+	case SDLK_KP_MULTIPLY: // screen
+	{
+		char buf[256];
+		const time_t t = time(0);
+		struct tm *_tm = localtime(&t);
+		strftime(buf, sizeof(buf), "screenshot-%Y%m%d-%H%M%S.png", _tm);
+		Graphics::ScreendumpState sd;
+		RendererLocator::getRenderer()->Screendump(sd);
+		write_screenshot(sd, buf);
+		break;
+	}
+
+	case SDLK_KP_DIVIDE: // toggle video recording
+		Pi::isRecordingVideo = !Pi::isRecordingVideo;
+		if (Pi::isRecordingVideo) {
+			char videoName[256];
 			const time_t t = time(0);
 			struct tm *_tm = localtime(&t);
-			strftime(buf, sizeof(buf), "screenshot-%Y%m%d-%H%M%S.png", _tm);
-			Graphics::ScreendumpState sd;
-			RendererLocator::getRenderer()->Screendump(sd);
-			write_screenshot(sd, buf);
-			break;
-		}
+			strftime(videoName, sizeof(videoName), "pioneer-%Y%m%d-%H%M%S", _tm);
+			const std::string dir = "videos";
+			FileSystem::userFiles.MakeDirectory(dir);
+			const std::string fname = FileSystem::JoinPathBelow(FileSystem::userFiles.GetRoot() + "/" + dir, videoName);
+			Output("Video Recording started to %s.\n", fname.c_str());
+			// start ffmpeg telling it to expect raw rgba 720p-60hz frames
+			// -i - tells it to read frames from stdin
+			// if given no frame rate (-r 60), it will just use vfr
+			char cmd[256] = { 0 };
+			snprintf(cmd, sizeof(cmd), "ffmpeg -f rawvideo -pix_fmt rgba -s %dx%d -i - -threads 0 -preset fast -y -pix_fmt yuv420p -crf 21 -vf vflip %s.mp4",
+				GameConfSingleton::getInstance().Int("ScrWidth"),
+				GameConfSingleton::getInstance().Int("ScrHeight"),
+				fname.c_str()
+				);
 
-		case SDLK_KP_DIVIDE: // toggle video recording
-			Pi::isRecordingVideo = !Pi::isRecordingVideo;
-			if (Pi::isRecordingVideo) {
-				char videoName[256];
-				const time_t t = time(0);
-				struct tm *_tm = localtime(&t);
-				strftime(videoName, sizeof(videoName), "pioneer-%Y%m%d-%H%M%S", _tm);
-				const std::string dir = "videos";
-				FileSystem::userFiles.MakeDirectory(dir);
-				const std::string fname = FileSystem::JoinPathBelow(FileSystem::userFiles.GetRoot() + "/" + dir, videoName);
-				Output("Video Recording started to %s.\n", fname.c_str());
-				// start ffmpeg telling it to expect raw rgba 720p-60hz frames
-				// -i - tells it to read frames from stdin
-				// if given no frame rate (-r 60), it will just use vfr
-				char cmd[256] = { 0 };
-				snprintf(cmd, sizeof(cmd), "ffmpeg -f rawvideo -pix_fmt rgba -s %dx%d -i - -threads 0 -preset fast -y -pix_fmt yuv420p -crf 21 -vf vflip %s.mp4",
-					GameConfSingleton::getInstance().Int("ScrWidth"),
-					GameConfSingleton::getInstance().Int("ScrHeight"),
-					fname.c_str()
-					);
-
-				// open pipe to ffmpeg's stdin in binary write mode
+			// open pipe to ffmpeg's stdin in binary write mode
 #if defined(_MSC_VER) || defined(__MINGW32__)
-				Pi::ffmpegFile = _popen(cmd, "wb");
+			Pi::ffmpegFile = _popen(cmd, "wb");
 #else
-				Pi::ffmpegFile = _popen(cmd, "w");
+			Pi::ffmpegFile = _popen(cmd, "w");
 #endif
-			} else {
-				Output("Video Recording ended.\n");
-				if (Pi::ffmpegFile != nullptr) {
-					_pclose(Pi::ffmpegFile);
-					Pi::ffmpegFile = nullptr;
-				}
+		} else {
+			Output("Video Recording ended.\n");
+			if (Pi::ffmpegFile != nullptr) {
+				_pclose(Pi::ffmpegFile);
+				Pi::ffmpegFile = nullptr;
 			}
-			break;
+		}
+		break;
 #if WITH_DEVKEYS
-		case SDLK_i: // Toggle Debug info
-			Pi::showDebugInfo = !Pi::showDebugInfo;
-			break;
+	case SDLK_i: // Toggle Debug info
+		Pi::showDebugInfo = !Pi::showDebugInfo;
+		break;
 
 #endif /* DEVKEYS */
 #ifdef PIONEER_PROFILER
-		case SDLK_p: // alert it that we want to profile
-			if (input.KeyState(SDLK_LSHIFT) || input.KeyState(SDLK_RSHIFT))
-				Pi::doProfileOne = true;
-			else {
-				Pi::doProfileSlow = !Pi::doProfileSlow;
-				Output("slow frame profiling %s\n", Pi::doProfileSlow ? "enabled" : "disabled");
-			}
-			break;
+	case SDLK_p: // alert it that we want to profile
+		if (input.KeyState(SDLK_LSHIFT) || input.KeyState(SDLK_RSHIFT))
+			Pi::doProfileOne = true;
+		else {
+			Pi::doProfileSlow = !Pi::doProfileSlow;
+			Output("slow frame profiling %s\n", Pi::doProfileSlow ? "enabled" : "disabled");
+		}
+		break;
 #endif
 #if WITH_DEVKEYS
-		case SDLK_F12: {
-			if (GameLocator::getGame()) {
-				vector3d dir = -GameLocator::getGame()->GetPlayer()->GetOrient().VectorZ();
-				/* add test object */
-				if (input.KeyState(SDLK_RSHIFT)) {
-					Missile *missile = GameLocator::getGame()->GetPlayer()->SpawnMissile(ShipType::MISSILE_GUIDED, 1000);
-					if (GameLocator::getGame()->GetPlayer()->GetCombatTarget()) {
-						missile->AIKamikaze(GameLocator::getGame()->GetPlayer()->GetCombatTarget());
-					}
-				} else if (input.KeyState(SDLK_LSHIFT)) {
-					SpaceStation *s = static_cast<SpaceStation *>(GameLocator::getGame()->GetPlayer()->GetNavTarget());
-					if (s) {
-						Ship *ship = new Ship(ShipType::POLICE);
-						int port = s->GetFreeDockingPort(ship);
-						if (port != -1) {
-							Output("Putting ship into station\n");
-							// Make police ship intent on killing the player
-							DebugSpawnShip(ship);
-							ship->AIKill(GameLocator::getGame()->GetPlayer());
-							ship->SetDockedWith(s, port);
-						} else {
-							delete ship;
-							Output("No docking ports free dude\n");
-						}
+	case SDLK_F12: {
+		if (GameLocator::getGame()) {
+			vector3d dir = -GameLocator::getGame()->GetPlayer()->GetOrient().VectorZ();
+			/* add test object */
+			if (input.KeyState(SDLK_RSHIFT)) {
+				Missile *missile = GameLocator::getGame()->GetPlayer()->SpawnMissile(ShipType::MISSILE_GUIDED, 1000);
+				if (GameLocator::getGame()->GetPlayer()->GetCombatTarget()) {
+					missile->AIKamikaze(GameLocator::getGame()->GetPlayer()->GetCombatTarget());
+				}
+			} else if (input.KeyState(SDLK_LSHIFT)) {
+				SpaceStation *s = static_cast<SpaceStation *>(GameLocator::getGame()->GetPlayer()->GetNavTarget());
+				if (s) {
+					Ship *ship = new Ship(ShipType::POLICE);
+					int port = s->GetFreeDockingPort(ship);
+					if (port != -1) {
+						Output("Putting ship into station\n");
+						// Make police ship intent on killing the player
+						DebugSpawnShip(ship);
+						ship->AIKill(GameLocator::getGame()->GetPlayer());
+						ship->SetDockedWith(s, port);
 					} else {
-						Output("Select a space station...\n");
+						delete ship;
+						Output("No docking ports free dude\n");
 					}
 				} else {
-					Ship *ship = new Ship(ShipType::POLICE);
-					DebugSpawnShip(ship);
-					if (!input.KeyState(SDLK_LALT)) { //Left ALT = no AI
-						if (!input.KeyState(SDLK_LCTRL))
-							ship->AIFlyTo(GameLocator::getGame()->GetPlayer()); // a less lethal option
-						else
-							ship->AIKill(GameLocator::getGame()->GetPlayer()); // a really lethal option!
-					}
+					Output("Select a space station...\n");
+				}
+			} else {
+				Ship *ship = new Ship(ShipType::POLICE);
+				DebugSpawnShip(ship);
+				if (!input.KeyState(SDLK_LALT)) { //Left ALT = no AI
+					if (!input.KeyState(SDLK_LCTRL))
+						ship->AIFlyTo(GameLocator::getGame()->GetPlayer()); // a less lethal option
+					else
+						ship->AIKill(GameLocator::getGame()->GetPlayer()); // a really lethal option!
 				}
 			}
-			break;
 		}
+		break;
+	}
 #endif /* DEVKEYS */
 #if WITH_OBJECTVIEWER
-		case SDLK_F10:
-			InGameViewsLocator::getInGameViews()->SetView(ViewType::OBJECT);
-			break;
+	case SDLK_F10:
+		InGameViewsLocator::getInGameViews()->SetView(ViewType::OBJECT);
+		break;
 #endif /* WITH_OBJECTVIEWER */
-		case SDLK_F11:
-			// XXX only works on X11
-			//SDL_WM_ToggleFullScreen(Pi::scrSurface);
+	case SDLK_F11:
+		// XXX only works on X11
+		//SDL_WM_ToggleFullScreen(Pi::scrSurface);
 #if WITH_DEVKEYS
-			RendererLocator::getRenderer()->ReloadShaders();
+		RendererLocator::getRenderer()->ReloadShaders();
 #endif /* DEVKEYS */
-			break;
-		case SDLK_F9: // Quicksave
-		{
-			if (GameLocator::getGame()) {
-				if (GameLocator::getGame()->IsHyperspace()) {
-					GameLocator::getGame()->GetGameLog().Add(Lang::CANT_SAVE_IN_HYPERSPACE);
-				} else {
-					const std::string name = "_quicksave";
-					const std::string path = FileSystem::JoinPath(GameConfSingleton::GetSaveDirFull(), name);
-					try {
-						GameState::SaveGame(name);
-						Output("Quick save: %s\n", name.c_str());
-						GameLocator::getGame()->GetGameLog().Add(Lang::GAME_SAVED_TO + path);
-					} catch (CouldNotOpenFileException) {
-						GameLocator::getGame()->GetGameLog().Add(stringf(Lang::COULD_NOT_OPEN_FILENAME, formatarg("path", path)));
-					} catch (CouldNotWriteToFileException) {
-						GameLocator::getGame()->GetGameLog().Add(Lang::GAME_SAVE_CANNOT_WRITE);
-					}
+		break;
+	case SDLK_F9: // Quicksave
+	{
+		if (GameLocator::getGame()) {
+			if (GameLocator::getGame()->IsHyperspace()) {
+				GameLocator::getGame()->GetGameLog().Add(Lang::CANT_SAVE_IN_HYPERSPACE);
+			} else {
+				const std::string name = "_quicksave";
+				const std::string path = FileSystem::JoinPath(GameConfSingleton::GetSaveDirFull(), name);
+				try {
+					GameState::SaveGame(name);
+					Output("Quick save: %s\n", name.c_str());
+					GameLocator::getGame()->GetGameLog().Add(Lang::GAME_SAVED_TO + path);
+				} catch (CouldNotOpenFileException) {
+					GameLocator::getGame()->GetGameLog().Add(stringf(Lang::COULD_NOT_OPEN_FILENAME, formatarg("path", path)));
+				} catch (CouldNotWriteToFileException) {
+					GameLocator::getGame()->GetGameLog().Add(Lang::GAME_SAVE_CANNOT_WRITE);
 				}
 			}
-			break;
 		}
-		default:
-			break; // This does nothing but it stops the compiler warnings
-		}
+		break;
+	}
+	default:
+		break; // This does nothing but it stops the compiler warnings
 	}
 }
 

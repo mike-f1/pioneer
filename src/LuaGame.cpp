@@ -453,24 +453,17 @@ static int l_game_set_radar_visible(lua_State *l)
 
 static int l_game_current_view(lua_State *l)
 {
-	if (InGameViewsLocator::getInGameViews()->IsWorldView()) {
-		LuaPush(l, "world");
-	} else if (InGameViewsLocator::getInGameViews()->IsSpaceStationView()) {
-		LuaPush(l, "space_station");
-	} else if (InGameViewsLocator::getInGameViews()->IsInfoView()) {
-		LuaPush(l, "info");
-	} else if (InGameViewsLocator::getInGameViews()->IsSectorView()) {
-		LuaPush(l, "sector");
-	} else if (InGameViewsLocator::getInGameViews()->IsSystemView()) {
-		LuaPush(l, "system");
-	} else if (InGameViewsLocator::getInGameViews()->IsSystemInfoView()) {
-		LuaPush(l, "system_info");
-	} else if (InGameViewsLocator::getInGameViews()->IsDeathView()) {
-		LuaPush(l, "death");
-	} else if (InGameViewsLocator::getInGameViews()->IsGalacticView()) {
-		LuaPush(l, "galaxy");
-	} else {
-		lua_pushnil(l);
+	switch (InGameViewsLocator::getInGameViews()->GetViewType()) {
+	case ViewType::NONE: lua_pushnil(l); break;
+	case ViewType::SECTOR: LuaPush(l, "sector"); break;
+	case ViewType::GALACTIC: LuaPush(l, "galaxy"); break;
+	case ViewType::SYSTEMINFO: LuaPush(l, "system_info"); break;
+	case ViewType::SYSTEM: LuaPush(l, "system"); break;
+	case ViewType::WORLD: LuaPush(l, "world"); break;
+	case ViewType::DEATH: LuaPush(l, "death"); break;
+	case ViewType::SPACESTATION: LuaPush(l, "space_station"); break;
+	case ViewType::INFO: LuaPush(l, "info"); break;
+	case ViewType::OBJECT: lua_pushnil(l); break;
 	}
 	return 1;
 }

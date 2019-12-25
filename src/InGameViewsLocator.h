@@ -18,7 +18,6 @@ public:
 	static void NewInGameViews(InGameViews *newInGameViews);
 	static void SaveInGameViews(Json &rootNode);
 
-
 protected:
 
 private:

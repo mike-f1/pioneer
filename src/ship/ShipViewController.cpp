@@ -38,7 +38,7 @@ void ShipViewController::InputBinding::RegisterBindings()
 	axes.push_back(n);
 
 	BINDING_GROUP(GeneralViewControls)
-	KEY_BINDING(cycleCameraMode, "BindCycleCameraMode", SDLK_F1, 0)
+//	KEY_BINDING(cycleCameraMode, "BindCycleCameraMode", SDLK_F1, 0) <- In PiGui
 
 	AXIS_BINDING(cameraRoll, "BindCameraRoll", SDLK_KP_1, SDLK_KP_3)
 	AXIS_BINDING(cameraPitch, "BindCameraPitch", SDLK_KP_2, SDLK_KP_8)
@@ -160,10 +160,9 @@ void ShipViewController::ChangeInternalCameraMode(InternalCameraController::Mode
 	GameLocator::getGame()->GetPlayer()->GetPlayerController()->SetMouseForRearView(m_camType == CAM_INTERNAL && m_internalCameraController->GetMode() == InternalCameraController::MODE_REAR);
 }
 
-void ShipViewController::Update()
+void ShipViewController::Update(const float frameTime)
 {
 	auto *cam = static_cast<MoveableCameraController *>(m_activeCameraController);
-	auto frameTime = Pi::GetFrameTime();
 
 	// XXX ugly hack checking for console here
 	if (!InputBindings.active || Pi::IsConsoleActive()) return;

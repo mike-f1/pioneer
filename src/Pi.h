@@ -5,7 +5,6 @@
 #define _PI_H
 
 #include "Input.h"
-#include "JsonFwd.h"
 #include "gameconsts.h"
 
 #include <map>
@@ -16,7 +15,6 @@
 class Cutscene;
 class LuaConsole;
 class LuaNameGen;
-class ObjectViewerView;
 class PiGui;
 class SystemPath;
 
@@ -66,7 +64,7 @@ public:
 	static void BeginRenderTarget();
 	static void EndRenderTarget();
 
-	static LuaNameGen *luaNameGen;
+	static std::unique_ptr<LuaNameGen> luaNameGen;
 
 #if ENABLE_SERVER_AGENT
 	static ServerAgent *serverAgent;
@@ -90,7 +88,7 @@ public:
 #endif
 
 	static Input input;
-	static LuaConsole *luaConsole;
+	static std::unique_ptr<LuaConsole> luaConsole;
 
 	static JobQueue *GetAsyncJobQueue();
 	static JobQueue *GetSyncJobQueue();

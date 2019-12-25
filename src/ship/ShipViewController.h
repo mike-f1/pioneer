@@ -12,6 +12,7 @@
 class Player;
 
 class ShipViewController : public InteractionController {
+	friend class WorldView;
 public:
 	ShipViewController(WorldView *v) :
 		InteractionController(v),
@@ -20,7 +21,7 @@ public:
 
 	~ShipViewController();
 
-	void Update() override;
+	void Update(const float frameTime) override;
 	void Activated() override;
 	void Deactivated() override;
 
@@ -37,7 +38,6 @@ public:
 	sigc::signal<void> onChangeCamType;
 
 private:
-	friend class WorldView;
 	void ChangeInternalCameraMode(InternalCameraController::Mode m);
 
 	enum CamType m_camType;

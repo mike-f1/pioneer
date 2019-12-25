@@ -50,8 +50,6 @@ public:
 	void SetNavTarget(Body *const target, bool setSpeedTo = false);
 	void SetSetSpeedTarget(Body *const target);
 
-	sigc::signal<void> onRotationDampingChanged;
-
 private:
 	static struct InputBinding : public Input::InputFrame {
 		// We create a local alias for ease of typing these bindings.

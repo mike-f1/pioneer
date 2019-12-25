@@ -375,15 +375,12 @@ void PlayerShipController::SetLowThrustPower(float power)
 
 void PlayerShipController::SetRotationDamping(bool enabled)
 {
-	if (enabled != m_rotationDamping) {
-		m_rotationDamping = enabled;
-		onRotationDampingChanged.emit();
-	}
+	m_rotationDamping = enabled;
 }
 
 void PlayerShipController::ToggleRotationDamping()
 {
-	SetRotationDamping(!GetRotationDamping());
+	m_rotationDamping = !m_rotationDamping;
 }
 
 void PlayerShipController::FireMissile()

@@ -301,7 +301,7 @@ void WorldView::Update(const float frameTime)
 	// show state-appropriate buttons
 	RefreshButtonStateAndVisibility();
 
-	shipView.Update();
+	shipView.Update(frameTime);
 
 	m_cameraContext->BeginFrame();
 	m_camera->Update();

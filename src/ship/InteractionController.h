@@ -12,7 +12,7 @@ public:
 
 	virtual void Activated() = 0;
 	virtual void Deactivated() = 0;
-	virtual void Update() = 0;
+	virtual void Update(const float framTime) = 0;
 
 	WorldView *parentView;
 };

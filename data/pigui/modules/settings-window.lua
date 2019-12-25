@@ -373,13 +373,13 @@ local function showLanguageOptions()
 	end)
 
 	local clicked
-	for _,lang in pairs(langs) do
-		ui.withFont(pionillium.large.name, pionillium.large.size, function()
+	ui.withFont(pionillium.large.name, pionillium.large.size, function()
+		for _,lang in pairs(langs) do
 			if ui.selectable(Lang.GetResource("core",lang).LANG_NAME, Lang.currentLanguage==lang, {}) then
 				clicked = lang
 			end
-		end)
-	end
+		end
+	end)
 
 	if clicked then
 		Lang.SetCurrentLanguage(clicked)

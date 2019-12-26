@@ -15,12 +15,12 @@
 #include "KeyBindings.h"
 #include "Lang.h"
 #include "LuaObject.h"
-#include "ModelCache.h"
 #include "Orbit.h"
 #include "Random.h"
 #include "RandomSingleton.h"
 #include "SectorView.h"
 #include "Sfx.h"
+#include "ShipCockpit.h"
 #include "SystemView.h"
 #include "ship/PlayerShipController.h"
 #include "StringF.h"
@@ -70,6 +70,10 @@ Player::Player(const Json &jsonObj, Space *space) :
 	registerEquipChangeListener(this);
 }
 
+Player::~Player()
+{
+}
+
 void Player::SetShipType(const ShipType::Id &shipId)
 {
 	Ship::SetShipType(shipId);
@@ -84,28 +88,11 @@ void Player::SaveToJson(Json &jsonObj, Space *space)
 
 void Player::InitCockpit()
 {
-	m_cockpit.release();
+	m_cockpit.reset();
 	if (!GameConfSingleton::getInstance().Int("EnableCockpit"))
 		return;
 
-	// XXX select a cockpit model. this is all quite skanky because we want a
-	// fallback if the name is not found, which means having to actually try to
-	// load the model. but ModelBody (on which ShipCockpit is currently based)
-	// requires a model name, not a model object. it won't hurt much because it
-	// all stays in the model cache anyway, its just awkward. the fix is to fix
-	// ShipCockpit so its not a ModelBody and thus does its model work
-	// directly, but we're not there yet
-	std::string cockpitModelName;
-	if (!GetShipType()->cockpitName.empty()) {
-		if (ModelCache::FindModel(GetShipType()->cockpitName, false))
-			cockpitModelName = GetShipType()->cockpitName;
-	}
-	if (cockpitModelName.empty()) {
-		if (ModelCache::FindModel("default_cockpit", false))
-			cockpitModelName = "default_cockpit";
-	}
-	if (!cockpitModelName.empty())
-		m_cockpit.reset(new ShipCockpit(cockpitModelName));
+	m_cockpit.reset(new ShipCockpit(GetShipType()->cockpitName));
 
 	OnCockpitActivated();
 }
@@ -294,6 +281,10 @@ void Player::OnCockpitActivated()
 		m_cockpit->OnActivated(this);
 }
 
+ShipCockpit *Player::GetCockpit() const
+{
+	return m_cockpit.get();
+}
 void Player::StaticUpdate(const float timeStep)
 {
 	Ship::StaticUpdate(timeStep);

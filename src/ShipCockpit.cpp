@@ -7,6 +7,7 @@
 #include "Easing.h"
 #include "InGameViews.h"
 #include "InGameViewsLocator.h"
+#include "ModelCache.h"
 #include "Player.h"
 #include "WorldView.h"
 #include "graphics/Renderer.h"
@@ -25,8 +26,16 @@ ShipCockpit::ShipCockpit(const std::string &modelName) :
 	m_translate(0.0),
 	m_transform(matrix4x4d::Identity())
 {
-	assert(!modelName.empty());
-	SetModel(modelName.c_str());
+	SceneGraph::Model *m = nullptr;
+	if (!modelName.empty())	m = ModelCache::FindModel(modelName, false);
+
+	if (m) {
+		SetModel(modelName.c_str());
+	} else {
+		Output("No cockpit model '%s', use default\n", modelName.c_str());
+		SetModel(DEFAULT_COCKPIT_NAME);
+	}
+
 	assert(GetModel());
 	SetColliding(false);
 	m_icc = nullptr;

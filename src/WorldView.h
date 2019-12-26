@@ -80,9 +80,9 @@ public:
 	bool DrawGui() { return m_guiOn; };
 
 protected:
-	virtual void BuildUI(UI::Single *container);
-	virtual void OnSwitchTo();
-	virtual void OnSwitchFrom();
+	virtual void BuildUI(UI::Single *container) override;
+	virtual void OnSwitchTo() override;
+	virtual void OnSwitchFrom() override;
 
 private:
 	void InitObject(Game *game);
@@ -136,9 +136,7 @@ private:
 	/* Only use #if WITH_DEVKEYS */
 	Gui::Label *m_debugInfo;
 
-	sigc::connection m_onHyperspaceTargetChangedCon;
 	sigc::connection m_onPlayerChangeTargetCon;
-	sigc::connection m_onChangeFlightControlStateCon;
 	sigc::connection m_onToggleHudModeCon;
 	sigc::connection m_onIncTimeAccelCon;
 	sigc::connection m_onDecTimeAccelCon;

@@ -54,7 +54,7 @@ public:
 		virtual void onFrameRemoved(){};
 
 		// Check the event against all the inputs in this frame.
-		InputResponse ProcessSDLEvent(SDL_Event &event);
+		InputResponse ProcessSDLEvent(const SDL_Event &event);
 	};
 
 	// Pushes an InputFrame onto the input stack.
@@ -136,14 +136,14 @@ public:
 		memcpy(motion, mouseMotion, sizeof(int) * 2);
 	}
 
-	sigc::signal<void, SDL_Keysym *> onKeyPress;
-	sigc::signal<void, SDL_Keysym *> onKeyRelease;
+	sigc::signal<void, const SDL_Keysym &> onKeyPress;
+	sigc::signal<void, const SDL_Keysym &> onKeyRelease;
 	sigc::signal<void, int, int, int> onMouseButtonUp;
 	sigc::signal<void, int, int, int> onMouseButtonDown;
 	sigc::signal<void, bool> onMouseWheel;
 
 private:
-	void HandleSDLEvent(SDL_Event &ev);
+	void HandleSDLEvent(const SDL_Event &ev);
 	void InitJoysticks();
 
 	std::map<SDL_Keycode, bool> keyState;

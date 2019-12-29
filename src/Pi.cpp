@@ -732,9 +732,9 @@ static void DebugSpawnShip(Ship *ship)
 	GameLocator::getGame()->GetSpace()->AddBody(ship);
 }
 
-void Pi::HandleKeyDown(SDL_Keysym *key)
+void Pi::HandleKeyDown(const SDL_Keysym &key)
 {
-	if (key->sym == SDLK_ESCAPE) {
+	if (key.sym == SDLK_ESCAPE) {
 		if (GameLocator::getGame()) {
 			// only accessible once game started
 			HandleEscKey();
@@ -745,7 +745,7 @@ void Pi::HandleKeyDown(SDL_Keysym *key)
 
 	if (!CTRL) return;
 	// special keys.
-	switch (key->sym) {
+	switch (key.sym) {
 	case SDLK_q: // Quit
 		Pi::RequestQuit();
 		break;
@@ -947,10 +947,10 @@ void Pi::HandleEvents()
 
 		bool consoleActive = Pi::IsConsoleActive();
 		if (!consoleActive) {
-			KeyBindings::DispatchSDLEvent(&event);
+			KeyBindings::DispatchSDLEvent(event);
 			if (InGameViewsLocator::getInGameViews()) InGameViewsLocator::getInGameViews()->HandleSDLEvent(event);
 		} else {
-			KeyBindings::toggleLuaConsole.CheckSDLEventAndDispatch(&event);
+			KeyBindings::toggleLuaConsole.CheckSDLEventAndDispatch(event);
 		}
 		if (consoleActive != Pi::IsConsoleActive()) {
 			skipTextInput = true;

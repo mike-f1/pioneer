@@ -1000,7 +1000,7 @@ vector3d WorldView::GetMouseDirection() const
 
 void WorldView::HandleSDLEvent(SDL_Event &event)
 {
-	InputBindings.toggleHudMode->CheckSDLEventAndDispatch(&event);
-	InputBindings.increaseTimeAcceleration->CheckSDLEventAndDispatch(&event);
-	InputBindings.decreaseTimeAcceleration->CheckSDLEventAndDispatch(&event);
+	InputBindings.toggleHudMode->CheckSDLEventAndDispatch(event);
+	InputBindings.increaseTimeAcceleration->CheckSDLEventAndDispatch(event);
+	InputBindings.decreaseTimeAcceleration->CheckSDLEventAndDispatch(event);
 }

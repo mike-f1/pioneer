@@ -1012,7 +1012,7 @@ void SectorView::OnSwitchTo()
 	Update(0.);
 }
 
-void SectorView::OnKeyPressed(SDL_Keysym *keysym)
+void SectorView::OnKeyPressed(const SDL_Keysym &keysym)
 {
 	if (!InGameViewsLocator::getInGameViews()->IsSectorView()) {
 		m_onKeyPressConnection.disconnect();

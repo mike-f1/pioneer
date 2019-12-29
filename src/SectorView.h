@@ -113,7 +113,7 @@ private:
 	void ShrinkCache();
 
 	void MouseWheel(bool up);
-	void OnKeyPressed(SDL_Keysym *keysym);
+	void OnKeyPressed(const SDL_Keysym &keysym);
 
 	RefCountedPtr<Galaxy> m_galaxy;
 

@@ -35,6 +35,8 @@ void ModelSpinner::CreateRenderTarget()
 	if (m_renderTarget)
 		m_renderTarget.reset();
 
+	if (m_size.x <= 0. || m_size.y <= 0.) return;
+
 	Graphics::RenderTargetDesc rtDesc{
 		uint16_t(m_size.x), uint16_t(m_size.y),
 		Graphics::TextureFormat::TEXTURE_RGBA_8888,
@@ -68,8 +70,6 @@ void ModelSpinner::Render()
 	// Resizing a render target involves destroying the old one and creating a new one.
 	if (m_needsResize) CreateRenderTarget();
 	if (!m_renderTarget) return;
-
-	if (m_size.x <= 0. || m_size.y <= 0.) return;
 
 	Graphics::Renderer *r = RendererLocator::getRenderer();
 

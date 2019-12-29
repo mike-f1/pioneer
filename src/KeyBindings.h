@@ -51,9 +51,9 @@ namespace KeyBindings {
 		std::string Description() const; // for display to the user
 
 		bool IsActive() const;
-		bool Matches(const SDL_Keysym *sym) const;
-		bool Matches(const SDL_JoyButtonEvent *joy) const;
-		bool Matches(const SDL_JoyHatEvent *joy) const;
+		bool Matches(const SDL_Keysym &sym) const;
+		bool Matches(const SDL_JoyButtonEvent &joy) const;
+		bool Matches(const SDL_JoyHatEvent &joy) const;
 
 		void Clear() { memset(this, 0, sizeof(*this)); }
 
@@ -113,9 +113,9 @@ namespace KeyBindings {
 		std::string ToString() const;
 
 		bool IsActive() const;
-		InputResponse CheckSDLEventAndDispatch(const SDL_Event *event);
+		InputResponse CheckSDLEventAndDispatch(const SDL_Event &event);
 
-		bool Matches(const SDL_Keysym *sym) const;
+		bool Matches(const SDL_Keysym &sym) const;
 	};
 
 	enum AxisDirection {
@@ -156,7 +156,7 @@ namespace KeyBindings {
 		static JoyAxisBinding FromString(const char *str);
 		std::string ToString() const;
 
-		bool Matches(const SDL_Event *event) const;
+		bool Matches(const SDL_Event &event) const;
 		bool IsActive() const;
 
 		bool IsInverted() { return direction == NEGATIVE; }
@@ -201,7 +201,7 @@ namespace KeyBindings {
 
 		bool IsActive() const;
 		float GetValue() const;
-		InputResponse CheckSDLEventAndDispatch(const SDL_Event *event);
+		InputResponse CheckSDLEventAndDispatch(const SDL_Event &event);
 	};
 
 	struct BindingPrototype {
@@ -215,7 +215,7 @@ namespace KeyBindings {
 	void EnableBindings();
 	void DisableBindings();
 
-	void DispatchSDLEvent(const SDL_Event *event);
+	void DispatchSDLEvent(const SDL_Event &event);
 
 #define KEY_BINDING(name, a, b, c, d) extern ActionBinding name;
 #define AXIS_BINDING(name, a, b, c) extern JoyAxisBinding name;

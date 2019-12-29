@@ -57,6 +57,7 @@ PlayerShipController::PlayerShipController() :
 
 	m_setSpeedMode = InputBindings.toggleSetSpeed->onPress.connect(
 		sigc::mem_fun(this, &PlayerShipController::ToggleSetSpeedMode));
+
 }
 
 PlayerShipController::InputBinding PlayerShipController::InputBindings;
@@ -91,8 +92,11 @@ void PlayerShipController::RegisterInputBindings()
 
 PlayerShipController::~PlayerShipController()
 {
+	Pi::input.RemoveInputFrame(&InputBindings);
+
 	m_connRotationDampingToggleKey.disconnect();
 	m_fireMissileKey.disconnect();
+	m_setSpeedMode.disconnect();
 }
 
 void PlayerShipController::SaveToJson(Json &jsonObj, Space *space)

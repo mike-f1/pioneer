@@ -84,14 +84,14 @@ void ShipViewController::SaveToJson(Json &jsonObj)
 	m_flybyCameraController->SaveToJson(jsonObj);
 }
 
-void ShipViewController::Init(Player *player)
+void ShipViewController::Init(Ship *ship)
 {
 	RefCountedPtr<CameraContext> m_cameraContext = parentView->GetCameraContext();
-	m_internalCameraController.reset(new InternalCameraController(m_cameraContext, player));
-	m_externalCameraController.reset(new ExternalCameraController(m_cameraContext, player));
-	m_siderealCameraController.reset(new SiderealCameraController(m_cameraContext, player));
-	m_flybyCameraController.reset(new FlyByCameraController(m_cameraContext,player));
-	SetCamType(player, m_camType); //set the active camera
+	m_internalCameraController.reset(new InternalCameraController(m_cameraContext, ship));
+	m_externalCameraController.reset(new ExternalCameraController(m_cameraContext, ship));
+	m_siderealCameraController.reset(new SiderealCameraController(m_cameraContext, ship));
+	m_flybyCameraController.reset(new FlyByCameraController(m_cameraContext,ship));
+	SetCamType(ship, m_camType); //set the active camera
 }
 
 void ShipViewController::Activated()
@@ -111,14 +111,16 @@ void ShipViewController::Deactivated()
 	m_onMouseWheelCon.disconnect();
 }
 
-void ShipViewController::SetCamType(Player *player, enum CamType c)
+void ShipViewController::SetCamType(Ship *ship, enum CamType c)
 {
 	m_camType = c;
 
 	switch (m_camType) {
-	case CAM_INTERNAL:
-		m_activeCameraController = m_internalCameraController.get();
-		player->OnCockpitActivated();
+	case CAM_INTERNAL: {
+			m_activeCameraController = m_internalCameraController.get();
+			Player *p = static_cast<Player *>(ship);
+			if (p) p->OnCockpitActivated();
+		}
 		break;
 	case CAM_EXTERNAL:
 		m_activeCameraController = m_externalCameraController.get();
@@ -135,7 +137,9 @@ void ShipViewController::SetCamType(Player *player, enum CamType c)
 		headtracker_input_priority = false;
 	}
 
-	player->GetPlayerController()->SetMouseForRearView(m_camType == CAM_INTERNAL && m_internalCameraController->GetMode() == InternalCameraController::MODE_REAR);
+	PlayerShipController *psc = static_cast<PlayerShipController *>(ship->GetController());
+	if (psc) psc->SetMouseForRearView(m_camType == CAM_INTERNAL && m_internalCameraController->GetMode() == InternalCameraController::MODE_REAR);
+	else Output("WARNING: Cannot set mouse for rear view\n");
 
 	m_activeCameraController->Reset();
 

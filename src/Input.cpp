@@ -34,18 +34,18 @@ void Input::InitGame()
 	}
 }
 
-InputResponse Input::InputFrame::ProcessSDLEvent(SDL_Event &event)
+InputResponse Input::InputFrame::ProcessSDLEvent(const SDL_Event &event)
 {
 	bool matched = false;
 
 	for (KeyBindings::ActionBinding *action : actions) {
-		auto resp = action->CheckSDLEventAndDispatch(&event);
+		auto resp = action->CheckSDLEventAndDispatch(event);
 		if (resp == RESPONSE_MATCHED) return resp;
 		matched = matched || resp > RESPONSE_NOMATCH;
 	}
 
 	for (KeyBindings::AxisBinding *axis : axes) {
-		auto resp = axis->CheckSDLEventAndDispatch(&event);
+		auto resp = axis->CheckSDLEventAndDispatch(event);
 		if (resp == RESPONSE_MATCHED) return resp;
 		matched = matched || resp > RESPONSE_NOMATCH;
 	}
@@ -118,18 +118,18 @@ KeyBindings::AxisBinding *Input::AddAxisBinding(std::string id, BindingGroup *gr
 	return &(axisBindings[id] = binding);
 }
 
-void Input::HandleSDLEvent(SDL_Event &event)
+void Input::HandleSDLEvent(const SDL_Event &event)
 {
 	switch (event.type) {
 	case SDL_KEYDOWN:
 		keyState[event.key.keysym.sym] = true;
 		keyModState = event.key.keysym.mod;
-		onKeyPress.emit(&event.key.keysym);
+		onKeyPress.emit(event.key.keysym);
 		break;
 	case SDL_KEYUP:
 		keyState[event.key.keysym.sym] = false;
 		keyModState = event.key.keysym.mod;
-		onKeyRelease.emit(&event.key.keysym);
+		onKeyRelease.emit(event.key.keysym);
 		break;
 	case SDL_MOUSEBUTTONDOWN:
 		if (event.button.button < COUNTOF(mouseButton)) {

@@ -110,7 +110,7 @@ private:
 		QUIT_GAME,
 	};
 	static void Quit() __attribute((noreturn));
-	static void HandleKeyDown(SDL_Keysym *key);
+	static void HandleKeyDown(const SDL_Keysym &key);
 	static void HandleEvents();
 	static void HandleRequests();
 	static void HandleEscKey();

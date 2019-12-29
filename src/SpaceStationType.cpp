@@ -141,6 +141,9 @@ void SpaceStationType::OnSetupComplete()
 				break;
 			}
 		}
+		if (!bFoundPort) {
+			Output("Port not found!\n");
+		}
 		assert(bFoundPort);
 
 		// now build the docking/leaving waypoints

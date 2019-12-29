@@ -13,6 +13,8 @@
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 
+static const char *DEFAULT_COCKPIT_NAME = "default_cockpit";
+
 ShipCockpit::ShipCockpit(const std::string &modelName) :
 	m_shipDir(0.0),
 	m_shipYaw(0.0),

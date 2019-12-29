@@ -311,9 +311,6 @@ void WorldView::Update(const float frameTime)
 	FrameId playerFrameId = GameLocator::getGame()->GetPlayer()->GetFrame();
 	FrameId camFrameId = m_cameraContext->GetCamFrame();
 
-	const Frame *playerFrame = Frame::GetFrame(playerFrameId);
-	const Frame *camFrame = Frame::GetFrame(camFrameId);
-
 	//speedlines and contact trails need camFrame for transform, so they
 	//must be updated here
 	if (GameConfSingleton::AreSpeedLinesDisplayed()) {

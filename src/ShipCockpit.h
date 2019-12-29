@@ -11,7 +11,6 @@ static const float COCKPIT_ROTATION_INTERP_MULTIPLIER = 5.0f;
 static const float COCKPIT_ACCEL_INTERP_MULTIPLIER = 0.5f;
 static const float COCKPIT_MAX_GFORCE = 10000.0f;
 static const float COCKPIT_ACCEL_OFFSET = 0.075f;
-static const char *DEFAULT_COCKPIT_NAME = "default_cockpit";
 
 class Player;
 class Camera;

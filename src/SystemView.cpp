@@ -43,11 +43,11 @@ static const double DEFAULT_VIEW_DISTANCE = 10.0;
 
 SystemView::SystemView() :
 	UIView(),
-	m_gridDrawing(GridDrawing::OFF),
-	m_shipDrawing(ShipDrawing::OFF),
+	m_unexplored(true),
 	m_showL4L5(ShowLagrange::LAG_OFF),
-	m_realtime(true),
-	m_unexplored(true)
+	m_shipDrawing(ShipDrawing::OFF),
+	m_gridDrawing(GridDrawing::OFF),
+	m_realtime(true)
 {
 	SetTransparency(true);
 

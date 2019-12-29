@@ -15,6 +15,8 @@
 #include "galaxy/SystemPath.h"
 
 InGameViews::InGameViews(Game *game, const SystemPath &path, unsigned int cacheRadius) :
+	m_currentView(nullptr),
+	m_currentViewType(ViewType::NONE),
 	m_sectorView(new SectorView(path, game->GetGalaxy(), cacheRadius)),
 	m_galacticView(new UIView("GalacticView")),
 	m_systemInfoView(new SystemInfoView(game)),
@@ -23,12 +25,10 @@ InGameViews::InGameViews(Game *game, const SystemPath &path, unsigned int cacheR
 	m_deathView(new DeathView()),
 	m_spaceStationView(new UIView("StationView")),
 	m_infoView(new UIView("InfoView")),
-	m_cpan(new ShipCpanel()),
+	m_cpan(new ShipCpanel())
 #if WITH_OBJECTVIEWER
-	m_objectViewerView(new ObjectViewerView(game)),
+	,m_objectViewerView(new ObjectViewerView(game))
 #endif
-	m_currentView(nullptr),
-	m_currentViewType(ViewType::NONE)
 {
 }
 

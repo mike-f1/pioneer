@@ -167,8 +167,8 @@ private:
 		std::string gun_name;
 		std::string sound;
 		float recharge;
-		float temp_heat_rate;
 		float temp_cool_rate;
+		float temp_heat_rate;
 		unsigned barrels;
 		ProjectileData projData;
 	};
@@ -209,8 +209,8 @@ private:
 		int contemporary_barrels; // <- the number of active barrels
 		int next_firing_barrels; // <-the next group of barrels which will fire
 		Sound::Event sound;
-		GunData gun_data;
 		std::vector<int> fire_modes;
+		GunData gun_data;
 		void UpdateFireModes(const Mount &mount);
 	};
 

@@ -40,14 +40,14 @@
 //#define DEBUG_CACHE
 
 Game::Game(const SystemPath &path, const double startDateTime, unsigned int cacheRadius) :
+	m_cacheRadius(cacheRadius),
 	m_galaxy(GalaxyGenerator::Create()),
 	m_time(startDateTime),
 	m_state(State::NORMAL),
 	m_wantHyperspace(false),
 	m_timeAccel(TIMEACCEL_1X),
 	m_requestedTimeAccel(TIMEACCEL_1X),
-	m_forceTimeAccel(false),
-	m_cacheRadius(cacheRadius)
+	m_forceTimeAccel(false)
 {
 #ifdef PIONEER_PROFILER
 	std::string profilerPath;
@@ -108,10 +108,10 @@ Game::Game(const SystemPath &path, const double startDateTime, unsigned int cach
 }
 
 Game::Game(const Json &jsonObj, unsigned int cacheRadius) :
+	m_cacheRadius(cacheRadius),
 	m_timeAccel(TIMEACCEL_PAUSED),
 	m_requestedTimeAccel(TIMEACCEL_PAUSED),
-	m_forceTimeAccel(false),
-	m_cacheRadius(cacheRadius)
+	m_forceTimeAccel(false)
 {
 	std::unique_ptr<LuaSerializer> luaSerializer(new LuaSerializer());
 
@@ -767,11 +767,6 @@ void Game::GenCaches(const SystemPath *here, unsigned int sectorRadius,
 void Game::UpdateStarSystemCache(const SystemPath *here, unsigned int sectorRadius)
 {
 	PROFILE_SCOPED()
-
-	// current location
-	const int here_x = here->sectorX;
-	const int here_y = here->sectorY;
-	const int here_z = here->sectorZ;
 
 	const int survivorRadius = sectorRadius * 3;
 

@@ -816,7 +816,6 @@ void Pi::HandleKeyDown(const SDL_Keysym &key)
 #if WITH_DEVKEYS
 	case SDLK_F12: {
 		if (GameLocator::getGame()) {
-			vector3d dir = -GameLocator::getGame()->GetPlayer()->GetOrient().VectorZ();
 			/* add test object */
 			if (input.KeyState(SDLK_RSHIFT)) {
 				Missile *missile = GameLocator::getGame()->GetPlayer()->SpawnMissile(ShipType::MISSILE_GUIDED, 1000);

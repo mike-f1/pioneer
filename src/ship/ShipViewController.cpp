@@ -211,10 +211,12 @@ void ShipViewController::Update(const float frameTime)
 		if (rotate.x != 0.0) cam->PitchCamera(rotate.x);
 		if (rotate.z != 0.0) cam->RollCamera(rotate.z);
 
-		if (InputBindings.cameraZoom->IsActive())
+		if (InputBindings.cameraZoom->IsActive()) {
 			cam->ZoomEvent(-InputBindings.cameraZoom->GetValue() * ZOOM_SPEED * frameTime);
-		if (InputBindings.resetCamera->IsActive())
+		}
+		if (InputBindings.resetCamera->IsActive()) {
 			cam->Reset();
+		}
 		cam->ZoomEventUpdate(frameTime);
 	}
 

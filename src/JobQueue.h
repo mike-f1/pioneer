@@ -11,6 +11,8 @@
 #include <string>
 #include <vector>
 
+#include "utils.h"
+
 static const Uint32 MAX_THREADS = 64;
 
 class JobClient;
@@ -263,6 +265,7 @@ public:
 	virtual void Order(Job *job)
 	{
 		auto x = m_jobs.insert(m_queue->Queue(job, this));
+		if (x.second) Output("Job already queued\n");
 		assert(x.second);
 	}
 	virtual void RemoveJob(Job::Handle *handle) { m_jobs.erase(*handle); }

@@ -62,6 +62,26 @@ void ShipViewController::InputBinding::RegisterBindings()
 #undef AXIS_BINDING
 }
 
+void ShipViewController::OnCamReset()
+{
+	auto *cam = static_cast<MoveableCameraController *>(m_activeCameraController);
+	if (cam) cam->Reset();
+}
+
+void ShipViewController::OnMouseWheel(bool up)
+{
+	if (m_activeCameraController == nullptr) return;
+
+	if (m_activeCameraController->IsExternal()) {
+		MoveableCameraController *cam = static_cast<MoveableCameraController *>(m_activeCameraController);
+
+		if (!up) // Zoom out
+			cam->ZoomEvent(ZOOM_SPEED * WHEEL_SENSITIVITY);
+		else
+			cam->ZoomEvent(-ZOOM_SPEED * WHEEL_SENSITIVITY);
+	}
+}
+
 ShipViewController::~ShipViewController()
 {
 	Deactivated();
@@ -99,7 +119,9 @@ void ShipViewController::Activated()
 	Pi::input.PushInputFrame(&InputBindings);
 
 	m_onMouseWheelCon =
-		Pi::input.onMouseWheel.connect(sigc::mem_fun(this, &ShipViewController::MouseWheel));
+		Pi::input.onMouseWheel.connect(sigc::mem_fun(this, &ShipViewController::OnMouseWheel));
+
+	m_onResetCam = InputBindings.resetCamera->onPress.connect(sigc::mem_fun(this, &ShipViewController::OnCamReset));
 
 	GameLocator::getGame()->GetPlayer()->GetPlayerController()->SetMouseForRearView(GetCamType() == CAM_INTERNAL && m_internalCameraController->GetMode() == InternalCameraController::MODE_REAR);
 }
@@ -109,6 +131,7 @@ void ShipViewController::Deactivated()
 	Pi::input.RemoveInputFrame(&InputBindings);
 
 	m_onMouseWheelCon.disconnect();
+	m_onResetCam.disconnect();
 }
 
 void ShipViewController::SetCamType(Ship *ship, enum CamType c)
@@ -214,9 +237,6 @@ void ShipViewController::Update(const float frameTime)
 		if (InputBindings.cameraZoom->IsActive()) {
 			cam->ZoomEvent(-InputBindings.cameraZoom->GetValue() * ZOOM_SPEED * frameTime);
 		}
-		if (InputBindings.resetCamera->IsActive()) {
-			cam->Reset();
-		}
 		cam->ZoomEventUpdate(frameTime);
 	}
 
@@ -232,18 +252,4 @@ void ShipViewController::Update(const float frameTime)
 	}
 
 	m_activeCameraController->Update();
-}
-
-void ShipViewController::MouseWheel(bool up)
-{
-	if (m_activeCameraController == nullptr) return;
-
-	if (m_activeCameraController->IsExternal()) {
-		MoveableCameraController *cam = static_cast<MoveableCameraController *>(m_activeCameraController);
-
-		if (!up) // Zoom out
-			cam->ZoomEvent(ZOOM_SPEED * WHEEL_SENSITIVITY);
-		else
-			cam->ZoomEvent(-ZOOM_SPEED * WHEEL_SENSITIVITY);
-	}
 }

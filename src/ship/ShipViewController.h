@@ -40,8 +40,12 @@ public:
 private:
 	void ChangeInternalCameraMode(InternalCameraController::Mode m);
 
+	void OnCamReset();
+	void OnMouseWheel(bool up);
+
 	enum CamType m_camType;
 
+	sigc::connection m_onResetCam;
 	sigc::connection m_onMouseWheelCon;
 
 	std::unique_ptr<InternalCameraController> m_internalCameraController;
@@ -51,8 +55,6 @@ private:
 	CameraController *m_activeCameraController; //one of the above
 
 	bool headtracker_input_priority;
-
-	void MouseWheel(bool up);
 
 public:
 	void Init(Ship *ship);

@@ -111,7 +111,7 @@ void ShipViewController::Init(Ship *ship)
 
 void ShipViewController::Activated()
 {
-	Pi::input.PushInputFrame(&InputBindings);
+	if (!Pi::input.PushInputFrame(&InputBindings)) return;
 
 	m_onMouseWheelCon =
 		Pi::input.onMouseWheel.connect(sigc::mem_fun(this, &ShipViewController::OnMouseWheel));
@@ -123,7 +123,7 @@ void ShipViewController::Activated()
 
 void ShipViewController::Deactivated()
 {
-	Pi::input.RemoveInputFrame(&InputBindings);
+	if (!Pi::input.RemoveInputFrame(&InputBindings)) return;
 
 	m_onMouseWheelCon.disconnect();
 	m_onResetCam.disconnect();

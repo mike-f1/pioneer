@@ -9,10 +9,9 @@
 
 #include <algorithm>
 
-class Input {
-	// TODO: better decouple these two classes.
-	friend class Pi;
+class InputFrame;
 
+class Input {
 public:
 	Input(){};
 	void Init();
@@ -38,26 +37,8 @@ public:
 	BindingPage *GetBindingPage(std::string id) { return &bindingPages[id]; }
 	std::map<std::string, BindingPage> GetBindingPages() { return bindingPages; }
 
-	struct InputFrame {
-		std::vector<KeyBindings::ActionBinding *> actions;
-		std::vector<KeyBindings::AxisBinding *> axes;
-
-		bool active;
-
-		// Call this at startup to register all the bindings associated with the frame.
-		virtual void RegisterBindings(){};
-
-		// Called when the frame is added to the stack.
-		virtual void onFrameAdded(){};
-
-		// Called when the frame is removed from the stack.
-		virtual void onFrameRemoved(){};
-
-		// Check the event against all the inputs in this frame.
-		InputResponse ProcessSDLEvent(const SDL_Event &event);
-	};
-
-	// Pushes an InputFrame onto the input stack.
+	// Pushes an InputFrame onto the input stack, return true if
+	// correctly pushed
 	bool PushInputFrame(InputFrame *frame);
 
 	// Pops the most-recently pushed InputFrame from the stack.
@@ -73,7 +54,8 @@ public:
 	}
 
 	// Remove an arbitrary input frame from the input stack.
-	void RemoveInputFrame(InputFrame *frame);
+	// return true if it was such frame
+	bool RemoveInputFrame(InputFrame *frame);
 
 	// Creates a new action binding, copying the provided binding.
 	// The returned binding pointer points to the actual binding.
@@ -142,8 +124,13 @@ public:
 	sigc::signal<void, int, int, int> onMouseButtonDown;
 	sigc::signal<void, bool> onMouseWheel;
 
-private:
+	void ResetMouseMotion()
+	{
+		mouseMotion[0] = mouseMotion[1] = 0;
+	}
+
 	void HandleSDLEvent(const SDL_Event &ev);
+private:
 	void InitJoysticks();
 
 	std::map<SDL_Keycode, bool> keyState;

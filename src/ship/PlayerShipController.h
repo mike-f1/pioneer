@@ -4,6 +4,7 @@
 #pragma once
 
 #include "Input.h"
+#include "InputFrame.h"
 #include "ShipController.h"
 
 namespace KeyBindings {
@@ -51,7 +52,7 @@ public:
 	void SetSetSpeedTarget(Body *const target);
 
 private:
-	static struct InputBinding : public Input::InputFrame {
+	static struct InputBinding : public InputFrame {
 		// We create a local alias for ease of typing these bindings.
 		typedef KeyBindings::AxisBinding AxisBinding;
 		typedef KeyBindings::ActionBinding ActionBinding;

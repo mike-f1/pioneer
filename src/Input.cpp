@@ -5,6 +5,7 @@
 
 #include "GameConfig.h"
 #include "GameConfSingleton.h"
+#include "InputFrame.h"
 #include "ui/Context.h"
 
 #include <array>
@@ -34,26 +35,7 @@ void Input::InitGame()
 	}
 }
 
-InputResponse Input::InputFrame::ProcessSDLEvent(const SDL_Event &event)
-{
-	bool matched = false;
-
-	for (KeyBindings::ActionBinding *action : actions) {
-		auto resp = action->CheckSDLEventAndDispatch(event);
-		if (resp == RESPONSE_MATCHED) return resp;
-		matched = matched || resp > RESPONSE_NOMATCH;
-	}
-
-	for (KeyBindings::AxisBinding *axis : axes) {
-		auto resp = axis->CheckSDLEventAndDispatch(event);
-		if (resp == RESPONSE_MATCHED) return resp;
-		matched = matched || resp > RESPONSE_NOMATCH;
-	}
-
-	return matched ? RESPONSE_PASSTHROUGH : RESPONSE_NOMATCH;
-}
-
-bool Input::PushInputFrame(Input::InputFrame *frame)
+bool Input::PushInputFrame(InputFrame *frame)
 {
 	if (HasInputFrame(frame)) {
 		return false;
@@ -65,7 +47,7 @@ bool Input::PushInputFrame(Input::InputFrame *frame)
 	return true;
 }
 
-Input::InputFrame *Input::PopInputFrame()
+InputFrame *Input::PopInputFrame()
 {
 	if (inputFrames.size() > 0) {
 		auto frame = inputFrames.back();
@@ -78,14 +60,16 @@ Input::InputFrame *Input::PopInputFrame()
 	return nullptr;
 }
 
-void Input::RemoveInputFrame(Input::InputFrame *frame)
+bool Input::RemoveInputFrame(InputFrame *frame)
 {
 	auto it = std::find(inputFrames.begin(), inputFrames.end(), frame);
 	if (it != inputFrames.end()) {
 		inputFrames.erase(it);
 		frame->active = false;
 		frame->onFrameRemoved();
+		return true;
 	}
+	return false;
 }
 
 KeyBindings::ActionBinding *Input::AddActionBinding(std::string id, BindingGroup *group, KeyBindings::ActionBinding binding)

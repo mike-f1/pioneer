@@ -907,7 +907,7 @@ void Pi::HandleEvents()
 	// unified input system
 	bool skipTextInput = false;
 
-	Pi::input.mouseMotion[0] = Pi::input.mouseMotion[1] = 0;
+	Pi::input.ResetMouseMotion();
 	while (SDL_PollEvent(&event)) {
 		if (event.type == SDL_QUIT) {
 			Pi::RequestQuit();

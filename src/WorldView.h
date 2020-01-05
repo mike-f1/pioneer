@@ -56,7 +56,6 @@ public:
 	virtual void Draw();
 	static const double PICK_OBJECT_RECT_SIZE;
 	virtual void SaveToJson(Json &jsonObj);
-	virtual void HandleSDLEvent(SDL_Event &event);
 
 	RefCountedPtr<CameraContext> GetCameraContext() const { return m_cameraContext; }
 
@@ -152,14 +151,17 @@ private:
 	Graphics::Drawables::Line3D m_edgeMarker;
 	Graphics::Drawables::Lines m_indicator;
 
-	static struct InputBinding {
-		typedef KeyBindings::ActionBinding ActionBinding;
-		typedef KeyBindings::AxisBinding AxisBinding;
+	static struct BaseBinding : public InputFrame {
+		using Action = KeyBindings::ActionBinding;
+		using Axis =  KeyBindings::AxisBinding;
 
-		ActionBinding *toggleHudMode;
-		ActionBinding *increaseTimeAcceleration;
-		ActionBinding *decreaseTimeAcceleration;
-	} InputBindings;
+		Action *toggleHudMode;
+		Action *increaseTimeAcceleration;
+		Action *decreaseTimeAcceleration;
+
+		virtual void RegisterBindings();
+	} BaseBindings;
+
 };
 
 class NavTunnelWidget : public Gui::Widget {

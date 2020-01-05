@@ -947,7 +947,6 @@ void Pi::HandleEvents()
 		bool consoleActive = Pi::IsConsoleActive();
 		if (!consoleActive) {
 			KeyBindings::DispatchSDLEvent(event);
-			if (InGameViewsLocator::getInGameViews()) InGameViewsLocator::getInGameViews()->HandleSDLEvent(event);
 		} else {
 			KeyBindings::toggleLuaConsole.CheckSDLEventAndDispatch(event);
 		}

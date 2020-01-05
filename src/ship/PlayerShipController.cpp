@@ -49,6 +49,8 @@ PlayerShipController::PlayerShipController() :
 			  "You must call PlayerShipController::RegisterInputBindings before initializing a PlayerShipController");
 	}
 
+	Pi::input.PushInputFrame(&InputBindings);
+
 	m_connRotationDampingToggleKey = InputBindings.toggleRotationDamping->onPress.connect(
 		sigc::mem_fun(this, &PlayerShipController::ToggleRotationDamping));
 
@@ -69,25 +71,39 @@ void PlayerShipController::RegisterInputBindings()
 
 	auto weaponsGroup = controlsPage->GetBindingGroup("Weapons");
 	InputBindings.targetObject = Pi::input.AddActionBinding("BindTargetObject", weaponsGroup, ActionBinding(SDLK_y));
+	InputBindings.actions.push_back(InputBindings.targetObject);
 	InputBindings.primaryFire = Pi::input.AddActionBinding("BindPrimaryFire", weaponsGroup, ActionBinding(SDLK_SPACE));
+	InputBindings.actions.push_back(InputBindings.primaryFire);
 	InputBindings.secondaryFire = Pi::input.AddActionBinding("BindSecondaryFire", weaponsGroup, ActionBinding(SDLK_m));
+	InputBindings.actions.push_back(InputBindings.secondaryFire);
 
 	auto flightGroup = controlsPage->GetBindingGroup("ShipOrient");
 	InputBindings.pitch = Pi::input.AddAxisBinding("BindAxisPitch", flightGroup, AxisBinding(SDLK_k, SDLK_i));
+	InputBindings.axes.push_back(InputBindings.pitch);
 	InputBindings.yaw = Pi::input.AddAxisBinding("BindAxisYaw", flightGroup, AxisBinding(SDLK_j, SDLK_l));
+	InputBindings.axes.push_back(InputBindings.yaw);
 	InputBindings.roll = Pi::input.AddAxisBinding("BindAxisRoll", flightGroup, AxisBinding(SDLK_u, SDLK_o));
+	InputBindings.axes.push_back(InputBindings.roll);
 	InputBindings.killRot = Pi::input.AddActionBinding("BindKillRot", flightGroup, ActionBinding(SDLK_p, SDLK_x));
+	InputBindings.actions.push_back(InputBindings.killRot);
 	InputBindings.toggleRotationDamping = Pi::input.AddActionBinding("BindToggleRotationDamping", flightGroup, ActionBinding(SDLK_v));
+	InputBindings.actions.push_back(InputBindings.toggleRotationDamping);
 
 	auto thrustGroup = controlsPage->GetBindingGroup("ManualControl");
 	InputBindings.thrustForward = Pi::input.AddAxisBinding("BindAxisThrustForward", thrustGroup, AxisBinding(SDLK_w, SDLK_s));
+	InputBindings.axes.push_back(InputBindings.thrustForward);
 	InputBindings.thrustUp = Pi::input.AddAxisBinding("BindAxisThrustUp", thrustGroup, AxisBinding(SDLK_r, SDLK_f));
+	InputBindings.axes.push_back(InputBindings.thrustUp);
 	InputBindings.thrustLeft = Pi::input.AddAxisBinding("BindAxisThrustLeft", thrustGroup, AxisBinding(SDLK_a, SDLK_d));
+	InputBindings.axes.push_back(InputBindings.thrustLeft);
 	InputBindings.thrustLowPower = Pi::input.AddActionBinding("BindThrustLowPower", thrustGroup, ActionBinding(SDLK_LSHIFT));
+	InputBindings.actions.push_back(InputBindings.thrustLowPower);
 
 	auto speedGroup = controlsPage->GetBindingGroup("SpeedControl");
 	InputBindings.speedControl = Pi::input.AddAxisBinding("BindSpeedControl", speedGroup, AxisBinding(SDLK_RETURN, SDLK_RSHIFT));
+	InputBindings.axes.push_back(InputBindings.speedControl);
 	InputBindings.toggleSetSpeed = Pi::input.AddActionBinding("BindToggleSetSpeed", speedGroup, ActionBinding(SDLK_v));
+	InputBindings.actions.push_back(InputBindings.toggleSetSpeed);
 }
 
 PlayerShipController::~PlayerShipController()

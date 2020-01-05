@@ -54,8 +54,8 @@ public:
 private:
 	static struct InputBinding : public InputFrame {
 		// We create a local alias for ease of typing these bindings.
-		typedef KeyBindings::AxisBinding AxisBinding;
-		typedef KeyBindings::ActionBinding ActionBinding;
+		using AxisBinding = KeyBindings::AxisBinding;
+		using ActionBinding = KeyBindings::ActionBinding;
 
 		// Weapons
 		ActionBinding *targetObject;

@@ -18,5 +18,10 @@ InputResponse InputFrame::ProcessSDLEvent(const SDL_Event &event)
 		matched = matched || resp > RESPONSE_NOMATCH;
 	}
 
+	if (wheel != nullptr) {
+		auto resp = wheel->CheckSDLEventAndDispatch(event);
+		if (resp == RESPONSE_MATCHED) return resp;
+		matched = matched || resp > RESPONSE_NOMATCH;
+	}
 	return matched ? RESPONSE_PASSTHROUGH : RESPONSE_NOMATCH;
 }

@@ -55,6 +55,9 @@ void ShipViewController::InputBinding::RegisterBindings()
 
 	resetCamera = Pi::input.AddActionBinding("BindResetCamera", group, ActionBinding(SDLK_HOME));
 	actions.push_back(resetCamera);
+
+	mouseWheel = Pi::input.AddWheelBinding("MouseWheel", group, WheelBinding());
+	wheel = mouseWheel;
 }
 
 void ShipViewController::OnCamReset()
@@ -114,7 +117,7 @@ void ShipViewController::Activated()
 	if (!Pi::input.PushInputFrame(&InputBindings)) return;
 
 	m_onMouseWheelCon =
-		Pi::input.onMouseWheel.connect(sigc::mem_fun(this, &ShipViewController::OnMouseWheel));
+		InputBindings.mouseWheel->onAxis.connect(sigc::mem_fun(this, &ShipViewController::OnMouseWheel));
 
 	m_onResetCam = InputBindings.resetCamera->onPress.connect(sigc::mem_fun(this, &ShipViewController::OnCamReset));
 

@@ -22,7 +22,8 @@ public:
 	struct BindingGroup {
 		enum EntryType {
 			ENTRY_ACTION,
-			ENTRY_AXIS
+			ENTRY_AXIS,
+			ENTRY_WHEEL
 		};
 
 		std::map<std::string, EntryType> bindings;
@@ -72,6 +73,8 @@ public:
 	{
 		return axisBindings.count(id) ? &axisBindings[id] : nullptr;
 	}
+
+	KeyBindings::WheelBinding *AddWheelBinding(std::string id, BindingGroup *group, KeyBindings::WheelBinding binding);
 
 	bool KeyState(SDL_Keycode k) { return keyState[k]; }
 	int KeyModState() { return keyModState; }
@@ -145,6 +148,7 @@ private:
 	std::map<std::string, BindingPage> bindingPages;
 	std::map<std::string, KeyBindings::ActionBinding> actionBindings;
 	std::map<std::string, KeyBindings::AxisBinding> axisBindings;
+	std::map<std::string, KeyBindings::WheelBinding> wheelBindings;
 
 	std::vector<InputFrame *> inputFrames;
 };

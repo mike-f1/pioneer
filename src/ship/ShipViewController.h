@@ -48,6 +48,7 @@ public:
 	static struct InputBinding : public InputFrame {
 		using Action = KeyBindings::ActionBinding;
 		using Axis = KeyBindings::AxisBinding;
+		using Wheel = KeyBindings::WheelBinding;
 
 		Axis *cameraYaw;
 		Axis *cameraPitch;
@@ -66,6 +67,8 @@ public:
 
 		Action *cycleCameraMode;
 		Action *resetCamera;
+
+		Wheel *mouseWheel;
 
 		virtual void RegisterBindings();
 	} InputBindings;

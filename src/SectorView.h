@@ -77,7 +77,8 @@ public:
 	void SetDrawRouteLines(bool value) { m_drawRouteLines = value; }
 
 protected:
-	virtual void OnSwitchTo();
+	virtual void OnSwitchTo() override;
+	virtual void OnSwitchFrom() override;
 
 private:
 	void InitDefaults();

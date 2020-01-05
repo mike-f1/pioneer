@@ -102,6 +102,22 @@ KeyBindings::AxisBinding *Input::AddAxisBinding(std::string id, BindingGroup *gr
 	return &(axisBindings[id] = binding);
 }
 
+KeyBindings::WheelBinding *Input::AddWheelBinding(std::string id, BindingGroup *group, KeyBindings::WheelBinding binding)
+{
+	// throw an error if we attempt to bind an axis onto an already-bound action in the same group.
+	if (group->bindings.count(id) && group->bindings[id] != BindingGroup::ENTRY_WHEEL)
+		Error("Attempt to bind already-registered action %s as an axis.\n", id.c_str());
+
+	group->bindings[id] = BindingGroup::ENTRY_WHEEL;
+
+	// Load from the config
+//	std::string config_str = GameConfSingleton::getInstance().String(id.c_str());
+//	if (config_str.length() > 0) binding.SetFromString(config_str);
+
+	return &(wheelBindings[id] = binding);
+}
+
+
 void Input::HandleSDLEvent(const SDL_Event &event)
 {
 	switch (event.type) {

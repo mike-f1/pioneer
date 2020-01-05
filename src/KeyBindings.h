@@ -197,6 +197,14 @@ namespace KeyBindings {
 		InputResponse CheckSDLEventAndDispatch(const SDL_Event &event);
 	};
 
+	struct WheelBinding {
+		WheelBinding() {};
+
+		sigc::signal<void, bool> onAxis;
+
+		InputResponse CheckSDLEventAndDispatch(const SDL_Event &event);
+	};
+
 	struct BindingPrototype {
 		const char *label, *function;
 		ActionBinding *kb;

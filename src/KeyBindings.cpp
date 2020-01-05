@@ -637,6 +637,16 @@ namespace KeyBindings {
 		return RESPONSE_NOMATCH;
 	}
 
+	InputResponse WheelBinding::CheckSDLEventAndDispatch(const SDL_Event &event)
+	{
+		if (m_disableBindings) return RESPONSE_NOMATCH;
+		if (event.type == SDL_MOUSEWHEEL) {
+			onAxis.emit(event.wheel.y > 0); // true = up
+			return RESPONSE_MATCHED;
+		}
+		return RESPONSE_NOMATCH;
+	}
+
 	void DispatchSDLEvent(const SDL_Event &event)
 	{
 		switch (event.type) {

@@ -1012,6 +1012,10 @@ void SectorView::OnSwitchTo()
 	Update(0.);
 }
 
+void SectorView::OnSwitchFrom()
+{
+}
+
 void SectorView::OnKeyPressed(const SDL_Keysym &keysym)
 {
 	if (!InGameViewsLocator::getInGameViews()->IsSectorView()) {

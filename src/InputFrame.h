@@ -7,6 +7,7 @@
 namespace KeyBindings {
 	struct ActionBinding;
 	struct AxisBinding;
+	struct WheelBinding;
 }
 
 enum InputResponse {
@@ -21,10 +22,11 @@ enum InputResponse {
 struct InputFrame {
 	std::vector<KeyBindings::ActionBinding *> actions;
 	std::vector<KeyBindings::AxisBinding *> axes;
+	KeyBindings::WheelBinding *wheel = nullptr;
 
 	bool active;
 
-	// Call this at startup to register all the bindings associated with the frame.
+	// Call this at startup and register all the bindings associated with the frame.
 	virtual void RegisterBindings(){};
 
 	// Called when the frame is added to the stack.

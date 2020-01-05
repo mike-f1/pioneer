@@ -278,8 +278,9 @@ void PlayerShipController::PollControls(const float timeStep, const bool force_r
 				matrix3x3d mrot = matrix3x3d::RotateY(modx) * matrix3x3d::RotateX(mody);
 				m_mouseDir = (rot * (mrot * objDir)).Normalized();
 			}
-		} else
+		} else {
 			m_mouseActive = false;
+		}
 
 		if (m_flightControlState == CONTROL_FIXSPEED) {
 			double oldSpeed = m_setSpeed;

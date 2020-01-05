@@ -37,26 +37,6 @@ public:
 
 	sigc::signal<void> onChangeCamType;
 
-private:
-	void ChangeInternalCameraMode(InternalCameraController::Mode m);
-
-	void OnCamReset();
-	void OnMouseWheel(bool up);
-
-	enum CamType m_camType;
-
-	sigc::connection m_onResetCam;
-	sigc::connection m_onMouseWheelCon;
-
-	std::unique_ptr<InternalCameraController> m_internalCameraController;
-	std::unique_ptr<ExternalCameraController> m_externalCameraController;
-	std::unique_ptr<SiderealCameraController> m_siderealCameraController;
-	std::unique_ptr<FlyByCameraController> m_flybyCameraController;
-	CameraController *m_activeCameraController; //one of the above
-
-	bool headtracker_input_priority;
-
-public:
 	void Init(Ship *ship);
 	void LoadFromJson(const Json &jsonObj);
 	void SaveToJson(Json &jsonObj);
@@ -88,4 +68,23 @@ public:
 
 		virtual void RegisterBindings();
 	} InputBindings;
+
+private:
+	void ChangeInternalCameraMode(InternalCameraController::Mode m);
+
+	void OnCamReset();
+	void OnMouseWheel(bool up);
+
+	enum CamType m_camType;
+
+	sigc::connection m_onResetCam;
+	sigc::connection m_onMouseWheelCon;
+
+	std::unique_ptr<InternalCameraController> m_internalCameraController;
+	std::unique_ptr<ExternalCameraController> m_externalCameraController;
+	std::unique_ptr<SiderealCameraController> m_siderealCameraController;
+	std::unique_ptr<FlyByCameraController> m_flybyCameraController;
+	CameraController *m_activeCameraController; //one of the above
+
+	bool headtracker_input_priority;
 };

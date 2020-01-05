@@ -25,41 +25,36 @@ void ShipViewController::InputBinding::RegisterBindings()
 	using namespace KeyBindings;
 
 	Input::BindingPage *page = Pi::input.GetBindingPage("ShipView");
-	Input::BindingGroup *group;
+	Input::BindingGroup *group = page->GetBindingGroup("GeneralViewControls");
 
-#define BINDING_GROUP(n) group = page->GetBindingGroup(#n);
-#define KEY_BINDING(n, id, k1, k2)                                    \
-	n =                                                               \
-		Pi::input.AddActionBinding(id, group, ActionBinding(k1, k2)); \
-	actions.push_back(n);
-#define AXIS_BINDING(n, id, k1, k2)                               \
-	n =                                                           \
-		Pi::input.AddAxisBinding(id, group, AxisBinding(k1, k2)); \
-	axes.push_back(n);
+	cameraRoll = Pi::input.AddAxisBinding("BindCameraRoll", group, AxisBinding(SDLK_KP_1, SDLK_KP_3));
+	axes.push_back(cameraRoll);
+	cameraPitch = Pi::input.AddAxisBinding("BindCameraPitch", group, AxisBinding(SDLK_KP_2, SDLK_KP_8));
+	axes.push_back(cameraPitch);
+	cameraYaw = Pi::input.AddAxisBinding("BindCameraYaw", group, AxisBinding(SDLK_KP_4, SDLK_KP_6));
+	axes.push_back(cameraYaw);
+	cameraZoom = Pi::input.AddAxisBinding("BindViewZoom", group, AxisBinding(SDLK_EQUALS, SDLK_MINUS));
+	axes.push_back(cameraZoom);
+	lookYaw = Pi::input.AddAxisBinding("BindLookYaw", group, AxisBinding(0, 0));
+	axes.push_back(lookYaw);
+	lookPitch = Pi::input.AddAxisBinding("BindLookPitch", group, AxisBinding(0, 0));
+	axes.push_back(lookPitch);
 
-	BINDING_GROUP(GeneralViewControls)
-//	KEY_BINDING(cycleCameraMode, "BindCycleCameraMode", SDLK_F1, 0) <- In PiGui
+	frontCamera = Pi::input.AddActionBinding("BindFrontCamera", group, ActionBinding(SDLK_KP_8, SDLK_UP));
+	actions.push_back(frontCamera);
+	rearCamera = Pi::input.AddActionBinding("BindRearCamera", group, ActionBinding(SDLK_KP_2, SDLK_DOWN));
+	actions.push_back(rearCamera);
+	leftCamera = Pi::input.AddActionBinding("BindLeftCamera", group, ActionBinding(SDLK_KP_4, SDLK_LEFT));
+	actions.push_back(leftCamera);
+	rightCamera = Pi::input.AddActionBinding("BindRightCamera", group, ActionBinding(SDLK_KP_6, SDLK_RIGHT));
+	actions.push_back(rightCamera);
+	topCamera = Pi::input.AddActionBinding("BindTopCamera", group, ActionBinding(SDLK_KP_9));
+	actions.push_back(topCamera);
+	bottomCamera = Pi::input.AddActionBinding("BindBottomCamera", group, ActionBinding(SDLK_KP_3));
+	actions.push_back(bottomCamera);
 
-	AXIS_BINDING(cameraRoll, "BindCameraRoll", SDLK_KP_1, SDLK_KP_3)
-	AXIS_BINDING(cameraPitch, "BindCameraPitch", SDLK_KP_2, SDLK_KP_8)
-	AXIS_BINDING(cameraYaw, "BindCameraYaw", SDLK_KP_4, SDLK_KP_6)
-	AXIS_BINDING(cameraZoom, "BindViewZoom", SDLK_EQUALS, SDLK_MINUS)
-
-	AXIS_BINDING(lookYaw, "BindLookYaw", 0, 0);
-	AXIS_BINDING(lookPitch, "BindLookPitch", 0, 0);
-
-	KEY_BINDING(frontCamera, "BindFrontCamera", SDLK_KP_8, SDLK_UP)
-	KEY_BINDING(rearCamera, "BindRearCamera", SDLK_KP_2, SDLK_DOWN)
-	KEY_BINDING(leftCamera, "BindLeftCamera", SDLK_KP_4, SDLK_LEFT)
-	KEY_BINDING(rightCamera, "BindRightCamera", SDLK_KP_6, SDLK_RIGHT)
-	KEY_BINDING(topCamera, "BindTopCamera", SDLK_KP_9, 0)
-	KEY_BINDING(bottomCamera, "BindBottomCamera", SDLK_KP_3, 0)
-
-	KEY_BINDING(resetCamera, "BindResetCamera", SDLK_HOME, 0)
-
-#undef BINDING_GROUP
-#undef KEY_BINDING
-#undef AXIS_BINDING
+	resetCamera = Pi::input.AddActionBinding("BindResetCamera", group, ActionBinding(SDLK_HOME));
+	actions.push_back(resetCamera);
 }
 
 void ShipViewController::OnCamReset()

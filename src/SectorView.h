@@ -121,8 +121,10 @@ private:
 
 	void ShrinkCache();
 
-	void MouseWheel(bool up);
-	void OnKeyPressed(const SDL_Keysym &keysym);
+	void OnMapLockHyperspaceToggle();
+	void OnToggleSelectionFollowView();
+	void OnMouseWheel(bool up);
+	void UpdateBindings();
 
 	RefCountedPtr<Galaxy> m_galaxy;
 
@@ -163,7 +165,8 @@ private:
 	void OnToggleFaction(Gui::ToggleButton *button, bool pressed, const Faction *faction);
 
 	sigc::connection m_onMouseWheelCon;
-	sigc::connection m_onKeyPressConnection;
+	sigc::connection m_mapLockHyperspaceTargetCon;
+	sigc::connection m_mapToggleSelectionFollowViewCon;
 
 	static struct SectorBinding : public InputFrame {
 	public:
@@ -177,6 +180,8 @@ private:
 		Action *mapWarpToSelected;
 		Action *mapWarpToHyperspaceTarget;
 		Action *mapViewReset;
+
+		Wheel *mouseWheel;
 
 		virtual void RegisterBindings();
 	} SectorBindings;

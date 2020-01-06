@@ -127,8 +127,8 @@ void SectorView::RegisterInputBindings()
 {
 	using namespace KeyBindings;
 
-	Input::BindingPage *page = Pi::input.GetBindingPage("VIEW");
-	Input::BindingGroup *group = page->GetBindingGroup("SECTOR_MAP_VIEW");
+	Input::BindingPage *page = Pi::input.GetBindingPage("View");
+	Input::BindingGroup *group = page->GetBindingGroup("Whatsoever :P");
 
 	SectorBindings.mapLockHyperspaceTarget = Pi::input.AddActionBinding("BindMapLockHyperspaceTarget", group, ActionBinding(SDLK_SPACE));
 	SectorBindings.actions.push_back(SectorBindings.mapLockHyperspaceTarget);
@@ -148,7 +148,8 @@ void SectorView::RegisterInputBindings()
 	SectorBindings.mapViewReset = Pi::input.AddActionBinding("BindMapViewReset", group, ActionBinding(SDLK_t));
 	SectorBindings.actions.push_back(SectorBindings.mapViewReset);
 
-	Pi::input.PushInputFrame(&SectorBindings);
+	SectorBindings.mouseWheel = Pi::input.AddWheelBinding("MouseWheel", group, WheelBinding());
+	SectorBindings.wheel = SectorBindings.mouseWheel;
 }
 
 void SectorView::InitDefaults()
@@ -171,6 +172,7 @@ void SectorView::InitDefaults()
 
 	m_drawRouteLines = true; // where should this go?!
 	m_route = std::vector<SystemPath>();
+
 }
 
 void SectorView::InitObject(unsigned int cacheRadius)
@@ -204,9 +206,6 @@ void SectorView::InitObject(unsigned int cacheRadius)
 
 	m_disk.reset(new Graphics::Drawables::Disk(RendererLocator::getRenderer(), m_solidState, Color::WHITE, 0.2f));
 
-	m_onMouseWheelCon =
-		Pi::input.onMouseWheel.connect(sigc::mem_fun(this, &SectorView::MouseWheel));
-
 	m_sectorCache = m_galaxy->NewSectorSlaveCache();
     size_t filled = m_galaxy->FillSectorCache(m_sectorCache, m_current, cacheRadius);
     Output("SectorView cache pre-filled with %lu entries\n", filled);
@@ -215,7 +214,11 @@ void SectorView::InitObject(unsigned int cacheRadius)
 SectorView::~SectorView()
 {
 	m_onMouseWheelCon.disconnect();
-	if (m_onKeyPressConnection.connected()) m_onKeyPressConnection.disconnect();
+
+	if (!Pi::input.RemoveInputFrame(&SectorBindings)) return;
+
+	m_mapLockHyperspaceTargetCon.disconnect();
+	m_mapToggleSelectionFollowViewCon.disconnect();
 }
 
 void SectorView::SaveToJson(Json &jsonObj)
@@ -1037,9 +1040,12 @@ void SectorView::OnSwitchTo()
 {
 	RendererLocator::getRenderer()->SetViewport(0, 0, Graphics::GetScreenWidth(), Graphics::GetScreenHeight());
 
-	if (!m_onKeyPressConnection.connected())
-		m_onKeyPressConnection =
-			Pi::input.onKeyPress.connect(sigc::mem_fun(this, &SectorView::OnKeyPressed));
+	if (!Pi::input.PushInputFrame(&SectorBindings)) return;
+
+	// Initialize signals for keys press & mouse wheel:
+	m_mapLockHyperspaceTargetCon = SectorBindings.mapLockHyperspaceTarget->onPress.connect(sigc::mem_fun(this, &SectorView::OnMapLockHyperspaceToggle));
+	m_mapToggleSelectionFollowViewCon = SectorBindings.mapToggleSelectionFollowView->onPress.connect(sigc::mem_fun(this, &SectorView::OnToggleSelectionFollowView));
+	m_onMouseWheelCon = SectorBindings.mouseWheel->onAxis.connect(sigc::mem_fun(this, &SectorView::OnMouseWheel));
 
 	UIView::OnSwitchTo();
 
@@ -1048,32 +1054,33 @@ void SectorView::OnSwitchTo()
 
 void SectorView::OnSwitchFrom()
 {
+	if (!Pi::input.RemoveInputFrame(&SectorBindings)) return;
+
+	m_mapLockHyperspaceTargetCon.disconnect();
+	m_mapToggleSelectionFollowViewCon.disconnect();
+	m_onMouseWheelCon.disconnect();
 }
 
-void SectorView::OnKeyPressed(const SDL_Keysym &keysym)
-{
-	if (!InGameViewsLocator::getInGameViews()->IsSectorView()) {
-		m_onKeyPressConnection.disconnect();
-		return;
-	}
+void SectorView::OnToggleSelectionFollowView() {
+	Output("SectorView::OnToggleSelectionFollowView()\n");
+	m_automaticSystemSelection = !m_automaticSystemSelection;
+}
 
+void SectorView::OnMapLockHyperspaceToggle() {
+	Output("SectorView::OnMapLockHyperspaceToggle()\n");
+	// space "locks" (or unlocks) the hyperspace target to the selected system
+	if ((m_matchTargetToSelection || m_hyperspaceTarget != m_selected) && !m_selected.IsSameSystem(m_current)) {
+		SetHyperspaceTarget(m_selected);
+	} else {
+		ResetHyperspaceTarget();
+	}
+}
+
+void SectorView::UpdateBindings()
+{
 	// XXX ugly hack checking for Lua console here
 	if (Pi::IsConsoleActive())
 		return;
-
-	// space "locks" (or unlocks) the hyperspace target to the selected system
-	if (SectorBindings.mapLockHyperspaceTarget->IsActive()) {
-		if ((m_matchTargetToSelection || m_hyperspaceTarget != m_selected) && !m_selected.IsSameSystem(m_current))
-			SetHyperspaceTarget(m_selected);
-		else
-			ResetHyperspaceTarget();
-		return;
-	}
-
-	if (SectorBindings.mapToggleSelectionFollowView->IsActive()) {
-		m_automaticSystemSelection = !m_automaticSystemSelection;
-		return;
-	}
 
 	bool reset_view = false;
 
@@ -1122,6 +1129,8 @@ void SectorView::Update(const float frameTime)
 	// don't check raw keypresses if the search box is active
 	// XXX ugly hack checking for Lua console here
 	if (!Pi::IsConsoleActive()) {
+		UpdateBindings();
+
 		const float moveSpeed = Pi::input.GetMoveSpeedShiftModifier();
 		float move = moveSpeed * frameTime;
 		vector3f shift(0.0f);
@@ -1242,7 +1251,7 @@ void SectorView::ShowAll()
 	View::ShowAll();
 }
 
-void SectorView::MouseWheel(bool up)
+void SectorView::OnMouseWheel(bool up)
 {
 	if (InGameViewsLocator::getInGameViews()->IsSectorView()) {
 		if (!up)

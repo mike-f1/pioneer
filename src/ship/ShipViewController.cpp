@@ -178,9 +178,9 @@ void ShipViewController::SetCamType(enum CamType c)
 
 void ShipViewController::ChangeInternalCameraMode(InternalCameraController::Mode m)
 {
-	if (m_internalCameraController->GetMode() != m)
-		// TODO: find a way around this, or move it to a dedicated system.
-		Sound::PlaySfx("Click", 0.3, 0.3, false);
+	if (m_internalCameraController->GetMode() == m) return;
+	// TODO: find a way around this, or move it to a dedicated system.
+	Sound::PlaySfx("Click", 0.3, 0.3, false);
 	m_internalCameraController->SetMode(m);
 	GameLocator::getGame()->GetPlayer()->GetPlayerController()->SetMouseForRearView(m_camType == CAM_INTERNAL && m_internalCameraController->GetMode() == InternalCameraController::MODE_REAR);
 }
@@ -242,7 +242,7 @@ void ShipViewController::Update(const float frameTime)
 	Pi::input.GetMouseMotion(mouseMotion);
 
 	// external camera mouselook
-	if (Pi::input.MouseButtonState(SDL_BUTTON_MIDDLE) && !headtracker_input_priority) {
+	if (!headtracker_input_priority && Pi::input.MouseButtonState(SDL_BUTTON_MIDDLE)) {
 		// invert the mouse input to convert between screen coordinates and
 		// right-hand coordinate system rotation.
 		cam->YawCamera(-mouseMotion[0] * MOUSELOOK_SPEED);

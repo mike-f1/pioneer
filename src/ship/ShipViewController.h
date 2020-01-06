@@ -4,13 +4,17 @@
 #pragma once
 
 #include "CameraController.h"
-#include "Input.h"
 #include "InputFrame.h"
 #include "InteractionController.h"
-#include "KeyBindings.h"
 #include "utils.h"
 
 class Ship;
+
+namespace KeyBindings {
+	struct ActionBinding;
+	struct AxisBinding;
+	struct WheelBinding;
+}
 
 class ShipViewController : public InteractionController {
 	friend class WorldView;

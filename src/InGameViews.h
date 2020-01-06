@@ -4,8 +4,6 @@
 #include "JsonFwd.h"
 #include "RefCounted.h"
 
-#include <SDL_events.h>
-
 class Game;
 class SystemPath;
 

@@ -49,6 +49,7 @@ public:
 	void SetHyperspaceTarget(const SystemPath &path);
 	void FloatHyperspaceTarget();
 	void LockHyperspaceTarget(bool lock);
+	bool GetLockHyperspaceTarget() { return !m_matchTargetToSelection; }
 	void ResetHyperspaceTarget();
 	void GotoSector(const SystemPath &path);
 	void GotoSystem(const SystemPath &path);
@@ -66,9 +67,13 @@ public:
 	vector3f GetCenterSector();
 	double GetCenterDistance();
 	void SetDrawUninhabitedLabels(bool value) { m_drawUninhabitedLabels = value; }
+	bool GetDrawUninhabitedLabels() { return m_drawUninhabitedLabels; }
 	void SetDrawVerticalLines(bool value) { m_drawVerticalLines = value; }
+	bool GetDrawVerticalLines() { return m_drawVerticalLines; }
 	void SetDrawOutRangeLabels(bool value) { m_drawOutRangeLabels = value; }
+	bool GetDrawOutRangeLabels() { return m_drawOutRangeLabels; }
 	void SetAutomaticSystemSelection(bool value) { m_automaticSystemSelection = value; }
+	bool GetAutomaticSystemSelection() { return m_automaticSystemSelection; }
 	std::vector<SystemPath> GetNearbyStarSystemsByName(std::string pattern);
 	const std::set<const Faction *> &GetVisibleFactions() { return m_visibleFactions; }
 	const std::set<const Faction *> &GetHiddenFactions() { return m_hiddenFactions; }
@@ -152,6 +157,8 @@ private:
 	bool m_drawUninhabitedLabels;
 	bool m_drawOutRangeLabels;
 	bool m_drawVerticalLines;
+
+	float m_lastFrameTime;
 
 	std::unique_ptr<Graphics::Drawables::Disk> m_disk;
 

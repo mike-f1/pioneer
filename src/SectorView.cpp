@@ -8,8 +8,6 @@
 #include "GameConfSingleton.h"
 #include "GameLocator.h"
 #include "GameSaveError.h"
-#include "InGameViews.h"
-#include "InGameViewsLocator.h"
 #include "KeyBindings.h"
 #include "LuaConstants.h"
 #include "LuaObject.h"
@@ -77,6 +75,10 @@ SectorView::SectorView(const SystemPath &path, RefCountedPtr<Galaxy> galaxy, uns
 
 	m_matchTargetToSelection = true;
 	m_automaticSystemSelection = true;
+	m_drawUninhabitedLabels = false;
+	m_drawVerticalLines = false;
+	m_drawOutRangeLabels = false;
+
 	m_detailBoxVisible = DETAILBOX_INFO;
 	m_toggledFaction = false;
 
@@ -109,6 +111,10 @@ SectorView::SectorView(const Json &jsonObj, RefCountedPtr<Galaxy> galaxy, unsign
 		m_hyperspaceTarget = SystemPath::FromJson(sectorViewObj["hyperspace"]);
 		m_matchTargetToSelection = sectorViewObj["match_target_to_selection"];
 		m_automaticSystemSelection = sectorViewObj["automatic_system_selection"];
+		m_drawUninhabitedLabels = sectorViewObj["draw_uninhabited_labels"];
+		m_drawVerticalLines = sectorViewObj["draw_vertical_lines"];
+		m_drawOutRangeLabels = sectorViewObj["draw_out_of_range_labels"];
+
 		m_detailBoxVisible = sectorViewObj["detail_box_visible"];
 	} catch (Json::type_error &) {
 		throw SavedGameCorruptException();
@@ -247,6 +253,10 @@ void SectorView::SaveToJson(Json &jsonObj)
 
 	sectorViewObj["match_target_to_selection"] = m_matchTargetToSelection;
 	sectorViewObj["automatic_system_selection"] = m_automaticSystemSelection;
+	sectorViewObj["draw_uninhabited_labels"] = m_drawUninhabitedLabels;
+	sectorViewObj["draw_vertical_lines"] = m_drawVerticalLines;
+	sectorViewObj["draw_out_of_range_labels"] = m_drawOutRangeLabels;
+
 	sectorViewObj["detail_box_visible"] = m_detailBoxVisible;
 
 	jsonObj["sector_view"] = sectorViewObj; // Add sector view object to supplied object.
@@ -1112,6 +1122,10 @@ void SectorView::UpdateBindings()
 void SectorView::Update(const float frameTime)
 {
 	PROFILE_SCOPED()
+
+	// Cache frame time for use in ZoomIn/ZoomOut
+	m_lastFrameTime = frameTime;
+
 	SystemPath last_current = m_current;
 
 	if (GameLocator::getGame()->IsNormalSpace()) {
@@ -1253,12 +1267,10 @@ void SectorView::ShowAll()
 
 void SectorView::OnMouseWheel(bool up)
 {
-	if (InGameViewsLocator::getInGameViews()->IsSectorView()) {
-		if (!up)
-			m_zoomMovingTo += ZOOM_SPEED * WHEEL_SENSITIVITY * Pi::input.GetMoveSpeedShiftModifier();
-		else
-			m_zoomMovingTo -= ZOOM_SPEED * WHEEL_SENSITIVITY * Pi::input.GetMoveSpeedShiftModifier();
-	}
+	if (!up)
+		m_zoomMovingTo += ZOOM_SPEED * WHEEL_SENSITIVITY * Pi::input.GetMoveSpeedShiftModifier();
+	else
+		m_zoomMovingTo -= ZOOM_SPEED * WHEEL_SENSITIVITY * Pi::input.GetMoveSpeedShiftModifier();
 }
 
 void SectorView::ShrinkCache()
@@ -1297,18 +1309,16 @@ double SectorView::GetZoomLevel() const
 
 void SectorView::ZoomIn()
 {
-	const float frameTime = Pi::GetFrameTime();
 	const float moveSpeed = Pi::input.GetMoveSpeedShiftModifier();
-	float move = moveSpeed * frameTime;
+	float move = moveSpeed * m_lastFrameTime;
 	m_zoomMovingTo -= move;
 	m_zoomMovingTo = Clamp(m_zoomMovingTo, 0.1f, FAR_MAX);
 }
 
 void SectorView::ZoomOut()
 {
-	const float frameTime = Pi::GetFrameTime();
 	const float moveSpeed = Pi::input.GetMoveSpeedShiftModifier();
-	float move = moveSpeed * frameTime;
+	float move = moveSpeed * m_lastFrameTime;
 	m_zoomMovingTo += move;
 	m_zoomMovingTo = Clamp(m_zoomMovingTo, 0.1f, FAR_MAX);
 }

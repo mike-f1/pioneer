@@ -889,12 +889,32 @@ static int l_engine_set_sector_map_draw_uninhabited_labels(lua_State *l)
 	return 0;
 }
 
+static int l_engine_get_sector_map_draw_uninhabited_labels(lua_State *l)
+{
+	SectorView *sv = InGameViewsLocator::getInGameViews()->GetSectorView();
+	if (sv) {
+		LuaPush<bool>(l, sv->GetDrawUninhabitedLabels());
+		return 1;
+	}
+	return 0;
+}
+
 static int l_engine_set_sector_map_draw_out_range_labels(lua_State *l)
 {
 	SectorView *sv = InGameViewsLocator::getInGameViews()->GetSectorView();
 	bool value = LuaPull<bool>(l, 1);
 	if (sv) {
 		sv->SetDrawOutRangeLabels(value);
+	}
+	return 0;
+}
+
+static int l_engine_get_sector_map_draw_out_range_labels(lua_State *l)
+{
+	SectorView *sv = InGameViewsLocator::getInGameViews()->GetSectorView();
+	if (sv) {
+		LuaPush<bool>(l, sv->GetDrawOutRangeLabels());
+		return 1;
 	}
 	return 0;
 }
@@ -909,6 +929,16 @@ static int l_engine_set_sector_map_lock_hyperspace_target(lua_State *l)
 	return 0;
 }
 
+static int l_engine_get_sector_map_lock_hyperspace_target(lua_State *l)
+{
+	SectorView *sv = InGameViewsLocator::getInGameViews()->GetSectorView();
+	if (sv) {
+		LuaPush<bool>(l, sv->GetLockHyperspaceTarget());
+		return 1;
+	}
+	return 0;
+}
+
 static int l_engine_set_sector_map_draw_vertical_lines(lua_State *l)
 {
 	SectorView *sv = InGameViewsLocator::getInGameViews()->GetSectorView();
@@ -919,12 +949,32 @@ static int l_engine_set_sector_map_draw_vertical_lines(lua_State *l)
 	return 0;
 }
 
+static int l_engine_get_sector_map_draw_vertical_lines(lua_State *l)
+{
+	SectorView *sv = InGameViewsLocator::getInGameViews()->GetSectorView();
+	if (sv) {
+		LuaPush<bool>(l, sv->GetDrawVerticalLines());
+		return 1;
+	}
+	return 0;
+}
+
 static int l_engine_set_sector_map_automatic_system_selection(lua_State *l)
 {
 	SectorView *sv = InGameViewsLocator::getInGameViews()->GetSectorView();
 	bool value = LuaPull<bool>(l, 1);
 	if (sv) {
 		sv->SetAutomaticSystemSelection(value);
+	}
+	return 0;
+}
+
+static int l_engine_get_sector_map_automatic_system_selection(lua_State *l)
+{
+	SectorView *sv = InGameViewsLocator::getInGameViews()->GetSectorView();
+	if (sv) {
+		LuaPush<bool>(l, sv->GetAutomaticSystemSelection());
+		return 1;
 	}
 	return 0;
 }
@@ -1230,10 +1280,15 @@ void LuaEngine::Register()
 		{ "GetSectorMapSelectedSystemPath", l_engine_get_sector_map_selected_system_path },
 		{ "GetSectorMapHyperspaceTargetSystemPath", l_engine_get_sector_map_hyperspace_target_system_path },
 		{ "SetSectorMapDrawUninhabitedLabels", l_engine_set_sector_map_draw_uninhabited_labels },
+		{ "GetSectorMapDrawUninhabitedLabels", l_engine_get_sector_map_draw_uninhabited_labels },
 		{ "SetSectorMapDrawVerticalLines", l_engine_set_sector_map_draw_vertical_lines },
+		{ "GetSectorMapDrawVerticalLines", l_engine_get_sector_map_draw_vertical_lines },
 		{ "SetSectorMapDrawOutRangeLabels", l_engine_set_sector_map_draw_out_range_labels },
+		{ "GetSectorMapDrawOutRangeLabels", l_engine_get_sector_map_draw_out_range_labels },
 		{ "SetSectorMapAutomaticSystemSelection", l_engine_set_sector_map_automatic_system_selection },
+		{ "GetSectorMapAutomaticSystemSelection", l_engine_get_sector_map_automatic_system_selection },
 		{ "SetSectorMapLockHyperspaceTarget", l_engine_set_sector_map_lock_hyperspace_target },
+		{ "GetSectorMapLockHyperspaceTarget", l_engine_get_sector_map_lock_hyperspace_target },
 		{ "SetSectorMapSelected", l_engine_set_sector_map_selected },
 		{ "SectorMapGotoSectorPath", l_engine_sector_map_goto_sector_path },
 		{ "SectorMapGotoSystemPath", l_engine_sector_map_goto_system_path },

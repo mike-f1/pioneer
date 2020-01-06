@@ -69,13 +69,12 @@ local function showSystemInfo(label, current_systempath, systempath, othersystem
 end
 
 local search_text = ""
-local draw_vertical_lines = false
-local draw_out_range_labels = false
-local draw_uninhabited_labels = true
-local automatic_system_selection = true
-local lock_hyperspace_target = false
+local draw_vertical_lines
+local draw_out_range_labels
+local draw_uninhabited_labels
+local automatic_system_selection
+local lock_hyperspace_target
 
-local initialized
 local function showSettings()
 	if ui.collapsingHeader("Settings", { "DefaultOpen" }) then
 		local changed
@@ -219,14 +218,20 @@ local function showFactionLegendWindow()
 							end
 	end)
 end
+
 local function displaySectorViewWindow()
-	if not initialized then
-		Engine.SetSectorMapAutomaticSystemSelection(automatic_system_selection)
-		Engine.SetSectorMapDrawOutRangeLabels(draw_out_range_labels)
-		Engine.SetSectorMapDrawUninhabitedLabels(draw_uninhabited_labels)
-		Engine.SetSectorMapDrawVerticalLines(draw_vertical_lines)
-		initialized = true
-	end
+	-- These are subjects of key binding, thus they must be updated every frame:
+	automatic_system_selection = Engine.GetSectorMapAutomaticSystemSelection()
+	lock_hyperspace_target = Engine.GetSectorMapLockHyperspaceTarget()
+
+	-- NOTE: SectorView save in C++ these flags while Lua don't, thus it is better to
+	-- let C++ side handle initial settings as Lua don't even know if this is loaded
+	-- or just initialized, and the previous paradigma let "initialized" being true after
+	-- first game being started... and obviusly why not some more keybinding?
+	draw_out_range_labels = Engine.GetSectorMapDrawOutRangeLabels()
+	draw_uninhabited_labels = Engine.GetSectorMapDrawUninhabitedLabels()
+	draw_vertical_lines = Engine.GetSectorMapDrawVerticalLines()
+
 	player = Game.player
 	local current_view = Game.CurrentView()
 	if current_view == "sector" then

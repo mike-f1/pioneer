@@ -50,7 +50,7 @@ KEY_BINDING(cameraRotateUp, "BindCameraRotateUp", Lang::ROTATE_UP, SDLK_KP_8, SD
 KEY_BINDING(cameraRotateLeft, "BindCameraRotateLeft", Lang::ROTATE_LEFT, SDLK_KP_4, SDLK_LEFT)
 KEY_BINDING(cameraRotateRight, "BindCameraRotateRight", Lang::ROTATE_RIGHT, SDLK_KP_6, SDLK_RIGHT)
 KEY_BINDING(resetCamera, "BindResetCamera", Lang::RESET, SDLK_HOME, 0)
-
+/*
 BINDING_GROUP(Lang::SECTOR_MAP_VIEW)
 KEY_BINDING(mapStartSearch, "BindMapStartSearch", Lang::SEARCH_MAP, SDLK_SLASH, SDLK_KP_DIVIDE)
 KEY_BINDING(mapLockHyperspaceTarget, "BindMapLockHyperspaceTarget", Lang::MAP_LOCK_HYPERSPACE_TARGET, SDLK_SPACE, 0)
@@ -59,7 +59,7 @@ KEY_BINDING(mapToggleSelectionFollowView, "BindMapToggleSelectionFollowView", La
 KEY_BINDING(mapWarpToCurrent, "BindMapWarpToCurrent", Lang::MAP_WARP_TO_CURRENT_SYSTEM, SDLK_c, 0)
 KEY_BINDING(mapWarpToSelected, "BindMapWarpToSelection", Lang::MAP_WARP_TO_SELECTED_SYSTEM, SDLK_g, 0)
 KEY_BINDING(mapWarpToHyperspaceTarget, "BindMapWarpToHyperspaceTarget", Lang::MAP_WARP_TO_HYPERSPACE_TARGET, SDLK_h, 0)
-
+*/
 KEY_BINDING(mapViewShiftForward, "BindMapViewShiftForward", Lang::MAP_VIEW_SHIFT_FORWARD, SDLK_r, 0)
 KEY_BINDING(mapViewShiftBackward, "BindMapViewShiftBackward", Lang::MAP_VIEW_SHIFT_BACKWARD, SDLK_f, 0)
 KEY_BINDING(mapViewShiftLeft, "BindMapViewShiftLeft", Lang::MAP_VIEW_SHIFT_LEFT, SDLK_a, 0)

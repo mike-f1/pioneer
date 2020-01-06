@@ -59,6 +59,7 @@
 #include "PiGui.h"
 #include "Player.h"
 #include "Projectile.h"
+#include "SectorView.h"
 #include "Sfx.h"
 #include "Shields.h"
 #include "ShipCpanel.h"
@@ -373,6 +374,8 @@ void RegisterInputBindings()
 	ShipViewController::InputBindings.RegisterBindings();
 
 	WorldView::RegisterInputBindings();
+
+	SectorView::RegisterInputBindings();
 }
 
 static void draw_progress(float progress)

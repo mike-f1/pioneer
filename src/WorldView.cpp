@@ -228,7 +228,6 @@ void WorldView::Draw3D()
 
 void WorldView::OnToggleLabels()
 {
-	Output("WorldView::OnToggleLabels()\n");
 	if (InGameViewsLocator::getInGameViews()->IsWorldView()) {
 		if (m_guiOn && m_labelsOn) {
 			m_labelsOn = false;

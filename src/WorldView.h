@@ -35,6 +35,7 @@ namespace Gui {
 namespace KeyBindings {
 	struct ActionBinding;
 	struct AxisBinding;
+	struct WheelBinding;
 }
 
 namespace UI {
@@ -151,7 +152,8 @@ private:
 	Graphics::Drawables::Line3D m_edgeMarker;
 	Graphics::Drawables::Lines m_indicator;
 
-	static struct BaseBinding : public InputFrame {
+	static class BaseBinding : public InputFrame {
+	public:
 		using Action = KeyBindings::ActionBinding;
 		using Axis =  KeyBindings::AxisBinding;
 

@@ -117,6 +117,40 @@ SectorView::SectorView(const Json &jsonObj, RefCountedPtr<Galaxy> galaxy, unsign
 	InitObject(cacheRadius);
 }
 
+SectorView::SectorBinding SectorView::SectorBindings;
+
+void SectorView::SectorBinding::RegisterBindings()
+{
+}
+
+void SectorView::RegisterInputBindings()
+{
+	using namespace KeyBindings;
+
+	Input::BindingPage *page = Pi::input.GetBindingPage("VIEW");
+	Input::BindingGroup *group = page->GetBindingGroup("SECTOR_MAP_VIEW");
+
+	SectorBindings.mapLockHyperspaceTarget = Pi::input.AddActionBinding("BindMapLockHyperspaceTarget", group, ActionBinding(SDLK_SPACE));
+	SectorBindings.actions.push_back(SectorBindings.mapLockHyperspaceTarget);
+
+	SectorBindings.mapToggleSelectionFollowView = Pi::input.AddActionBinding("BindMapToggleSelectionFollowView", group, ActionBinding(SDLK_RETURN, SDLK_KP_ENTER));
+	SectorBindings.actions.push_back(SectorBindings.mapToggleSelectionFollowView);
+
+	SectorBindings.mapWarpToCurrent = Pi::input.AddActionBinding("BindMapWarpToCurrent", group, ActionBinding(SDLK_c));
+	SectorBindings.actions.push_back(SectorBindings.mapWarpToCurrent);
+
+	SectorBindings.mapWarpToSelected = Pi::input.AddActionBinding("BindMapWarpToSelection", group, ActionBinding(SDLK_g));
+	SectorBindings.actions.push_back(SectorBindings.mapWarpToSelected);
+
+	SectorBindings.mapWarpToHyperspaceTarget = Pi::input.AddActionBinding("BindMapWarpToHyperspaceTarget", group, ActionBinding(SDLK_h));
+	SectorBindings.actions.push_back(SectorBindings.mapWarpToHyperspaceTarget);
+
+	SectorBindings.mapViewReset = Pi::input.AddActionBinding("BindMapViewReset", group, ActionBinding(SDLK_t));
+	SectorBindings.actions.push_back(SectorBindings.mapViewReset);
+
+	Pi::input.PushInputFrame(&SectorBindings);
+}
+
 void SectorView::InitDefaults()
 {
 	m_rotXDefault = GameConfSingleton::getInstance().Float("SectorViewXRotation");
@@ -1028,7 +1062,7 @@ void SectorView::OnKeyPressed(const SDL_Keysym &keysym)
 		return;
 
 	// space "locks" (or unlocks) the hyperspace target to the selected system
-	if (KeyBindings::mapLockHyperspaceTarget.Matches(keysym)) {
+	if (SectorBindings.mapLockHyperspaceTarget->IsActive()) {
 		if ((m_matchTargetToSelection || m_hyperspaceTarget != m_selected) && !m_selected.IsSameSystem(m_current))
 			SetHyperspaceTarget(m_selected);
 		else
@@ -1036,7 +1070,7 @@ void SectorView::OnKeyPressed(const SDL_Keysym &keysym)
 		return;
 	}
 
-	if (KeyBindings::mapToggleSelectionFollowView.Matches(keysym)) {
+	if (SectorBindings.mapToggleSelectionFollowView->IsActive()) {
 		m_automaticSystemSelection = !m_automaticSystemSelection;
 		return;
 	}
@@ -1045,19 +1079,19 @@ void SectorView::OnKeyPressed(const SDL_Keysym &keysym)
 
 	// fast move selection to current player system or hyperspace target
 	const bool shifted = (Pi::input.KeyState(SDLK_LSHIFT) || Pi::input.KeyState(SDLK_RSHIFT));
-	if (KeyBindings::mapWarpToCurrent.Matches(keysym)) {
+	if (SectorBindings.mapWarpToCurrent->IsActive()) {
 		GotoSystem(m_current);
 		reset_view = shifted;
-	} else if (KeyBindings::mapWarpToSelected.Matches(keysym)) {
+	} else if (SectorBindings.mapWarpToSelected->IsActive()) {
 		GotoSystem(m_selected);
 		reset_view = shifted;
-	} else if (KeyBindings::mapWarpToHyperspaceTarget.Matches(keysym)) {
+	} else if (SectorBindings.mapWarpToHyperspaceTarget->IsActive()) {
 		GotoSystem(m_hyperspaceTarget);
 		reset_view = shifted;
 	}
 
 	// reset rotation and zoom
-	if (reset_view || KeyBindings::mapViewReset.Matches(keysym)) {
+	if (reset_view || SectorBindings.mapViewReset->IsActive()) {
 		while (m_rotZ < -180.0f)
 			m_rotZ += 360.0f;
 		while (m_rotZ > 180.0f)

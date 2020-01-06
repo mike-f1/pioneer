@@ -4,6 +4,7 @@
 #ifndef _SECTORVIEW_H
 #define _SECTORVIEW_H
 
+#include "InputFrame.h"
 #include "UIView.h"
 #include "galaxy/Sector.h"
 #include "galaxy/SystemPath.h"
@@ -13,6 +14,12 @@
 #include <vector>
 
 class Galaxy;
+
+namespace KeyBindings {
+	struct ActionBinding;
+	struct AxisBinding;
+	struct WheelBinding;
+}
 
 namespace Gui {
 	class Label;
@@ -26,6 +33,7 @@ namespace Graphics {
 
 class SectorView : public UIView {
 public:
+	static void RegisterInputBindings();
 	SectorView(const SystemPath &path, RefCountedPtr<Galaxy> galaxy, unsigned int cacheRadius);
 	SectorView(const Json &jsonObj, RefCountedPtr<Galaxy> galaxy, unsigned int cacheRadius);
 	virtual ~SectorView();
@@ -156,6 +164,22 @@ private:
 
 	sigc::connection m_onMouseWheelCon;
 	sigc::connection m_onKeyPressConnection;
+
+	static struct SectorBinding : public InputFrame {
+	public:
+		using Action = KeyBindings::ActionBinding;
+		using Axis =  KeyBindings::AxisBinding;
+		using Wheel = KeyBindings::WheelBinding;
+
+		Action *mapLockHyperspaceTarget;
+		Action *mapToggleSelectionFollowView;
+		Action *mapWarpToCurrent;
+		Action *mapWarpToSelected;
+		Action *mapWarpToHyperspaceTarget;
+		Action *mapViewReset;
+
+		virtual void RegisterBindings();
+	} SectorBindings;
 
 	RefCountedPtr<SectorCache::Slave> m_sectorCache;
 	std::string m_previousSearch;

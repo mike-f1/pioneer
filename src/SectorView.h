@@ -188,6 +188,21 @@ private:
 		Action *mapWarpToHyperspaceTarget;
 		Action *mapViewReset;
 
+		Action *mapViewShiftLeft;
+		Action *mapViewShiftRight;
+		Action *mapViewShiftUp;
+		Action *mapViewShiftDown;
+		Action *mapViewShiftForward;
+		Action *mapViewShiftBackward;
+
+		Action *mapViewZoomIn;
+		Action *mapViewZoomOut;
+
+		Action *mapViewRotateLeft;
+		Action *mapViewRotateRight;
+		Action *mapViewRotateUp;
+		Action *mapViewRotateDown;
+
 		Wheel *mouseWheel;
 
 		virtual void RegisterBindings();

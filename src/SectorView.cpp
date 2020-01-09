@@ -154,23 +154,25 @@ void SectorView::RegisterInputBindings()
 	SectorBindings.mapViewReset = Pi::input.AddActionBinding("BindMapViewReset", group, ActionBinding(SDLK_t));
 	SectorBindings.actions.push_back(SectorBindings.mapViewReset);
 
-	SectorBindings.mapViewShiftLeft = Pi::input.AddActionBinding("BindMapViewShiftForward", group, ActionBinding(SDLK_r));
-	SectorBindings.actions.push_back(SectorBindings.mapViewShiftLeft);
+	group = page->GetBindingGroup("ViewMovementControls");
 
-	SectorBindings.mapViewShiftRight = Pi::input.AddActionBinding("BindMapViewShiftBackward", group, ActionBinding(SDLK_f));
-	SectorBindings.actions.push_back(SectorBindings.mapViewShiftRight);
-
-	SectorBindings.mapViewShiftUp = Pi::input.AddActionBinding("BindMapViewShiftLeft", group, ActionBinding(SDLK_a));
-	SectorBindings.actions.push_back(SectorBindings.mapViewShiftUp);
-
-	SectorBindings.mapViewShiftDown = Pi::input.AddActionBinding("BindMapViewShiftRight", group, ActionBinding(SDLK_d));
-	SectorBindings.actions.push_back(SectorBindings.mapViewShiftDown);
-
-	SectorBindings.mapViewShiftForward = Pi::input.AddActionBinding("BindMapViewShiftUp", group, ActionBinding(SDLK_w));
+	SectorBindings.mapViewShiftForward = Pi::input.AddActionBinding("BindMapViewShiftForward", group, ActionBinding(SDLK_r));
 	SectorBindings.actions.push_back(SectorBindings.mapViewShiftForward);
 
-	SectorBindings.mapViewShiftBackward = Pi::input.AddActionBinding("BindMapViewShiftDown", group, ActionBinding(SDLK_s));
+	SectorBindings.mapViewShiftBackward = Pi::input.AddActionBinding("BindMapViewShiftBackward", group, ActionBinding(SDLK_f));
 	SectorBindings.actions.push_back(SectorBindings.mapViewShiftBackward);
+
+	SectorBindings.mapViewShiftLeft = Pi::input.AddActionBinding("BindMapViewShiftLeft", group, ActionBinding(SDLK_a));
+	SectorBindings.actions.push_back(SectorBindings.mapViewShiftLeft);
+
+	SectorBindings.mapViewShiftRight = Pi::input.AddActionBinding("BindMapViewShiftRight", group, ActionBinding(SDLK_d));
+	SectorBindings.actions.push_back(SectorBindings.mapViewShiftRight);
+
+	SectorBindings.mapViewShiftUp = Pi::input.AddActionBinding("BindMapViewShiftUp", group, ActionBinding(SDLK_w));
+	SectorBindings.actions.push_back(SectorBindings.mapViewShiftUp);
+
+	SectorBindings.mapViewShiftDown = Pi::input.AddActionBinding("BindMapViewShiftDown", group, ActionBinding(SDLK_s));
+	SectorBindings.actions.push_back(SectorBindings.mapViewShiftDown);
 
 	SectorBindings.mapViewZoomIn = Pi::input.AddActionBinding("BindMapViewZoomIn", group, ActionBinding(SDLK_PLUS));
 	SectorBindings.actions.push_back(SectorBindings.mapViewZoomIn);

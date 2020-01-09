@@ -22,7 +22,6 @@ private:
 	float m_duration;
 
 	std::unique_ptr<Background::Container> m_background;
-
 };
 
 #endif

@@ -59,7 +59,6 @@ PlayerShipController::PlayerShipController() :
 
 	m_setSpeedMode = InputBindings.toggleSetSpeed->onPress.connect(
 		sigc::mem_fun(this, &PlayerShipController::ToggleSetSpeedMode));
-
 }
 
 PlayerShipController::InputBinding PlayerShipController::InputBindings;

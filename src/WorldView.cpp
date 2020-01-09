@@ -181,14 +181,12 @@ void WorldView::SaveToJson(Json &jsonObj)
 
 void WorldView::OnRequestTimeAccelInc()
 {
-	Output("WorldView::OnRequestTimeAccelInc()\n");
 	// requests an increase in time acceleration
 	GameLocator::getGame()->RequestTimeAccelInc();
 }
 
 void WorldView::OnRequestTimeAccelDec()
 {
-	Output("WorldView::OnRequestTimeAccelDec()\n");
 	// requests a decrease in time acceleration
 	GameLocator::getGame()->RequestTimeAccelDec();
 }

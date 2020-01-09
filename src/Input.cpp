@@ -117,7 +117,6 @@ KeyBindings::WheelBinding *Input::AddWheelBinding(std::string id, BindingGroup *
 	return &(wheelBindings[id] = binding);
 }
 
-
 void Input::HandleSDLEvent(const SDL_Event &event)
 {
 	switch (event.type) {

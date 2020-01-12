@@ -700,9 +700,9 @@ void Pi::OnChangeDetailLevel()
 	BaseSphere::OnChangeDetailLevel(GameConfSingleton::getDetail().planets);
 }
 
-void Pi::HandleEscKey()
+bool Pi::HandleEscKey()
 {
-	if (!InGameViewsLocator::getInGameViews()) return;
+	if (!InGameViewsLocator::getInGameViews()) return false;
 
 	switch (InGameViewsLocator::getInGameViews()->GetViewType()) {
 	case ViewType::OBJECT:
@@ -713,9 +713,10 @@ void Pi::HandleEscKey()
 	case ViewType::SYSTEMINFO:
 	case ViewType::SYSTEM: InGameViewsLocator::getInGameViews()->SetView(ViewType::SECTOR); break;
 	case ViewType::NONE:
-	case ViewType::WORLD:
-	case ViewType::DEATH: return;
+	case ViewType::DEATH: break;
+	case ViewType::WORLD: return true;
 	};
+	return false;
 }
 
 static void DebugSpawnShip(Ship *ship)
@@ -737,13 +738,6 @@ static void DebugSpawnShip(Ship *ship)
 
 void Pi::HandleKeyDown(const SDL_Keysym &key)
 {
-	if (key.sym == SDLK_ESCAPE) {
-		if (GameLocator::getGame()) {
-			// only accessible once game started
-			HandleEscKey();
-		}
-		return;
-	}
 	const bool CTRL = input.KeyState(SDLK_LCTRL) || input.KeyState(SDLK_RCTRL);
 
 	if (!CTRL) return;
@@ -914,6 +908,13 @@ void Pi::HandleEvents()
 	while (SDL_PollEvent(&event)) {
 		if (event.type == SDL_QUIT) {
 			Pi::RequestQuit();
+		}
+
+		if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE) {
+			if (GameLocator::getGame()) {
+				// only accessible once game started
+				if (!HandleEscKey()) continue;
+			}
 		}
 
 		Pi::pigui->ProcessEvent(&event);

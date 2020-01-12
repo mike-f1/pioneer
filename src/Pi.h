@@ -113,7 +113,11 @@ private:
 	static void HandleKeyDown(const SDL_Keysym &key);
 	static void HandleEvents();
 	static void HandleRequests();
-	static void HandleEscKey();
+	// Return true if there'a a need of further checks
+	// (basically it should return true if a windows (as settings)
+	// needs to be displayed, thus the event should be passed to
+	// PiGui...
+	static bool HandleEscKey();
 
 	// private members
 	static std::vector<InternalRequests> internalRequests;

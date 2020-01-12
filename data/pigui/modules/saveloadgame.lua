@@ -17,7 +17,6 @@ local player = nil
 local colors = ui.theme.colors
 local icons = ui.theme.icons
 local pionillium = ui.fonts.pionillium
-local popupOpened = false
 
 local mainButtonSize = Vector2(40,40) * (ui.screenHeight / 1200)
 local optionButtonSize = Vector2(125,40) * (ui.screenHeight / 1200)
@@ -81,7 +80,7 @@ local function showSaveFiles()
 		table.sort(files, function(a,b) return (a.mtime.timestamp > b.mtime.timestamp) end)
 		ui.columns(2,"##saved_games",true)
 		for _,f in pairs(files) do
-			if ui.selectable(f.name, f.name == selectedSave, {"SpanAllColumns", "DontClosePopups"}) then
+			if ui.selectable(f.name, f.name == selectedSave, {"SpanAllColumns"}) then
 				selectedSave = f.name
 			end
 			if Engine.pigui.IsItemHovered() then
@@ -98,10 +97,8 @@ local function showSaveFiles()
 end
 
 local function closeAndClearCache()
-	ui.closeCurrentPopup()
 	ui.showSavedGameWindow = nil
 	saveFileCache = {}
-	popupOpened = false
 end
 
 local function closeAndLoadOrSave()
@@ -117,14 +114,10 @@ end
 
 local function savedGameWindow()
 	if ui.showSavedGameWindow then
-		if not popupOpened then
-			popupOpened = true
-			ui.openPopup("LoadGame")
-		end
-
 		ui.setNextWindowPosCenter('Always')
-		ui.withStyleColorsAndVars({WindowBg = Color(20, 20, 80, 230)}, {WindowBorderSize = 1}, function()
-			ui.popupModal("LoadGame", {"NoTitleBar", "NoResize", "AlwaysAutoResize"}, function()
+		ui.withStyleColors({["WindowBg"] = Color(20, 20, 80, 230)}, function()
+			-- TODO: this window should be ShowBorders
+			ui.window("LoadGame", {"NoTitleBar", "NoResize", "AlwaysAutoResize"}, function()
 				local mode
 				mode = ui.showSavedGameWindow == 'SAVE' and lui.SAVE or lui.LOAD
 				optionTextButton(mode, nil, selectedSave~=nil, closeAndLoadOrSave)

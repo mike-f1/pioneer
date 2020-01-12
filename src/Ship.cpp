@@ -14,13 +14,13 @@
 #include "HeatGradientPar.h"
 #include "HyperspaceCloud.h"
 #include "InGameViews.h"
+#include "InGameViewsLocator.h"
 #include "Lang.h"
 #include "LuaEvent.h"
 #include "LuaObject.h"
 #include "LuaUtils.h"
 #include "Missile.h"
 #include "NavLights.h"
-#include "Pi.h" // <-- Only for 2 occurence of Pi::GetInGameViews :P
 #include "Planet.h"
 #include "Player.h" // <-- Here only for 1 occurence of "GameLocator::getGame()->GetPlayer()" in Ship::Explode
 #include "Random.h"
@@ -926,7 +926,6 @@ void Ship::SetLandedOn(Planet *p, float latitude, float longitude)
 	m_wheelTransition = 0;
 	m_wheelState = 1.0f;
 	Frame *f_non_rot = Frame::GetFrame(p->GetFrame());
-	Frame *f = Frame::GetFrame(f_non_rot->GetRotFrame());
 	SetFrame(f_non_rot->GetRotFrame());
 
 	vector3d up = vector3d(cos(latitude) * sin(longitude), sin(latitude), cos(latitude) * cos(longitude));
@@ -980,7 +979,7 @@ void Ship::DoThrusterSounds() const
 
 	// XXX sound logic could be part of a bigger class (ship internal sounds)
 	/* Ship engine noise. less loud inside */
-	float v_env = (Pi::GetInGameViews()->GetWorldView()->shipView.GetCameraController()->IsExternal() ? 1.0f : 0.5f) * Sound::GetSfxVolume();
+	float v_env = (InGameViewsLocator::getInGameViews()->GetWorldView()->shipView.GetCameraController()->IsExternal() ? 1.0f : 0.5f) * Sound::GetSfxVolume();
 	static Sound::Event sndev;
 	float volBoth = 0.0f;
 	volBoth += 0.5f * fabs(GetPropulsion()->GetLinThrusterState().y);
@@ -1516,7 +1515,7 @@ void Ship::SetShipType(const ShipType::Id &shipId)
 	Init();
 	onFlavourChanged.emit();
 	if (IsType(Object::PLAYER))
-		Pi::GetInGameViews()->GetWorldView()->shipView.GetCameraController()->Reset();
+		InGameViewsLocator::getInGameViews()->GetWorldView()->shipView.GetCameraController()->Reset();
 	InitEquipSet();
 
 	LuaEvent::Queue("onShipTypeChanged", this);

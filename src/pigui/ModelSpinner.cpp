@@ -4,6 +4,7 @@
 #include "pigui/ModelSpinner.h"
 
 #include "PiGui.h"
+#include "RandomSingleton.h"
 #include "graphics/RenderTarget.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
@@ -16,7 +17,8 @@
 using namespace PiGUI;
 
 ModelSpinner::ModelSpinner() :
-	m_rot(vector2f(DEG2RAD(-15.0), DEG2RAD(180.0)))
+	m_rot(vector2f(DEG2RAD(-15.0), DEG2RAD(180.0))),
+	m_pauseTime(0.)
 {
 	Color lc(Color::WHITE);
 	m_light.SetDiffuse(lc);
@@ -33,6 +35,8 @@ void ModelSpinner::CreateRenderTarget()
 	if (m_renderTarget)
 		m_renderTarget.reset();
 
+	if (m_size.x <= 0. || m_size.y <= 0.) return;
+
 	Graphics::RenderTargetDesc rtDesc{
 		uint16_t(m_size.x), uint16_t(m_size.y),
 		Graphics::TextureFormat::TEXTURE_RGBA_8888,
@@ -45,10 +49,17 @@ void ModelSpinner::CreateRenderTarget()
 	m_needsResize = false;
 }
 
-void ModelSpinner::SetModel(SceneGraph::Model *model, const SceneGraph::ModelSkin &skin, unsigned int pattern)
+void ModelSpinner::SetModel(SceneGraph::Model *model, SceneGraph::ModelSkin *skin, unsigned int pattern)
 {
 	m_model.reset(model->MakeInstance());
-	skin.Apply(m_model.get());
+	if (skin) {
+		skin->Apply(m_model.get());
+	} else {
+		skin = new SceneGraph::ModelSkin();
+		skin->SetRandomColors(RandomSingleton::getInstance());
+		skin->Apply(m_model.get());
+		delete skin;
+	}
 	m_model->SetPattern(pattern);
 	m_shields.reset(new Shields(model));
 }

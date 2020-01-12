@@ -35,6 +35,7 @@ namespace Gui {
 namespace KeyBindings {
 	struct ActionBinding;
 	struct AxisBinding;
+	struct WheelBinding;
 }
 
 namespace UI {
@@ -56,7 +57,6 @@ public:
 	virtual void Draw();
 	static const double PICK_OBJECT_RECT_SIZE;
 	virtual void SaveToJson(Json &jsonObj);
-	virtual void HandleSDLEvent(SDL_Event &event);
 
 	RefCountedPtr<CameraContext> GetCameraContext() const { return m_cameraContext; }
 
@@ -80,9 +80,9 @@ public:
 	bool DrawGui() { return m_guiOn; };
 
 protected:
-	virtual void BuildUI(UI::Single *container);
-	virtual void OnSwitchTo();
-	virtual void OnSwitchFrom();
+	virtual void BuildUI(UI::Single *container) override;
+	virtual void OnSwitchTo() override;
+	virtual void OnSwitchFrom() override;
 
 private:
 	void InitObject(Game *game);
@@ -136,9 +136,7 @@ private:
 	/* Only use #if WITH_DEVKEYS */
 	Gui::Label *m_debugInfo;
 
-	sigc::connection m_onHyperspaceTargetChangedCon;
 	sigc::connection m_onPlayerChangeTargetCon;
-	sigc::connection m_onChangeFlightControlStateCon;
 	sigc::connection m_onToggleHudModeCon;
 	sigc::connection m_onIncTimeAccelCon;
 	sigc::connection m_onDecTimeAccelCon;
@@ -154,14 +152,18 @@ private:
 	Graphics::Drawables::Line3D m_edgeMarker;
 	Graphics::Drawables::Lines m_indicator;
 
-	static struct InputBinding {
-		typedef KeyBindings::ActionBinding ActionBinding;
-		typedef KeyBindings::AxisBinding AxisBinding;
+	static class BaseBinding : public InputFrame {
+	public:
+		using Action = KeyBindings::ActionBinding;
+		using Axis =  KeyBindings::AxisBinding;
 
-		ActionBinding *toggleHudMode;
-		ActionBinding *increaseTimeAcceleration;
-		ActionBinding *decreaseTimeAcceleration;
-	} InputBindings;
+		Action *toggleHudMode;
+		Action *increaseTimeAcceleration;
+		Action *decreaseTimeAcceleration;
+
+		virtual void RegisterBindings();
+	} BaseBindings;
+
 };
 
 class NavTunnelWidget : public Gui::Widget {

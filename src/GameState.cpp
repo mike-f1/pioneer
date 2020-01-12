@@ -11,13 +11,13 @@
 #include "GameSaveError.h"
 #include "GZipFormat.h"
 #include "InGameViews.h"
-#include "Pi.h"
+#include "InGameViewsLocator.h"
 #include "Player.h"
 #include "Space.h"
 #include "galaxy/StarSystem.h"
 #include "utils.h"
 
-static const int s_saveVersion = 87;
+static const int s_saveVersion = 88;
 
 void GameState::MakeNewGame(const SystemPath &path,
 		const double startDateTime,
@@ -31,7 +31,7 @@ void GameState::MakeNewGame(const SystemPath &path,
 	GameLocator::provideGame(game);
 
 	// Sub optimal: need a better way to couple inGameViews to game
-	Pi::NewInGameViews(new InGameViews(game, path, sectorRadius));
+	InGameViewsLocator::NewInGameViews(new InGameViews(game, path, sectorRadius));
 	// Here because 'l_game_attr_player' would have
 	// a player to be pushed on Lua VM through GameLocator,
 	// but that is not yet set in a ctor
@@ -75,7 +75,7 @@ void GameState::LoadGame(const std::string &filename)
 		 game = new Game(rootNode, sectorRadius);
 		// Sub optimal: need a better way to couple inGameViews to game
 		const SystemPath &path = game->GetSpace()->GetStarSystem()->GetPath();
-		Pi::NewInGameViews(new InGameViews(rootNode, game, path, sectorRadius + 2));
+		InGameViewsLocator::NewInGameViews(new InGameViews(rootNode, game, path, sectorRadius + 2));
 	} catch (Json::type_error) {
 		throw SavedGameCorruptException();
 	} catch (Json::out_of_range) {
@@ -126,7 +126,7 @@ void GameState::SaveGame(const std::string &filename)
 	rootNode["version"] = s_saveVersion;
 
 	game->ToJson(rootNode); // Encode the game data as JSON and give to the root value.
-	Pi::SaveInGameViews(rootNode);
+	InGameViewsLocator::SaveInGameViews(rootNode);
 
 	std::vector<uint8_t> jsonData;
 	{
@@ -162,7 +162,7 @@ void GameState::DestroyGame()
 		return;
 	}
 
-	Pi::NewInGameViews(nullptr);
+	InGameViewsLocator::NewInGameViews(nullptr);
 
 	delete GameLocator::getGame();
 	GameLocator::provideGame(nullptr);

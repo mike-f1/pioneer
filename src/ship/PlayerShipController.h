@@ -4,6 +4,7 @@
 #pragma once
 
 #include "Input.h"
+#include "InputFrame.h"
 #include "ShipController.h"
 
 namespace KeyBindings {
@@ -50,13 +51,11 @@ public:
 	void SetNavTarget(Body *const target, bool setSpeedTo = false);
 	void SetSetSpeedTarget(Body *const target);
 
-	sigc::signal<void> onRotationDampingChanged;
-
 private:
-	static struct InputBinding : public Input::InputFrame {
+	static struct InputBinding : public InputFrame {
 		// We create a local alias for ease of typing these bindings.
-		typedef KeyBindings::AxisBinding AxisBinding;
-		typedef KeyBindings::ActionBinding ActionBinding;
+		using AxisBinding = KeyBindings::AxisBinding;
+		using ActionBinding = KeyBindings::ActionBinding;
 
 		// Weapons
 		ActionBinding *targetObject;

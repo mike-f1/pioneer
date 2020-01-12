@@ -71,6 +71,78 @@
     "description": "Descriptive name for the Freelook Yaw axis.",
     "message": "Freelook Yaw"
   },
+  "BIND_MAP_LOCK_HYPERSPACE_TARGET": {
+    "description": "Descriptive name for the lock hyperspace target mode",
+    "message": "Lock Hyperspace Target"
+  },
+  "BIND_MAP_TOGGLE_SELECTION_FOLLOW_VIEW": {
+    "description": "Descriptive name for the follow view modality",
+    "message": "Follow View"
+  },
+  "BIND_MAP_VIEW_RESET": {
+    "description": "Descriptive name for the reset view action",
+    "message": "Reset View"
+  },
+  "BIND_MAP_VIEW_ROTATE_DOWN": {
+    "description": "Descriptive name for the rotate down view action",
+    "message": "Rotate Down View"
+  },
+  "BIND_MAP_VIEW_ROTATE_LEFT": {
+    "description": "Descriptive name for the rotate left view action",
+    "message": "Rotate Left View"
+  },
+  "BIND_MAP_VIEW_ROTATE_RIGHT": {
+    "description": "Descriptive name for the rotate right view action",
+    "message": "Rotate Right View"
+  },
+  "BIND_MAP_VIEW_ROTATE_UP": {
+    "description": "Descriptive name for the rotate up view action",
+    "message": "Rotate Up View"
+  },
+  "BIND_MAP_VIEW_SHIFT_BACKWARD": {
+    "description": "Descriptive name for the move backward view action",
+    "message": "Shift Backward View"
+  },
+  "BIND_MAP_VIEW_SHIFT_DOWN": {
+    "description": "Descriptive name for the move down view action",
+    "message": "Shift Down View"
+  },
+  "BIND_MAP_VIEW_SHIFT_FORWARD": {
+    "description": "Descriptive name for the move forward view action",
+    "message": "Shift Forward View"
+  },
+  "BIND_MAP_VIEW_SHIFT_LEFT": {
+    "description": "Descriptive name for the move left view action",
+    "message": "Shift Left View"
+  },
+  "BIND_MAP_VIEW_SHIFT_RIGHT": {
+    "description": "Descriptive name for the move right view action",
+    "message": "Shift Right View"
+  },
+  "BIND_MAP_VIEW_SHIFT_UP": {
+    "description": "Descriptive name for the move up view action",
+    "message": "Shift Up View"
+  },
+  "BIND_MAP_WARP_TO_CURRENT": {
+    "description": "Descriptive name for the move view to current system action",
+    "message": "Warp to Current"
+  },
+  "BIND_MAP_WARP_TO_HYPERSPACE_TARGET": {
+    "description": "Descriptive name for the move view to hyperspace target action",
+    "message": "Warp to Hyperspace Target"
+  },
+  "BIND_MAP_WARP_TO_SELECTION": {
+    "description": "Descriptive name for the automatic move view to selection action",
+    "message": "Automatic Warp to Selection"
+  },
+  "BIND_MAP_VIEW_ZOOM_IN": {
+    "description": "Descriptive name for the zoom in view action",
+    "message": "Zoom In View"
+  },
+  "BIND_MAP_VIEW_ZOOM_OUT": {
+    "description": "Descriptive name for the zoom out view action",
+    "message": "Zoom Out View"
+  },
   "BIND_PRIMARY_FIRE": {
     "description": "Descriptive name for the PrimaryFire action.",
     "message": "Primary Fire"
@@ -131,6 +203,10 @@
     "description": "Header for the ManualControl input group.",
     "message": "Manual Thrust Control"
   },
+  "GROUP_VIEW_MOVEMENT_CONTROLS": {
+    "description": "Header for the ViewMovement input group.",
+    "message": "View Movement Controls"
+  },
   "GROUP_MISCELLANEOUS": {
     "message": "Miscellaneous"
   },
@@ -157,6 +233,10 @@
   "PAGE_SHIP_VIEW": {
     "description": "Header for the ShipView input page.",
     "message": "Ship - View"
+  },
+  "PAGE_SECTOR_VIEW": {
+    "description": "Header for the SectorView input page.",
+    "message": "Sector - View"
   },
   "TEXT_ALT_BINDING": {
     "description": "",

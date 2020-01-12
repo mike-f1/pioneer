@@ -19,6 +19,7 @@
 #include "GameLog.h"
 #include "GameState.h"
 #include "InGameViews.h"
+#include "InGameViewsLocator.h"
 #include "Intro.h"
 #include "JobQueue.h"
 #include "KeyBindings.h"
@@ -58,6 +59,7 @@
 #include "PiGui.h"
 #include "Player.h"
 #include "Projectile.h"
+#include "SectorView.h"
 #include "Sfx.h"
 #include "Shields.h"
 #include "ShipCpanel.h"
@@ -69,7 +71,6 @@
 #include "Random.h"
 #include "RandomSingleton.h"
 #include "Tombstone.h"
-#include "UIView.h"
 #include "WorldView.h"
 #include "galaxy/GalaxyGenerator.h"
 #include "gameui/Lua.h"
@@ -111,14 +112,13 @@
 #define _pclose pclose
 #endif
 
-std::unique_ptr<InGameViews> Pi::m_inGameViews;
 float Pi::gameTickAlpha;
-LuaNameGen *Pi::luaNameGen;
+std::unique_ptr<LuaNameGen> Pi::luaNameGen;
 #ifdef ENABLE_SERVER_AGENT
 ServerAgent *Pi::serverAgent;
 #endif
 Input Pi::input;
-LuaConsole *Pi::luaConsole;
+std::unique_ptr<LuaConsole> Pi::luaConsole;
 float Pi::frameTime;
 bool Pi::doingMouseGrab;
 #if WITH_DEVKEYS
@@ -246,29 +246,6 @@ void Pi::EndRenderTarget()
 #endif
 }
 
-InGameViews *Pi::GetInGameViews()
-{
-	return m_inGameViews.get();
-}
-
-//static
-void Pi::NewInGameViews(InGameViews *newInGameViews)
-{
-	m_inGameViews.reset(newInGameViews);
-}
-
-//static
-void Pi::SaveInGameViews(Json &rootNode)
-{
-	m_inGameViews->SaveToJson(rootNode);
-}
-
-//static
-Cutscene *Pi::GetCutscene()
-{
-	return m_cutscene.get();
-}
-
 static void LuaInit()
 {
 	PROFILE_SCOPED()
@@ -332,12 +309,12 @@ static void LuaInit()
 	pi_lua_import_recursive(l, "pigui/views");
 	pi_lua_import_recursive(l, "modules");
 
-	Pi::luaNameGen = new LuaNameGen(Lua::manager);
+	Pi::luaNameGen.reset(new LuaNameGen());
 }
 
 static void LuaUninit()
 {
-	delete Pi::luaNameGen;
+	Pi::luaNameGen.reset();
 
 	Lua::Uninit();
 }
@@ -397,6 +374,8 @@ void RegisterInputBindings()
 	ShipViewController::InputBindings.RegisterBindings();
 
 	WorldView::RegisterInputBindings();
+
+	SectorView::RegisterInputBindings();
 }
 
 static void draw_progress(float progress)
@@ -571,7 +550,7 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 	draw_progress(0.2f);
 
 	Output("ModelCache::Init()\n");
-	ModelCache::Init();
+	ModelCache::Init(ShipType::types);
 	draw_progress(0.3f);
 
 	Output("Shields::Init()\n");
@@ -667,8 +646,8 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 	}
 #endif
 
-	luaConsole = new LuaConsole();
-	KeyBindings::toggleLuaConsole.onPress.connect(sigc::mem_fun(Pi::luaConsole, &LuaConsole::Toggle));
+	luaConsole.reset(new LuaConsole());
+	KeyBindings::toggleLuaConsole.onPress.connect(sigc::mem_fun(Pi::luaConsole.get(), &LuaConsole::Toggle));
 
 	draw_progress(1.0f);
 
@@ -694,7 +673,6 @@ void Pi::Quit()
 	}
 	Projectile::FreeModel();
 	Beam::FreeModel();
-	delete Pi::luaConsole;
 	NavLights::Uninit();
 	Shields::Uninit();
 	SfxManager::Uninit();
@@ -724,33 +702,42 @@ void Pi::OnChangeDetailLevel()
 
 void Pi::HandleEscKey()
 {
-	if (!m_inGameViews) return;
+	if (!InGameViewsLocator::getInGameViews()) return;
 
-	if (!m_inGameViews->IsEmptyView()) {
-		if (m_inGameViews->IsSectorView()) {
-			m_inGameViews->SetView(ViewType::WORLD);
-		} else if ((m_inGameViews->IsSystemView()) || (m_inGameViews->IsSystemInfoView())) {
-			m_inGameViews->SetView(ViewType::SECTOR);
-		} else {
-			UIView *view = dynamic_cast<UIView *>(m_inGameViews->GetView());
-			if (view) {
-				// checks the template name
-				const char *tname = view->GetTemplateName();
-				if (tname) {
-					if (!strcmp(tname, "GalacticView")) {
-						m_inGameViews->SetView(ViewType::SECTOR);
-					} else if (!strcmp(tname, "InfoView") || !strcmp(tname, "StationView")) {
-						m_inGameViews->SetView(ViewType::WORLD);
-					}
-				}
-			}
-		}
-	}
+	switch (InGameViewsLocator::getInGameViews()->GetViewType()) {
+	case ViewType::OBJECT:
+	case ViewType::SPACESTATION:
+	case ViewType::INFO:
+	case ViewType::SECTOR: InGameViewsLocator::getInGameViews()->SetView(ViewType::WORLD); break;
+	case ViewType::GALACTIC:
+	case ViewType::SYSTEMINFO:
+	case ViewType::SYSTEM: InGameViewsLocator::getInGameViews()->SetView(ViewType::SECTOR); break;
+	case ViewType::NONE:
+	case ViewType::WORLD:
+	case ViewType::DEATH: return;
+	};
 }
 
-void Pi::HandleKeyDown(SDL_Keysym *key)
+static void DebugSpawnShip(Ship *ship)
 {
-	if (key->sym == SDLK_ESCAPE) {
+	lua_State *l = Lua::manager->GetLuaState();
+	pi_lua_import(l, "Equipment");
+	LuaTable equip(l, -1);
+	LuaObject<Ship>::CallMethod<>(ship, "AddEquip", equip.Sub("laser").Sub("pulsecannon_dual_1mw"));
+	LuaObject<Ship>::CallMethod<>(ship, "AddEquip", equip.Sub("misc").Sub("laser_cooling_booster"));
+	LuaObject<Ship>::CallMethod<>(ship, "AddEquip", equip.Sub("misc").Sub("atmospheric_shielding"));
+	lua_pop(l, 5);
+	ship->SetFrame(GameLocator::getGame()->GetPlayer()->GetFrame());
+	vector3d dir = -GameLocator::getGame()->GetPlayer()->GetOrient().VectorZ();
+	ship->SetPosition(GameLocator::getGame()->GetPlayer()->GetPosition() + 100.0 * dir);
+	ship->SetVelocity(GameLocator::getGame()->GetPlayer()->GetVelocity());
+	ship->UpdateEquipStats();
+	GameLocator::getGame()->GetSpace()->AddBody(ship);
+}
+
+void Pi::HandleKeyDown(const SDL_Keysym &key)
+{
+	if (key.sym == SDLK_ESCAPE) {
 		if (GameLocator::getGame()) {
 			// only accessible once game started
 			HandleEscKey();
@@ -759,169 +746,152 @@ void Pi::HandleKeyDown(SDL_Keysym *key)
 	}
 	const bool CTRL = input.KeyState(SDLK_LCTRL) || input.KeyState(SDLK_RCTRL);
 
+	if (!CTRL) return;
 	// special keys.
-	if (CTRL) {
-		switch (key->sym) {
-		case SDLK_q: // Quit
-			Pi::RequestQuit();
-			break;
-		case SDLK_PRINTSCREEN: // print
-		case SDLK_KP_MULTIPLY: // screen
-		{
-			char buf[256];
+	switch (key.sym) {
+	case SDLK_q: // Quit
+		Pi::RequestQuit();
+		break;
+	case SDLK_PRINTSCREEN: // print
+	case SDLK_KP_MULTIPLY: // screen
+	{
+		char buf[256];
+		const time_t t = time(0);
+		struct tm *_tm = localtime(&t);
+		strftime(buf, sizeof(buf), "screenshot-%Y%m%d-%H%M%S.png", _tm);
+		Graphics::ScreendumpState sd;
+		RendererLocator::getRenderer()->Screendump(sd);
+		write_screenshot(sd, buf);
+		break;
+	}
+
+	case SDLK_KP_DIVIDE: // toggle video recording
+		Pi::isRecordingVideo = !Pi::isRecordingVideo;
+		if (Pi::isRecordingVideo) {
+			char videoName[256];
 			const time_t t = time(0);
 			struct tm *_tm = localtime(&t);
-			strftime(buf, sizeof(buf), "screenshot-%Y%m%d-%H%M%S.png", _tm);
-			Graphics::ScreendumpState sd;
-			RendererLocator::getRenderer()->Screendump(sd);
-			write_screenshot(sd, buf);
-			break;
-		}
+			strftime(videoName, sizeof(videoName), "pioneer-%Y%m%d-%H%M%S", _tm);
+			const std::string dir = "videos";
+			FileSystem::userFiles.MakeDirectory(dir);
+			const std::string fname = FileSystem::JoinPathBelow(FileSystem::userFiles.GetRoot() + "/" + dir, videoName);
+			Output("Video Recording started to %s.\n", fname.c_str());
+			// start ffmpeg telling it to expect raw rgba 720p-60hz frames
+			// -i - tells it to read frames from stdin
+			// if given no frame rate (-r 60), it will just use vfr
+			char cmd[256] = { 0 };
+			snprintf(cmd, sizeof(cmd), "ffmpeg -f rawvideo -pix_fmt rgba -s %dx%d -i - -threads 0 -preset fast -y -pix_fmt yuv420p -crf 21 -vf vflip %s.mp4",
+				GameConfSingleton::getInstance().Int("ScrWidth"),
+				GameConfSingleton::getInstance().Int("ScrHeight"),
+				fname.c_str()
+				);
 
-		case SDLK_SCROLLLOCK: // toggle video recording
-			Pi::isRecordingVideo = !Pi::isRecordingVideo;
-			if (Pi::isRecordingVideo) {
-				char videoName[256];
-				const time_t t = time(0);
-				struct tm *_tm = localtime(&t);
-				strftime(videoName, sizeof(videoName), "pioneer-%Y%m%d-%H%M%S", _tm);
-				const std::string dir = "videos";
-				FileSystem::userFiles.MakeDirectory(dir);
-				const std::string fname = FileSystem::JoinPathBelow(FileSystem::userFiles.GetRoot() + "/" + dir, videoName);
-				Output("Video Recording started to %s.\n", fname.c_str());
-				// start ffmpeg telling it to expect raw rgba 720p-60hz frames
-				// -i - tells it to read frames from stdin
-				// if given no frame rate (-r 60), it will just use vfr
-				char cmd[256] = { 0 };
-				snprintf(cmd, sizeof(cmd), "ffmpeg -f rawvideo -pix_fmt rgba -s %dx%d -i - -threads 0 -preset fast -y -pix_fmt yuv420p -crf 21 -vf vflip %s.mp4",
-					GameConfSingleton::getInstance().Int("ScrWidth"),
-					GameConfSingleton::getInstance().Int("ScrHeight"),
-					fname.c_str()
-					);
-
-				// open pipe to ffmpeg's stdin in binary write mode
+			// open pipe to ffmpeg's stdin in binary write mode
 #if defined(_MSC_VER) || defined(__MINGW32__)
-				Pi::ffmpegFile = _popen(cmd, "wb");
+			Pi::ffmpegFile = _popen(cmd, "wb");
 #else
-				Pi::ffmpegFile = _popen(cmd, "w");
+			Pi::ffmpegFile = _popen(cmd, "w");
 #endif
-			} else {
-				Output("Video Recording ended.\n");
-				if (Pi::ffmpegFile != nullptr) {
-					_pclose(Pi::ffmpegFile);
-					Pi::ffmpegFile = nullptr;
-				}
+		} else {
+			Output("Video Recording ended.\n");
+			if (Pi::ffmpegFile != nullptr) {
+				_pclose(Pi::ffmpegFile);
+				Pi::ffmpegFile = nullptr;
 			}
-			break;
+		}
+		break;
 #if WITH_DEVKEYS
-		case SDLK_i: // Toggle Debug info
-			Pi::showDebugInfo = !Pi::showDebugInfo;
-			break;
+	case SDLK_i: // Toggle Debug info
+		Pi::showDebugInfo = !Pi::showDebugInfo;
+		break;
 
+#endif /* DEVKEYS */
 #ifdef PIONEER_PROFILER
-		case SDLK_p: // alert it that we want to profile
-			if (input.KeyState(SDLK_LSHIFT) || input.KeyState(SDLK_RSHIFT))
-				Pi::doProfileOne = true;
-			else {
-				Pi::doProfileSlow = !Pi::doProfileSlow;
-				Output("slow frame profiling %s\n", Pi::doProfileSlow ? "enabled" : "disabled");
-			}
-			break;
+	case SDLK_p: // alert it that we want to profile
+		if (input.KeyState(SDLK_LSHIFT) || input.KeyState(SDLK_RSHIFT))
+			Pi::doProfileOne = true;
+		else {
+			Pi::doProfileSlow = !Pi::doProfileSlow;
+			Output("slow frame profiling %s\n", Pi::doProfileSlow ? "enabled" : "disabled");
+		}
+		break;
 #endif
-
-		case SDLK_F12: {
-			if (GameLocator::getGame()) {
-				vector3d dir = -GameLocator::getGame()->GetPlayer()->GetOrient().VectorZ();
-				/* add test object */
-				if (input.KeyState(SDLK_RSHIFT)) {
-					Missile *missile =
-						new Missile(ShipType::MISSILE_GUIDED, GameLocator::getGame()->GetPlayer());
-					missile->SetOrient(GameLocator::getGame()->GetPlayer()->GetOrient());
-					missile->SetFrame(GameLocator::getGame()->GetPlayer()->GetFrame());
-					missile->SetPosition(GameLocator::getGame()->GetPlayer()->GetPosition() + 50.0 * dir);
-					missile->SetVelocity(GameLocator::getGame()->GetPlayer()->GetVelocity());
-					GameLocator::getGame()->GetSpace()->AddBody(missile);
+#if WITH_DEVKEYS
+	case SDLK_F12: {
+		if (GameLocator::getGame()) {
+			/* add test object */
+			if (input.KeyState(SDLK_RSHIFT)) {
+				Missile *missile = GameLocator::getGame()->GetPlayer()->SpawnMissile(ShipType::MISSILE_GUIDED, 1000);
+				if (GameLocator::getGame()->GetPlayer()->GetCombatTarget()) {
 					missile->AIKamikaze(GameLocator::getGame()->GetPlayer()->GetCombatTarget());
-				} else if (input.KeyState(SDLK_LSHIFT)) {
-					SpaceStation *s = static_cast<SpaceStation *>(GameLocator::getGame()->GetPlayer()->GetNavTarget());
-					if (s) {
-						Ship *ship = new Ship(ShipType::POLICE);
-						int port = s->GetFreeDockingPort(ship);
-						if (port != -1) {
-							Output("Putting ship into station\n");
-							// Make police ship intent on killing the player
-							ship->AIKill(GameLocator::getGame()->GetPlayer());
-							ship->SetFrame(GameLocator::getGame()->GetPlayer()->GetFrame());
-							ship->SetDockedWith(s, port);
-							GameLocator::getGame()->GetSpace()->AddBody(ship);
-						} else {
-							delete ship;
-							Output("No docking ports free dude\n");
-						}
+				}
+			} else if (input.KeyState(SDLK_LSHIFT)) {
+				SpaceStation *s = static_cast<SpaceStation *>(GameLocator::getGame()->GetPlayer()->GetNavTarget());
+				if (s) {
+					Ship *ship = new Ship(ShipType::POLICE);
+					int port = s->GetFreeDockingPort(ship);
+					if (port != -1) {
+						Output("Putting ship into station\n");
+						// Make police ship intent on killing the player
+						DebugSpawnShip(ship);
+						ship->AIKill(GameLocator::getGame()->GetPlayer());
+						ship->SetDockedWith(s, port);
 					} else {
-						Output("Select a space station...\n");
+						delete ship;
+						Output("No docking ports free dude\n");
 					}
 				} else {
-					Ship *ship = new Ship(ShipType::POLICE);
-					if (!input.KeyState(SDLK_LALT)) { //Left ALT = no AI
-						if (!input.KeyState(SDLK_LCTRL))
-							ship->AIFlyTo(GameLocator::getGame()->GetPlayer()); // a less lethal option
-						else
-							ship->AIKill(GameLocator::getGame()->GetPlayer()); // a really lethal option!
-					}
-					lua_State *l = Lua::manager->GetLuaState();
-					pi_lua_import(l, "Equipment");
-					LuaTable equip(l, -1);
-					LuaObject<Ship>::CallMethod<>(ship, "AddEquip", equip.Sub("laser").Sub("pulsecannon_dual_1mw"));
-					LuaObject<Ship>::CallMethod<>(ship, "AddEquip", equip.Sub("misc").Sub("laser_cooling_booster"));
-					LuaObject<Ship>::CallMethod<>(ship, "AddEquip", equip.Sub("misc").Sub("atmospheric_shielding"));
-					lua_pop(l, 5);
-					ship->SetFrame(GameLocator::getGame()->GetPlayer()->GetFrame());
-					ship->SetPosition(GameLocator::getGame()->GetPlayer()->GetPosition() + 100.0 * dir);
-					ship->SetVelocity(GameLocator::getGame()->GetPlayer()->GetVelocity());
-					ship->UpdateEquipStats();
-					GameLocator::getGame()->GetSpace()->AddBody(ship);
+					Output("Select a space station...\n");
+				}
+			} else {
+				Ship *ship = new Ship(ShipType::POLICE);
+				DebugSpawnShip(ship);
+				if (!input.KeyState(SDLK_LALT)) { //Left ALT = no AI
+					if (!input.KeyState(SDLK_LCTRL))
+						ship->AIFlyTo(GameLocator::getGame()->GetPlayer()); // a less lethal option
+					else
+						ship->AIKill(GameLocator::getGame()->GetPlayer()); // a really lethal option!
 				}
 			}
-			break;
 		}
+		break;
+	}
 #endif /* DEVKEYS */
 #if WITH_OBJECTVIEWER
-		case SDLK_F10:
-			m_inGameViews->SetView(ViewType::OBJECT);
-			break;
-#endif
-		case SDLK_F11:
-			// XXX only works on X11
-			//SDL_WM_ToggleFullScreen(Pi::scrSurface);
+	case SDLK_F10:
+		InGameViewsLocator::getInGameViews()->SetView(ViewType::OBJECT);
+		break;
+#endif /* WITH_OBJECTVIEWER */
+	case SDLK_F11:
+		// XXX only works on X11
+		//SDL_WM_ToggleFullScreen(Pi::scrSurface);
 #if WITH_DEVKEYS
-			RendererLocator::getRenderer()->ReloadShaders();
-#endif
-			break;
-		case SDLK_F9: // Quicksave
-		{
-			if (GameLocator::getGame()) {
-				if (GameLocator::getGame()->IsHyperspace()) {
-					GameLocator::getGame()->GetGameLog().Add(Lang::CANT_SAVE_IN_HYPERSPACE);
-				} else {
-					const std::string name = "_quicksave";
-					const std::string path = FileSystem::JoinPath(GameConfSingleton::GetSaveDirFull(), name);
-					try {
-						GameState::SaveGame(name);
-						Output("Quick save: %s\n", name.c_str());
-						GameLocator::getGame()->GetGameLog().Add(Lang::GAME_SAVED_TO + path);
-					} catch (CouldNotOpenFileException) {
-						GameLocator::getGame()->GetGameLog().Add(stringf(Lang::COULD_NOT_OPEN_FILENAME, formatarg("path", path)));
-					} catch (CouldNotWriteToFileException) {
-						GameLocator::getGame()->GetGameLog().Add(Lang::GAME_SAVE_CANNOT_WRITE);
-					}
+		RendererLocator::getRenderer()->ReloadShaders();
+#endif /* DEVKEYS */
+		break;
+	case SDLK_F9: // Quicksave
+	{
+		if (GameLocator::getGame()) {
+			if (GameLocator::getGame()->IsHyperspace()) {
+				GameLocator::getGame()->GetGameLog().Add(Lang::CANT_SAVE_IN_HYPERSPACE);
+			} else {
+				const std::string name = "_quicksave";
+				const std::string path = FileSystem::JoinPath(GameConfSingleton::GetSaveDirFull(), name);
+				try {
+					GameState::SaveGame(name);
+					Output("Quick save: %s\n", name.c_str());
+					GameLocator::getGame()->GetGameLog().Add(Lang::GAME_SAVED_TO + path);
+				} catch (CouldNotOpenFileException) {
+					GameLocator::getGame()->GetGameLog().Add(stringf(Lang::COULD_NOT_OPEN_FILENAME, formatarg("path", path)));
+				} catch (CouldNotWriteToFileException) {
+					GameLocator::getGame()->GetGameLog().Add(Lang::GAME_SAVE_CANNOT_WRITE);
 				}
 			}
-			break;
 		}
-		default:
-			break; // This does nothing but it stops the compiler warnings
-		}
+		break;
+	}
+	default:
+		break; // This does nothing but it stops the compiler warnings
 	}
 }
 
@@ -940,7 +910,7 @@ void Pi::HandleEvents()
 	// unified input system
 	bool skipTextInput = false;
 
-	Pi::input.mouseMotion[0] = Pi::input.mouseMotion[1] = 0;
+	Pi::input.ResetMouseMotion();
 	while (SDL_PollEvent(&event)) {
 		if (event.type == SDL_QUIT) {
 			Pi::RequestQuit();
@@ -979,10 +949,9 @@ void Pi::HandleEvents()
 
 		bool consoleActive = Pi::IsConsoleActive();
 		if (!consoleActive) {
-			KeyBindings::DispatchSDLEvent(&event);
-			if (m_inGameViews) m_inGameViews->HandleSDLEvent(event);
+			KeyBindings::DispatchSDLEvent(event);
 		} else {
-			KeyBindings::toggleLuaConsole.CheckSDLEventAndDispatch(&event);
+			KeyBindings::toggleLuaConsole.CheckSDLEventAndDispatch(event);
 		}
 		if (consoleActive != Pi::IsConsoleActive()) {
 			skipTextInput = true;
@@ -1082,8 +1051,8 @@ void Pi::StartGame()
 	GameLocator::getGame()->GetPlayer()->onDock.connect(sigc::ptr_fun(&OnPlayerDockOrUndock));
 	GameLocator::getGame()->GetPlayer()->onUndock.connect(sigc::ptr_fun(&OnPlayerDockOrUndock));
 	GameLocator::getGame()->GetPlayer()->onLanded.connect(sigc::ptr_fun(&OnPlayerDockOrUndock));
-	m_inGameViews->GetCpan()->ShowAll();
-	m_inGameViews->SetView(ViewType::WORLD);
+	InGameViewsLocator::getInGameViews()->GetCpan()->ShowAll();
+	InGameViewsLocator::getInGameViews()->SetView(ViewType::WORLD);
 
 #ifdef REMOTE_LUA_REPL
 #ifndef REMOTE_LUA_REPL_PORT
@@ -1196,11 +1165,6 @@ void Pi::EndGame()
 void Pi::MainLoop()
 {
 	double time_player_died = 0;
-#ifdef MAKING_VIDEO
-	Uint32 last_screendump = SDL_GetTicks();
-	int dumpnum = 0;
-#endif /* MAKING_VIDEO */
-
 #if WITH_DEVKEYS
 	Uint32 last_stats = SDL_GetTicks();
 	int frame_stat = 0;
@@ -1245,7 +1209,7 @@ void Pi::MainLoop()
 					break;
 				}
 				GameLocator::getGame()->TimeStep(step);
-				m_inGameViews->GetCpan()->TimeStepUpdate(step);
+				InGameViewsLocator::getInGameViews()->GetCpan()->TimeStepUpdate(step);
 
 				BaseSphere::UpdateAllBaseSphereDerivatives();
 
@@ -1274,14 +1238,14 @@ void Pi::MainLoop()
 		if (GameLocator::getGame()->GetPlayer()->IsDead()) {
 			if (time_player_died > 0.0) {
 				if (GameLocator::getGame()->GetTime() - time_player_died > 8.0) {
-					m_inGameViews->SetView(ViewType::NONE);
+					InGameViewsLocator::getInGameViews()->SetView(ViewType::NONE);
 					m_mainState = MainState::TO_TOMBSTONE;
 					return;
 				}
 			} else {
 				GameLocator::getGame()->SetTimeAccel(Game::TIMEACCEL_1X);
-				m_inGameViews->GetDeathView()->Init();
-				m_inGameViews->SetView(ViewType::DEATH);
+				InGameViewsLocator::getInGameViews()->GetDeathView()->Init();
+				InGameViewsLocator::getInGameViews()->SetView(ViewType::DEATH);
 				time_player_died = GameLocator::getGame()->GetTime();
 			}
 		}
@@ -1299,8 +1263,8 @@ void Pi::MainLoop()
 
 		Frame::GetRootFrame()->UpdateInterpTransform(Pi::GetGameTickAlpha());
 
-		m_inGameViews->UpdateView(frameTime);
-		m_inGameViews->Draw3DView();
+		InGameViewsLocator::getInGameViews()->UpdateView(frameTime);
+		InGameViewsLocator::getInGameViews()->Draw3DView();
 
 		// hide cursor for ship control. Do this before imgui runs, to prevent the mouse pointer from jumping
 		Pi::SetMouseGrab(input.MouseButtonState(SDL_BUTTON_RIGHT) | input.MouseButtonState(SDL_BUTTON_MIDDLE));
@@ -1317,7 +1281,7 @@ void Pi::MainLoop()
 		RendererLocator::getRenderer()->EndFrame();
 
 		RendererLocator::getRenderer()->ClearDepthBuffer();
-		if (m_inGameViews->DrawGui()) {
+		if (InGameViewsLocator::getInGameViews()->DrawGui()) {
 			Gui::Draw();
 		}
 
@@ -1325,7 +1289,7 @@ void Pi::MainLoop()
 		// wrong, because we shouldn't this when the HUD is disabled, but
 		// probably sure draw it if they switch to eg infoview while the HUD is
 		// disabled so we need much smarter control for all this rubbish
-		if ((!GameLocator::getGame() || !m_inGameViews->IsDeathView()) && m_inGameViews->DrawGui()) {
+		if ((!GameLocator::getGame() || !InGameViewsLocator::getInGameViews()->IsDeathView()) && InGameViewsLocator::getInGameViews()->DrawGui()) {
 			Pi::ui->Update();
 			Pi::ui->Draw();
 		}
@@ -1335,10 +1299,10 @@ void Pi::MainLoop()
 		if (GameLocator::getGame() && !GameLocator::getGame()->GetPlayer()->IsDead()) {
 			// FIXME: Always begin a camera frame because WorldSpaceToScreenSpace
 			// requires it and is exposed to pigui.
-			m_inGameViews->GetWorldView()->BeginCameraFrame();
-			PiGui::NewFrame(RendererLocator::getRenderer()->GetSDLWindow(), m_inGameViews->DrawGui());
+			InGameViewsLocator::getInGameViews()->GetWorldView()->BeginCameraFrame();
+			PiGui::NewFrame(RendererLocator::getRenderer()->GetSDLWindow(), InGameViewsLocator::getInGameViews()->DrawGui());
 			DrawPiGui(Pi::frameTime, "GAME");
-			m_inGameViews->GetWorldView()->EndCameraFrame();
+			InGameViewsLocator::getInGameViews()->GetWorldView()->EndCameraFrame();
 		}
 
 #if WITH_DEVKEYS
@@ -1371,7 +1335,7 @@ void Pi::MainLoop()
 			// this is something we need not do every turn...
 			if (!GameConfSingleton::getInstance().Int("DisableSound")) AmbientSounds::Update();
 		}
-		m_inGameViews->GetCpan()->Update();
+		InGameViewsLocator::getInGameViews()->GetCpan()->Update();
 		Sound::MusicPlayer::Update();
 
 		syncJobQueue->RunJobs(SYNC_JOBS_PER_LOOP);
@@ -1427,6 +1391,7 @@ void Pi::MainLoop()
 		Pi::statSceneTris = 0;
 		Pi::statNumPatches = 0;
 
+#endif // WITH_DEVKEYS
 #ifdef PIONEER_PROFILER
 		const Uint32 profTicks = SDL_GetTicks();
 		if (Pi::doProfileOne || (Pi::doProfileSlow && (profTicks - newTicks) > 100)) { // slow: < ~10fps
@@ -1434,17 +1399,7 @@ void Pi::MainLoop()
 			Profiler::dumphtml(profilerPath.c_str());
 			Pi::doProfileOne = false;
 		}
-#endif
-
-#endif
-
-#ifdef MAKING_VIDEO
-		if (SDL_GetTicks() - last_screendump > 50) {
-			last_screendump = SDL_GetTicks();
-			std::string fname = stringf(Lang::SCREENSHOT_FILENAME_TEMPLATE, formatarg("index", dumpnum++));
-			Screendump(fname.c_str(), Graphics::GetScreenWidth(), Graphics::GetScreenHeight());
-		}
-#endif /* MAKING_VIDEO */
+#endif // PIONEER_PROFILER
 
 		if (isRecordingVideo && (Pi::ffmpegFile != nullptr)) {
 			Graphics::ScreendumpState sd;

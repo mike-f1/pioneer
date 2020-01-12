@@ -89,6 +89,10 @@ static void push_key_binding(lua_State *l, KeyBindings::KeyBinding *kb, const ch
  * Status:
  *
  *   permanent
+ *
+ * TODO: Let (if possible) mouse wheel be displayed and
+ * be assigned as an axis
+ *
  */
 static int l_input_get_bindings(lua_State *l)
 {
@@ -109,15 +113,16 @@ static int l_input_get_bindings(lua_State *l)
 
 			int binding_idx = 1;
 			for (auto type : group.second.bindings) {
-				lua_pushunsigned(l, binding_idx++);
 				if (type.second == Input::BindingGroup::EntryType::ENTRY_ACTION) {
+					lua_pushunsigned(l, binding_idx++);
 					ActionBinding *ab = Pi::input.GetActionBinding(type.first);
 					if (!ab) continue; // Should never happen, but include it here for future proofing.
 					setup_binding_table(l, type.first.c_str(), "action");
 
 					push_key_binding(l, &ab->binding1, "binding1", "bindingDescription1");
 					push_key_binding(l, &ab->binding2, "binding2", "bindingDescription2");
-				} else {
+				} else if (type.second == Input::BindingGroup::EntryType::ENTRY_AXIS) {
+					lua_pushunsigned(l, binding_idx++);
 					AxisBinding *ab = Pi::input.GetAxisBinding(type.first);
 					if (!ab) continue; // Should never happen, but include it here for future proofing.
 					setup_binding_table(l, type.first.c_str(), "axis");
@@ -131,6 +136,10 @@ static int l_input_get_bindings(lua_State *l)
 
 					push_key_binding(l, &ab->positive, "positive", "positiveDescription");
 					push_key_binding(l, &ab->negative, "negative", "negativeDescription");
+				} else {
+					// Skip mouse wheel (...for now, because...)
+					// TODO: mouse wheel could be an axis binding...
+					continue;
 				}
 
 				// [-3] group, [-2] idx, [-1] binding

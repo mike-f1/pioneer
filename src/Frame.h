@@ -63,7 +63,7 @@ public:
 	static Frame *GetFrame(FrameId fId)
 	{
 		if (fId.valid()) {
-			if (fId.id() < s_frames.size()) return &s_frames[fId];
+			if (unsigned(fId.id()) < s_frames.size()) return &s_frames[fId];
 			Error("In '%s': fId is valid but out of range (%i)...\n",__func__, fId.id());
 			return nullptr;
 		}
@@ -161,8 +161,8 @@ private:
 	vector3d m_pos;
 	vector3d m_oldPos;
 	vector3d m_interpPos;
-	matrix3x3d m_initialOrient;
 	matrix3x3d m_orient;
+	matrix3x3d m_initialOrient;
 	matrix3x3d m_interpOrient;
 	vector3d m_vel; // note we don't use this to move frame. rather,
 		// orbital rails determine velocity.

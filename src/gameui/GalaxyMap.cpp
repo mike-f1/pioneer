@@ -98,11 +98,11 @@ namespace GameUI {
 		return this;
 	}
 
-	GalaxyMap *GalaxyMap::AddPointLabel(const vector2f &at, const std::string &text)
+	GalaxyMap *GalaxyMap::AddPointLabel(const vector2f &at, const std::string &text, const Color &c)
 	{
 		const vector3f at3(at, 0.0f);
 		LabelOverlay::Marker *m = m_labelOverlay->AddMarker(text, at3);
-		m->color = Color4ub(0, 255, 0, 255);
+		m->color = c;
 		m->style = LabelOverlay::MARKER_DOT;
 		m->textAnchor = UI::Align::LEFT;
 		return this;

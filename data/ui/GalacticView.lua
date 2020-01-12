@@ -25,6 +25,8 @@ local resetCurrentSector = function (map)
 	local x = sysPath.sectorX
 	local y = sysPath.sectorY
 
+	local selected = Engine.GetSectorMapSelectedSystemPath()
+
 	map:ClearLabels()
 	map:SetCentreSector(x, y)
 	map
@@ -36,6 +38,9 @@ local resetCurrentSector = function (map)
 		:AddAreaLabel(-4300,  3450, l.SCUTUM_CENTAURUS_ARM)
 		:AddAreaLabel(  100, -1100, l.LOCAL_ARM)
 		:AddPointLabel(   x,     y, Game.system.name)
+	if selected and (x ~= selected.sectorX or y ~= selected.sectorY) then
+		map:AddPointLabel(selected.sectorX, selected.sectorY, "Selected("..selected.sectorX..":"..selected.sectorY..":"..selected.sectorZ..")", Color(0,0,150))
+	end	
 end
 
 zoomSlider:SetRange(-1, 3.322)

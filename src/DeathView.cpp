@@ -9,7 +9,7 @@
 #include "GameConfSingleton.h"
 #include "GameLocator.h"
 #include "InGameViews.h"
-#include "Pi.h"
+#include "InGameViewsLocator.h"
 #include "Player.h"
 #include "ShipCpanel.h"
 #include "graphics/Graphics.h"
@@ -45,7 +45,7 @@ void DeathView::Init()
 
 void DeathView::OnSwitchTo()
 {
-	Pi::GetInGameViews()->GetCpan()->HideAll();
+	InGameViewsLocator::getInGameViews()->GetCpan()->HideAll();
 }
 
 void DeathView::Update(const float frameTime)

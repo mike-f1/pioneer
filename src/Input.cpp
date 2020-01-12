@@ -5,6 +5,7 @@
 
 #include "GameConfig.h"
 #include "GameConfSingleton.h"
+#include "InputFrame.h"
 #include "ui/Context.h"
 
 #include <array>
@@ -34,26 +35,7 @@ void Input::InitGame()
 	}
 }
 
-InputResponse Input::InputFrame::ProcessSDLEvent(SDL_Event &event)
-{
-	bool matched = false;
-
-	for (KeyBindings::ActionBinding *action : actions) {
-		auto resp = action->CheckSDLEventAndDispatch(&event);
-		if (resp == RESPONSE_MATCHED) return resp;
-		matched = matched || resp > RESPONSE_NOMATCH;
-	}
-
-	for (KeyBindings::AxisBinding *axis : axes) {
-		auto resp = axis->CheckSDLEventAndDispatch(&event);
-		if (resp == RESPONSE_MATCHED) return resp;
-		matched = matched || resp > RESPONSE_NOMATCH;
-	}
-
-	return matched ? RESPONSE_PASSTHROUGH : RESPONSE_NOMATCH;
-}
-
-bool Input::PushInputFrame(Input::InputFrame *frame)
+bool Input::PushInputFrame(InputFrame *frame)
 {
 	if (HasInputFrame(frame)) {
 		return false;
@@ -65,7 +47,7 @@ bool Input::PushInputFrame(Input::InputFrame *frame)
 	return true;
 }
 
-Input::InputFrame *Input::PopInputFrame()
+InputFrame *Input::PopInputFrame()
 {
 	if (inputFrames.size() > 0) {
 		auto frame = inputFrames.back();
@@ -78,14 +60,16 @@ Input::InputFrame *Input::PopInputFrame()
 	return nullptr;
 }
 
-void Input::RemoveInputFrame(Input::InputFrame *frame)
+bool Input::RemoveInputFrame(InputFrame *frame)
 {
 	auto it = std::find(inputFrames.begin(), inputFrames.end(), frame);
 	if (it != inputFrames.end()) {
 		inputFrames.erase(it);
 		frame->active = false;
 		frame->onFrameRemoved();
+		return true;
 	}
+	return false;
 }
 
 KeyBindings::ActionBinding *Input::AddActionBinding(std::string id, BindingGroup *group, KeyBindings::ActionBinding binding)
@@ -118,18 +102,33 @@ KeyBindings::AxisBinding *Input::AddAxisBinding(std::string id, BindingGroup *gr
 	return &(axisBindings[id] = binding);
 }
 
-void Input::HandleSDLEvent(SDL_Event &event)
+KeyBindings::WheelBinding *Input::AddWheelBinding(std::string id, BindingGroup *group, KeyBindings::WheelBinding binding)
+{
+	// throw an error if we attempt to bind an axis onto an already-bound action in the same group.
+	if (group->bindings.count(id) && group->bindings[id] != BindingGroup::ENTRY_WHEEL)
+		Error("Attempt to bind already-registered action %s as an axis.\n", id.c_str());
+
+	group->bindings[id] = BindingGroup::ENTRY_WHEEL;
+
+	// Load from the config
+//	std::string config_str = GameConfSingleton::getInstance().String(id.c_str());
+//	if (config_str.length() > 0) binding.SetFromString(config_str);
+
+	return &(wheelBindings[id] = binding);
+}
+
+void Input::HandleSDLEvent(const SDL_Event &event)
 {
 	switch (event.type) {
 	case SDL_KEYDOWN:
 		keyState[event.key.keysym.sym] = true;
 		keyModState = event.key.keysym.mod;
-		onKeyPress.emit(&event.key.keysym);
+		onKeyPress.emit(event.key.keysym);
 		break;
 	case SDL_KEYUP:
 		keyState[event.key.keysym.sym] = false;
 		keyModState = event.key.keysym.mod;
-		onKeyRelease.emit(&event.key.keysym);
+		onKeyRelease.emit(event.key.keysym);
 		break;
 	case SDL_MOUSEBUTTONDOWN:
 		if (event.button.button < COUNTOF(mouseButton)) {

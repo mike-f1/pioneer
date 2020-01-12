@@ -4,154 +4,35 @@
 #include "Intro.h"
 
 #include "Background.h"
-#include "Easing.h"
-#include "Lang.h"
-#include "ModelCache.h"
 #include "RandomSingleton.h"
-#include "ShipType.h"
 #include "graphics/Drawables.h"
-#include "graphics/Graphics.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
-#include "graphics/TextureBuilder.h"
-#include "scenegraph/ModelSkin.h"
-#include "scenegraph/SceneGraph.h"
-#include <algorithm>
-
-struct PiRngWrapper {
-	unsigned int operator()(unsigned int n)
-	{
-		return RandomSingleton::getInstance().Int32(n);
-	}
-};
 
 Intro::Intro(int width, int height, float amountOfBackgroundStars) :
 	Cutscene(width, height)
 {
-	using Graphics::Light;
-
 	m_background.reset(new Background::Container(RandomSingleton::getInstance(), amountOfBackgroundStars));
-	m_ambientColor = Color::BLANK;
 
-	const Color one = Color::WHITE;
-	const Color two = Color(77, 77, 204, 0);
-	m_lights.push_back(Light(Graphics::Light::LIGHT_DIRECTIONAL, vector3f(0.f, 0.3f, 1.f), one, one));
-	m_lights.push_back(Light(Graphics::Light::LIGHT_DIRECTIONAL, vector3f(0.f, -1.f, 0.f), two, Color::BLACK));
-
-	m_skin.SetDecal("pioneer");
-	m_skin.SetLabel(Lang::PIONEER);
-
-	for (auto i : ShipType::player_ships) {
-		SceneGraph::Model *model = ModelCache::FindModel(ShipType::types[i].modelName)->MakeInstance();
-		model->SetThrust(vector3f(0.f, 0.f, -0.6f), vector3f(0.f));
-		if (ShipType::types[i].isGlobalColorDefined) model->SetThrusterColor(ShipType::types[i].globalThrusterColor);
-		for (int j = 0; j < THRUSTER_MAX; j++) {
-			if (!ShipType::types[i].isDirectionColorDefined[j]) continue;
-			vector3f dir;
-			switch (j) {
-			case THRUSTER_FORWARD: dir = vector3f(0.0, 0.0, 1.0); break;
-			case THRUSTER_REVERSE: dir = vector3f(0.0, 0.0, -1.0); break;
-			case THRUSTER_LEFT: dir = vector3f(1.0, 0.0, 0.0); break;
-			case THRUSTER_RIGHT: dir = vector3f(-1.0, 0.0, 0.0); break;
-			case THRUSTER_UP: dir = vector3f(1.0, 0.0, 0.0); break;
-			case THRUSTER_DOWN: dir = vector3f(-1.0, 0.0, 0.0); break;
-			}
-			model->SetThrusterColor(dir, ShipType::types[i].directionThrusterColor[j]);
-		}
-		const Uint32 numMats = model->GetNumMaterials();
-		for (Uint32 m = 0; m < numMats; m++) {
-			RefCountedPtr<Graphics::Material> mat = model->GetMaterialByIndex(m);
-			mat->specialParameter0 = nullptr;
-		}
-		m_models.push_back(model);
-	}
-
-	PiRngWrapper rng;
-	std::random_shuffle(m_models.begin(), m_models.end(), rng);
-
-	m_modelIndex = 0;
-
-	const int w = Graphics::GetScreenWidth();
-	const int h = Graphics::GetScreenHeight();
-
-	// double-width viewport, centred, then offset 1/6th to centre on the left
-	// 2/3rds of the screen, to the left of the menu
-	m_spinnerLeft = int(float(w) * -.5f - float(w) / 6.f);
-	m_spinnerWidth = w * 2;
-	m_spinnerRatio = w * 2.f / h;
-
-	m_needReset = true;
+	m_duration = 0.;
 }
 
 Intro::~Intro()
 {
-	for (std::vector<SceneGraph::Model *>::iterator i = m_models.begin(); i != m_models.end(); ++i)
-		delete (*i);
 }
-
-void Intro::Reset()
-{
-	m_model = m_models[m_modelIndex++];
-	if (m_modelIndex == m_models.size()) m_modelIndex = 0;
-	m_skin.SetRandomColors(RandomSingleton::getInstance());
-	m_skin.Apply(m_model);
-	if (m_model->SupportsPatterns())
-		m_model->SetPattern(RandomSingleton::getInstance().Int32(0, m_model->GetNumPatterns() - 1));
-	m_zoomBegin = -10000.0f;
-	m_zoomEnd = -m_model->GetDrawClipRadius() * 1.7f;
-	m_dist = m_zoomBegin;
-	m_duration = 0.;
-	m_needReset = false;
-}
-
-// stage end times
-static const float ZOOM_IN_END = 2.0f;
-static const float WAIT_END = 12.0f;
-static const float ZOOM_OUT_END = 14.0f;
 
 void Intro::Draw(float _time)
 {
-	if (m_needReset)
-		Reset();
-
 	m_duration += _time;
-
-	// zoom in
-	if (m_duration < ZOOM_IN_END)
-		m_dist = Clamp(Easing::Quad::EaseOut(m_duration, m_zoomBegin, m_zoomEnd - m_zoomBegin, 2.0f), m_zoomBegin, m_zoomEnd);
-
-	// wait
-	else if (m_duration < WAIT_END) {
-		m_dist = m_zoomEnd;
-	}
-
-	// zoom out
-	else if (m_duration < ZOOM_OUT_END) {
-		m_dist = Clamp(Easing::Quad::EaseIn(m_duration - WAIT_END, m_zoomEnd, m_zoomBegin - m_zoomEnd, 2.0f), m_zoomBegin, m_zoomEnd);
-	} else {
-		m_needReset = true;
-	}
 
 	Graphics::Renderer::StateTicket ticket(RendererLocator::getRenderer());
 
 	RendererLocator::getRenderer()->SetPerspectiveProjection(75, m_aspectRatio, 1.f, 10000.f);
 	RendererLocator::getRenderer()->SetTransform(matrix4x4f::Identity());
 
-	RendererLocator::getRenderer()->SetAmbientColor(m_ambientColor);
-	RendererLocator::getRenderer()->SetLights(m_lights.size(), &m_lights[0]);
-
 	// XXX all this stuff will be gone when intro uses a Camera
 	// rotate background by time, and a bit extra Z so it's not so flat
 	matrix4x4d brot = matrix4x4d::RotateXMatrix(-0.25 * m_duration) * matrix4x4d::RotateZMatrix(0.6);
 	RendererLocator::getRenderer()->ClearDepthBuffer();
 	m_background->Draw(brot);
-
-	RendererLocator::getRenderer()->SetViewport(m_spinnerLeft, 0, m_spinnerWidth, Graphics::GetScreenHeight());
-	RendererLocator::getRenderer()->SetPerspectiveProjection(75, m_spinnerRatio, 1.f, 10000.f);
-
-	matrix4x4f trans =
-		matrix4x4f::Translation(0, 0, m_dist) *
-		matrix4x4f::RotateXMatrix(DEG2RAD(-15.0f)) *
-		matrix4x4f::RotateYMatrix(m_duration);
-	m_model->Render(trans);
 }

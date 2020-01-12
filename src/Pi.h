@@ -5,7 +5,6 @@
 #define _PI_H
 
 #include "Input.h"
-#include "JsonFwd.h"
 #include "gameconsts.h"
 
 #include <map>
@@ -14,10 +13,8 @@
 #include <vector>
 
 class Cutscene;
-class InGameViews;
 class LuaConsole;
 class LuaNameGen;
-class ObjectViewerView;
 class PiGui;
 class SystemPath;
 
@@ -67,23 +64,11 @@ public:
 	static void BeginRenderTarget();
 	static void EndRenderTarget();
 
-	static LuaNameGen *luaNameGen;
+	static std::unique_ptr<LuaNameGen> luaNameGen;
 
 #if ENABLE_SERVER_AGENT
 	static ServerAgent *serverAgent;
 #endif
-
-	static InGameViews *GetInGameViews();
-
-	// TODO: These are needed because Pi doesn't know how a new
-	// game is made (either be it loaded or created) and it doesn't
-	// know if that game would be saved. Until now these functionality
-	// are delegated to Game(Mono)State, which will use below methods
-	// to set m_InGameViews
-	static void NewInGameViews(InGameViews *newInGameViews);
-	static void SaveInGameViews(Json &rootNode);
-
-	static Cutscene *GetCutscene();
 
 	static RefCountedPtr<UI::Context> ui;
 	static RefCountedPtr<PiGui> pigui;
@@ -103,7 +88,7 @@ public:
 #endif
 
 	static Input input;
-	static LuaConsole *luaConsole;
+	static std::unique_ptr<LuaConsole> luaConsole;
 
 	static JobQueue *GetAsyncJobQueue();
 	static JobQueue *GetSyncJobQueue();
@@ -125,7 +110,7 @@ private:
 		QUIT_GAME,
 	};
 	static void Quit() __attribute((noreturn));
-	static void HandleKeyDown(SDL_Keysym *key);
+	static void HandleKeyDown(const SDL_Keysym &key);
 	static void HandleEvents();
 	static void HandleRequests();
 	static void HandleEscKey();
@@ -146,7 +131,6 @@ private:
 	static float frameTime;
 
 	static std::unique_ptr<Cutscene> m_cutscene;
-	static std::unique_ptr<InGameViews> m_inGameViews;
 
 	static Graphics::RenderTarget *renderTarget;
 	static RefCountedPtr<Graphics::Texture> renderTexture;

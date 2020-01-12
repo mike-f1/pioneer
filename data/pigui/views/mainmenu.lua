@@ -11,11 +11,17 @@ local Format = import("Format")
 local ui = import('pigui/pigui.lua')
 local Event = import('Event')
 local Lang = import("Lang")
+local ModelSpinner = import("PiGui.Modules.ModelSpinner")
+
 local lc = Lang.GetResource("core")
 local lui = Lang.GetResource("ui-core")
 local qlc = Lang.GetResource("quitconfirmation-core")
 local elc = Lang.GetResource("equipment-core")
 local clc = Lang.GetResource("commodity")
+
+local modelSpinner = ModelSpinner()
+local cachedShip = nil
+local cachedTime = nil
 
 local cargo = Equipment.cargo
 local misc = Equipment.misc
@@ -67,6 +73,57 @@ local startLocations = {
 		{misc.radar,1},
 		{cargo.hydrogen,2}}}
 }
+
+local cycleTime = 9000
+local zoomTime = 2500
+local minSize = 50
+
+local function shipSpinner()
+	local spinnerWidth = ui.getColumnWidth() or ui.getContentRegion().x
+
+	if cachedShip == nil then
+		cachedShip = modelSpinner:setRandomModel()
+	end
+
+	if cachedTime == nil then
+		cachedTime = Engine.ticks
+	end
+
+	-- TODO: Need a (better) way to handle time during intro, asking milliseconds passed
+	-- in Engine is not a good thing
+	local time = Engine.ticks - cachedTime
+	local zooming = false
+
+	if time >= cycleTime then
+		cachedTime = Engine.ticks
+		cachedShip = modelSpinner:setRandomModel()
+	end
+
+	if time <= zoomTime then
+		-- Zoom in:
+		modelSpinner:setSize(Vector2(spinnerWidth, spinnerWidth / 1.5) * (time + minSize) / (zoomTime + minSize))
+		zooming = true
+	end
+
+	if time >= cycleTime - zoomTime then
+		-- Zoom out:
+		modelSpinner:setSize(Vector2(spinnerWidth, spinnerWidth / 1.5) * (cycleTime - (time - minSize)) / (zoomTime + minSize))
+		zooming = true
+	end
+
+	ui.child("modelSpinnerWindow", Vector2(-1,-1), {"NoTitleBar", "AlwaysAutoResize", "NoMove", "NoInputs", "AlwaysUseWindowPadding"}, function()
+		ui.group(function ()
+			modelSpinner:draw()
+			if not zooming then
+				local font = ui.fonts.orbiteer.large
+				ui.withFont(font.name, font.size, function()
+					ui.text(cachedShip)
+					ui.sameLine()
+				end)
+			end
+		end)
+	end)
+end
 
 local function dialogTextButton(label, enabled, callback)
 	local bgcolor = enabled and colors.buttonBlue or colors.grey
@@ -150,56 +207,12 @@ local function startAtLocation(location)
 	end
 end
 
-local function callModules(mode)
-	for k,v in pairs(ui.getModules(mode)) do
-		v.fun()
-	end
-end
-
-local function showMainMenu()
+local function mainMenu()
 	local canContinue = Game.CanLoadGame('_exit')
 	local buttons = 4
 
-	local winPos = Vector2(ui.screenWidth - mainButtonSize.x - 100, ui.screenHeight/2 - (buttons * mainButtonSize.y)/2 - (2*mainButtonSize.y)/2 - 8)
-
-	ui.setNextWindowPos(Vector2(110,65),'Always')
-	ui.withStyleColors({["WindowBg"]=colors.transparent}, function()
-		ui.window("headingWindow", {"NoTitleBar","NoResize","NoFocusOnAppearing","NoBringToFrontOnFocus","AlwaysAutoResize"}, function()
-			ui.withFont("orbiteer",36 * (ui.screenHeight/1200),function() ui.text("Pioneer") end)
-		end)
-	end)
-	if Engine.IsIntroZooming() then
-		ui.setNextWindowPos(Vector2(0,0),'Always')
-		ui.setNextWindowSize(Vector2(ui.screenWidth, ui.screenHeight), 'Always')
-		ui.withStyleColors({["WindowBg"]=colors.transparent}, function()
-			ui.window("shipinfoWindow", {"NoTitleBar","NoResize","NoFocusOnAppearing","NoBringToFrontOnFocus","AlwaysAutoResize"}, function()
-				local mn = Engine.GetIntroCurrentModelName()
-				if mn then
-					local sd = ShipDef[mn]
-					if sd then
-						ui.addFancyText(Vector2(ui.screenWidth / 3, ui.screenHeight / 5.0 * 4), ui.anchor.center, ui.anchor.bottom, {{text=sd.name, color=colors.white, font=orbiteer.medlarge}}, colors.transparent)
-						ui.addFancyText(Vector2(ui.screenWidth / 3, ui.screenHeight / 5.0 * 4.02), ui.anchor.center, ui.anchor.top, {{text=lui[sd.shipClass:upper()], color=colors.white, font=orbiteer.medium}}, colors.transparent)
-					end
-				end
-			end)
-		end)
-	end
-	local build_text = Engine.version
-	ui.withFont("orbiteer", 16 * (ui.screenHeight/1200),
-							function()
-								ui.setNextWindowPos(Vector2(ui.screenWidth - ui.calcTextSize(build_text).x * 1.2,ui.screenHeight - 50), 'Always')
-								ui.withStyleColors({["WindowBg"] = colors.transparent}, function()
-										ui.window("buildLabel", {"NoTitleBar", "NoResize", "NoFocusOnAppearing", "NoBringToFrontOnFocus", "AlwaysAutoResize"},
-															function()
-																ui.text(build_text)
-										end)
-								end)
-	end)
-
-	ui.setNextWindowPos(winPos,'Always')
-	ui.setNextWindowSize(Vector2(0,0), 'Always')
 	ui.withStyleColors({["WindowBg"] = colors.lightBlackBackground}, function()
-		ui.window("MainMenuButtons", {"NoTitleBar", "NoResize", "NoFocusOnAppearing", "NoBringToFrontOnFocus"}, function()
+		ui.child("MainMenuButtons", Vector2(-1,-1), {"NoTitleBar", "NoMove", "NoResize", "NoFocusOnAppearing", "NoBringToFrontOnFocus"}, function()
 			mainTextButton(lui.CONTINUE_GAME, nil, canContinue, continueGame)
 
 			for _,loc in pairs(startLocations) do
@@ -235,6 +248,47 @@ local function showMainMenu()
 
 			if showQuitConfirm then confirmQuit() end
 		end)
+	end)
+end
+
+local function callModules(mode)
+	for k,v in pairs(ui.getModules(mode)) do
+		v.fun()
+	end
+end
+
+local function showMainMenu()
+	ui.setNextWindowPos(Vector2(110,65),'Always')
+	ui.withStyleColors({["WindowBg"]=colors.transparent}, function()
+		ui.window("headingWindow", {"NoTitleBar","NoResize","NoFocusOnAppearing","NoBringToFrontOnFocus","AlwaysAutoResize"}, function()
+			ui.withFont("orbiteer", 36 * (ui.screenHeight / 1200),function() ui.text("Pioneer") end)
+		end)
+	end)
+
+	ui.setNextWindowPos(Vector2(10,100),'Always')
+	ui.setNextWindowSize(Vector2(ui.screenWidth - 20, ui.screenHeight - 10),'Always')
+	ui.withStyleVars({ WindowPadding = Vector2(12, 12) }, function()
+		ui.withStyleColors({["WindowBg"]=colors.transparent}, function()
+			ui.window("", {"NoTitleBar", "AlwaysAutoResize", "NoInputs", "AlwaysUseWindowPadding"}, function()
+				ui.columns(2, "menuCol")
+				ui.setColumnWidth(0, ui.screenWidth * 3 / 5)
+				shipSpinner()
+				ui.nextColumn()
+				mainMenu()
+			end)
+		end)
+	end)
+
+	local build_text = Engine.version
+	ui.withFont("orbiteer", 16 * (ui.screenHeight/1200),
+		function()
+			ui.setNextWindowPos(Vector2(ui.screenWidth - ui.calcTextSize(build_text).x * 1.2,ui.screenHeight - 50), 'Always')
+			ui.withStyleColors({["WindowBg"] = colors.transparent}, function()
+				ui.window("buildLabel", {"NoTitleBar", "NoResize", "NoFocusOnAppearing", "NoBringToFrontOnFocus", "AlwaysAutoResize"},
+					function()
+						ui.text(build_text)
+					end)
+			end)
 	end)
 
 	callModules('mainMenu')

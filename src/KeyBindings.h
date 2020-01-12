@@ -7,14 +7,7 @@
 #include "libs.h"
 #include <iosfwd>
 
-enum InputResponse {
-	// None of the inputs match the event.
-	RESPONSE_NOMATCH = 0,
-	// An input matched, but won't consume the event.
-	RESPONSE_PASSTHROUGH,
-	// An input matched and consumed the event.
-	RESPONSE_MATCHED
-};
+#include "InputFrame.h"
 
 namespace KeyBindings {
 	enum Type {
@@ -51,9 +44,9 @@ namespace KeyBindings {
 		std::string Description() const; // for display to the user
 
 		bool IsActive() const;
-		bool Matches(const SDL_Keysym *sym) const;
-		bool Matches(const SDL_JoyButtonEvent *joy) const;
-		bool Matches(const SDL_JoyHatEvent *joy) const;
+		bool Matches(const SDL_Keysym &sym) const;
+		bool Matches(const SDL_JoyButtonEvent &joy) const;
+		bool Matches(const SDL_JoyHatEvent &joy) const;
 
 		void Clear() { memset(this, 0, sizeof(*this)); }
 
@@ -113,9 +106,9 @@ namespace KeyBindings {
 		std::string ToString() const;
 
 		bool IsActive() const;
-		InputResponse CheckSDLEventAndDispatch(const SDL_Event *event);
+		InputResponse CheckSDLEventAndDispatch(const SDL_Event &event);
 
-		bool Matches(const SDL_Keysym *sym) const;
+		bool Matches(const SDL_Keysym &sym) const;
 	};
 
 	enum AxisDirection {
@@ -156,7 +149,7 @@ namespace KeyBindings {
 		static JoyAxisBinding FromString(const char *str);
 		std::string ToString() const;
 
-		bool Matches(const SDL_Event *event) const;
+		bool Matches(const SDL_Event &event) const;
 		bool IsActive() const;
 
 		bool IsInverted() { return direction == NEGATIVE; }
@@ -201,7 +194,15 @@ namespace KeyBindings {
 
 		bool IsActive() const;
 		float GetValue() const;
-		InputResponse CheckSDLEventAndDispatch(const SDL_Event *event);
+		InputResponse CheckSDLEventAndDispatch(const SDL_Event &event);
+	};
+
+	struct WheelBinding {
+		WheelBinding() {};
+
+		sigc::signal<void, bool> onAxis;
+
+		InputResponse CheckSDLEventAndDispatch(const SDL_Event &event);
 	};
 
 	struct BindingPrototype {
@@ -215,7 +216,7 @@ namespace KeyBindings {
 	void EnableBindings();
 	void DisableBindings();
 
-	void DispatchSDLEvent(const SDL_Event *event);
+	void DispatchSDLEvent(const SDL_Event &event);
 
 #define KEY_BINDING(name, a, b, c, d) extern ActionBinding name;
 #define AXIS_BINDING(name, a, b, c) extern JoyAxisBinding name;

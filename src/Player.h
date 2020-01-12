@@ -5,9 +5,9 @@
 #define _PLAYER_H
 
 #include "Ship.h"
-#include "ShipCockpit.h"
 
 class PlayerShipController;
+class ShipCockpit;
 
 namespace Graphics {
 	class Renderer;
@@ -19,6 +19,8 @@ public:
 	Player() = delete;
 	Player(const Json &jsonObj, Space *space);
 	Player(const ShipType::Id &shipId);
+
+	~Player();
 
 	virtual void SetDockedWith(SpaceStation *, int port) override;
 	virtual bool DoDamage(float kgDamage) override final; // overloaded to add "crush" audio
@@ -45,7 +47,7 @@ public:
 
 	// XXX cockpit is here for now because it has a physics component
 	void InitCockpit();
-	ShipCockpit *GetCockpit() const { return m_cockpit.get(); }
+	ShipCockpit *GetCockpit() const;
 	void OnCockpitActivated();
 
 	virtual void StaticUpdate(const float timeStep) override;

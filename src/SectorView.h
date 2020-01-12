@@ -4,6 +4,7 @@
 #ifndef _SECTORVIEW_H
 #define _SECTORVIEW_H
 
+#include "InputFrame.h"
 #include "UIView.h"
 #include "galaxy/Sector.h"
 #include "galaxy/SystemPath.h"
@@ -13,6 +14,12 @@
 #include <vector>
 
 class Galaxy;
+
+namespace KeyBindings {
+	struct ActionBinding;
+	struct AxisBinding;
+	struct WheelBinding;
+}
 
 namespace Gui {
 	class Label;
@@ -26,6 +33,7 @@ namespace Graphics {
 
 class SectorView : public UIView {
 public:
+	static void RegisterInputBindings();
 	SectorView(const SystemPath &path, RefCountedPtr<Galaxy> galaxy, unsigned int cacheRadius);
 	SectorView(const Json &jsonObj, RefCountedPtr<Galaxy> galaxy, unsigned int cacheRadius);
 	virtual ~SectorView();
@@ -41,6 +49,7 @@ public:
 	void SetHyperspaceTarget(const SystemPath &path);
 	void FloatHyperspaceTarget();
 	void LockHyperspaceTarget(bool lock);
+	bool GetLockHyperspaceTarget() { return !m_matchTargetToSelection; }
 	void ResetHyperspaceTarget();
 	void GotoSector(const SystemPath &path);
 	void GotoSystem(const SystemPath &path);
@@ -58,9 +67,13 @@ public:
 	vector3f GetCenterSector();
 	double GetCenterDistance();
 	void SetDrawUninhabitedLabels(bool value) { m_drawUninhabitedLabels = value; }
+	bool GetDrawUninhabitedLabels() { return m_drawUninhabitedLabels; }
 	void SetDrawVerticalLines(bool value) { m_drawVerticalLines = value; }
+	bool GetDrawVerticalLines() { return m_drawVerticalLines; }
 	void SetDrawOutRangeLabels(bool value) { m_drawOutRangeLabels = value; }
+	bool GetDrawOutRangeLabels() { return m_drawOutRangeLabels; }
 	void SetAutomaticSystemSelection(bool value) { m_automaticSystemSelection = value; }
+	bool GetAutomaticSystemSelection() { return m_automaticSystemSelection; }
 	std::vector<SystemPath> GetNearbyStarSystemsByName(std::string pattern);
 	const std::set<const Faction *> &GetVisibleFactions() { return m_visibleFactions; }
 	const std::set<const Faction *> &GetHiddenFactions() { return m_hiddenFactions; }
@@ -77,7 +90,8 @@ public:
 	void SetDrawRouteLines(bool value) { m_drawRouteLines = value; }
 
 protected:
-	virtual void OnSwitchTo();
+	virtual void OnSwitchTo() override;
+	virtual void OnSwitchFrom() override;
 
 private:
 	void InitDefaults();
@@ -112,8 +126,10 @@ private:
 
 	void ShrinkCache();
 
-	void MouseWheel(bool up);
-	void OnKeyPressed(SDL_Keysym *keysym);
+	void OnMapLockHyperspaceToggle();
+	void OnToggleSelectionFollowView();
+	void OnMouseWheel(bool up);
+	void UpdateBindings();
 
 	RefCountedPtr<Galaxy> m_galaxy;
 
@@ -142,6 +158,8 @@ private:
 	bool m_drawOutRangeLabels;
 	bool m_drawVerticalLines;
 
+	float m_lastFrameTime;
+
 	std::unique_ptr<Graphics::Drawables::Disk> m_disk;
 
 	Gui::LabelSet *m_clickableLabels;
@@ -154,7 +172,41 @@ private:
 	void OnToggleFaction(Gui::ToggleButton *button, bool pressed, const Faction *faction);
 
 	sigc::connection m_onMouseWheelCon;
-	sigc::connection m_onKeyPressConnection;
+	sigc::connection m_mapLockHyperspaceTargetCon;
+	sigc::connection m_mapToggleSelectionFollowViewCon;
+
+	static struct SectorBinding : public InputFrame {
+	public:
+		using Action = KeyBindings::ActionBinding;
+		using Axis =  KeyBindings::AxisBinding;
+		using Wheel = KeyBindings::WheelBinding;
+
+		Action *mapLockHyperspaceTarget;
+		Action *mapToggleSelectionFollowView;
+		Action *mapWarpToCurrent;
+		Action *mapWarpToSelected;
+		Action *mapWarpToHyperspaceTarget;
+		Action *mapViewReset;
+
+		Action *mapViewShiftLeft;
+		Action *mapViewShiftRight;
+		Action *mapViewShiftUp;
+		Action *mapViewShiftDown;
+		Action *mapViewShiftForward;
+		Action *mapViewShiftBackward;
+
+		Action *mapViewZoomIn;
+		Action *mapViewZoomOut;
+
+		Action *mapViewRotateLeft;
+		Action *mapViewRotateRight;
+		Action *mapViewRotateUp;
+		Action *mapViewRotateDown;
+
+		Wheel *mouseWheel;
+
+		virtual void RegisterBindings();
+	} SectorBindings;
 
 	RefCountedPtr<SectorCache::Slave> m_sectorCache;
 	std::string m_previousSearch;

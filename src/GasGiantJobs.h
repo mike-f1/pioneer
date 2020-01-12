@@ -15,7 +15,7 @@
 #include <deque>
 
 #ifdef PIONEER_PROFILER
-#include "Profiler.h"
+#include "profiler/Profiler.h"
 #endif // PIONEER_PROFILER
 
 namespace Graphics {

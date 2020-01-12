@@ -442,7 +442,7 @@ void CollisionSpace::RebuildObjectTrees()
 		if (m_staticObjectTree) delete m_staticObjectTree;
 		m_staticObjectTree = new BvhTree(m_staticGeoms);
 	}
-	if (m_oldGeomsNumber < m_geoms.size()) {
+	if (unsigned(m_oldGeomsNumber) < m_geoms.size()) {
 		// Have more geoms: rebuild completely (ask more memory)
 		if (m_dynamicObjectTree) delete m_dynamicObjectTree;
 		m_dynamicObjectTree = new BvhTree(m_geoms);

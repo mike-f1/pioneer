@@ -4,6 +4,7 @@
 #ifndef GAMEUI_GALAXYMAP_H
 #define GAMEUI_GALAXYMAP_H
 
+#include "Color.h"
 #include "ui/Context.h"
 #include "ui/OverlayStack.h"
 
@@ -30,7 +31,7 @@ namespace GameUI {
 		GalaxyMap *AddAreaLabel(const vector2f &at, const std::string &text);
 
 		// Position is in sector X,Y coordinates.
-		GalaxyMap *AddPointLabel(const vector2f &at, const std::string &text);
+		GalaxyMap *AddPointLabel(const vector2f &at, const std::string &text, const Color &c);
 
 		sigc::signal<void, float> onDisplayScaleChanged;
 

@@ -4,9 +4,9 @@
 #include "LuaDev.h"
 
 #include "InGameViews.h"
+#include "InGameViewsLocator.h"
 #include "LuaManager.h"
 #include "LuaObject.h"
-#include "Pi.h"
 #include "WorldView.h"
 
 /*
@@ -22,9 +22,9 @@
  */
 static int l_dev_set_camera_offset(lua_State *l)
 {
-	if (!Pi::GetInGameViews() || !Pi::GetInGameViews()->GetWorldView())
+	if (!InGameViewsLocator::getInGameViews() || !InGameViewsLocator::getInGameViews()->GetWorldView())
 		return luaL_error(l, "Dev.SetCameraOffset only works when there is a game running");
-	CameraController *cam = Pi::GetInGameViews()->GetWorldView()->shipView.GetCameraController();
+	CameraController *cam = InGameViewsLocator::getInGameViews()->GetWorldView()->shipView.GetCameraController();
 	const float x = luaL_checknumber(l, 1);
 	const float y = luaL_checknumber(l, 2);
 	const float z = luaL_checknumber(l, 3);

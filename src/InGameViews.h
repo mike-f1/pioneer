@@ -4,8 +4,6 @@
 #include "JsonFwd.h"
 #include "RefCounted.h"
 
-#include <SDL_events.h>
-
 class Game;
 class SystemPath;
 
@@ -41,9 +39,10 @@ public:
 	void SaveToJson(Json &jsonObj);
 
 	void SetView(ViewType vt);
-	View *GetView() { return m_currentView; } // <-- Only for a check on template name in Pi::
 
 	bool DrawGui();
+
+	ViewType GetViewType() const { return m_currentViewType; }
 
 	bool IsEmptyView() const { return nullptr == m_currentView; }
 	bool IsSectorView() const { return ViewType::SECTOR == m_currentViewType; }
@@ -69,7 +68,6 @@ public:
 	/* Only use #if WITH_OBJECTVIEWER */
 	ObjectViewerView *GetObjectViewerView() const;
 
-	void HandleSDLEvent(SDL_Event &event);
 	void UpdateView(const float frameTime);
 	void Draw3DView();
 

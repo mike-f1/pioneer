@@ -2,6 +2,7 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "GalaxyMap.h"
+#include "LuaColor.h"
 #include "LuaConstants.h"
 #include "LuaObject.h"
 #include "ui/Lua.h"
@@ -53,7 +54,11 @@ namespace GameUI {
 			float y = luaL_checknumber(l, 3);
 			std::string text;
 			pi_lua_generic_pull(l, 4, text);
-			map->AddPointLabel(vector2f(x, y), text);
+			Color c(Color4ub::GREEN);
+			if (lua_gettop(l) > 4) {
+				c = LuaPull<Color>(l, 5);
+			}
+			map->AddPointLabel(vector2f(x, y), text, c);
 			lua_settop(l, 1);
 			return 1;
 		}

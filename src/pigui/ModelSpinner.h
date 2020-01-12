@@ -36,7 +36,7 @@ namespace PiGUI {
 		~ModelSpinner();
 
 		// Set the ship we should be looking at.
-		void SetModel(SceneGraph::Model *model, const SceneGraph::ModelSkin &skin, unsigned int pattern);
+		void SetModel(SceneGraph::Model *model, SceneGraph::ModelSkin *skin, unsigned int pattern);
 
 		// Called to draw the model to the render target.
 		void Render();

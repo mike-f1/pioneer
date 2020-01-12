@@ -26,7 +26,6 @@ public:
 	virtual void Update(const float frameTime) = 0;
 	virtual void SaveToJson(Json &jsonObj) {}
 	virtual void LoadFromJson(const Json &jsonObj) {}
-	virtual void HandleSDLEvent(SDL_Event &event) {}
 
 	void Attach();
 	void Detach();

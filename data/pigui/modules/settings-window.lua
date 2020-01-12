@@ -373,13 +373,13 @@ local function showLanguageOptions()
 	end)
 
 	local clicked
-	for _,lang in pairs(langs) do
-		ui.withFont(pionillium.large.name, pionillium.large.size, function()
+	ui.withFont(pionillium.large.name, pionillium.large.size, function()
+		for _,lang in pairs(langs) do
 			if ui.selectable(Lang.GetResource("core",lang).LANG_NAME, Lang.currentLanguage==lang, {}) then
 				clicked = lang
 			end
-		end)
-	end
+		end
+	end)
 
 	if clicked then
 		Lang.SetCurrentLanguage(clicked)
@@ -509,18 +509,12 @@ local optionsTabs = {
 	["controls"]=showControlsOptions
 }
 
-local optionModalOpen = false
-
 local function optionsWindow()
 	if ui.showOptionsWindow then
-		if not optionModalOpen then
-			ui.openPopup("Options")
-		end
-
 		ui.setNextWindowSize(optionsWinSize, 'Always')
 		ui.setNextWindowPosCenter('Always')
 		ui.withStyleColorsAndVars({["WindowBg"] = Color(20, 20, 80, 230)}, {WindowBorderSize = 1}, function()
-			ui.popupModal("Options", {"NoTitleBar", "NoResize"}, function()
+			ui.window("Options", {"NoTitleBar", "NoResize"}, function()
 				mainButton(icons.view_sidereal, lui.VIDEO, showTab=='video', function()
 					showTab = 'video'
 				end)
@@ -573,8 +567,6 @@ local function optionsWindow()
 		if showKeyCapture then
 			captureBinding(keyCaptureId, keyCaptureNum)
 		end
-	elseif optionModalOpen then
-		ui.closeCurrentPopup()
 	end
 end
 

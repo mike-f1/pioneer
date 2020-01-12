@@ -15,16 +15,16 @@ std::vector<Frame> Frame::s_frames;
 std::vector<CollisionSpace> Frame::s_collisionSpaces;
 
 Frame::Frame(const Dummy &d, FrameId parent, const char *label, unsigned int flags, double radius) :
+	m_parent(parent),
 	m_sbody(nullptr),
 	m_astroBody(nullptr),
-	m_parent(parent),
-	m_radius(radius),
-	m_flags(flags),
 	m_pos(vector3d(0.0)),
+	m_orient(matrix3x3d::Identity()),
+	m_initialOrient(matrix3x3d::Identity()),
 	m_vel(vector3d(0.0)),
 	m_angSpeed(0.0),
-	m_orient(matrix3x3d::Identity()),
-	m_initialOrient(matrix3x3d::Identity())
+	m_radius(radius),
+	m_flags(flags)
 {
 	if (!d.madeWithFactory)
 		Error("Frame ctor called directly!\n");
@@ -43,18 +43,18 @@ Frame::Frame(const Dummy &d, FrameId parent, const char *label, unsigned int fla
 }
 
 Frame::Frame(const Dummy &d, FrameId parent) :
+	m_parent(parent),
 	m_sbody(nullptr),
 	m_astroBody(nullptr),
-	m_parent(parent),
+	m_pos(vector3d(0.0)),
+	m_orient(matrix3x3d::Identity()),
+	m_initialOrient(matrix3x3d::Identity()),
+	m_vel(vector3d(0.0)),
+	m_angSpeed(0.0),
 	m_label("camera"),
 	m_radius(0.0),
 	m_flags(FLAG_ROTATING),
-	m_collisionSpace(-1),
-	m_pos(vector3d(0.0)),
-	m_vel(vector3d(0.0)),
-	m_angSpeed(0.0),
-	m_orient(matrix3x3d::Identity()),
-	m_initialOrient(matrix3x3d::Identity())
+	m_collisionSpace(-1)
 {
 	if (!d.madeWithFactory)
 		Error("Frame ctor called directly!\n");
@@ -76,8 +76,8 @@ Frame::Frame(Frame &&other) noexcept :
 	m_pos(other.m_pos),
 	m_oldPos(other.m_oldPos),
 	m_interpPos(other.m_interpPos),
-	m_initialOrient(other.m_initialOrient),
 	m_orient(other.m_orient),
+	m_initialOrient(other.m_initialOrient),
 	m_vel(other.m_vel),
 	m_angSpeed(other.m_angSpeed),
 	m_oldAngDisplacement(other.m_oldAngDisplacement),

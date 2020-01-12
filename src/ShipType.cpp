@@ -13,6 +13,8 @@
 #include "FileSystem.h"
 #include "Json.h"
 #include "Lang.h"
+#include "Random.h"
+#include "RandomSingleton.h"
 #include "utils.h"
 #include <algorithm>
 
@@ -499,4 +501,20 @@ void ShipType::Init()
 
 	if (ShipType::player_ships.empty())
 		Error("No playable ships have been defined! The game cannot run.");
+}
+
+//static
+const std::string ShipType::GetRandom()
+{
+	std::vector<std::string> ship_names;
+	ship_names.reserve(types.size());
+	for (const std::pair<Id, const ShipType> &type : types) {
+		if (type.second.tag == Tag::TAG_SHIP) {
+			ship_names.push_back(type.first);
+		}
+	}
+	int skip = RandomSingleton::getInstance().Int32(ship_names.size());
+	std::vector<std::string>::iterator it = ship_names.begin();
+	std::advance(it, skip);
+	return (*it);
 }

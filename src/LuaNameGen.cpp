@@ -1,7 +1,10 @@
 // Copyright © 2008-2019 Pioneer Developers. See AUTHORS.txt for details
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
+#include "buildopts.h"
 
 #include "LuaNameGen.h"
+
+#include "LuaManager.h"
 #include "LuaObject.h"
 #include "Random.h"
 #include "galaxy/SystemBody.h"
@@ -11,7 +14,17 @@ static const std::string DEFAULT_FULL_NAME_FEMALE("Thomasina Mortonella");
 static const std::string DEFAULT_SURNAME("Jameson");
 static const std::string DEFAULT_BODY_NAME("Planet Rock");
 
-static bool GetNameGenFunc(lua_State *l, const char *func)
+LuaNameGen::LuaNameGen()
+{
+#ifndef NDEBUG
+	if (Lua::manager == nullptr) {
+		Error("Lua manager is null during LuaNameGen ctor");
+		abort();
+	}
+#endif // NDEBUG
+}
+
+static bool getNameGenFunc(lua_State *l, const char *func)
 {
 	LUA_DEBUG_START(l);
 
@@ -33,9 +46,9 @@ static bool GetNameGenFunc(lua_State *l, const char *func)
 
 std::string LuaNameGen::FullName(bool isFemale, RefCountedPtr<Random> &rng)
 {
-	lua_State *l = m_luaManager->GetLuaState();
+	lua_State *l = Lua::manager->GetLuaState();
 
-	if (!GetNameGenFunc(l, "FullName"))
+	if (!getNameGenFunc(l, "FullName"))
 		return isFemale ? DEFAULT_FULL_NAME_FEMALE : DEFAULT_FULL_NAME_MALE;
 
 	lua_pushboolean(l, isFemale);
@@ -50,9 +63,9 @@ std::string LuaNameGen::FullName(bool isFemale, RefCountedPtr<Random> &rng)
 
 std::string LuaNameGen::Surname(RefCountedPtr<Random> &rng)
 {
-	lua_State *l = m_luaManager->GetLuaState();
+	lua_State *l = Lua::manager->GetLuaState();
 
-	if (!GetNameGenFunc(l, "Surname"))
+	if (!getNameGenFunc(l, "Surname"))
 		return DEFAULT_SURNAME;
 
 	LuaObject<Random>::PushToLua(rng.Get());
@@ -66,9 +79,9 @@ std::string LuaNameGen::Surname(RefCountedPtr<Random> &rng)
 
 std::string LuaNameGen::BodyName(SystemBody *body, RefCountedPtr<Random> &rng)
 {
-	lua_State *l = m_luaManager->GetLuaState();
+	lua_State *l = Lua::manager->GetLuaState();
 
-	if (!GetNameGenFunc(l, "BodyName"))
+	if (!getNameGenFunc(l, "BodyName"))
 		return DEFAULT_BODY_NAME;
 
 	LuaObject<SystemBody>::PushToLua(body);

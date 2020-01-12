@@ -13,12 +13,12 @@
 #include "GameSaveError.h"
 #include "HyperspaceCloud.h"
 #include "InGameViews.h"
+#include "InGameViewsLocator.h"
 #include "LuaEvent.h"
 #include "LuaSerializer.h"
 #include "LuaTimer.h"
 #include "MathUtil.h"
 #include "Object.h"
-#include "Pi.h"
 #include "Player.h"
 #include "Sfx.h"
 #include "Space.h"
@@ -40,14 +40,14 @@
 //#define DEBUG_CACHE
 
 Game::Game(const SystemPath &path, const double startDateTime, unsigned int cacheRadius) :
+	m_cacheRadius(cacheRadius),
 	m_galaxy(GalaxyGenerator::Create()),
 	m_time(startDateTime),
 	m_state(State::NORMAL),
 	m_wantHyperspace(false),
 	m_timeAccel(TIMEACCEL_1X),
 	m_requestedTimeAccel(TIMEACCEL_1X),
-	m_forceTimeAccel(false),
-	m_cacheRadius(cacheRadius)
+	m_forceTimeAccel(false)
 {
 #ifdef PIONEER_PROFILER
 	std::string profilerPath;
@@ -108,10 +108,10 @@ Game::Game(const SystemPath &path, const double startDateTime, unsigned int cach
 }
 
 Game::Game(const Json &jsonObj, unsigned int cacheRadius) :
+	m_cacheRadius(cacheRadius),
 	m_timeAccel(TIMEACCEL_PAUSED),
 	m_requestedTimeAccel(TIMEACCEL_PAUSED),
-	m_forceTimeAccel(false),
-	m_cacheRadius(cacheRadius)
+	m_forceTimeAccel(false)
 {
 	std::unique_ptr<LuaSerializer> luaSerializer(new LuaSerializer());
 
@@ -224,8 +224,8 @@ void Game::ToJson(Json &jsonObj)
 	jsonObj["hyperspace_end_time"] = m_hyperspaceEndTime;
 
 	// Delete camera frame from frame structure:
-	bool have_cam_frame = Pi::GetInGameViews()->GetWorldView()->GetCameraContext()->GetCamFrame();
-	if (have_cam_frame)	Pi::GetInGameViews()->GetWorldView()->EndCameraFrame();
+	bool have_cam_frame = InGameViewsLocator::getInGameViews()->GetWorldView()->GetCameraContext()->GetCamFrame();
+	if (have_cam_frame)	InGameViewsLocator::getInGameViews()->GetWorldView()->EndCameraFrame();
 
 	// space, all the bodies and things
 	m_space->ToJson(jsonObj);
@@ -287,7 +287,7 @@ void Game::ToJson(Json &jsonObj)
 	luaSerializer->UninitTableRefs();
 
 	// Bring back camera frame:
-	if (have_cam_frame)	Pi::GetInGameViews()->GetWorldView()->BeginCameraFrame();
+	if (have_cam_frame)	InGameViewsLocator::getInGameViews()->GetWorldView()->BeginCameraFrame();
 }
 
 RefCountedPtr<Galaxy> Game::GetGalaxy() const { return m_galaxy; }
@@ -491,7 +491,7 @@ void Game::SwitchToHyperspace()
 	m_space->GetBackground()->SetDrawFlags(Background::Container::DRAW_STARS);
 
 	// Reset planner
-	Pi::GetInGameViews()->GetSystemView()->ResetPlanner();
+	InGameViewsLocator::getInGameViews()->GetSystemView()->ResetPlanner();
 
 	// Update caches:
 	assert(m_starSystemCache && m_sectorCache);
@@ -767,11 +767,6 @@ void Game::GenCaches(const SystemPath *here, unsigned int sectorRadius,
 void Game::UpdateStarSystemCache(const SystemPath *here, unsigned int sectorRadius)
 {
 	PROFILE_SCOPED()
-
-	// current location
-	const int here_x = here->sectorX;
-	const int here_y = here->sectorY;
-	const int here_z = here->sectorZ;
 
 	const int survivorRadius = sectorRadius * 3;
 

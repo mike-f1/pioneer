@@ -168,7 +168,7 @@ void SpaceStation::InitStation()
 
 	if (m_shipDocking.empty()) {
 		m_shipDocking.reserve(m_type->NumDockingPorts());
-		for (unsigned int i = 0; i < m_type->NumDockingPorts(); i++) {
+		for (unsigned i = 0; i < m_type->NumDockingPorts(); i++) {
 			m_shipDocking.push_back(shipDocking_t());
 		}
 		// only (re)set these if we've not come from the ::Load method
@@ -186,7 +186,7 @@ void SpaceStation::InitStation()
 		// clear it all to default
 		m_ports = m_type->Ports();
 		// now restore the "inUse" variable only since it's the only bit that might have changed
-		for (int p = 0; p < m_ports.size(); p++) {
+		for (unsigned p = 0; p < m_ports.size(); p++) {
 			m_ports[p].inUse = backup[p].inUse;
 		}
 	}

@@ -4,14 +4,20 @@
 #pragma once
 
 #include "CameraController.h"
-#include "Input.h"
+#include "InputFrame.h"
 #include "InteractionController.h"
-#include "KeyBindings.h"
 #include "utils.h"
 
-class Player;
+class Ship;
+
+namespace KeyBindings {
+	struct ActionBinding;
+	struct AxisBinding;
+	struct WheelBinding;
+}
 
 class ShipViewController : public InteractionController {
+	friend class WorldView;
 public:
 	ShipViewController(WorldView *v) :
 		InteractionController(v),
@@ -20,7 +26,7 @@ public:
 
 	~ShipViewController();
 
-	void Update() override;
+	void Update(const float frameTime) override;
 	void Activated() override;
 	void Deactivated() override;
 
@@ -36,35 +42,17 @@ public:
 
 	sigc::signal<void> onChangeCamType;
 
-private:
-	friend class WorldView;
-	void ChangeInternalCameraMode(InternalCameraController::Mode m);
-
-	enum CamType m_camType;
-
-	sigc::connection m_onMouseWheelCon;
-
-	std::unique_ptr<InternalCameraController> m_internalCameraController;
-	std::unique_ptr<ExternalCameraController> m_externalCameraController;
-	std::unique_ptr<SiderealCameraController> m_siderealCameraController;
-	std::unique_ptr<FlyByCameraController> m_flybyCameraController;
-	CameraController *m_activeCameraController; //one of the above
-
-	bool headtracker_input_priority;
-
-	void MouseWheel(bool up);
-
-public:
-	void Init(Player *player);
+	void Init(Ship *ship);
 	void LoadFromJson(const Json &jsonObj);
 	void SaveToJson(Json &jsonObj);
 
 	// Here temporarely because of initialization order
-	void SetCamType(Player *player, enum CamType c);
+	void SetCamType(Ship *ship, enum CamType c);
 
-	static struct InputBinding : public Input::InputFrame {
+	static struct InputBinding : public InputFrame {
 		using Action = KeyBindings::ActionBinding;
 		using Axis = KeyBindings::AxisBinding;
+		using Wheel = KeyBindings::WheelBinding;
 
 		Axis *cameraYaw;
 		Axis *cameraPitch;
@@ -84,6 +72,27 @@ public:
 		Action *cycleCameraMode;
 		Action *resetCamera;
 
+		Wheel *mouseWheel;
+
 		virtual void RegisterBindings();
 	} InputBindings;
+
+private:
+	void ChangeInternalCameraMode(InternalCameraController::Mode m);
+
+	void OnCamReset();
+	void OnMouseWheel(bool up);
+
+	enum CamType m_camType;
+
+	sigc::connection m_onResetCam;
+	sigc::connection m_onMouseWheelCon;
+
+	std::unique_ptr<InternalCameraController> m_internalCameraController;
+	std::unique_ptr<ExternalCameraController> m_externalCameraController;
+	std::unique_ptr<SiderealCameraController> m_siderealCameraController;
+	std::unique_ptr<FlyByCameraController> m_flybyCameraController;
+	CameraController *m_activeCameraController; //one of the above
+
+	bool headtracker_input_priority;
 };

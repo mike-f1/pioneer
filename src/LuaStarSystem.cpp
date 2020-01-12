@@ -253,8 +253,6 @@ static int l_starsystem_get_nearby_systems(lua_State *l)
 
 	const SystemPath &here = s->GetPath();
 
-	const int diff_sec = int(ceil(dist_ly / Sector::SIZE));
-
 	std::vector<RefCountedPtr<StarSystem>> ss_vector = s->GetGalaxy()->GetNearStarSystemLy(here, dist_ly);
 
 	if (filter) {

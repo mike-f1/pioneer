@@ -8,7 +8,6 @@
 #include "GameConfSingleton.h"
 #include "GameLocator.h"
 #include "GameSaveError.h"
-#include "InGameViews.h"
 #include "KeyBindings.h"
 #include "LuaConstants.h"
 #include "LuaObject.h"
@@ -76,6 +75,10 @@ SectorView::SectorView(const SystemPath &path, RefCountedPtr<Galaxy> galaxy, uns
 
 	m_matchTargetToSelection = true;
 	m_automaticSystemSelection = true;
+	m_drawUninhabitedLabels = false;
+	m_drawVerticalLines = true;
+	m_drawOutRangeLabels = false;
+
 	m_detailBoxVisible = DETAILBOX_INFO;
 	m_toggledFaction = false;
 
@@ -108,12 +111,89 @@ SectorView::SectorView(const Json &jsonObj, RefCountedPtr<Galaxy> galaxy, unsign
 		m_hyperspaceTarget = SystemPath::FromJson(sectorViewObj["hyperspace"]);
 		m_matchTargetToSelection = sectorViewObj["match_target_to_selection"];
 		m_automaticSystemSelection = sectorViewObj["automatic_system_selection"];
+		m_drawUninhabitedLabels = sectorViewObj["draw_uninhabited_labels"];
+		m_drawVerticalLines = sectorViewObj["draw_vertical_lines"];
+		m_drawOutRangeLabels = sectorViewObj["draw_out_of_range_labels"];
+
 		m_detailBoxVisible = sectorViewObj["detail_box_visible"];
 	} catch (Json::type_error &) {
 		throw SavedGameCorruptException();
 	}
 
 	InitObject(cacheRadius);
+}
+
+SectorView::SectorBinding SectorView::SectorBindings;
+
+void SectorView::SectorBinding::RegisterBindings()
+{
+}
+
+void SectorView::RegisterInputBindings()
+{
+	using namespace KeyBindings;
+
+	Input::BindingPage *page = Pi::input.GetBindingPage("SectorView");
+	Input::BindingGroup *group = page->GetBindingGroup("Miscellaneous");
+
+	SectorBindings.mapLockHyperspaceTarget = Pi::input.AddActionBinding("BindMapLockHyperspaceTarget", group, ActionBinding(SDLK_SPACE));
+	SectorBindings.actions.push_back(SectorBindings.mapLockHyperspaceTarget);
+
+	SectorBindings.mapToggleSelectionFollowView = Pi::input.AddActionBinding("BindMapToggleSelectionFollowView", group, ActionBinding(SDLK_RETURN, SDLK_KP_ENTER));
+	SectorBindings.actions.push_back(SectorBindings.mapToggleSelectionFollowView);
+
+	SectorBindings.mapWarpToCurrent = Pi::input.AddActionBinding("BindMapWarpToCurrent", group, ActionBinding(SDLK_c));
+	SectorBindings.actions.push_back(SectorBindings.mapWarpToCurrent);
+
+	SectorBindings.mapWarpToSelected = Pi::input.AddActionBinding("BindMapWarpToSelection", group, ActionBinding(SDLK_g));
+	SectorBindings.actions.push_back(SectorBindings.mapWarpToSelected);
+
+	SectorBindings.mapWarpToHyperspaceTarget = Pi::input.AddActionBinding("BindMapWarpToHyperspaceTarget", group, ActionBinding(SDLK_h));
+	SectorBindings.actions.push_back(SectorBindings.mapWarpToHyperspaceTarget);
+
+	SectorBindings.mapViewReset = Pi::input.AddActionBinding("BindMapViewReset", group, ActionBinding(SDLK_t));
+	SectorBindings.actions.push_back(SectorBindings.mapViewReset);
+
+	group = page->GetBindingGroup("ViewMovementControls");
+
+	SectorBindings.mapViewShiftForward = Pi::input.AddActionBinding("BindMapViewShiftForward", group, ActionBinding(SDLK_r));
+	SectorBindings.actions.push_back(SectorBindings.mapViewShiftForward);
+
+	SectorBindings.mapViewShiftBackward = Pi::input.AddActionBinding("BindMapViewShiftBackward", group, ActionBinding(SDLK_f));
+	SectorBindings.actions.push_back(SectorBindings.mapViewShiftBackward);
+
+	SectorBindings.mapViewShiftLeft = Pi::input.AddActionBinding("BindMapViewShiftLeft", group, ActionBinding(SDLK_a));
+	SectorBindings.actions.push_back(SectorBindings.mapViewShiftLeft);
+
+	SectorBindings.mapViewShiftRight = Pi::input.AddActionBinding("BindMapViewShiftRight", group, ActionBinding(SDLK_d));
+	SectorBindings.actions.push_back(SectorBindings.mapViewShiftRight);
+
+	SectorBindings.mapViewShiftUp = Pi::input.AddActionBinding("BindMapViewShiftUp", group, ActionBinding(SDLK_w));
+	SectorBindings.actions.push_back(SectorBindings.mapViewShiftUp);
+
+	SectorBindings.mapViewShiftDown = Pi::input.AddActionBinding("BindMapViewShiftDown", group, ActionBinding(SDLK_s));
+	SectorBindings.actions.push_back(SectorBindings.mapViewShiftDown);
+
+	SectorBindings.mapViewZoomIn = Pi::input.AddActionBinding("BindMapViewZoomIn", group, ActionBinding(SDLK_PLUS));
+	SectorBindings.actions.push_back(SectorBindings.mapViewZoomIn);
+
+	SectorBindings.mapViewZoomOut = Pi::input.AddActionBinding("BindMapViewZoomOut", group, ActionBinding(SDLK_MINUS));
+	SectorBindings.actions.push_back(SectorBindings.mapViewZoomOut);
+
+	SectorBindings.mapViewRotateLeft = Pi::input.AddActionBinding("BindMapViewRotateLeft", group, ActionBinding(SDLK_RIGHT));
+	SectorBindings.actions.push_back(SectorBindings.mapViewRotateLeft);
+
+	SectorBindings.mapViewRotateRight = Pi::input.AddActionBinding("BindMapViewRotateRight", group, ActionBinding(SDLK_LEFT));
+	SectorBindings.actions.push_back(SectorBindings.mapViewRotateRight);
+
+	SectorBindings.mapViewRotateUp = Pi::input.AddActionBinding("BindMapViewRotateUp", group, ActionBinding(SDLK_DOWN));
+	SectorBindings.actions.push_back(SectorBindings.mapViewRotateUp);
+
+	SectorBindings.mapViewRotateDown = Pi::input.AddActionBinding("BindMapViewRotateDown", group, ActionBinding(SDLK_UP));
+	SectorBindings.actions.push_back(SectorBindings.mapViewRotateDown);
+
+	SectorBindings.mouseWheel = Pi::input.AddWheelBinding("MouseWheel", group, WheelBinding());
+	SectorBindings.wheel = SectorBindings.mouseWheel;
 }
 
 void SectorView::InitDefaults()
@@ -136,6 +216,7 @@ void SectorView::InitDefaults()
 
 	m_drawRouteLines = true; // where should this go?!
 	m_route = std::vector<SystemPath>();
+
 }
 
 void SectorView::InitObject(unsigned int cacheRadius)
@@ -169,9 +250,6 @@ void SectorView::InitObject(unsigned int cacheRadius)
 
 	m_disk.reset(new Graphics::Drawables::Disk(RendererLocator::getRenderer(), m_solidState, Color::WHITE, 0.2f));
 
-	m_onMouseWheelCon =
-		Pi::input.onMouseWheel.connect(sigc::mem_fun(this, &SectorView::MouseWheel));
-
 	m_sectorCache = m_galaxy->NewSectorSlaveCache();
     size_t filled = m_galaxy->FillSectorCache(m_sectorCache, m_current, cacheRadius);
     Output("SectorView cache pre-filled with %lu entries\n", filled);
@@ -180,7 +258,11 @@ void SectorView::InitObject(unsigned int cacheRadius)
 SectorView::~SectorView()
 {
 	m_onMouseWheelCon.disconnect();
-	if (m_onKeyPressConnection.connected()) m_onKeyPressConnection.disconnect();
+
+	if (!Pi::input.RemoveInputFrame(&SectorBindings)) return;
+
+	m_mapLockHyperspaceTargetCon.disconnect();
+	m_mapToggleSelectionFollowViewCon.disconnect();
 }
 
 void SectorView::SaveToJson(Json &jsonObj)
@@ -209,6 +291,10 @@ void SectorView::SaveToJson(Json &jsonObj)
 
 	sectorViewObj["match_target_to_selection"] = m_matchTargetToSelection;
 	sectorViewObj["automatic_system_selection"] = m_automaticSystemSelection;
+	sectorViewObj["draw_uninhabited_labels"] = m_drawUninhabitedLabels;
+	sectorViewObj["draw_vertical_lines"] = m_drawVerticalLines;
+	sectorViewObj["draw_out_of_range_labels"] = m_drawOutRangeLabels;
+
 	sectorViewObj["detail_box_visible"] = m_detailBoxVisible;
 
 	jsonObj["sector_view"] = sectorViewObj; // Add sector view object to supplied object.
@@ -1002,57 +1088,63 @@ void SectorView::OnSwitchTo()
 {
 	RendererLocator::getRenderer()->SetViewport(0, 0, Graphics::GetScreenWidth(), Graphics::GetScreenHeight());
 
-	if (!m_onKeyPressConnection.connected())
-		m_onKeyPressConnection =
-			Pi::input.onKeyPress.connect(sigc::mem_fun(this, &SectorView::OnKeyPressed));
+	if (!Pi::input.PushInputFrame(&SectorBindings)) return;
+
+	// Initialize signals for keys press & mouse wheel:
+	m_mapLockHyperspaceTargetCon = SectorBindings.mapLockHyperspaceTarget->onPress.connect(sigc::mem_fun(this, &SectorView::OnMapLockHyperspaceToggle));
+	m_mapToggleSelectionFollowViewCon = SectorBindings.mapToggleSelectionFollowView->onPress.connect(sigc::mem_fun(this, &SectorView::OnToggleSelectionFollowView));
+	m_onMouseWheelCon = SectorBindings.mouseWheel->onAxis.connect(sigc::mem_fun(this, &SectorView::OnMouseWheel));
 
 	UIView::OnSwitchTo();
 
 	Update(0.);
 }
 
-void SectorView::OnKeyPressed(SDL_Keysym *keysym)
+void SectorView::OnSwitchFrom()
 {
-	if (!Pi::GetInGameViews()->IsSectorView()) {
-		m_onKeyPressConnection.disconnect();
-		return;
-	}
+	if (!Pi::input.RemoveInputFrame(&SectorBindings)) return;
 
+	m_mapLockHyperspaceTargetCon.disconnect();
+	m_mapToggleSelectionFollowViewCon.disconnect();
+	m_onMouseWheelCon.disconnect();
+}
+
+void SectorView::OnToggleSelectionFollowView() {
+	m_automaticSystemSelection = !m_automaticSystemSelection;
+}
+
+void SectorView::OnMapLockHyperspaceToggle() {
+	// space "locks" (or unlocks) the hyperspace target to the selected system
+	if ((m_matchTargetToSelection || m_hyperspaceTarget != m_selected) && !m_selected.IsSameSystem(m_current)) {
+		SetHyperspaceTarget(m_selected);
+	} else {
+		ResetHyperspaceTarget();
+	}
+}
+
+void SectorView::UpdateBindings()
+{
 	// XXX ugly hack checking for Lua console here
 	if (Pi::IsConsoleActive())
 		return;
-
-	// space "locks" (or unlocks) the hyperspace target to the selected system
-	if (KeyBindings::mapLockHyperspaceTarget.Matches(keysym)) {
-		if ((m_matchTargetToSelection || m_hyperspaceTarget != m_selected) && !m_selected.IsSameSystem(m_current))
-			SetHyperspaceTarget(m_selected);
-		else
-			ResetHyperspaceTarget();
-		return;
-	}
-
-	if (KeyBindings::mapToggleSelectionFollowView.Matches(keysym)) {
-		m_automaticSystemSelection = !m_automaticSystemSelection;
-		return;
-	}
 
 	bool reset_view = false;
 
 	// fast move selection to current player system or hyperspace target
 	const bool shifted = (Pi::input.KeyState(SDLK_LSHIFT) || Pi::input.KeyState(SDLK_RSHIFT));
-	if (KeyBindings::mapWarpToCurrent.Matches(keysym)) {
+	if (SectorBindings.mapWarpToCurrent->IsActive()) {
 		GotoSystem(m_current);
 		reset_view = shifted;
-	} else if (KeyBindings::mapWarpToSelected.Matches(keysym)) {
+	} else if (SectorBindings.mapWarpToSelected->IsActive()) {
 		GotoSystem(m_selected);
 		reset_view = shifted;
-	} else if (KeyBindings::mapWarpToHyperspaceTarget.Matches(keysym)) {
+	} else if (SectorBindings.mapWarpToHyperspaceTarget->IsActive()) {
 		GotoSystem(m_hyperspaceTarget);
 		reset_view = shifted;
 	}
 
 	// reset rotation and zoom
-	if (reset_view || KeyBindings::mapViewReset.Matches(keysym)) {
+	if (reset_view || SectorBindings.mapViewReset->IsActive()) {
 		while (m_rotZ < -180.0f)
 			m_rotZ += 360.0f;
 		while (m_rotZ > 180.0f)
@@ -1066,6 +1158,10 @@ void SectorView::OnKeyPressed(SDL_Keysym *keysym)
 void SectorView::Update(const float frameTime)
 {
 	PROFILE_SCOPED()
+
+	// Cache frame time for use in ZoomIn/ZoomOut
+	m_lastFrameTime = frameTime;
+
 	SystemPath last_current = m_current;
 
 	if (GameLocator::getGame()->IsNormalSpace()) {
@@ -1083,27 +1179,29 @@ void SectorView::Update(const float frameTime)
 	// don't check raw keypresses if the search box is active
 	// XXX ugly hack checking for Lua console here
 	if (!Pi::IsConsoleActive()) {
+		UpdateBindings();
+
 		const float moveSpeed = Pi::input.GetMoveSpeedShiftModifier();
 		float move = moveSpeed * frameTime;
 		vector3f shift(0.0f);
-		if (KeyBindings::mapViewShiftLeft.IsActive()) shift.x -= move;
-		if (KeyBindings::mapViewShiftRight.IsActive()) shift.x += move;
-		if (KeyBindings::mapViewShiftUp.IsActive()) shift.y += move;
-		if (KeyBindings::mapViewShiftDown.IsActive()) shift.y -= move;
-		if (KeyBindings::mapViewShiftForward.IsActive()) shift.z -= move;
-		if (KeyBindings::mapViewShiftBackward.IsActive()) shift.z += move;
+		if (SectorBindings.mapViewShiftLeft->IsActive()) shift.x -= move;
+		if (SectorBindings.mapViewShiftRight->IsActive()) shift.x += move;
+		if (SectorBindings.mapViewShiftUp->IsActive()) shift.y += move;
+		if (SectorBindings.mapViewShiftDown->IsActive()) shift.y -= move;
+		if (SectorBindings.mapViewShiftForward->IsActive()) shift.z -= move;
+		if (SectorBindings.mapViewShiftBackward->IsActive()) shift.z += move;
 		m_posMovingTo += shift * rot;
 
-		if (KeyBindings::viewZoomIn.IsActive())
+		if (SectorBindings.mapViewZoomIn->IsActive())
 			m_zoomMovingTo -= move;
-		if (KeyBindings::viewZoomOut.IsActive())
+		if (SectorBindings.mapViewZoomOut->IsActive())
 			m_zoomMovingTo += move;
 		m_zoomMovingTo = Clamp(m_zoomMovingTo, 0.1f, FAR_MAX);
 
-		if (KeyBindings::mapViewRotateLeft.IsActive()) m_rotZMovingTo -= 0.5f * moveSpeed;
-		if (KeyBindings::mapViewRotateRight.IsActive()) m_rotZMovingTo += 0.5f * moveSpeed;
-		if (KeyBindings::mapViewRotateUp.IsActive()) m_rotXMovingTo -= 0.5f * moveSpeed;
-		if (KeyBindings::mapViewRotateDown.IsActive()) m_rotXMovingTo += 0.5f * moveSpeed;
+		if (SectorBindings.mapViewRotateLeft->IsActive()) m_rotZMovingTo -= 0.2f * moveSpeed;
+		if (SectorBindings.mapViewRotateRight->IsActive()) m_rotZMovingTo += 0.2f * moveSpeed;
+		if (SectorBindings.mapViewRotateUp->IsActive()) m_rotXMovingTo -= 0.2f * moveSpeed;
+		if (SectorBindings.mapViewRotateDown->IsActive()) m_rotXMovingTo += 0.2f * moveSpeed;
 	}
 
 	if (Pi::input.MouseButtonState(SDL_BUTTON_RIGHT)) {
@@ -1203,14 +1301,12 @@ void SectorView::ShowAll()
 	View::ShowAll();
 }
 
-void SectorView::MouseWheel(bool up)
+void SectorView::OnMouseWheel(bool up)
 {
-	if (Pi::GetInGameViews()->IsSectorView()) {
-		if (!up)
-			m_zoomMovingTo += ZOOM_SPEED * WHEEL_SENSITIVITY * Pi::input.GetMoveSpeedShiftModifier();
-		else
-			m_zoomMovingTo -= ZOOM_SPEED * WHEEL_SENSITIVITY * Pi::input.GetMoveSpeedShiftModifier();
-	}
+	if (!up)
+		m_zoomMovingTo += ZOOM_SPEED * WHEEL_SENSITIVITY * Pi::input.GetMoveSpeedShiftModifier();
+	else
+		m_zoomMovingTo -= ZOOM_SPEED * WHEEL_SENSITIVITY * Pi::input.GetMoveSpeedShiftModifier();
 }
 
 void SectorView::ShrinkCache()
@@ -1249,18 +1345,16 @@ double SectorView::GetZoomLevel() const
 
 void SectorView::ZoomIn()
 {
-	const float frameTime = Pi::GetFrameTime();
 	const float moveSpeed = Pi::input.GetMoveSpeedShiftModifier();
-	float move = moveSpeed * frameTime;
+	float move = moveSpeed * m_lastFrameTime;
 	m_zoomMovingTo -= move;
 	m_zoomMovingTo = Clamp(m_zoomMovingTo, 0.1f, FAR_MAX);
 }
 
 void SectorView::ZoomOut()
 {
-	const float frameTime = Pi::GetFrameTime();
 	const float moveSpeed = Pi::input.GetMoveSpeedShiftModifier();
-	float move = moveSpeed * frameTime;
+	float move = moveSpeed * m_lastFrameTime;
 	m_zoomMovingTo += move;
 	m_zoomMovingTo = Clamp(m_zoomMovingTo, 0.1f, FAR_MAX);
 }

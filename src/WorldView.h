@@ -102,18 +102,15 @@ private:
 		vector2f pos;
 		vector2f realpos;
 		IndicatorSide side;
-		Gui::Label *label;
 		Indicator() :
 			pos(0.0f, 0.0f),
 			realpos(0.0f, 0.0f),
-			side(INDICATOR_HIDDEN),
-			label(nullptr) {}
+			side(INDICATOR_HIDDEN) {}
 	};
 
 	void UpdateProjectedObjects();
 	void UpdateIndicator(Indicator &indicator, const vector3d &direction);
 	void HideIndicator(Indicator &indicator);
-	void SeparateLabels(Gui::Label *a, Gui::Label *b);
 
 	void DrawCombatTargetIndicator(const Indicator &target, const Indicator &lead, const Color &c);
 	void DrawEdgeMarker(const Indicator &marker, const Color &c);

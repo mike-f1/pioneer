@@ -71,8 +71,6 @@ SectorView::SectorView(const SystemPath &path, RefCountedPtr<Galaxy> galaxy, uns
 	m_current = m_current.SystemOnly();
 	m_selected = m_hyperspaceTarget = system->GetStars()[0]->GetPath(); // XXX This always selects the first star of the system
 
-	m_pos = m_posMovingTo;
-
 	m_matchTargetToSelection = true;
 	m_automaticSystemSelection = true;
 	m_drawUninhabitedLabels = false;
@@ -85,6 +83,8 @@ SectorView::SectorView(const SystemPath &path, RefCountedPtr<Galaxy> galaxy, uns
 	InitObject(cacheRadius);
 
 	GotoSystem(m_current);
+
+	m_pos = m_posMovingTo;
 }
 
 SectorView::SectorView(const Json &jsonObj, RefCountedPtr<Galaxy> galaxy, unsigned int cacheRadius) :

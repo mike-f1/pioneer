@@ -596,17 +596,6 @@ void SectorView::AddStarBillboard(const matrix4x4f &trans, const vector3f &pos, 
 	va.Add(offset + rotv1, col, vector2f(1.f, 1.f)); //bottom right
 }
 
-void SectorView::OnToggleFaction(Gui::ToggleButton *button, bool pressed, const Faction *faction)
-{
-	// hide or show the faction's systems depending on whether the button is pressed
-	if (pressed)
-		m_hiddenFactions.erase(faction);
-	else
-		m_hiddenFactions.insert(faction);
-
-	m_toggledFaction = true;
-}
-
 void SectorView::DrawNearSectors(const matrix4x4f &modelview)
 {
 	PROFILE_SCOPED()

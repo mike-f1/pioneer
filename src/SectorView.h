@@ -169,8 +169,6 @@ private:
 
 	Uint8 m_detailBoxVisible;
 
-	void OnToggleFaction(Gui::ToggleButton *button, bool pressed, const Faction *faction);
-
 	sigc::connection m_onMouseWheelCon;
 	sigc::connection m_mapLockHyperspaceTargetCon;
 	sigc::connection m_mapToggleSelectionFollowViewCon;

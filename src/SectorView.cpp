@@ -76,9 +76,10 @@ SectorView::SectorView(const SystemPath &path, RefCountedPtr<Galaxy> galaxy, uns
 	m_drawUninhabitedLabels = false;
 	m_drawVerticalLines = true;
 	m_drawOutRangeLabels = false;
+	m_showFactionColor = false;
 
 	m_detailBoxVisible = DETAILBOX_INFO;
-	m_toggledFaction = false;
+	m_rebuildFarSector = false;
 
 	InitObject(cacheRadius);
 
@@ -114,6 +115,7 @@ SectorView::SectorView(const Json &jsonObj, RefCountedPtr<Galaxy> galaxy, unsign
 		m_drawUninhabitedLabels = sectorViewObj["draw_uninhabited_labels"];
 		m_drawVerticalLines = sectorViewObj["draw_vertical_lines"];
 		m_drawOutRangeLabels = sectorViewObj["draw_out_of_range_labels"];
+		m_showFactionColor = sectorViewObj["show_faction_color"];
 
 		m_detailBoxVisible = sectorViewObj["detail_box_visible"];
 	} catch (Json::type_error &) {
@@ -294,6 +296,7 @@ void SectorView::SaveToJson(Json &jsonObj)
 	sectorViewObj["draw_uninhabited_labels"] = m_drawUninhabitedLabels;
 	sectorViewObj["draw_vertical_lines"] = m_drawVerticalLines;
 	sectorViewObj["draw_out_of_range_labels"] = m_drawOutRangeLabels;
+	sectorViewObj["show_faction_color"] = m_showFactionColor;
 
 	sectorViewObj["detail_box_visible"] = m_detailBoxVisible;
 
@@ -974,7 +977,12 @@ void SectorView::DrawNearSector(const int sx, const int sy, const int sz, const 
 		systrans.Scale((GalaxyEnums::starScale[(*i).GetStarType(0)]));
 		RendererLocator::getRenderer()->SetTransform(systrans);
 
-		const Uint8 *col = GalaxyEnums::starColors[(*i).GetStarType(0)];
+		const Uint8 *col;
+		if (m_showFactionColor) {
+			col = (*i).GetFaction()->colour;
+		} else {
+			col = GalaxyEnums::starColors[(*i).GetStarType(0)];
+		}
 		AddStarBillboard(systrans, vector3f(0.f), Color(col[0], col[1], col[2], 255), 0.5f);
 
 		// player location indicator
@@ -1015,7 +1023,7 @@ void SectorView::DrawFarSectors(const matrix4x4f &modelview)
 	const vector3f secOrigin = vector3f(int(floorf(m_pos.x)), int(floorf(m_pos.y)), int(floorf(m_pos.z)));
 
 	// build vertex and colour arrays for all the stars we want to see, if we don't already have them
-	if (m_toggledFaction || buildRadius != m_radiusFar || !secOrigin.ExactlyEqual(m_secPosFar)) {
+	if (m_rebuildFarSector || buildRadius != m_radiusFar || !secOrigin.ExactlyEqual(m_secPosFar)) {
 		m_farstars.clear();
 		m_farstarsColor.clear();
 		m_visibleFactions.clear();
@@ -1032,7 +1040,7 @@ void SectorView::DrawFarSectors(const matrix4x4f &modelview)
 
 		m_secPosFar = secOrigin;
 		m_radiusFar = buildRadius;
-		m_toggledFaction = false;
+		m_rebuildFarSector = false;
 	}
 
 	// always draw the stars, slightly altering their size for different different resolutions, so they still look okay
@@ -1049,26 +1057,30 @@ void SectorView::BuildFarSector(RefCountedPtr<Sector> sec, const vector3f &origi
 {
 	PROFILE_SCOPED()
 	Color starColor;
-	for (std::vector<Sector::System>::iterator i = sec->m_systems.begin(); i != sec->m_systems.end(); ++i) {
+	for (const auto sys : sec->m_systems) { //std::vector<Sector::System>::iterator i = sec->m_systems.begin(); i != sec->m_systems.end(); ++i) {
 		// skip the system if it doesn't fall within the sphere we're viewing.
-		if ((m_pos * Sector::SIZE - (*i).GetFullPosition()).Length() > (m_zoomClamped / FAR_THRESHOLD) * OUTER_RADIUS) continue;
+		if ((m_pos * Sector::SIZE - sys.GetFullPosition()).Length() > (m_zoomClamped / FAR_THRESHOLD) * OUTER_RADIUS) continue;
 
-		if (!i->IsExplored()) {
-			points.push_back((*i).GetFullPosition() - origin);
+		if (!sys.IsExplored()) {
+			points.push_back(sys.GetFullPosition() - origin);
 			colors.push_back({ 100, 100, 100, 155 }); // flat gray for unexplored systems
 			continue;
 		}
 
 		// if the system belongs to a faction we've chosen to hide also skip it, if it's not selectd in some way
-		m_visibleFactions.insert(i->GetFaction());
-		if (m_hiddenFactions.find(i->GetFaction()) != m_hiddenFactions.end() && !i->IsSameSystem(m_selected) && !i->IsSameSystem(m_hyperspaceTarget) && !i->IsSameSystem(m_current)) continue;
+		m_visibleFactions.insert(sys.GetFaction());
+		if (m_hiddenFactions.find(sys.GetFaction()) != m_hiddenFactions.end() && !sys.IsSameSystem(m_selected) && !sys.IsSameSystem(m_hyperspaceTarget) && !sys.IsSameSystem(m_current)) continue;
 
 		// otherwise add the system's position (origin must be m_pos's *sector* or we get judder)
 		// and faction color to the list to draw
-		starColor = i->GetFaction()->colour;
+		if (m_showFactionColor) {
+			starColor = sys.GetFaction()->colour;
+		} else {
+			starColor = GalaxyEnums::starColors[sys.GetStarType(0)];
+		}
 		starColor.a = 120;
 
-		points.push_back((*i).GetFullPosition() - origin);
+		points.push_back(sys.GetFullPosition() - origin);
 		colors.push_back(starColor);
 	}
 }
@@ -1383,5 +1395,5 @@ void SectorView::SetFactionVisible(const Faction *faction, bool visible)
 		m_hiddenFactions.erase(faction);
 	else
 		m_hiddenFactions.insert(faction);
-	m_toggledFaction = true;
+	m_rebuildFarSector = true;
 }

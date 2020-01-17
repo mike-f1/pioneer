@@ -1387,6 +1387,10 @@
     "description": "",
     "message": "Ship velocity by reference object"
   },
+  "SHOW_FACTION_COLOR": {
+    "description": "camera view setting",
+    "message": "Toggle faction or star color"
+  },
   "SIDEREAL_VIEW": {
     "description": "camera view setting",
     "message": "Sidereal view"

@@ -66,6 +66,8 @@ public:
 	void ZoomOut();
 	vector3f GetCenterSector();
 	double GetCenterDistance();
+	void SetShowFactionColor(bool value) { m_showFactionColor = value; m_rebuildFarSector = true; }
+	bool GetShowFactionColor() { return m_showFactionColor; }
 	void SetDrawUninhabitedLabels(bool value) { m_drawUninhabitedLabels = value; }
 	bool GetDrawUninhabitedLabels() { return m_drawUninhabitedLabels; }
 	void SetDrawVerticalLines(bool value) { m_drawVerticalLines = value; }
@@ -151,6 +153,7 @@ private:
 	float m_zoomMovingTo;
 
 	SystemPath m_hyperspaceTarget;
+	bool m_showFactionColor;
 	bool m_matchTargetToSelection;
 	bool m_automaticSystemSelection;
 
@@ -230,7 +233,7 @@ private:
 
 	vector3f m_secPosFar;
 	int m_radiusFar;
-	bool m_toggledFaction;
+	bool m_rebuildFarSector;
 
 	int m_cacheXMin;
 	int m_cacheXMax;

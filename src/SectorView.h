@@ -115,6 +115,7 @@ private:
 		Gui::Label *shortDesc;
 	};
 
+	void PrepareGrid(const matrix4x4f &trans, int radius);
 	void DrawNearSectors(const matrix4x4f &modelview);
 	void DrawNearSector(const int sx, const int sy, const int sz, const vector3f &playerAbsPos, const matrix4x4f &trans);
 	void PutSystemLabels(RefCountedPtr<Sector> sec, const vector3f &origin, int drawRadius);

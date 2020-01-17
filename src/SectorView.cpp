@@ -352,6 +352,7 @@ void SectorView::Draw3D()
 		m_lines.Draw(RendererLocator::getRenderer(), m_alphaBlendState);
 	}
 
+	//draw sector grid in one go
 	if (!m_secLineVerts->IsEmpty()) {
 		m_sectorlines.SetData(m_secLineVerts->GetNumVerts(), &m_secLineVerts->position[0], &m_secLineVerts->diffuse[0]);
 		m_sectorlines.Draw(RendererLocator::getRenderer(), m_alphaBlendState);
@@ -599,6 +600,38 @@ void SectorView::AddStarBillboard(const matrix4x4f &trans, const vector3f &pos, 
 	va.Add(offset + rotv1, col, vector2f(1.f, 1.f)); //bottom right
 }
 
+void SectorView::PrepareGrid(const matrix4x4f &trans, int radius)
+{
+	static const Color darkgreen(0, 51, 0, 255);
+
+	// TODO: Sure there's a better way but it's too much I'm stuck here :P
+	double fractpart, intpart;
+	fractpart = std::modf(m_pos.z, &intpart);
+	int offset;
+	if (fractpart > 0.5) offset = 1;
+	else if (fractpart > 0.0 ) offset = 0;
+	else if (fractpart > -0.5) offset = 1;
+	else offset = 0;
+
+	const size_t newNum = m_secLineVerts->GetNumVerts() + 4 * (2 * radius + 1);
+	m_secLineVerts->position.reserve(newNum);
+	m_secLineVerts->diffuse.reserve(newNum);
+	for (int sx = -radius; sx <= radius; sx++) {
+		// Draw lines in y direction:
+		vector3f a = trans * vector3f(Sector::SIZE * sx, -Sector::SIZE * radius, Sector::SIZE * offset);
+		vector3f b = trans * vector3f(Sector::SIZE * sx, Sector::SIZE * radius, Sector::SIZE * offset);
+		m_secLineVerts->Add(a, darkgreen);
+		m_secLineVerts->Add(b, darkgreen);
+	}
+	for (int sy = -radius; sy <= radius; sy++) {
+		// Draw lines in x direction:
+		vector3f a = trans * vector3f(Sector::SIZE * radius, Sector::SIZE * sy, Sector::SIZE * offset);
+		vector3f b = trans * vector3f(-Sector::SIZE * radius, Sector::SIZE * sy, Sector::SIZE * offset);
+		m_secLineVerts->Add(a, darkgreen);
+		m_secLineVerts->Add(b, darkgreen);
+	}
+}
+
 void SectorView::DrawNearSectors(const matrix4x4f &modelview)
 {
 	PROFILE_SCOPED()
@@ -607,11 +640,14 @@ void SectorView::DrawNearSectors(const matrix4x4f &modelview)
 	RefCountedPtr<const Sector> playerSec = m_sectorCache->GetCached(m_current);
 	const vector3f playerPos = Sector::SIZE * vector3f(float(m_current.sectorX), float(m_current.sectorY), float(m_current.sectorZ)) + playerSec->m_systems[m_current.systemIndex].GetPosition();
 
+	PrepareGrid(modelview, DRAW_RAD);
+
 	for (int sx = -DRAW_RAD; sx <= DRAW_RAD; sx++) {
 		for (int sy = -DRAW_RAD; sy <= DRAW_RAD; sy++) {
 			for (int sz = -DRAW_RAD; sz <= DRAW_RAD; sz++) {
+				matrix4x4f translation = matrix4x4f::Translation(Sector::SIZE * sx, Sector::SIZE * sy, Sector::SIZE * sz);
 				DrawNearSector(int(floorf(m_pos.x)) + sx, int(floorf(m_pos.y)) + sy, int(floorf(m_pos.z)) + sz, playerPos,
-					modelview * matrix4x4f::Translation(Sector::SIZE * sx, Sector::SIZE * sy, Sector::SIZE * sz));
+					modelview * translation);
 			}
 		}
 	}
@@ -844,32 +880,6 @@ void SectorView::DrawNearSector(const int sx, const int sy, const int sz, const 
 	RendererLocator::getRenderer()->SetTransform(trans);
 	RefCountedPtr<Sector> ps = m_sectorCache->GetCached(SystemPath(sx, sy, sz));
 
-	const int cz = int(floor(m_pos.z + 0.5f));
-
-	if (cz == sz) {
-		static const Color darkgreen(0, 51, 0, 255);
-		const vector3f vts[] = {
-			trans * vector3f(0.f, 0.f, 0.f),
-			trans * vector3f(0.f, Sector::SIZE, 0.f),
-			trans * vector3f(Sector::SIZE, Sector::SIZE, 0.f),
-			trans * vector3f(Sector::SIZE, 0.f, 0.f)
-		};
-
-		// reserve some more space
-		const size_t newNum = m_secLineVerts->GetNumVerts() + 8;
-		m_secLineVerts->position.reserve(newNum);
-		m_secLineVerts->diffuse.reserve(newNum);
-
-		m_secLineVerts->Add(vts[0], darkgreen); // line segment 1
-		m_secLineVerts->Add(vts[1], darkgreen);
-		m_secLineVerts->Add(vts[1], darkgreen); // line segment 2
-		m_secLineVerts->Add(vts[2], darkgreen);
-		m_secLineVerts->Add(vts[2], darkgreen); // line segment 3
-		m_secLineVerts->Add(vts[3], darkgreen);
-		m_secLineVerts->Add(vts[3], darkgreen); // line segment 4
-		m_secLineVerts->Add(vts[0], darkgreen);
-	}
-
 	const size_t numLineVerts = ps->m_systems.size() * 8;
 	m_lineVerts->position.reserve(numLineVerts);
 	m_lineVerts->diffuse.reserve(numLineVerts);
@@ -920,6 +930,7 @@ void SectorView::DrawNearSector(const int sx, const int sy, const int sz, const 
 		matrix4x4f systrans = trans * matrix4x4f::Translation(i->GetPosition().x, i->GetPosition().y, i->GetPosition().z);
 		RendererLocator::getRenderer()->SetTransform(systrans);
 
+		const int cz = int(floor(m_pos.z + 0.5f));
 		// for out-of-range systems draw leg only if we draw label
 		if ((m_drawVerticalLines && (inRange || m_drawOutRangeLabels) && (i->GetPopulation() > 0 || m_drawUninhabitedLabels)) || !can_skip) {
 
@@ -1021,6 +1032,8 @@ void SectorView::DrawFarSectors(const matrix4x4f &modelview)
 	if (buildRadius <= DRAW_RAD) buildRadius = DRAW_RAD;
 
 	const vector3f secOrigin = vector3f(int(floorf(m_pos.x)), int(floorf(m_pos.y)), int(floorf(m_pos.z)));
+
+	PrepareGrid(modelview, buildRadius);
 
 	// build vertex and colour arrays for all the stars we want to see, if we don't already have them
 	if (m_rebuildFarSector || buildRadius != m_radiusFar || !secOrigin.ExactlyEqual(m_secPosFar)) {

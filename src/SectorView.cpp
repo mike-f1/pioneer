@@ -558,7 +558,11 @@ void SectorView::PutFactionLabels(const vector3f &origin)
 				marker.Add(vector3f(pos.x, pos.y + STARSIZE, 0));
 				marker.Add(vector3f(pos.x, pos.y - STARSIZE, 0));
 				marker.Add(vector3f(pos.x + STARSIZE, pos.y, 0));
-				m_material->diffuse = labelColor;
+				if (m_showFactionColor) {
+					m_material->diffuse = (*it)->colour;
+				} else {
+					m_material->diffuse = GalaxyEnums::starColors[sys.GetStarType(0)];
+				}
 				RendererLocator::getRenderer()->DrawTriangles(&marker, renderState, m_material.Get(), Graphics::TRIANGLE_STRIP);
 
 				// draw a surface for the label to sit on

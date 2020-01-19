@@ -604,9 +604,36 @@ void SectorView::AddStarBillboard(const matrix4x4f &trans, const vector3f &pos, 
 	va.Add(offset + rotv1, col, vector2f(1.f, 1.f)); //bottom right
 }
 
+void SectorView::PrepareLegs(const matrix4x4f &trans, const vector3f &pos, int z_diff)
+{
+	const Color light(128, 128, 128);
+	const Color dark(51, 51, 51);
+
+	m_lineVerts->position.reserve(m_lineVerts->GetNumVerts() + 8);
+	m_lineVerts->diffuse.reserve(m_lineVerts->GetNumVerts() + 8);
+
+	// draw system "leg"
+	float z = -pos.z;
+	if (z_diff >= 0) {
+		z = z + abs(z_diff) * Sector::SIZE;
+	} else {
+		z = z - abs(z_diff) * Sector::SIZE;
+	}
+	m_lineVerts->Add(trans * vector3f(0.f, 0.f, z), light);
+	m_lineVerts->Add(trans * vector3f(0.f, 0.f, z * 0.5f), dark);
+	m_lineVerts->Add(trans * vector3f(0.f, 0.f, z * 0.5f), dark);
+	m_lineVerts->Add(trans * vector3f(0.f, 0.f, 0.f), light);
+
+	//cross at other end
+	m_lineVerts->Add(trans * vector3f(-0.1f, -0.1f, z), light);
+	m_lineVerts->Add(trans * vector3f(0.1f, 0.1f, z), light);
+	m_lineVerts->Add(trans * vector3f(-0.1f, 0.1f, z), light);
+	m_lineVerts->Add(trans * vector3f(0.1f, -0.1f, z), light);
+}
+
 void SectorView::PrepareGrid(const matrix4x4f &trans, int radius)
 {
-	static const Color darkgreen(0, 51, 0, 255);
+	const Color darkgreen(0, 51, 0, 255);
 
 	// TODO: Sure there's a better way but it's too much I'm stuck here :P
 	double fractpart, intpart;
@@ -884,10 +911,6 @@ void SectorView::DrawNearSector(const int sx, const int sy, const int sz, const 
 	RendererLocator::getRenderer()->SetTransform(trans);
 	RefCountedPtr<Sector> ps = m_sectorCache->GetCached(SystemPath(sx, sy, sz));
 
-	const size_t numLineVerts = ps->m_systems.size() * 8;
-	m_lineVerts->position.reserve(numLineVerts);
-	m_lineVerts->diffuse.reserve(numLineVerts);
-
 	Uint32 sysIdx = 0;
 	for (std::vector<Sector::System>::iterator i = ps->m_systems.begin(); i != ps->m_systems.end(); ++i, ++sysIdx) {
 		// calculate where the system is in relation the centre of the view...
@@ -916,7 +939,6 @@ void SectorView::DrawNearSector(const int sx, const int sy, const int sz, const 
 		// unexplored (same calculation as in StarSystem.cpp) or we've
 		// already retrieved their population.
 		if (i->GetPopulation() < 0 && isqrt(1 + sx * sx + sy * sy + sz * sz) <= 90) {
-
 			// only do this once we've pretty much stopped moving.
 			vector3f diff = vector3f(
 				fabs(m_posMovingTo.x - m_pos.x),
@@ -932,32 +954,14 @@ void SectorView::DrawNearSector(const int sx, const int sy, const int sz, const 
 		}
 
 		matrix4x4f systrans = trans * matrix4x4f::Translation(i->GetPosition().x, i->GetPosition().y, i->GetPosition().z);
-		RendererLocator::getRenderer()->SetTransform(systrans);
 
 		const int cz = int(floor(m_pos.z + 0.5f));
 		// for out-of-range systems draw leg only if we draw label
 		if ((m_drawVerticalLines && (inRange || m_drawOutRangeLabels) && (i->GetPopulation() > 0 || m_drawUninhabitedLabels)) || !can_skip) {
-
-			const Color light(128, 128, 128);
-			const Color dark(51, 51, 51);
-
-			// draw system "leg"
-			float z = -i->GetPosition().z;
-			if (sz <= cz)
-				z = z + abs(cz - sz) * Sector::SIZE;
-			else
-				z = z - abs(cz - sz) * Sector::SIZE;
-			m_lineVerts->Add(systrans * vector3f(0.f, 0.f, z), light);
-			m_lineVerts->Add(systrans * vector3f(0.f, 0.f, z * 0.5f), dark);
-			m_lineVerts->Add(systrans * vector3f(0.f, 0.f, z * 0.5f), dark);
-			m_lineVerts->Add(systrans * vector3f(0.f, 0.f, 0.f), light);
-
-			//cross at other end
-			m_lineVerts->Add(systrans * vector3f(-0.1f, -0.1f, z), light);
-			m_lineVerts->Add(systrans * vector3f(0.1f, 0.1f, z), light);
-			m_lineVerts->Add(systrans * vector3f(-0.1f, 0.1f, z), light);
-			m_lineVerts->Add(systrans * vector3f(0.1f, -0.1f, z), light);
+			PrepareLegs(systrans, i->GetPosition(), cz - sz);
 		}
+
+		RendererLocator::getRenderer()->SetTransform(systrans);
 
 		if (i->IsSameSystem(m_selected)) {
 			if (m_selected != m_current) {

@@ -39,12 +39,6 @@ static const float FAR_THRESHOLD = 7.5f;
 static const float FAR_LIMIT = 36.f;
 static const float FAR_MAX = 46.f;
 
-enum DetailSelection {
-	DETAILBOX_NONE = 0,
-	DETAILBOX_INFO = 1,
-	DETAILBOX_FACTION = 2
-};
-
 static const float ZOOM_SPEED = 15;
 static const float WHEEL_SENSITIVITY = .03f; // Should be a variable in user settings.
 
@@ -78,7 +72,6 @@ SectorView::SectorView(const SystemPath &path, RefCountedPtr<Galaxy> galaxy, uns
 	m_drawOutRangeLabels = false;
 	m_showFactionColor = false;
 
-	m_detailBoxVisible = DETAILBOX_INFO;
 	m_rebuildFarSector = false;
 
 	InitObject(cacheRadius);
@@ -117,7 +110,6 @@ SectorView::SectorView(const Json &jsonObj, RefCountedPtr<Galaxy> galaxy, unsign
 		m_drawOutRangeLabels = sectorViewObj["draw_out_of_range_labels"];
 		m_showFactionColor = sectorViewObj["show_faction_color"];
 
-		m_detailBoxVisible = sectorViewObj["detail_box_visible"];
 	} catch (Json::type_error &) {
 		throw SavedGameCorruptException();
 	}
@@ -297,8 +289,6 @@ void SectorView::SaveToJson(Json &jsonObj)
 	sectorViewObj["draw_vertical_lines"] = m_drawVerticalLines;
 	sectorViewObj["draw_out_of_range_labels"] = m_drawOutRangeLabels;
 	sectorViewObj["show_faction_color"] = m_showFactionColor;
-
-	sectorViewObj["detail_box_visible"] = m_detailBoxVisible;
 
 	jsonObj["sector_view"] = sectorViewObj; // Add sector view object to supplied object.
 }

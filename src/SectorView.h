@@ -99,22 +99,6 @@ private:
 	void InitDefaults();
 	void InitObject(unsigned int cacheRadius);
 
-	struct DistanceIndicator {
-		Gui::Label *label;
-		Graphics::Drawables::Line3D *line;
-		Color okayColor;
-		Color unsuffFuelColor;
-		Color outOfRangeColor;
-	};
-
-	struct SystemLabels {
-		Gui::Label *systemName;
-		Gui::Label *sector;
-		DistanceIndicator distance;
-		Gui::Label *starType;
-		Gui::Label *shortDesc;
-	};
-
 	void PrepareLegs(const matrix4x4f &trans, const vector3f &pos, int z_diff);
 	void PrepareGrid(const matrix4x4f &trans, int radius);
 	void DrawNearSectors(const matrix4x4f &modelview);
@@ -158,7 +142,6 @@ private:
 	bool m_showFactionColor;
 	bool m_matchTargetToSelection;
 	bool m_automaticSystemSelection;
-
 	bool m_drawUninhabitedLabels;
 	bool m_drawOutRangeLabels;
 	bool m_drawVerticalLines;
@@ -171,8 +154,6 @@ private:
 
 	std::set<const Faction *> m_visibleFactions;
 	std::set<const Faction *> m_hiddenFactions;
-
-	Uint8 m_detailBoxVisible;
 
 	sigc::connection m_onMouseWheelCon;
 	sigc::connection m_mapLockHyperspaceTargetCon;

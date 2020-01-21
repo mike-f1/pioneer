@@ -355,6 +355,15 @@ void SectorView::Draw3D()
 	trans.Rotate(DEG2RAD(m_rotZ), 0.f, 0.f, 1.f);
 	trans.Translate(-(m_pos.x) * Sector::SIZE, -(m_pos.y) * Sector::SIZE, -(m_pos.z) * Sector::SIZE);
 
+	//draw jump shere
+	if (m_jumpSphere && m_playerHyperspaceRange > 0.0f) {
+		matrix4x4f trans2 = trans;
+		trans2.Translate(playerPos);
+
+		RendererLocator::getRenderer()->SetTransform(trans2 * matrix4x4f::ScaleMatrix(m_playerHyperspaceRange));
+		m_jumpSphere->Draw(RendererLocator::getRenderer());
+	}
+
 	DrawRouteLines(playerPos, trans);
 
 	UIView::Draw3D();
@@ -1014,11 +1023,6 @@ void SectorView::DrawNearSector(const int sx, const int sy, const int sz, const 
 			m_disk->SetColor(Color(77, 77, 77));
 			RendererLocator::getRenderer()->SetTransform(systrans * matrix4x4f::ScaleMatrix(2.f));
 			m_disk->Draw(RendererLocator::getRenderer());
-		}
-		if (bIsCurrentSystem && m_jumpSphere && m_playerHyperspaceRange > 0.0f) {
-			const matrix4x4f sphTrans = trans * matrix4x4f::Translation(i->GetPosition().x, i->GetPosition().y, i->GetPosition().z);
-			RendererLocator::getRenderer()->SetTransform(sphTrans * matrix4x4f::ScaleMatrix(m_playerHyperspaceRange));
-			m_jumpSphere->Draw(RendererLocator::getRenderer());
 		}
 	}
 }

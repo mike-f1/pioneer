@@ -203,7 +203,7 @@ private:
 	// HyperJump Route Planner Stuff
 	std::vector<SystemPath> m_route;
 	bool m_drawRouteLines;
-	void DrawRouteLines(const vector3f &playerAbsPos, const matrix4x4f &trans);
+	void PrepareRouteLines(const vector3f &playerAbsPos, const matrix4x4f &trans);
 
 	Graphics::RenderState *m_solidState;
 	Graphics::RenderState *m_alphaBlendState;
@@ -225,8 +225,8 @@ private:
 	int m_cacheZMin;
 	int m_cacheZMax;
 
-	std::unique_ptr<Graphics::VertexArray> m_lineVerts;
-	std::unique_ptr<Graphics::VertexArray> m_secLineVerts;
+	std::unique_ptr<Graphics::VertexArray> m_lineVerts; // used for "legs"
+	std::unique_ptr<Graphics::VertexArray> m_secLineVerts; // used for grid and route lines
 	RefCountedPtr<Graphics::Material> m_fresnelMat;
 	std::unique_ptr<Graphics::Drawables::Sphere3D> m_jumpSphere;
 	std::unique_ptr<Graphics::VertexArray> m_starVerts;

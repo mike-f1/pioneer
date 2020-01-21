@@ -309,17 +309,16 @@ void SectorView::Draw3D()
 	else
 		RendererLocator::getRenderer()->SetPerspectiveProjection(40.f, RendererLocator::getRenderer()->GetDisplayAspect(), 1.f, 600.f);
 
-	matrix4x4f modelview = matrix4x4f::Identity();
-
 	RendererLocator::getRenderer()->ClearScreen();
 
-	Graphics::Renderer::MatrixTicket ticket(RendererLocator::getRenderer(), Graphics::MatrixMode::MODELVIEW);
-
 	// units are lightyears, my friend
+	matrix4x4f modelview = matrix4x4f::Identity();
 	modelview.Translate(0.f, 0.f, -10.f - 10.f * m_zoom); // not zoomClamped, let us zoom out a bit beyond what we're drawing
 	modelview.Rotate(DEG2RAD(m_rotX), 1.f, 0.f, 0.f);
 	modelview.Rotate(DEG2RAD(m_rotZ), 0.f, 0.f, 1.f);
 	modelview.Translate(-FFRAC(m_pos.x) * Sector::SIZE, -FFRAC(m_pos.y) * Sector::SIZE, -FFRAC(m_pos.z) * Sector::SIZE);
+
+	Graphics::Renderer::MatrixTicket ticket(RendererLocator::getRenderer(), Graphics::MatrixMode::MODELVIEW);
 	RendererLocator::getRenderer()->SetTransform(modelview);
 
 	RefCountedPtr<const Sector> playerSec = m_sectorCache->GetCached(m_current);
@@ -331,6 +330,15 @@ void SectorView::Draw3D()
 		DrawFarSectors(modelview);
 
 	RendererLocator::getRenderer()->SetTransform(matrix4x4f::Identity());
+
+	// not quite the same as modelview in regard of the translation...
+	matrix4x4f trans = matrix4x4f::Identity();
+	trans.Translate(0.f, 0.f, -10.f - 10.f * m_zoom);
+	trans.Rotate(DEG2RAD(m_rotX), 1.f, 0.f, 0.f);
+	trans.Rotate(DEG2RAD(m_rotZ), 0.f, 0.f, 1.f);
+	trans.Translate(-(m_pos.x) * Sector::SIZE, -(m_pos.y) * Sector::SIZE, -(m_pos.z) * Sector::SIZE);
+
+	PrepareRouteLines(playerPos, trans);
 
 	//draw star billboards in one go
 	RendererLocator::getRenderer()->SetAmbientColor(Color(30, 30, 30));
@@ -348,13 +356,6 @@ void SectorView::Draw3D()
 		m_sectorlines.Draw(RendererLocator::getRenderer(), m_alphaBlendState);
 	}
 
-	// not quite the same as modelview
-	matrix4x4f trans = matrix4x4f::Identity();
-	trans.Translate(0.f, 0.f, -10.f - 10.f * m_zoom);
-	trans.Rotate(DEG2RAD(m_rotX), 1.f, 0.f, 0.f);
-	trans.Rotate(DEG2RAD(m_rotZ), 0.f, 0.f, 1.f);
-	trans.Translate(-(m_pos.x) * Sector::SIZE, -(m_pos.y) * Sector::SIZE, -(m_pos.z) * Sector::SIZE);
-
 	//draw jump shere
 	if (m_jumpSphere && m_playerHyperspaceRange > 0.0f) {
 		matrix4x4f trans2 = trans;
@@ -363,8 +364,6 @@ void SectorView::Draw3D()
 		RendererLocator::getRenderer()->SetTransform(trans2 * matrix4x4f::ScaleMatrix(m_playerHyperspaceRange));
 		m_jumpSphere->Draw(RendererLocator::getRenderer());
 	}
-
-	DrawRouteLines(playerPos, trans);
 
 	UIView::Draw3D();
 }
@@ -872,8 +871,12 @@ void SectorView::AutoRoute(const SystemPath &start, const SystemPath &target, st
 	}
 }
 
-void SectorView::DrawRouteLines(const vector3f &playerAbsPos, const matrix4x4f &trans)
+void SectorView::PrepareRouteLines(const vector3f &playerAbsPos, const matrix4x4f &trans)
 {
+	const size_t currentSize = m_secLineVerts->GetNumVerts();
+	m_secLineVerts->position.reserve(currentSize + 2 * m_route.size());
+	m_secLineVerts->diffuse.reserve(currentSize + 2 * m_route.size());
+
 	for (std::vector<SystemPath>::size_type i = 0; i < m_route.size(); ++i) {
 		RefCountedPtr<const Sector> jumpSec = m_galaxy->GetSector(m_route[i]);
 		const Sector::System &jumpSecSys = jumpSec->m_systems[m_route[i].systemIndex];
@@ -888,19 +891,9 @@ void SectorView::DrawRouteLines(const vector3f &playerAbsPos, const matrix4x4f &
 			const vector3f prevAbsPos = Sector::SIZE * vector3f(float(prevSec->sx), float(prevSec->sy), float(prevSec->sz)) + prevSecSys.GetPosition();
 			startPos = prevAbsPos;
 		}
-		std::unique_ptr<Graphics::VertexArray> verts;
-		Graphics::Drawables::Lines lines;
-		verts.reset(new Graphics::VertexArray(Graphics::ATTRIB_POSITION, 500));
-		verts->Clear();
 
-		verts->position.reserve(2);
-		verts->diffuse.reserve(2);
-
-		verts->Add(trans * startPos, Color(20, 20, 0, 127));
-		verts->Add(trans * jumpAbsPos, Color(255, 255, 0, 255));
-
-		lines.SetData(verts->GetNumVerts(), &verts->position[0], &verts->diffuse[0]);
-		lines.Draw(RendererLocator::getRenderer(), m_alphaBlendState);
+		m_secLineVerts->Add(trans * startPos, Color(20, 20, 0, 127));
+		m_secLineVerts->Add(trans * jumpAbsPos, Color(255, 255, 0, 255));
 	}
 }
 

@@ -35,8 +35,8 @@ using namespace Graphics;
 static const int DRAW_RAD = 5;
 #define INNER_RADIUS (Sector::SIZE * 1.5f)
 #define OUTER_RADIUS (Sector::SIZE * float(DRAW_RAD))
-static const float FAR_THRESHOLD = 7.5f;
-static const float FAR_LIMIT = 36.f;
+static const float FAR_THRESHOLD = 10.0f;
+static const float FAR_LIMIT = 38.f;
 static const float FAR_MAX = 46.f;
 
 static const float ZOOM_SPEED = 15;
@@ -217,8 +217,8 @@ void SectorView::InitObject(unsigned int cacheRadius)
 {
 	SetTransparency(true);
 
-	m_lineVerts.reset(new Graphics::VertexArray(Graphics::ATTRIB_POSITION, 500));
-	m_secLineVerts.reset(new Graphics::VertexArray(Graphics::ATTRIB_POSITION, 500));
+	m_lineVerts.reset(new Graphics::VertexArray(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE, 500));
+	m_secLineVerts.reset(new Graphics::VertexArray(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE, 500));
 	m_starVerts.reset(new Graphics::VertexArray(
 		Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE | Graphics::ATTRIB_UV0, 500));
 
@@ -1058,7 +1058,7 @@ void SectorView::DrawFarSectors(const matrix4x4f &modelview)
 	}
 
 	// also add labels for any faction homeworlds among the systems we've drawn
-	PutFactionLabels(Sector::SIZE * secOrigin);
+	PutFactionLabels(Sector::SIZE * secOrigin, modelview);
 }
 
 void SectorView::BuildFarSector(RefCountedPtr<Sector> sec, const vector3f &origin, std::vector<vector3f> &points, std::vector<Color> &colors)

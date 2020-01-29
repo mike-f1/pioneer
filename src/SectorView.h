@@ -103,12 +103,18 @@ private:
 	void PrepareGrid(const matrix4x4f &trans, int radius);
 	void DrawNearSectors(const matrix4x4f &modelview);
 	void DrawNearSector(const int sx, const int sy, const int sz, const vector3f &playerAbsPos, const matrix4x4f &trans);
-	void PutSystemLabels(RefCountedPtr<Sector> sec, const vector3f &origin, int drawRadius);
 
 	void DrawFarSectors(const matrix4x4f &modelview);
 	void BuildFarSector(RefCountedPtr<Sector> sec, const vector3f &origin, std::vector<vector3f> &points, std::vector<Color> &colors);
-	void PutFactionLabels(const vector3f &secPos);
 	void AddStarBillboard(const matrix4x4f &modelview, const vector3f &pos, const Color &col, float size);
+
+	typedef std::vector<std::pair<const Sector::System *,vector3d>> t_systemAndPosVector;
+
+	void PutLabels(const t_systemAndPosVector &homeworlds, bool far_mode);
+
+	void CollectSystems(RefCountedPtr<Sector> sec, const vector3f &origin, int drawRadius, SectorView::t_systemAndPosVector &systems);
+
+	t_systemAndPosVector CollectHomeworlds(const vector3f &origin);
 
 	void OnClickSystem(const SystemPath &path);
 

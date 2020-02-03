@@ -21,12 +21,6 @@ namespace KeyBindings {
 	struct WheelBinding;
 }
 
-namespace Gui {
-	class Label;
-	class LabelSet;
-	class ToggleButton;
-}
-
 namespace Graphics {
 	class RenderState;
 }
@@ -39,8 +33,9 @@ public:
 	virtual ~SectorView();
 
 	virtual void Update(const float frameTime) override;
-	virtual void ShowAll();
 	virtual void Draw3D() override;
+	void DrawImGui(const float frameTime);
+
 	vector3f GetPosition() const { return m_pos; }
 	SystemPath GetCurrent() const { return m_current; }
 	SystemPath GetSelected() const { return m_selected; }
@@ -108,13 +103,16 @@ private:
 	void BuildFarSector(RefCountedPtr<Sector> sec, const vector3f &origin, std::vector<vector3f> &points, std::vector<Color> &colors);
 	void AddStarBillboard(const matrix4x4f &modelview, const vector3f &pos, const Color &col, float size);
 
-	typedef std::vector<std::pair<const Sector::System *,vector3d>> t_systemAndPosVector;
+	typedef std::pair<const Sector::System *,vector3d> t_systemAndPos;
+	typedef std::vector<t_systemAndPos> t_systemsAndPosVector;
 
-	void PutLabels(const t_systemAndPosVector &homeworlds, bool far_mode);
+	void PutDiamonds(const t_systemsAndPosVector &homeworlds);
 
-	void CollectSystems(RefCountedPtr<Sector> sec, const vector3f &origin, int drawRadius, SectorView::t_systemAndPosVector &systems);
+	void CollectSystems(RefCountedPtr<Sector> sec, const vector3f &origin, int drawRadius, SectorView::t_systemsAndPosVector &systems);
 
-	t_systemAndPosVector CollectHomeworlds(const vector3f &origin);
+	t_systemsAndPosVector CollectHomeworlds(const vector3f &origin);
+
+	t_systemsAndPosVector m_systems;
 
 	void OnClickSystem(const SystemPath &path);
 
@@ -128,6 +126,7 @@ private:
 	RefCountedPtr<Galaxy> m_galaxy;
 
 	bool m_inSystem;
+	bool m_farMode;
 
 	SystemPath m_current;
 	SystemPath m_selected;
@@ -155,8 +154,6 @@ private:
 	float m_lastFrameTime;
 
 	std::unique_ptr<Graphics::Drawables::Disk> m_disk;
-
-	Gui::LabelSet *m_clickableLabels;
 
 	std::set<const Faction *> m_visibleFactions;
 	std::set<const Faction *> m_hiddenFactions;

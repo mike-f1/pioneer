@@ -487,10 +487,10 @@ void LuaConsole::ExecOrContinue(const std::string &stmt, bool repeatStatement)
  */
 static int l_console_addline(lua_State *L)
 {
-	if (Pi::luaConsole) {
+	if (Pi::m_luaConsole) {
 		size_t len;
 		const char *s = luaL_checklstring(L, 1, &len);
-		Pi::luaConsole->AddOutput(std::string(s, len));
+		Pi::m_luaConsole->AddOutput(std::string(s, len));
 	}
 	return 0;
 }
@@ -518,8 +518,8 @@ static int l_console_print(lua_State *L)
 	}
 	lua_pop(L, 1);
 	Output("%s\n", line.c_str());
-	if (Pi::luaConsole) {
-		Pi::luaConsole->AddOutput(line);
+	if (Pi::m_luaConsole) {
+		Pi::m_luaConsole->AddOutput(line);
 	}
 	LUA_DEBUG_END(L, 0);
 	return 0;

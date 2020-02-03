@@ -134,8 +134,6 @@ void WorldView::InitObject(Game *game)
 
 	m_speedLines.reset(new SpeedLines(game->GetPlayer()));
 
-	//get near & far clipping distances
-	//XXX m_renderer not set yet
 	float znear;
 	float zfar;
 	RendererLocator::getRenderer()->GetNearFarRange(znear, zfar);

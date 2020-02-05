@@ -365,6 +365,8 @@ void SectorView::Draw3D()
 
 	//draw jump shere
 	if (m_jumpSphere && m_playerHyperspaceRange > 0.0f) {
+		Graphics::Renderer *r = RendererLocator::getRenderer();
+		Graphics::Renderer::StateTicket ticket2(r);
 		matrix4x4f trans2 = trans;
 		trans2.Translate(playerPos);
 
@@ -612,12 +614,11 @@ SectorView::t_systemsAndPosVector SectorView::CollectHomeworlds(const vector3f &
 
 			vector3d pos;
 			if (frustum.ProjectPoint(vector3d(sys->GetFullPosition() - origin), pos)) {
-				// ok, need to use these formula to project correctly from Renderer to ImGui
 				if (pos.z > 1.0f) continue;
 
+				// ok, need to use these formula to project correctly from Renderer to ImGui
 				pos.x = pos.x * viewport[2] + viewport[0];
 				pos.y = pos.y * viewport[3] + viewport[1];
-
 				pos.y = RendererLocator::getRenderer()->GetWindowHeight() - pos.y;
 
 				homeworlds.emplace_back(std::make_pair(sys, std::move(pos)));
@@ -635,12 +636,11 @@ void SectorView::PutDiamonds(const t_systemsAndPosVector &homeworlds)
 		m_material.Reset(RendererLocator::getRenderer()->CreateMaterial(Graphics::MaterialDescriptor()));
 
 	for (auto element : homeworlds) {
-		// copy, not move or ref
 		const vector3d &pos = element.second;
 
 		// draw a big diamond for the location of the star
 		static const float STARSIZE = 5;
-		Graphics::VertexArray outline(Graphics::ATTRIB_POSITION);
+		Graphics::VertexArray outline(Graphics::ATTRIB_POSITION, 4);
 		outline.position.reserve(4);
 		outline.Add(vector3f(pos.x - STARSIZE - 1.f, pos.y, 0.f));
 		outline.Add(vector3f(pos.x, pos.y + STARSIZE + 1.f, 0.f));
@@ -649,7 +649,7 @@ void SectorView::PutDiamonds(const t_systemsAndPosVector &homeworlds)
 		m_material->diffuse = { 0, 0, 0, 255 };
 		RendererLocator::getRenderer()->DrawTriangles(&outline, m_alphaBlendState, m_material.Get(), Graphics::TRIANGLE_STRIP);
 
-		Graphics::VertexArray marker(Graphics::ATTRIB_POSITION);
+		Graphics::VertexArray marker(Graphics::ATTRIB_POSITION, 4);
 		marker.position.reserve(4);
 		marker.Add(vector3f(pos.x - STARSIZE, pos.y, 0.f));
 		marker.Add(vector3f(pos.x, pos.y + STARSIZE, 0.f));

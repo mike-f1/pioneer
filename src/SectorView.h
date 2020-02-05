@@ -34,7 +34,7 @@ public:
 
 	virtual void Update(const float frameTime) override;
 	virtual void Draw3D() override;
-	void DrawImGui(const float frameTime);
+	virtual void DrawImGui(const float frameTime) override;
 
 	vector3f GetPosition() const { return m_pos; }
 	SystemPath GetCurrent() const { return m_current; }

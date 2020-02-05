@@ -119,7 +119,5 @@ void InGameViews::Draw3DView() {
 }
 
 void InGameViews::DrawImGui(const float frameTime) {
-	if (m_currentViewType != ViewType::SECTOR) return;
-	SectorView *sector = static_cast<SectorView *>(m_currentView);
-	sector->DrawImGui(frameTime);
+	if (m_currentView != nullptr) m_currentView->DrawImGui(frameTime);
 }

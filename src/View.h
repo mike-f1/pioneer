@@ -22,6 +22,7 @@ public:
 	virtual ~View();
 	// called before Gui::Draw will call widget ::Draw methods.
 	virtual void Draw3D() = 0;
+	virtual void DrawImGui(const float frameTime) {};
 	// for checking key states, mouse crud
 	virtual void Update(const float frameTime) = 0;
 	virtual void SaveToJson(Json &jsonObj) {}

@@ -581,6 +581,7 @@ void WorldView::Draw()
 
 void WorldView::DrawUI(const float frameTime)
 {
+	if (Pi::IsConsoleActive()) return;
 #if WITH_DEVKEYS
 	if (Pi::showDebugInfo) {
 		std::ostringstream ss;

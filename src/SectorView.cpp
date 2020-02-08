@@ -380,6 +380,7 @@ void SectorView::Draw3D()
 
 void SectorView::DrawUI(const float frameTime)
 {
+	if (Pi::IsConsoleActive()) return;
 	/*
 	This will open a window with a list of displayed systems... It may be useful later
 	ImGui::Begin("Systems Labelled");

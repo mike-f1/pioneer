@@ -378,7 +378,7 @@ void SectorView::Draw3D()
 
 }
 
-void SectorView::DrawImGui(const float frameTime)
+void SectorView::DrawUI(const float frameTime)
 {
 	/*
 	This will open a window with a list of displayed systems... It may be useful later
@@ -641,7 +641,6 @@ void SectorView::PutDiamonds(const t_systemsAndPosVector &homeworlds)
 		// draw a big diamond for the location of the star
 		static const float STARSIZE = 5;
 		Graphics::VertexArray outline(Graphics::ATTRIB_POSITION, 4);
-		outline.position.reserve(4);
 		outline.Add(vector3f(pos.x - STARSIZE - 1.f, pos.y, 0.f));
 		outline.Add(vector3f(pos.x, pos.y + STARSIZE + 1.f, 0.f));
 		outline.Add(vector3f(pos.x, pos.y - STARSIZE - 1.f, 0.f));
@@ -650,7 +649,6 @@ void SectorView::PutDiamonds(const t_systemsAndPosVector &homeworlds)
 		RendererLocator::getRenderer()->DrawTriangles(&outline, m_alphaBlendState, m_material.Get(), Graphics::TRIANGLE_STRIP);
 
 		Graphics::VertexArray marker(Graphics::ATTRIB_POSITION, 4);
-		marker.position.reserve(4);
 		marker.Add(vector3f(pos.x - STARSIZE, pos.y, 0.f));
 		marker.Add(vector3f(pos.x, pos.y + STARSIZE, 0.f));
 		marker.Add(vector3f(pos.x, pos.y - STARSIZE, 0.f));

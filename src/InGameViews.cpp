@@ -118,6 +118,6 @@ void InGameViews::Draw3DView() {
 	if (m_currentView != nullptr) m_currentView->Draw3D();
 }
 
-void InGameViews::DrawImGui(const float frameTime) {
-	if (m_currentView != nullptr) m_currentView->DrawImGui(frameTime);
+void InGameViews::DrawUI(const float frameTime) {
+	if (m_currentView != nullptr) m_currentView->DrawUI(frameTime);
 }

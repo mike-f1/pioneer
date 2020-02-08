@@ -33,12 +33,13 @@
 
 #include "gui/GuiScreen.h"
 
+#include "imgui/imgui.h"
+
 #ifdef WITH_DEVKEYS
 #include <sstream>
 #include "galaxy/SystemBody.h"
 #endif // WITH_DEVKEYS
 
-const double WorldView::PICK_OBJECT_RECT_SIZE = 20.0;
 namespace {
 	static const Color s_hudTextColor(0, 255, 0, 230);
 	static const float HUD_CROSSHAIR_SIZE = 8.0f;
@@ -109,28 +110,6 @@ void WorldView::InitObject(Game *game)
 	m_blendState = RendererLocator::getRenderer()->CreateRenderState(rsd); //XXX m_renderer not set yet
 	m_navTunnel = new NavTunnelWidget(this, m_blendState);
 	Add(m_navTunnel, 0, 0);
-
-#if WITH_DEVKEYS
-	Gui::Screen::PushFont("ConsoleFont");
-	m_debugInfo = (new Gui::Label(""))->Color(204, 204, 204);
-	Add(m_debugInfo, 10, 200);
-	Gui::Screen::PopFont();
-#endif
-	/*
-	  NEW UI
-	*/
-
-	// --
-
-	Gui::Screen::PushFont("OverlayFont");
-
-	{
-		m_pauseText = new Gui::Label(std::string("#f7f") + Lang::PAUSED);
-		float w, h;
-		Gui::Screen::MeasureString(Lang::PAUSED, w, h);
-		Add(m_pauseText, 0.5f * (Gui::Screen::GetWidth() - w), 100);
-	}
-	Gui::Screen::PopFont();
 
 	m_speedLines.reset(new SpeedLines(game->GetPlayer()));
 
@@ -232,59 +211,6 @@ void WorldView::OnToggleLabels()
 void WorldView::ShowAll()
 {
 	View::ShowAll(); // by default, just delegate back to View
-	RefreshButtonStateAndVisibility();
-}
-
-void WorldView::RefreshButtonStateAndVisibility()
-{
-	assert(GameLocator::getGame());
-	assert(GameLocator::getGame()->GetPlayer());
-	assert(!GameLocator::getGame()->GetPlayer()->IsDead());
-
-	if (GameLocator::getGame()->IsPaused())
-		m_pauseText->Show();
-	else
-		m_pauseText->Hide();
-
-#if WITH_DEVKEYS
-	if (Pi::showDebugInfo) {
-		std::ostringstream ss;
-
-		if (GameLocator::getGame()->GetPlayer()->GetFlightState() != Ship::HYPERSPACE) {
-			vector3d pos = GameLocator::getGame()->GetPlayer()->GetPosition();
-			vector3d abs_pos = GameLocator::getGame()->GetPlayer()->GetPositionRelTo(Frame::GetRootFrameId());
-
-			const Frame *playerFrame = Frame::GetFrame(GameLocator::getGame()->GetPlayer()->GetFrame());
-
-			ss << stringf("Pos: %0{f.2}, %1{f.2}, %2{f.2}\n", pos.x, pos.y, pos.z);
-			ss << stringf("AbsPos: %0{f.2}, %1{f.2}, %2{f.2}\n", abs_pos.x, abs_pos.y, abs_pos.z);
-
-			const SystemPath &path(playerFrame->GetSystemBody()->GetPath());
-			ss << stringf("Rel-to: %0 [%1{d},%2{d},%3{d},%4{u},%5{u}] ",
-				playerFrame->GetLabel(),
-				path.sectorX, path.sectorY, path.sectorZ, path.systemIndex, path.bodyIndex);
-			ss << stringf("(%0{f.2} km), rotating: %1, has rotation: %2\n",
-				pos.Length() / 1000, (playerFrame->IsRotFrame() ? "yes" : "no"), (playerFrame->HasRotFrame() ? "yes" : "no"));
-
-			//Calculate lat/lon for ship position
-			const vector3d dir = pos.NormalizedSafe();
-			const float lat = RAD2DEG(asin(dir.y));
-			const float lon = RAD2DEG(atan2(dir.x, dir.z));
-
-			ss << stringf("Lat / Lon: %0{f.8} / %1{f.8}\n", lat, lon);
-		}
-
-		char aibuf[256];
-		GameLocator::getGame()->GetPlayer()->AIGetStatusText(aibuf);
-		aibuf[255] = 0;
-		ss << aibuf << std::endl;
-
-		m_debugInfo->SetText(ss.str());
-		m_debugInfo->Show();
-	} else {
-		m_debugInfo->Hide();
-	}
-#endif
 }
 
 void WorldView::Update(const float frameTime)
@@ -293,9 +219,6 @@ void WorldView::Update(const float frameTime)
 	assert(GameLocator::getGame());
 	assert(GameLocator::getGame()->GetPlayer());
 	assert(!GameLocator::getGame()->GetPlayer()->IsDead());
-
-	// show state-appropriate buttons
-	RefreshButtonStateAndVisibility();
 
 	shipView.Update(frameTime);
 
@@ -345,7 +268,6 @@ void WorldView::BuildUI(UI::Single *container)
 void WorldView::OnSwitchTo()
 {
 	UIView::OnSwitchTo();
-	RefreshButtonStateAndVisibility();
 	shipView.Activated();
 
 	if (!Pi::input.PushInputFrame(&BaseBindings)) return;
@@ -655,6 +577,108 @@ void WorldView::Draw()
 
 	// glLineWidth(1.0f);
 	RendererLocator::getRenderer()->CheckRenderErrors(__FUNCTION__, __LINE__);
+}
+
+void WorldView::DrawUI(const float frameTime)
+{
+#if WITH_DEVKEYS
+	if (Pi::showDebugInfo) {
+		std::ostringstream ss;
+
+		if (GameLocator::getGame()->GetPlayer()->GetFlightState() != Ship::HYPERSPACE) {
+			vector3d pos = GameLocator::getGame()->GetPlayer()->GetPosition();
+			vector3d abs_pos = GameLocator::getGame()->GetPlayer()->GetPositionRelTo(Frame::GetRootFrameId());
+
+			const Frame *playerFrame = Frame::GetFrame(GameLocator::getGame()->GetPlayer()->GetFrame());
+
+			ss << stringf("Pos: %0{f.2}, %1{f.2}, %2{f.2}\n", pos.x, pos.y, pos.z);
+			ss << stringf("AbsPos: %0{f.2}, %1{f.2}, %2{f.2}\n", abs_pos.x, abs_pos.y, abs_pos.z);
+
+			const SystemPath &path(playerFrame->GetSystemBody()->GetPath());
+			ss << stringf("Rel-to: %0 [%1{d},%2{d},%3{d},%4{u},%5{u}] ",
+				playerFrame->GetLabel(),
+				path.sectorX, path.sectorY, path.sectorZ, path.systemIndex, path.bodyIndex);
+			ss << stringf("(%0{f.2} km), rotating: %1, has rotation: %2\n",
+				pos.Length() / 1000, (playerFrame->IsRotFrame() ? "yes" : "no"), (playerFrame->HasRotFrame() ? "yes" : "no"));
+
+			//Calculate lat/lon for ship position
+			const vector3d dir = pos.NormalizedSafe();
+			const float lat = RAD2DEG(asin(dir.y));
+			const float lon = RAD2DEG(atan2(dir.x, dir.z));
+
+			ss << stringf("Lat / Lon: %0{f.8} / %1{f.8}\n", lat, lon);
+		}
+
+		char aibuf[256];
+		GameLocator::getGame()->GetPlayer()->AIGetStatusText(aibuf);
+		aibuf[255] = 0;
+		ss << aibuf << std::endl;
+
+		Sint32 viewport[4];
+		RendererLocator::getRenderer()->GetCurrentViewport(&viewport[0]);
+		ImVec2 pos(0.0, 0.5);
+		pos.x = pos.x * viewport[2] + viewport[0];
+		pos.y = pos.y * viewport[3] + viewport[1];
+		pos.y = RendererLocator::getRenderer()->GetWindowHeight() - pos.y;
+
+		ImVec2 size = ImGui::CalcTextSize(ss.str().c_str());
+		ImGuiStyle& style = ImGui::GetStyle();
+		size.x += style.WindowPadding.x * 2;
+		size.y += style.WindowPadding.y * 2;
+
+		pos.y -= size.y / 2.0;
+		ImGui::SetNextWindowBgAlpha(0.7f);
+		ImGui::Begin("dbg", nullptr, ImGuiWindowFlags_NoTitleBar
+					| ImGuiWindowFlags_NoResize
+					| ImGuiWindowFlags_NoMove
+					| ImGuiWindowFlags_NoScrollbar
+					| ImGuiWindowFlags_NoCollapse
+					| ImGuiWindowFlags_NoSavedSettings
+					| ImGuiWindowFlags_NoFocusOnAppearing
+					| ImGuiWindowFlags_NoBringToFrontOnFocus
+					);
+		ImGui::SetWindowPos(pos);
+		ImGui::SetWindowSize(size);
+		ImVec4 color(1.0f, 1.0f, 1.0f, 1.0);
+		ImGui::PushStyleColor(ImGuiCol_Text, color);
+		ImGui::TextUnformatted(ss.str().c_str());
+		ImGui::PopStyleColor(1);
+		ImGui::End();
+	}
+#endif
+	if (!GameLocator::getGame()->IsPaused()) return;
+	Sint32 viewport[4];
+	RendererLocator::getRenderer()->GetCurrentViewport(&viewport[0]);
+	ImVec2 pos(0.5, 0.85);
+	pos.x = pos.x * viewport[2] + viewport[0];
+	pos.y = pos.y * viewport[3] + viewport[1];
+	pos.y = RendererLocator::getRenderer()->GetWindowHeight() - pos.y;
+
+	ImGuiStyle& style = ImGui::GetStyle();
+	ImGui::SetNextWindowBgAlpha(0.7f);
+	ImGui::Begin("pause", nullptr, ImGuiWindowFlags_NoTitleBar
+				| ImGuiWindowFlags_NoResize
+				| ImGuiWindowFlags_NoMove
+				| ImGuiWindowFlags_NoScrollbar
+				| ImGuiWindowFlags_NoCollapse
+				| ImGuiWindowFlags_NoSavedSettings
+				| ImGuiWindowFlags_NoFocusOnAppearing
+				| ImGuiWindowFlags_NoBringToFrontOnFocus
+				);
+	std::string label = Lang::PAUSED;
+	ImVec2 size = ImGui::CalcTextSize(label.c_str());
+	size.x += style.WindowPadding.x * 2;
+	size.y += style.WindowPadding.y * 2;
+
+	pos.x -= size.x / 2.0; // ...and add something to make it depend on zoom
+	pos.y -= size.y / 2.0;
+	ImGui::SetWindowPos(pos);
+	ImGui::SetWindowSize(size);
+	ImVec4 color(1.0f, 0.5f, 0.5f, 1.0);
+	ImGui::PushStyleColor(ImGuiCol_Text, color);
+	ImGui::TextUnformatted(label.c_str());
+	ImGui::PopStyleColor(1);
+	ImGui::End();
 }
 
 void WorldView::DrawCombatTargetIndicator(const Indicator &target, const Indicator &lead, const Color &c)

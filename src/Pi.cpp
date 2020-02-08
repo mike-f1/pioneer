@@ -1301,7 +1301,7 @@ void Pi::MainLoop()
 			InGameViewsLocator::getInGameViews()->GetWorldView()->BeginCameraFrame();
 			PiGui::NewFrame(RendererLocator::getRenderer()->GetSDLWindow(), InGameViewsLocator::getInGameViews()->DrawGui());
 
-			InGameViewsLocator::getInGameViews()->DrawImGui(m_frameTime);
+			InGameViewsLocator::getInGameViews()->DrawUI(m_frameTime);
 
 			DrawPiGui(m_frameTime, "GAME");
 			InGameViewsLocator::getInGameViews()->GetWorldView()->EndCameraFrame();

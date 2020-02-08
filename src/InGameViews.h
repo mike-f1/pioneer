@@ -71,7 +71,7 @@ public:
 	void UpdateView(const float frameTime);
 	void Draw3DView();
 
-	void DrawImGui(const float frameTime);
+	void DrawUI(const float frameTime);
 
 private:
 	View *m_currentView;

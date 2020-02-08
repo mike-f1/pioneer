@@ -269,8 +269,8 @@ public:
 		const vector3d relpos = clipCentroid - campos;
 		renderer->SetTransform(modelView * matrix4x4d::Translation(relpos));
 
-		Pi::statSceneTris += 2 * (ctx->edgeLen - 1) * (ctx->edgeLen - 1);
-		++Pi::statNumPatches;
+		RendererLocator::getRenderer()->GetStats().AddToStatCount(Graphics::Stats::STAT_PATCHES_TRIS,
+			2 * (ctx->edgeLen - 1) * (ctx->edgeLen - 1));
 
 		renderer->DrawBufferIndexed(m_vertexBuffer.get(), ctx->indexBuffer.Get(), rs, mat.Get());
 		renderer->GetStats().AddToStatCount(Graphics::Stats::STAT_PATCHES, 1);

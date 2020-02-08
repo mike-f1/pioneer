@@ -129,8 +129,6 @@ std::string Pi::profilerPath;
 bool Pi::doProfileSlow = false;
 bool Pi::doProfileOne = false;
 #endif
-int Pi::statSceneTris = 0;
-int Pi::statNumPatches = 0;
 RefCountedPtr<UI::Context> Pi::ui;
 RefCountedPtr<PiGui> Pi::pigui;
 std::unique_ptr<Cutscene> Pi::m_cutscene;
@@ -154,7 +152,6 @@ std::unique_ptr<SyncJobQueue> Pi::syncJobQueue;
 JobQueue *Pi::GetAsyncJobQueue() { return asyncJobQueue.get(); }
 // static
 JobQueue *Pi::GetSyncJobQueue() { return syncJobQueue.get(); }
-
 
 //static
 void Pi::CreateRenderTarget(const Uint16 width, const Uint16 height)
@@ -1368,6 +1365,7 @@ void Pi::MainLoop()
 			const Uint32 numDrawStars = stats.m_stats[Graphics::Stats::STAT_STARS];
 			const Uint32 numDrawShips = stats.m_stats[Graphics::Stats::STAT_SHIPS];
 			const Uint32 numDrawBillBoards = stats.m_stats[Graphics::Stats::STAT_BILLBOARD];
+			const Uint32 numDrawPatchesTris = stats.m_stats[Graphics::Stats::STAT_PATCHES_TRIS];
 			snprintf(
 				fps_readout, sizeof(fps_readout),
 				"%d fps (%.1f ms/f), %d phys updates, %d triangles, %.3f M tris/sec, %d glyphs/sec, %d patches/frame\n"
@@ -1376,8 +1374,8 @@ void Pi::MainLoop()
 				"Buildings (%u), Cities (%u), GroundStations (%u), SpaceStations (%u), Atmospheres (%u)\n"
 				"Patches (%u), Planets (%u), GasGiants (%u), Stars (%u), Ships (%u)\n"
 				"Buffers Created(%u)\n",
-				frame_stat, (1000.0 / frame_stat), phys_stat, Pi::statSceneTris, Pi::statSceneTris * frame_stat * 1e-6,
-				Text::TextureFont::GetGlyphCount(), Pi::statNumPatches,
+				frame_stat, (1000.0 / frame_stat), phys_stat, numDrawPatchesTris, numDrawPatchesTris * frame_stat * 1e-6,
+				Text::TextureFont::GetGlyphCount(), numDrawPatches,
 				lua_memMB, lua_memKB, lua_memB, lua_gettop(Lua::manager->GetLuaState()),
 				numDrawCalls, numDrawTris, numDrawPointSprites, numDrawBillBoards,
 				numDrawBuildings, numDrawCities, numDrawGroundStations, numDrawSpaceStations, numDrawAtmospheres,
@@ -1390,8 +1388,6 @@ void Pi::MainLoop()
 			else
 				last_stats += 1000;
 		}
-		Pi::statSceneTris = 0;
-		Pi::statNumPatches = 0;
 
 #endif // WITH_DEVKEYS
 #ifdef PIONEER_PROFILER

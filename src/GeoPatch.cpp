@@ -293,8 +293,7 @@ void GeoPatch::Render(const vector3d &campos, const matrix4x4d &modelView, const
 		const vector3d relpos = m_clipCentroid - campos;
 		RendererLocator::getRenderer()->SetTransform(modelView * matrix4x4d::Translation(relpos));
 
-		Pi::statSceneTris += (m_ctx->GetNumTris());
-		++Pi::statNumPatches;
+		RendererLocator::getRenderer()->GetStats().AddToStatCount(Graphics::Stats::STAT_PATCHES_TRIS, m_ctx->GetNumTris());
 
 		// per-patch detail texture scaling value
 		m_geosphere->GetMaterialParameters().patchDepth = m_depth;

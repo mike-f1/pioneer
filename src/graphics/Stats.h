@@ -17,6 +17,7 @@ namespace Graphics {
 			// renderer entries
 			STAT_DRAWCALL = 0,
 			STAT_DRAWTRIS,
+			STAT_PATCHES_TRIS,
 			STAT_DRAWPOINTSPRITES,
 
 			// buffers

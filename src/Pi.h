@@ -73,9 +73,6 @@ public:
 	static RefCountedPtr<UI::Context> ui;
 	static RefCountedPtr<PiGui> pigui;
 
-	static int statSceneTris;
-	static int statNumPatches;
-
 	static void DrawPiGui(double delta, std::string handler);
 
 	/* Only use #if WITH_DEVKEYS */

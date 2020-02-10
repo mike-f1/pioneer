@@ -210,6 +210,8 @@ void PiGui::Init(SDL_Window *window)
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 
+	ImGuiIO &io = ImGui::GetIO();
+	io.IniFilename = nullptr;
 	// TODO: FIXME before upgrading! The sdl_gl_context parameter is currently
 	// unused, but that is slated to change very soon.
 	// We will need to fill this with a valid pointer to the OpenGL context.
@@ -224,19 +226,12 @@ void PiGui::Init(SDL_Window *window)
 		break;
 	}
 
-	ImGuiIO &io = ImGui::GetIO();
 	// Apply the base style
 	ImGui::StyleColorsDark();
 
 	// Apply Pioneer's style.
 	// TODO: load this from Lua.
 	PiDefaultStyle(ImGui::GetStyle());
-
-	std::string imguiIni = FileSystem::JoinPath(FileSystem::GetUserDir(), "imgui.ini");
-	// this will be leaked, not sure how to deal with it properly in imgui...
-	char *ioIniFilename = new char[imguiIni.size() + 1];
-	std::strncpy(ioIniFilename, imguiIni.c_str(), imguiIni.size() + 1);
-	io.IniFilename = ioIniFilename;
 }
 
 int PiGui::RadialPopupSelectMenu(const ImVec2 &center, std::string popup_id, int mouse_button, std::vector<ImTextureID> tex_ids, std::vector<std::pair<ImVec2, ImVec2>> uvs, unsigned int size, std::vector<std::string> tooltips)

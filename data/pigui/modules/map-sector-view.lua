@@ -74,6 +74,7 @@ local draw_out_range_labels
 local draw_uninhabited_labels
 local automatic_system_selection
 local lock_hyperspace_target
+local show_faction_color
 
 local function showSettings()
 	if ui.collapsingHeader("Settings", { "DefaultOpen" }) then
@@ -93,6 +94,10 @@ local function showSettings()
 		changed, automatic_system_selection = ui.checkbox(lc.AUTOMATIC_SYSTEM_SELECTION, automatic_system_selection)
 		if changed then
 			Engine.SetSectorMapAutomaticSystemSelection(automatic_system_selection)
+		end
+		changed, show_faction_color = ui.checkbox(lc.SHOW_FACTION_COLOR, show_faction_color)
+		if changed then
+			Engine.SetSectorMapShowFactionColor(show_faction_color)
 		end
 	end
 end
@@ -231,6 +236,7 @@ local function displaySectorViewWindow()
 	draw_out_range_labels = Engine.GetSectorMapDrawOutRangeLabels()
 	draw_uninhabited_labels = Engine.GetSectorMapDrawUninhabitedLabels()
 	draw_vertical_lines = Engine.GetSectorMapDrawVerticalLines()
+	show_faction_color = Engine.GetSectorMapShowFactionColor()
 
 	player = Game.player
 	local current_view = Game.CurrentView()

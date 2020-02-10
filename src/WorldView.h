@@ -27,7 +27,6 @@ enum PlaneType {
 };
 
 namespace Gui {
-	class Label;
 	class TexturedQuad;
 	class VBox;
 }
@@ -55,7 +54,8 @@ public:
 	virtual void Update(const float frameTime) override;
 	virtual void Draw3D() override;
 	virtual void Draw();
-	static const double PICK_OBJECT_RECT_SIZE;
+	virtual void DrawUI(const float frameTime) override;
+
 	virtual void SaveToJson(Json &jsonObj);
 
 	RefCountedPtr<CameraContext> GetCameraContext() const { return m_cameraContext; }
@@ -87,8 +87,6 @@ protected:
 private:
 	void InitObject(Game *game);
 
-	void RefreshButtonStateAndVisibility();
-
 	enum IndicatorSide {
 		INDICATOR_HIDDEN,
 		INDICATOR_ONSCREEN,
@@ -102,18 +100,15 @@ private:
 		vector2f pos;
 		vector2f realpos;
 		IndicatorSide side;
-		Gui::Label *label;
 		Indicator() :
 			pos(0.0f, 0.0f),
 			realpos(0.0f, 0.0f),
-			side(INDICATOR_HIDDEN),
-			label(nullptr) {}
+			side(INDICATOR_HIDDEN) {}
 	};
 
 	void UpdateProjectedObjects();
 	void UpdateIndicator(Indicator &indicator, const vector3d &direction);
 	void HideIndicator(Indicator &indicator);
-	void SeparateLabels(Gui::Label *a, Gui::Label *b);
 
 	void DrawCombatTargetIndicator(const Indicator &target, const Indicator &lead, const Color &c);
 	void DrawEdgeMarker(const Indicator &marker, const Color &c);
@@ -129,12 +124,8 @@ private:
 	NavTunnelWidget *m_navTunnel;
 	std::unique_ptr<SpeedLines> m_speedLines;
 
-	Gui::Label *m_pauseText;
 	bool m_labelsOn;
 	bool m_guiOn;
-
-	/* Only use #if WITH_DEVKEYS */
-	Gui::Label *m_debugInfo;
 
 	sigc::connection m_onPlayerChangeTargetCon;
 	sigc::connection m_onToggleHudModeCon;

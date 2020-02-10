@@ -879,6 +879,26 @@ static int l_engine_get_sector_map_hyperspace_target_system_path(lua_State *l)
 	return 1;
 }
 
+static int l_engine_set_sector_map_show_faction_color(lua_State *l)
+{
+	SectorView *sv = InGameViewsLocator::getInGameViews()->GetSectorView();
+	bool value = LuaPull<bool>(l, 1);
+	if (sv) {
+		sv->SetShowFactionColor(value);
+	}
+	return 0;
+}
+
+static int l_engine_get_sector_map_show_faction_color(lua_State *l)
+{
+	SectorView *sv = InGameViewsLocator::getInGameViews()->GetSectorView();
+	if (sv) {
+		LuaPush<bool>(l, sv->GetShowFactionColor());
+		return 1;
+	}
+	return 0;
+}
+
 static int l_engine_set_sector_map_draw_uninhabited_labels(lua_State *l)
 {
 	SectorView *sv = InGameViewsLocator::getInGameViews()->GetSectorView();
@@ -1279,6 +1299,8 @@ void LuaEngine::Register()
 		{ "GetSectorMapCurrentSystemPath", l_engine_get_sector_map_current_system_path },
 		{ "GetSectorMapSelectedSystemPath", l_engine_get_sector_map_selected_system_path },
 		{ "GetSectorMapHyperspaceTargetSystemPath", l_engine_get_sector_map_hyperspace_target_system_path },
+		{ "SetSectorMapShowFactionColor", l_engine_set_sector_map_show_faction_color },
+		{ "GetSectorMapShowFactionColor", l_engine_get_sector_map_show_faction_color },
 		{ "SetSectorMapDrawUninhabitedLabels", l_engine_set_sector_map_draw_uninhabited_labels },
 		{ "GetSectorMapDrawUninhabitedLabels", l_engine_get_sector_map_draw_uninhabited_labels },
 		{ "SetSectorMapDrawVerticalLines", l_engine_set_sector_map_draw_vertical_lines },

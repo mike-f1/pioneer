@@ -16,6 +16,7 @@ namespace Graphics {
 	// the one used for rendering
 	class Frustum {
 	public:
+		Frustum() = delete;
 		// create for specified values
 		Frustum(float width, float height, float fovAng, float nearClip, float farClip);
 		Frustum(const matrix4x4d &modelview, const matrix4x4d &projection);
@@ -33,9 +34,6 @@ namespace Graphics {
 		void TranslatePoint(const vector3d &in, vector3d &out) const;
 
 	private:
-		// create from current gl state
-		Frustum();
-
 		void InitFromMatrix(const matrix4x4d &m);
 
 		matrix4x4d m_projMatrix;

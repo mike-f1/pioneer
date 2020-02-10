@@ -22,6 +22,7 @@ public:
 
 	virtual void Update(const float frameTime) override {}
 	virtual void Draw3D() override {}
+	virtual void DrawUI(const float frameTime) override {};
 	const char *GetTemplateName() { return m_templateName; }
 
 protected:

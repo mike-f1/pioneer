@@ -1451,7 +1451,7 @@ void PopulateStarSystemGenerator::PopulateStage1(SystemBody *sbody, StarSystem *
 	}
 
 	if (!syswrt.HasCustomBodies() && sbody->GetPopulationAsFixed() > 0)
-		sbody->m_name = Pi::luaNameGen->BodyName(sbody, namerand);
+		sbody->m_name = Pi::m_luaNameGen->BodyName(sbody, namerand);
 
 	// Add a bunch of things people consume
 	for (int i = 0; i < NUM_CONSUMABLES; i++) {
@@ -1493,7 +1493,7 @@ static std::string gen_unique_station_name(SystemBody *sp, const StarSystem *sys
 	PROFILE_SCOPED()
 	std::string name;
 	do {
-		name = Pi::luaNameGen->BodyName(sp, namerand);
+		name = Pi::m_luaNameGen->BodyName(sp, namerand);
 	} while (!check_unique_station_name(name, system));
 	return name;
 }

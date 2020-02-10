@@ -33,12 +33,13 @@
 
 #include "gui/GuiScreen.h"
 
+#include "imgui/imgui.h"
+
 #ifdef WITH_DEVKEYS
 #include <sstream>
 #include "galaxy/SystemBody.h"
 #endif // WITH_DEVKEYS
 
-const double WorldView::PICK_OBJECT_RECT_SIZE = 20.0;
 namespace {
 	static const Color s_hudTextColor(0, 255, 0, 230);
 	static const float HUD_CROSSHAIR_SIZE = 8.0f;
@@ -110,39 +111,8 @@ void WorldView::InitObject(Game *game)
 	m_navTunnel = new NavTunnelWidget(this, m_blendState);
 	Add(m_navTunnel, 0, 0);
 
-#if WITH_DEVKEYS
-	Gui::Screen::PushFont("ConsoleFont");
-	m_debugInfo = (new Gui::Label(""))->Color(204, 204, 204);
-	Add(m_debugInfo, 10, 200);
-	Gui::Screen::PopFont();
-#endif
-	/*
-	  NEW UI
-	*/
-
-	// --
-
-	Gui::Screen::PushFont("OverlayFont");
-
-	{
-		m_pauseText = new Gui::Label(std::string("#f7f") + Lang::PAUSED);
-		float w, h;
-		Gui::Screen::MeasureString(Lang::PAUSED, w, h);
-		Add(m_pauseText, 0.5f * (Gui::Screen::GetWidth() - w), 100);
-	}
-	Gui::Screen::PopFont();
-
-	m_combatTargetIndicator.label = new Gui::Label(""); // colour set dynamically
-	m_targetLeadIndicator.label = new Gui::Label("");
-
-	// these labels are repositioned during Draw3D()
-	Add(m_combatTargetIndicator.label, 0, 0);
-	Add(m_targetLeadIndicator.label, 0, 0);
-
 	m_speedLines.reset(new SpeedLines(game->GetPlayer()));
 
-	//get near & far clipping distances
-	//XXX m_renderer not set yet
 	float znear;
 	float zfar;
 	RendererLocator::getRenderer()->GetNearFarRange(znear, zfar);
@@ -241,59 +211,6 @@ void WorldView::OnToggleLabels()
 void WorldView::ShowAll()
 {
 	View::ShowAll(); // by default, just delegate back to View
-	RefreshButtonStateAndVisibility();
-}
-
-void WorldView::RefreshButtonStateAndVisibility()
-{
-	assert(GameLocator::getGame());
-	assert(GameLocator::getGame()->GetPlayer());
-	assert(!GameLocator::getGame()->GetPlayer()->IsDead());
-
-	if (GameLocator::getGame()->IsPaused())
-		m_pauseText->Show();
-	else
-		m_pauseText->Hide();
-
-#if WITH_DEVKEYS
-	if (Pi::showDebugInfo) {
-		std::ostringstream ss;
-
-		if (GameLocator::getGame()->GetPlayer()->GetFlightState() != Ship::HYPERSPACE) {
-			vector3d pos = GameLocator::getGame()->GetPlayer()->GetPosition();
-			vector3d abs_pos = GameLocator::getGame()->GetPlayer()->GetPositionRelTo(Frame::GetRootFrameId());
-
-			const Frame *playerFrame = Frame::GetFrame(GameLocator::getGame()->GetPlayer()->GetFrame());
-
-			ss << stringf("Pos: %0{f.2}, %1{f.2}, %2{f.2}\n", pos.x, pos.y, pos.z);
-			ss << stringf("AbsPos: %0{f.2}, %1{f.2}, %2{f.2}\n", abs_pos.x, abs_pos.y, abs_pos.z);
-
-			const SystemPath &path(playerFrame->GetSystemBody()->GetPath());
-			ss << stringf("Rel-to: %0 [%1{d},%2{d},%3{d},%4{u},%5{u}] ",
-				playerFrame->GetLabel(),
-				path.sectorX, path.sectorY, path.sectorZ, path.systemIndex, path.bodyIndex);
-			ss << stringf("(%0{f.2} km), rotating: %1, has rotation: %2\n",
-				pos.Length() / 1000, (playerFrame->IsRotFrame() ? "yes" : "no"), (playerFrame->HasRotFrame() ? "yes" : "no"));
-
-			//Calculate lat/lon for ship position
-			const vector3d dir = pos.NormalizedSafe();
-			const float lat = RAD2DEG(asin(dir.y));
-			const float lon = RAD2DEG(atan2(dir.x, dir.z));
-
-			ss << stringf("Lat / Lon: %0{f.8} / %1{f.8}\n", lat, lon);
-		}
-
-		char aibuf[256];
-		GameLocator::getGame()->GetPlayer()->AIGetStatusText(aibuf);
-		aibuf[255] = 0;
-		ss << aibuf << std::endl;
-
-		m_debugInfo->SetText(ss.str());
-		m_debugInfo->Show();
-	} else {
-		m_debugInfo->Hide();
-	}
-#endif
 }
 
 void WorldView::Update(const float frameTime)
@@ -302,9 +219,6 @@ void WorldView::Update(const float frameTime)
 	assert(GameLocator::getGame());
 	assert(GameLocator::getGame()->GetPlayer());
 	assert(!GameLocator::getGame()->GetPlayer()->IsDead());
-
-	// show state-appropriate buttons
-	RefreshButtonStateAndVisibility();
 
 	shipView.Update(frameTime);
 
@@ -354,7 +268,6 @@ void WorldView::BuildUI(UI::Single *container)
 void WorldView::OnSwitchTo()
 {
 	UIView::OnSwitchTo();
-	RefreshButtonStateAndVisibility();
 	shipView.Activated();
 
 	if (!Pi::input.PushInputFrame(&BaseBindings)) return;
@@ -492,9 +405,6 @@ void WorldView::UpdateProjectedObjects()
 			float r = float(0.2 + (c + 1.0) * 0.4);
 			float b = float(0.2 + (1.0 - c) * 0.4);
 
-			m_combatTargetIndicator.label->Color(r * 255, 0, b * 255);
-			m_targetLeadIndicator.label->Color(r * 255, 0, b * 255);
-
 			UpdateIndicator(m_targetLeadIndicator, leadpos);
 
 			if ((m_targetLeadIndicator.side != INDICATOR_ONSCREEN) || (m_combatTargetIndicator.side != INDICATOR_ONSCREEN))
@@ -504,7 +414,6 @@ void WorldView::UpdateProjectedObjects()
 			// try (just a little) to keep the labels from interfering with one another
 			if (m_targetLeadIndicator.side == INDICATOR_ONSCREEN) {
 				assert(m_combatTargetIndicator.side == INDICATOR_ONSCREEN);
-				SeparateLabels(m_combatTargetIndicator.label, m_targetLeadIndicator.label);
 			}
 		} else
 			HideIndicator(m_targetLeadIndicator);
@@ -517,7 +426,7 @@ void WorldView::UpdateProjectedObjects()
 void WorldView::UpdateIndicator(Indicator &indicator, const vector3d &cameraSpacePos)
 {
 	const int guiSize[2] = { Gui::Screen::GetWidth(), Gui::Screen::GetHeight() };
-	const Graphics::Frustum frustum = m_cameraContext->GetFrustum();
+	const Graphics::Frustum &frustum = m_cameraContext->GetFrustum();
 
 	const float BORDER = 10.0;
 	const float BORDER_BOTTOM = 90.0;
@@ -599,46 +508,39 @@ void WorldView::UpdateIndicator(Indicator &indicator, const vector3d &cameraSpac
 	}
 
 	// update the label position
-	if (indicator.label) {
-		if (indicator.side != INDICATOR_HIDDEN) {
-			float labelSize[2] = { 500.0f, 500.0f };
-			indicator.label->GetSizeRequested(labelSize);
+	if (indicator.side != INDICATOR_HIDDEN) {
+		float labelSize[2] = { 500.0f, 500.0f };
 
-			int pos[2] = { 0, 0 };
-			switch (indicator.side) {
-			case INDICATOR_HIDDEN: break;
-			case INDICATOR_ONSCREEN: // when onscreen, default to label-below unless it would clamp to be on top of the marker
-				pos[0] = -(labelSize[0] / 2.0f);
-				if (indicator.pos.y + pos[1] + labelSize[1] + HUD_CROSSHAIR_SIZE + 2.0f > h - BORDER_BOTTOM)
-					pos[1] = -(labelSize[1] + HUD_CROSSHAIR_SIZE + 2.0f);
-				else
-					pos[1] = HUD_CROSSHAIR_SIZE + 2.0f;
-				break;
-			case INDICATOR_TOP:
-				pos[0] = -(labelSize[0] / 2.0f);
-				pos[1] = HUD_CROSSHAIR_SIZE + 2.0f;
-				break;
-			case INDICATOR_LEFT:
-				pos[0] = HUD_CROSSHAIR_SIZE + 2.0f;
-				pos[1] = -(labelSize[1] / 2.0f);
-				break;
-			case INDICATOR_RIGHT:
-				pos[0] = -(labelSize[0] + HUD_CROSSHAIR_SIZE + 2.0f);
-				pos[1] = -(labelSize[1] / 2.0f);
-				break;
-			case INDICATOR_BOTTOM:
-				pos[0] = -(labelSize[0] / 2.0f);
+		int pos[2] = { 0, 0 };
+		switch (indicator.side) {
+		case INDICATOR_HIDDEN: break;
+		case INDICATOR_ONSCREEN: // when onscreen, default to label-below unless it would clamp to be on top of the marker
+			pos[0] = -(labelSize[0] / 2.0f);
+			if (indicator.pos.y + pos[1] + labelSize[1] + HUD_CROSSHAIR_SIZE + 2.0f > h - BORDER_BOTTOM)
 				pos[1] = -(labelSize[1] + HUD_CROSSHAIR_SIZE + 2.0f);
-				break;
-			}
-
-			pos[0] = Clamp(pos[0] + indicator.pos.x, BORDER, w - BORDER - labelSize[0]);
-			pos[1] = Clamp(pos[1] + indicator.pos.y, BORDER, h - BORDER_BOTTOM - labelSize[1]);
-			MoveChild(indicator.label, pos[0], pos[1]);
-			indicator.label->Show();
-		} else {
-			indicator.label->Hide();
+			else
+				pos[1] = HUD_CROSSHAIR_SIZE + 2.0f;
+			break;
+		case INDICATOR_TOP:
+			pos[0] = -(labelSize[0] / 2.0f);
+			pos[1] = HUD_CROSSHAIR_SIZE + 2.0f;
+			break;
+		case INDICATOR_LEFT:
+			pos[0] = HUD_CROSSHAIR_SIZE + 2.0f;
+			pos[1] = -(labelSize[1] / 2.0f);
+			break;
+		case INDICATOR_RIGHT:
+			pos[0] = -(labelSize[0] + HUD_CROSSHAIR_SIZE + 2.0f);
+			pos[1] = -(labelSize[1] / 2.0f);
+			break;
+		case INDICATOR_BOTTOM:
+			pos[0] = -(labelSize[0] / 2.0f);
+			pos[1] = -(labelSize[1] + HUD_CROSSHAIR_SIZE + 2.0f);
+			break;
 		}
+
+		pos[0] = Clamp(pos[0] + indicator.pos.x, BORDER, w - BORDER - labelSize[0]);
+		pos[1] = Clamp(pos[1] + indicator.pos.y, BORDER, h - BORDER_BOTTOM - labelSize[1]);
 	}
 }
 
@@ -646,42 +548,6 @@ void WorldView::HideIndicator(Indicator &indicator)
 {
 	indicator.side = INDICATOR_HIDDEN;
 	indicator.pos = vector2f(0.0f, 0.0f);
-	if (indicator.label)
-		indicator.label->Hide();
-}
-
-void WorldView::SeparateLabels(Gui::Label *a, Gui::Label *b)
-{
-	float posa[2], posb[2], sizea[2], sizeb[2];
-	GetChildPosition(a, posa);
-	a->GetSize(sizea);
-	sizea[0] *= 0.5f;
-	sizea[1] *= 0.5f;
-	posa[0] += sizea[0];
-	posa[1] += sizea[1];
-	GetChildPosition(b, posb);
-	b->GetSize(sizeb);
-	sizeb[0] *= 0.5f;
-	sizeb[1] *= 0.5f;
-	posb[0] += sizeb[0];
-	posb[1] += sizeb[1];
-
-	float overlapX = sizea[0] + sizeb[0] - fabs(posa[0] - posb[0]);
-	float overlapY = sizea[1] + sizeb[1] - fabs(posa[1] - posb[1]);
-
-	if (overlapX > 0.0f && overlapY > 0.0f) {
-		if (overlapX <= 4.0f) {
-			// small horizontal overlap; bump horizontally
-			if (posa[0] > posb[0]) overlapX *= -1.0f;
-			MoveChild(a, posa[0] - overlapX * 0.5f - sizea[0], posa[1] - sizea[1]);
-			MoveChild(b, posb[0] + overlapX * 0.5f - sizeb[0], posb[1] - sizeb[1]);
-		} else {
-			// large horizonal overlap; bump vertically
-			if (posa[1] > posb[1]) overlapY *= -1.0f;
-			MoveChild(a, posa[0] - sizea[0], posa[1] - overlapY * 0.5f - sizea[1]);
-			MoveChild(b, posb[0] - sizeb[0], posb[1] + overlapY * 0.5f - sizeb[1]);
-		}
-	}
 }
 
 double getSquareDistance(double initialDist, double scalingFactor, int num)
@@ -706,17 +572,114 @@ void WorldView::Draw()
 	// don't draw crosshairs etc in hyperspace
 	if (GameLocator::getGame()->GetPlayer()->GetFlightState() == Ship::HYPERSPACE) return;
 
-	// glLineWidth(2.0f);
-
-	// glLineWidth(1.0f);
-
-	// glLineWidth(2.0f);
-
 	// combat target indicator
 	DrawCombatTargetIndicator(m_combatTargetIndicator, m_targetLeadIndicator, red);
 
 	// glLineWidth(1.0f);
 	RendererLocator::getRenderer()->CheckRenderErrors(__FUNCTION__, __LINE__);
+}
+
+void WorldView::DrawUI(const float frameTime)
+{
+	if (Pi::IsConsoleActive()) return;
+#if WITH_DEVKEYS
+	if (Pi::showDebugInfo) {
+		std::ostringstream ss;
+
+		if (GameLocator::getGame()->GetPlayer()->GetFlightState() != Ship::HYPERSPACE) {
+			vector3d pos = GameLocator::getGame()->GetPlayer()->GetPosition();
+			vector3d abs_pos = GameLocator::getGame()->GetPlayer()->GetPositionRelTo(Frame::GetRootFrameId());
+
+			const Frame *playerFrame = Frame::GetFrame(GameLocator::getGame()->GetPlayer()->GetFrame());
+
+			ss << stringf("Pos: %0{f.2}, %1{f.2}, %2{f.2}\n", pos.x, pos.y, pos.z);
+			ss << stringf("AbsPos: %0{f.2}, %1{f.2}, %2{f.2}\n", abs_pos.x, abs_pos.y, abs_pos.z);
+
+			const SystemPath &path(playerFrame->GetSystemBody()->GetPath());
+			ss << stringf("Rel-to: %0 [%1{d},%2{d},%3{d},%4{u},%5{u}] ",
+				playerFrame->GetLabel(),
+				path.sectorX, path.sectorY, path.sectorZ, path.systemIndex, path.bodyIndex);
+			ss << stringf("(%0{f.2} km), rotating: %1, has rotation: %2\n",
+				pos.Length() / 1000, (playerFrame->IsRotFrame() ? "yes" : "no"), (playerFrame->HasRotFrame() ? "yes" : "no"));
+
+			//Calculate lat/lon for ship position
+			const vector3d dir = pos.NormalizedSafe();
+			const float lat = RAD2DEG(asin(dir.y));
+			const float lon = RAD2DEG(atan2(dir.x, dir.z));
+
+			ss << stringf("Lat / Lon: %0{f.8} / %1{f.8}\n", lat, lon);
+		}
+
+		char aibuf[256];
+		GameLocator::getGame()->GetPlayer()->AIGetStatusText(aibuf);
+		aibuf[255] = 0;
+		ss << aibuf << std::endl;
+
+		Sint32 viewport[4];
+		RendererLocator::getRenderer()->GetCurrentViewport(&viewport[0]);
+		ImVec2 pos(0.0, 0.5);
+		pos.x = pos.x * viewport[2] + viewport[0];
+		pos.y = pos.y * viewport[3] + viewport[1];
+		pos.y = RendererLocator::getRenderer()->GetWindowHeight() - pos.y;
+
+		ImVec2 size = ImGui::CalcTextSize(ss.str().c_str());
+		ImGuiStyle& style = ImGui::GetStyle();
+		size.x += style.WindowPadding.x * 2;
+		size.y += style.WindowPadding.y * 2;
+
+		pos.y -= size.y / 2.0;
+		ImGui::SetNextWindowBgAlpha(0.7f);
+		ImGui::Begin("dbg", nullptr, ImGuiWindowFlags_NoTitleBar
+					| ImGuiWindowFlags_NoResize
+					| ImGuiWindowFlags_NoMove
+					| ImGuiWindowFlags_NoScrollbar
+					| ImGuiWindowFlags_NoCollapse
+					| ImGuiWindowFlags_NoSavedSettings
+					| ImGuiWindowFlags_NoFocusOnAppearing
+					| ImGuiWindowFlags_NoBringToFrontOnFocus
+					);
+		ImGui::SetWindowPos(pos);
+		ImGui::SetWindowSize(size);
+		ImVec4 color(1.0f, 1.0f, 1.0f, 1.0);
+		ImGui::PushStyleColor(ImGuiCol_Text, color);
+		ImGui::TextUnformatted(ss.str().c_str());
+		ImGui::PopStyleColor(1);
+		ImGui::End();
+	}
+#endif
+	if (!GameLocator::getGame()->IsPaused()) return;
+	Sint32 viewport[4];
+	RendererLocator::getRenderer()->GetCurrentViewport(&viewport[0]);
+	ImVec2 pos(0.5, 0.85);
+	pos.x = pos.x * viewport[2] + viewport[0];
+	pos.y = pos.y * viewport[3] + viewport[1];
+	pos.y = RendererLocator::getRenderer()->GetWindowHeight() - pos.y;
+
+	ImGuiStyle& style = ImGui::GetStyle();
+	ImGui::SetNextWindowBgAlpha(0.7f);
+	ImGui::Begin("pause", nullptr, ImGuiWindowFlags_NoTitleBar
+				| ImGuiWindowFlags_NoResize
+				| ImGuiWindowFlags_NoMove
+				| ImGuiWindowFlags_NoScrollbar
+				| ImGuiWindowFlags_NoCollapse
+				| ImGuiWindowFlags_NoSavedSettings
+				| ImGuiWindowFlags_NoFocusOnAppearing
+				| ImGuiWindowFlags_NoBringToFrontOnFocus
+				);
+	std::string label = Lang::PAUSED;
+	ImVec2 size = ImGui::CalcTextSize(label.c_str());
+	size.x += style.WindowPadding.x * 2;
+	size.y += style.WindowPadding.y * 2;
+
+	pos.x -= size.x / 2.0; // ...and add something to make it depend on zoom
+	pos.y -= size.y / 2.0;
+	ImGui::SetWindowPos(pos);
+	ImGui::SetWindowSize(size);
+	ImVec4 color(1.0f, 0.5f, 0.5f, 1.0);
+	ImGui::PushStyleColor(ImGuiCol_Text, color);
+	ImGui::TextUnformatted(label.c_str());
+	ImGui::PopStyleColor(1);
+	ImGui::End();
 }
 
 void WorldView::DrawCombatTargetIndicator(const Indicator &target, const Indicator &lead, const Color &c)

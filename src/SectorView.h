@@ -21,12 +21,6 @@ namespace KeyBindings {
 	struct WheelBinding;
 }
 
-namespace Gui {
-	class Label;
-	class LabelSet;
-	class ToggleButton;
-}
-
 namespace Graphics {
 	class RenderState;
 }
@@ -39,8 +33,9 @@ public:
 	virtual ~SectorView();
 
 	virtual void Update(const float frameTime) override;
-	virtual void ShowAll();
 	virtual void Draw3D() override;
+	virtual void DrawUI(const float frameTime) override;
+
 	vector3f GetPosition() const { return m_pos; }
 	SystemPath GetCurrent() const { return m_current; }
 	SystemPath GetSelected() const { return m_selected; }
@@ -66,6 +61,8 @@ public:
 	void ZoomOut();
 	vector3f GetCenterSector();
 	double GetCenterDistance();
+	void SetShowFactionColor(bool value) { m_showFactionColor = value; m_rebuildFarSector = true; }
+	bool GetShowFactionColor() { return m_showFactionColor; }
 	void SetDrawUninhabitedLabels(bool value) { m_drawUninhabitedLabels = value; }
 	bool GetDrawUninhabitedLabels() { return m_drawUninhabitedLabels; }
 	void SetDrawVerticalLines(bool value) { m_drawVerticalLines = value; }
@@ -97,30 +94,25 @@ private:
 	void InitDefaults();
 	void InitObject(unsigned int cacheRadius);
 
-	struct DistanceIndicator {
-		Gui::Label *label;
-		Graphics::Drawables::Line3D *line;
-		Color okayColor;
-		Color unsuffFuelColor;
-		Color outOfRangeColor;
-	};
-
-	struct SystemLabels {
-		Gui::Label *systemName;
-		Gui::Label *sector;
-		DistanceIndicator distance;
-		Gui::Label *starType;
-		Gui::Label *shortDesc;
-	};
-
+	void PrepareLegs(const matrix4x4f &trans, const vector3f &pos, int z_diff);
+	void PrepareGrid(const matrix4x4f &trans, int radius);
 	void DrawNearSectors(const matrix4x4f &modelview);
 	void DrawNearSector(const int sx, const int sy, const int sz, const vector3f &playerAbsPos, const matrix4x4f &trans);
-	void PutSystemLabels(RefCountedPtr<Sector> sec, const vector3f &origin, int drawRadius);
 
 	void DrawFarSectors(const matrix4x4f &modelview);
 	void BuildFarSector(RefCountedPtr<Sector> sec, const vector3f &origin, std::vector<vector3f> &points, std::vector<Color> &colors);
-	void PutFactionLabels(const vector3f &secPos);
 	void AddStarBillboard(const matrix4x4f &modelview, const vector3f &pos, const Color &col, float size);
+
+	typedef std::pair<const Sector::System *,vector3d> t_systemAndPos;
+	typedef std::vector<t_systemAndPos> t_systemsAndPosVector;
+
+	void PutDiamonds(const t_systemsAndPosVector &homeworlds);
+
+	void CollectSystems(RefCountedPtr<Sector> sec, const vector3f &origin, int drawRadius, SectorView::t_systemsAndPosVector &systems);
+
+	t_systemsAndPosVector CollectHomeworlds(const vector3f &origin);
+
+	t_systemsAndPosVector m_systems;
 
 	void OnClickSystem(const SystemPath &path);
 
@@ -134,6 +126,7 @@ private:
 	RefCountedPtr<Galaxy> m_galaxy;
 
 	bool m_inSystem;
+	bool m_farMode;
 
 	SystemPath m_current;
 	SystemPath m_selected;
@@ -151,9 +144,9 @@ private:
 	float m_zoomMovingTo;
 
 	SystemPath m_hyperspaceTarget;
+	bool m_showFactionColor;
 	bool m_matchTargetToSelection;
 	bool m_automaticSystemSelection;
-
 	bool m_drawUninhabitedLabels;
 	bool m_drawOutRangeLabels;
 	bool m_drawVerticalLines;
@@ -162,14 +155,8 @@ private:
 
 	std::unique_ptr<Graphics::Drawables::Disk> m_disk;
 
-	Gui::LabelSet *m_clickableLabels;
-
 	std::set<const Faction *> m_visibleFactions;
 	std::set<const Faction *> m_hiddenFactions;
-
-	Uint8 m_detailBoxVisible;
-
-	void OnToggleFaction(Gui::ToggleButton *button, bool pressed, const Faction *faction);
 
 	sigc::connection m_onMouseWheelCon;
 	sigc::connection m_mapLockHyperspaceTargetCon;
@@ -219,7 +206,7 @@ private:
 	// HyperJump Route Planner Stuff
 	std::vector<SystemPath> m_route;
 	bool m_drawRouteLines;
-	void DrawRouteLines(const vector3f &playerAbsPos, const matrix4x4f &trans);
+	void PrepareRouteLines(const vector3f &playerAbsPos, const matrix4x4f &trans);
 
 	Graphics::RenderState *m_solidState;
 	Graphics::RenderState *m_alphaBlendState;
@@ -232,7 +219,7 @@ private:
 
 	vector3f m_secPosFar;
 	int m_radiusFar;
-	bool m_toggledFaction;
+	bool m_rebuildFarSector;
 
 	int m_cacheXMin;
 	int m_cacheXMax;
@@ -241,8 +228,8 @@ private:
 	int m_cacheZMin;
 	int m_cacheZMax;
 
-	std::unique_ptr<Graphics::VertexArray> m_lineVerts;
-	std::unique_ptr<Graphics::VertexArray> m_secLineVerts;
+	std::unique_ptr<Graphics::VertexArray> m_lineVerts; // used for "legs"
+	std::unique_ptr<Graphics::VertexArray> m_secLineVerts; // used for grid and route lines
 	RefCountedPtr<Graphics::Material> m_fresnelMat;
 	std::unique_ptr<Graphics::Drawables::Sphere3D> m_jumpSphere;
 	std::unique_ptr<Graphics::VertexArray> m_starVerts;

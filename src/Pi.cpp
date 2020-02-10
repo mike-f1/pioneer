@@ -112,14 +112,14 @@
 #define _pclose pclose
 #endif
 
-float Pi::gameTickAlpha;
-std::unique_ptr<LuaNameGen> Pi::luaNameGen;
+float Pi::m_gameTickAlpha;
+std::unique_ptr<LuaNameGen> Pi::m_luaNameGen;
 #ifdef ENABLE_SERVER_AGENT
 ServerAgent *Pi::serverAgent;
 #endif
 Input Pi::input;
-std::unique_ptr<LuaConsole> Pi::luaConsole;
-float Pi::frameTime;
+std::unique_ptr<LuaConsole> Pi::m_luaConsole;
+float Pi::m_frameTime;
 bool Pi::doingMouseGrab;
 #if WITH_DEVKEYS
 bool Pi::showDebugInfo = false;
@@ -129,15 +129,13 @@ std::string Pi::profilerPath;
 bool Pi::doProfileSlow = false;
 bool Pi::doProfileOne = false;
 #endif
-int Pi::statSceneTris = 0;
-int Pi::statNumPatches = 0;
 RefCountedPtr<UI::Context> Pi::ui;
 RefCountedPtr<PiGui> Pi::pigui;
 std::unique_ptr<Cutscene> Pi::m_cutscene;
-Graphics::RenderTarget *Pi::renderTarget;
-RefCountedPtr<Graphics::Texture> Pi::renderTexture;
-std::unique_ptr<Graphics::Drawables::TexturedQuad> Pi::renderQuad;
-Graphics::RenderState *Pi::quadRenderState = nullptr;
+Graphics::RenderTarget *Pi::m_renderTarget;
+RefCountedPtr<Graphics::Texture> Pi::m_renderTexture;
+std::unique_ptr<Graphics::Drawables::TexturedQuad> Pi::m_renderQuad;
+Graphics::RenderState *Pi::m_quadRenderState = nullptr;
 std::vector<Pi::InternalRequests> Pi::internalRequests;
 bool Pi::isRecordingVideo = false;
 FILE *Pi::ffmpegFile = nullptr;
@@ -154,7 +152,6 @@ std::unique_ptr<SyncJobQueue> Pi::syncJobQueue;
 JobQueue *Pi::GetAsyncJobQueue() { return asyncJobQueue.get(); }
 // static
 JobQueue *Pi::GetSyncJobQueue() { return syncJobQueue.get(); }
-
 
 //static
 void Pi::CreateRenderTarget(const Uint16 width, const Uint16 height)
@@ -173,17 +170,17 @@ void Pi::CreateRenderTarget(const Uint16 width, const Uint16 height)
 	rsd.depthTest = false;
 	rsd.depthWrite = false;
 	rsd.blendMode = Graphics::BLEND_SOLID;
-	quadRenderState = RendererLocator::getRenderer()->CreateRenderState(rsd);
+	m_quadRenderState = RendererLocator::getRenderer()->CreateRenderState(rsd);
 
 	Graphics::TextureDescriptor texDesc(
 		Graphics::TEXTURE_RGBA_8888,
 		vector2f(width, height),
 		Graphics::LINEAR_CLAMP, false, false, 0);
-	Pi::renderTexture.Reset(RendererLocator::getRenderer()->CreateTexture(texDesc));
-	Pi::renderQuad.reset(new Graphics::Drawables::TexturedQuad(
-		RendererLocator::getRenderer(), Pi::renderTexture.Get(),
+	m_renderTexture.Reset(RendererLocator::getRenderer()->CreateTexture(texDesc));
+	m_renderQuad.reset(new Graphics::Drawables::TexturedQuad(
+		RendererLocator::getRenderer(), m_renderTexture.Get(),
 		vector2f(0.0f, 0.0f), vector2f(float(Graphics::GetScreenWidth()), float(Graphics::GetScreenHeight())),
-		quadRenderState));
+		m_quadRenderState));
 
 	// Complete the RT description so we can request a buffer.
 	// NB: we don't want it to create use a texture because we share it with the textured quad created above.
@@ -193,9 +190,9 @@ void Pi::CreateRenderTarget(const Uint16 width, const Uint16 height)
 		Graphics::TEXTURE_NONE, // don't create a texture
 		Graphics::TEXTURE_DEPTH,
 		false);
-	Pi::renderTarget = RendererLocator::getRenderer()->CreateRenderTarget(rtDesc);
+	m_renderTarget = RendererLocator::getRenderer()->CreateRenderTarget(rtDesc);
 
-	Pi::renderTarget->SetColorTexture(Pi::renderTexture.Get());
+	m_renderTarget->SetColorTexture(m_renderTexture.Get());
 #endif
 }
 
@@ -216,7 +213,7 @@ void Pi::DrawRenderTarget()
 		RendererLocator::getRenderer()->LoadIdentity();
 	}
 
-	Pi::renderQuad->Draw(RendererLocator::getRenderer());
+	m_renderQuad->Draw(RendererLocator::getRenderer());
 
 	{
 		RendererLocator::getRenderer()->SetMatrixMode(Graphics::MatrixMode::PROJECTION);
@@ -233,7 +230,7 @@ void Pi::DrawRenderTarget()
 void Pi::BeginRenderTarget()
 {
 #if USE_RTT
-	RendererLocator::getRenderer()->SetRenderTarget(Pi::renderTarget);
+	RendererLocator::getRenderer()->SetRenderTarget(m_renderTarget);
 	RendererLocator::getRenderer()->ClearScreen();
 #endif
 }
@@ -309,12 +306,12 @@ static void LuaInit()
 	pi_lua_import_recursive(l, "pigui/views");
 	pi_lua_import_recursive(l, "modules");
 
-	Pi::luaNameGen.reset(new LuaNameGen());
+	Pi::m_luaNameGen.reset(new LuaNameGen());
 }
 
 static void LuaUninit()
 {
-	Pi::luaNameGen.reset();
+	Pi::m_luaNameGen.reset();
 
 	Lua::Uninit();
 }
@@ -646,8 +643,8 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 	}
 #endif
 
-	luaConsole.reset(new LuaConsole());
-	KeyBindings::toggleLuaConsole.onPress.connect(sigc::mem_fun(Pi::luaConsole.get(), &LuaConsole::Toggle));
+	m_luaConsole.reset(new LuaConsole());
+	KeyBindings::toggleLuaConsole.onPress.connect(sigc::mem_fun(m_luaConsole.get(), &LuaConsole::Toggle));
 
 	draw_progress(1.0f);
 
@@ -660,7 +657,7 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 
 bool Pi::IsConsoleActive()
 {
-	return luaConsole && luaConsole->IsActive();
+	return m_luaConsole && m_luaConsole->IsActive();
 }
 
 void Pi::Quit()
@@ -700,9 +697,9 @@ void Pi::OnChangeDetailLevel()
 	BaseSphere::OnChangeDetailLevel(GameConfSingleton::getDetail().planets);
 }
 
-void Pi::HandleEscKey()
+bool Pi::HandleEscKey()
 {
-	if (!InGameViewsLocator::getInGameViews()) return;
+	if (!InGameViewsLocator::getInGameViews()) return false;
 
 	switch (InGameViewsLocator::getInGameViews()->GetViewType()) {
 	case ViewType::OBJECT:
@@ -713,9 +710,10 @@ void Pi::HandleEscKey()
 	case ViewType::SYSTEMINFO:
 	case ViewType::SYSTEM: InGameViewsLocator::getInGameViews()->SetView(ViewType::SECTOR); break;
 	case ViewType::NONE:
-	case ViewType::WORLD:
-	case ViewType::DEATH: return;
+	case ViewType::DEATH: break;
+	case ViewType::WORLD: return true;
 	};
+	return false;
 }
 
 static void DebugSpawnShip(Ship *ship)
@@ -737,13 +735,6 @@ static void DebugSpawnShip(Ship *ship)
 
 void Pi::HandleKeyDown(const SDL_Keysym &key)
 {
-	if (key.sym == SDLK_ESCAPE) {
-		if (GameLocator::getGame()) {
-			// only accessible once game started
-			HandleEscKey();
-		}
-		return;
-	}
 	const bool CTRL = input.KeyState(SDLK_LCTRL) || input.KeyState(SDLK_RCTRL);
 
 	if (!CTRL) return;
@@ -916,6 +907,10 @@ void Pi::HandleEvents()
 			Pi::RequestQuit();
 		}
 
+		if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE) {
+			if (!HandleEscKey()) continue;
+		}
+
 		Pi::pigui->ProcessEvent(&event);
 
 		if (Pi::pigui->WantCaptureMouse()) {
@@ -1058,7 +1053,7 @@ void Pi::StartGame()
 #ifndef REMOTE_LUA_REPL_PORT
 #define REMOTE_LUA_REPL_PORT 12345
 #endif
-	luaConsole->OpenTCPDebugConnection(REMOTE_LUA_REPL_PORT);
+	m_luaConsole->OpenTCPDebugConnection(REMOTE_LUA_REPL_PORT);
 #endif
 
 	// fire event before the first frame
@@ -1083,12 +1078,12 @@ void Pi::Start(const SystemPath &startPath)
 	Uint32 last_time = SDL_GetTicks();
 
 	while (1) {
-		frameTime = 0.001f * (SDL_GetTicks() - last_time);
+		m_frameTime = 0.001f * (SDL_GetTicks() - last_time);
 		last_time = SDL_GetTicks();
 
 		switch (m_mainState) {
 		case MainState::MAIN_MENU:
-			CutSceneLoop(frameTime, m_cutscene.get());
+			CutSceneLoop(m_frameTime, m_cutscene.get());
 			if (GameLocator::getGame() != nullptr) {
 				m_mainState = MainState::TO_GAME_START;
 			}
@@ -1119,8 +1114,8 @@ void Pi::Start(const SystemPath &startPath)
 			m_mainState = MainState::TOMBSTONE;
 		break;
 		case MainState::TOMBSTONE:
-			time += frameTime;
-			CutSceneLoop(frameTime, m_cutscene.get());
+			time += m_frameTime;
+			CutSceneLoop(m_frameTime, m_cutscene.get());
 			if ((time > 2.0) && ((input.MouseButtonState(SDL_BUTTON_LEFT)) || input.KeyState(SDLK_SPACE))) {
 				m_cutscene.reset();
 				m_mainState = MainState::TO_MAIN_MENU;
@@ -1179,7 +1174,7 @@ void Pi::MainLoop()
 
 	double currentTime = 0.001 * double(SDL_GetTicks());
 	double accumulator = GameLocator::getGame()->GetTimeStep();
-	Pi::gameTickAlpha = 0;
+	m_gameTickAlpha = 0;
 
 #ifdef PIONEER_PROFILER
 	Profiler::reset();
@@ -1194,10 +1189,10 @@ void Pi::MainLoop()
 
 		const Uint32 newTicks = SDL_GetTicks();
 		double newTime = 0.001 * double(newTicks);
-		Pi::frameTime = newTime - currentTime;
-		if (Pi::frameTime > 0.25) Pi::frameTime = 0.25;
+		m_frameTime = newTime - currentTime;
+		if (m_frameTime > 0.25) m_frameTime = 0.25;
 		currentTime = newTime;
-		accumulator += Pi::frameTime * GameLocator::getGame()->GetTimeAccelRate();
+		accumulator += m_frameTime * GameLocator::getGame()->GetTimeAccelRate();
 
 		const float step = GameLocator::getGame()->GetTimeStep();
 		if (step > 0.0f) {
@@ -1218,9 +1213,9 @@ void Pi::MainLoop()
 			// rendering interpolation between frames: don't use when docked
 			int pstate = GameLocator::getGame()->GetPlayer()->GetFlightState();
 			if (pstate == Ship::DOCKED || pstate == Ship::DOCKING || pstate == Ship::UNDOCKING)
-				Pi::gameTickAlpha = 1.0;
+				m_gameTickAlpha = 1.0;
 			else
-				Pi::gameTickAlpha = accumulator / step;
+				m_gameTickAlpha = accumulator / step;
 
 #if WITH_DEVKEYS
 			phys_stat += phys_ticks;
@@ -1263,7 +1258,7 @@ void Pi::MainLoop()
 
 		Frame::GetRootFrame()->UpdateInterpTransform(Pi::GetGameTickAlpha());
 
-		InGameViewsLocator::getInGameViews()->UpdateView(frameTime);
+		InGameViewsLocator::getInGameViews()->UpdateView(m_frameTime);
 		InGameViewsLocator::getInGameViews()->Draw3DView();
 
 		// hide cursor for ship control. Do this before imgui runs, to prevent the mouse pointer from jumping
@@ -1275,12 +1270,13 @@ void Pi::MainLoop()
 		Pi::HandleEvents();
 
 #ifdef REMOTE_LUA_REPL
-		Pi::luaConsole->HandleTCPDebugConnections();
+		m_luaConsole->HandleTCPDebugConnections();
 #endif
 
 		RendererLocator::getRenderer()->EndFrame();
 
 		RendererLocator::getRenderer()->ClearDepthBuffer();
+
 		if (InGameViewsLocator::getInGameViews()->DrawGui()) {
 			Gui::Draw();
 		}
@@ -1301,7 +1297,10 @@ void Pi::MainLoop()
 			// requires it and is exposed to pigui.
 			InGameViewsLocator::getInGameViews()->GetWorldView()->BeginCameraFrame();
 			PiGui::NewFrame(RendererLocator::getRenderer()->GetSDLWindow(), InGameViewsLocator::getInGameViews()->DrawGui());
-			DrawPiGui(Pi::frameTime, "GAME");
+
+			InGameViewsLocator::getInGameViews()->DrawUI(m_frameTime);
+
+			DrawPiGui(m_frameTime, "GAME");
 			InGameViewsLocator::getInGameViews()->GetWorldView()->EndCameraFrame();
 		}
 
@@ -1366,6 +1365,7 @@ void Pi::MainLoop()
 			const Uint32 numDrawStars = stats.m_stats[Graphics::Stats::STAT_STARS];
 			const Uint32 numDrawShips = stats.m_stats[Graphics::Stats::STAT_SHIPS];
 			const Uint32 numDrawBillBoards = stats.m_stats[Graphics::Stats::STAT_BILLBOARD];
+			const Uint32 numDrawPatchesTris = stats.m_stats[Graphics::Stats::STAT_PATCHES_TRIS];
 			snprintf(
 				fps_readout, sizeof(fps_readout),
 				"%d fps (%.1f ms/f), %d phys updates, %d triangles, %.3f M tris/sec, %d glyphs/sec, %d patches/frame\n"
@@ -1374,8 +1374,8 @@ void Pi::MainLoop()
 				"Buildings (%u), Cities (%u), GroundStations (%u), SpaceStations (%u), Atmospheres (%u)\n"
 				"Patches (%u), Planets (%u), GasGiants (%u), Stars (%u), Ships (%u)\n"
 				"Buffers Created(%u)\n",
-				frame_stat, (1000.0 / frame_stat), phys_stat, Pi::statSceneTris, Pi::statSceneTris * frame_stat * 1e-6,
-				Text::TextureFont::GetGlyphCount(), Pi::statNumPatches,
+				frame_stat, (1000.0 / frame_stat), phys_stat, numDrawPatchesTris, numDrawPatchesTris * frame_stat * 1e-6,
+				Text::TextureFont::GetGlyphCount(), numDrawPatches,
 				lua_memMB, lua_memKB, lua_memB, lua_gettop(Lua::manager->GetLuaState()),
 				numDrawCalls, numDrawTris, numDrawPointSprites, numDrawBillBoards,
 				numDrawBuildings, numDrawCities, numDrawGroundStations, numDrawSpaceStations, numDrawAtmospheres,
@@ -1388,8 +1388,6 @@ void Pi::MainLoop()
 			else
 				last_stats += 1000;
 		}
-		Pi::statSceneTris = 0;
-		Pi::statNumPatches = 0;
 
 #endif // WITH_DEVKEYS
 #ifdef PIONEER_PROFILER

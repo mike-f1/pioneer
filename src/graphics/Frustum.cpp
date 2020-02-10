@@ -13,8 +13,6 @@ namespace Graphics {
 	// step for translating to frustum space
 	static const double TRANSLATE_STEP = 0.25;
 
-	Frustum::Frustum() {}
-
 	Frustum::Frustum(float width, float height, float fovAng, float znear, float zfar)
 	{
 		//http://www.opengl.org/resources/faq/technical/transformations.htm

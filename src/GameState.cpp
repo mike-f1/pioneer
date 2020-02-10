@@ -17,7 +17,7 @@
 #include "galaxy/StarSystem.h"
 #include "utils.h"
 
-static const int s_saveVersion = 88;
+static const int s_saveVersion = 89;
 
 void GameState::MakeNewGame(const SystemPath &path,
 		const double startDateTime,

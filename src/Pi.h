@@ -51,8 +51,8 @@ public:
 	static void MainLoop();
 	static void CutSceneLoop(double step, Cutscene *cutscene);
 	static void OnChangeDetailLevel();
-	static float GetFrameTime() { return frameTime; }
-	static float GetGameTickAlpha() { return gameTickAlpha; }
+	static float GetFrameTime() { return m_frameTime; }
+	static float GetGameTickAlpha() { return m_gameTickAlpha; }
 
 	static bool IsConsoleActive();
 
@@ -64,7 +64,7 @@ public:
 	static void BeginRenderTarget();
 	static void EndRenderTarget();
 
-	static std::unique_ptr<LuaNameGen> luaNameGen;
+	static std::unique_ptr<LuaNameGen> m_luaNameGen;
 
 #if ENABLE_SERVER_AGENT
 	static ServerAgent *serverAgent;
@@ -72,9 +72,6 @@ public:
 
 	static RefCountedPtr<UI::Context> ui;
 	static RefCountedPtr<PiGui> pigui;
-
-	static int statSceneTris;
-	static int statNumPatches;
 
 	static void DrawPiGui(double delta, std::string handler);
 
@@ -88,7 +85,7 @@ public:
 #endif
 
 	static Input input;
-	static std::unique_ptr<LuaConsole> luaConsole;
+	static std::unique_ptr<LuaConsole> m_luaConsole;
 
 	static JobQueue *GetAsyncJobQueue();
 	static JobQueue *GetSyncJobQueue();
@@ -113,7 +110,11 @@ private:
 	static void HandleKeyDown(const SDL_Keysym &key);
 	static void HandleEvents();
 	static void HandleRequests();
-	static void HandleEscKey();
+	// Return true if there'a a need of further checks
+	// (basically it should return true if a windows (as settings)
+	// needs to be displayed, thus the event should be passed to
+	// PiGui...
+	static bool HandleEscKey();
 
 	// private members
 	static std::vector<InternalRequests> internalRequests;
@@ -121,21 +122,19 @@ private:
 	static std::unique_ptr<AsyncJobQueue> asyncJobQueue;
 	static std::unique_ptr<SyncJobQueue> syncJobQueue;
 
-	static bool menuDone;
-
 	/** So, the game physics rate (50Hz) can run slower
-	  * than the frame rate. gameTickAlpha is the interpolation
+	  * than the frame rate. m_gameTickAlpha is the interpolation
 	  * factor between one physics tick and another [0.0-1.0]
 	  */
-	static float gameTickAlpha;
-	static float frameTime;
+	static float m_gameTickAlpha;
+	static float m_frameTime;
 
 	static std::unique_ptr<Cutscene> m_cutscene;
 
-	static Graphics::RenderTarget *renderTarget;
-	static RefCountedPtr<Graphics::Texture> renderTexture;
-	static std::unique_ptr<Graphics::Drawables::TexturedQuad> renderQuad;
-	static Graphics::RenderState *quadRenderState;
+	static Graphics::RenderTarget *m_renderTarget;
+	static RefCountedPtr<Graphics::Texture> m_renderTexture;
+	static std::unique_ptr<Graphics::Drawables::TexturedQuad> m_renderQuad;
+	static Graphics::RenderState *m_quadRenderState;
 
 	static bool doingMouseGrab;
 

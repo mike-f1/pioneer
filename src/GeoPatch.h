@@ -48,8 +48,6 @@ public:
 		m_needUpdateVBOs = (nullptr != m_heights);
 	}
 
-	void UpdateVBOs();
-
 	int GetChildIdx(const GeoPatch *child) const
 	{
 		for (int i = 0; i < NUM_KIDS; i++) {
@@ -88,6 +86,8 @@ public:
 
 	inline bool HasHeightData() const { return (m_heights.get() != nullptr); }
 private:
+	void UpdateVBOs();
+
 	static const int NUM_KIDS = 4;
 
 	RefCountedPtr<GeoPatchContext> m_ctx;
@@ -108,6 +108,7 @@ private:
 	const GeoPatchID m_PatchID;
 	Job::Handle m_job;
 	bool m_HasJobRequest;
+
 #ifdef DEBUG_BOUNDING_SPHERES
 	std::unique_ptr<Graphics::Drawables::Sphere3D> m_boundsphere;
 #endif

@@ -8,6 +8,7 @@
 #include <SDL_stdinc.h>
 
 #include "JobQueue.h"
+#include "galaxy/SystemPath.h"
 #include "graphics/opengl/GenGasGiantColourMaterial.h"
 #include "terrain/Terrain.h"
 #include "vector3.h"

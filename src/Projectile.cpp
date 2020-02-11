@@ -18,7 +18,6 @@
 #include "SpawnTastyStuff.h"
 #include "collider/CollisionContact.h"
 #include "collider/CollisionSpace.h"
-#include "graphics/Graphics.h"
 #include "graphics/Material.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"

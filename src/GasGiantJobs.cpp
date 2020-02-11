@@ -6,7 +6,6 @@
 #include "GasGiant.h"
 #include "RefCounted.h"
 #include "graphics/Frustum.h"
-#include "graphics/Graphics.h"
 #include "graphics/Material.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
@@ -15,9 +14,7 @@
 #include "graphics/Types.h"
 #include "graphics/VertexArray.h"
 #include "graphics/VertexBuffer.h"
-#include "graphics/opengl/GenGasGiantColourMaterial.h"
 #include "perlin.h"
-#include "vcacheopt/vcacheopt.h"
 #include <algorithm>
 #include <deque>
 

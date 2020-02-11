@@ -10,7 +10,6 @@
 #include "RefCounted.h"
 #include "galaxy/AtmosphereParameters.h"
 #include "graphics/Frustum.h"
-#include "graphics/Graphics.h"
 #include "graphics/Material.h"
 #include "graphics/RenderState.h"
 #include "graphics/Renderer.h"
@@ -19,7 +18,6 @@
 #include "graphics/TextureBuilder.h"
 #include "graphics/VertexArray.h"
 #include "perlin.h"
-#include "vcacheopt/vcacheopt.h"
 #include <algorithm>
 #include <deque>
 
@@ -119,6 +117,11 @@ bool GeoSphere::OnAddSingleSplitResult(const SystemPath &path, SSingleSplitResul
 		delete res;
 	}
 	return false;
+}
+
+double GeoSphere::GetMaxFeatureHeight() const
+{
+	return m_terrain->GetMaxHeight();
 }
 
 void GeoSphere::Reset()
@@ -318,6 +321,11 @@ void GeoSphere::CalculateMaxPatchDepth()
 	}
 }
 
+vector3d GeoSphere::GetColor(const vector3d &p, double height, const vector3d &norm) const
+{
+	return m_terrain->GetColor(p, height, norm);
+}
+
 void GeoSphere::Update()
 {
 	switch (m_initStage) {
@@ -453,6 +461,22 @@ void GeoSphere::Render(const matrix4x4d &modelView, vector3d campos, const float
 	RendererLocator::getRenderer()->SetAmbientColor(oldAmbient);
 
 	RendererLocator::getRenderer()->GetStats().AddToStatCount(Graphics::Stats::STAT_PLANETS, 1);
+}
+
+double GeoSphere::GetHeight(const vector3d &p) const
+{
+	const double h = m_terrain->GetHeight(p);
+#ifdef DEBUG
+	// XXX don't remove this. Fix your fractals instead
+	// Fractals absolutely MUST return heights >= 0.0 (one planet radius)
+	// otherwise atmosphere and other things break.
+	if (h < 0.0) {
+		Output("GetHeight({ %f, %f, %f }) returned %f\n", p.x, p.y, p.z, h);
+		m_terrain->DebugDump();
+		assert(h >= 0.0);
+	}
+#endif /* DEBUG */
+	return h;
 }
 
 void GeoSphere::SetUpMaterials()

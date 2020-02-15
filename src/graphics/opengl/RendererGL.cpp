@@ -930,49 +930,49 @@ namespace Graphics {
 		// Create the material. It will be also used to create the shader,
 		// like a tiny factory
 		switch (desc.effect) {
-		case EFFECT_VTXCOLOR:
+		case EffectType::VTXCOLOR:
 			mat = new OGL::VtxColorMaterial();
 			break;
-		case EFFECT_UI:
+		case EffectType::UI:
 			mat = new OGL::UIMaterial();
 			break;
-		case EFFECT_PLANETRING:
+		case EffectType::PLANETRING:
 			mat = new OGL::RingMaterial();
 			break;
-		case EFFECT_STARFIELD:
+		case EffectType::STARFIELD:
 			mat = new OGL::StarfieldMaterial();
 			break;
-		case EFFECT_GEOSPHERE_TERRAIN:
-		case EFFECT_GEOSPHERE_TERRAIN_WITH_LAVA:
-		case EFFECT_GEOSPHERE_TERRAIN_WITH_WATER:
+		case EffectType::GEOSPHERE_TERRAIN:
+		case EffectType::GEOSPHERE_TERRAIN_WITH_LAVA:
+		case EffectType::GEOSPHERE_TERRAIN_WITH_WATER:
 			mat = new OGL::GeoSphereSurfaceMaterial();
 			break;
-		case EFFECT_GEOSPHERE_SKY:
+		case EffectType::GEOSPHERE_SKY:
 			mat = new OGL::GeoSphereSkyMaterial();
 			break;
-		case EFFECT_GEOSPHERE_STAR:
+		case EffectType::GEOSPHERE_STAR:
 			mat = new OGL::GeoSphereStarMaterial();
 			break;
-		case EFFECT_FRESNEL_SPHERE:
+		case EffectType::FRESNEL_SPHERE:
 			mat = new OGL::FresnelColourMaterial();
 			break;
-		case EFFECT_SHIELD:
+		case EffectType::SHIELD:
 			mat = new OGL::ShieldMaterial();
 			break;
-		case EFFECT_SKYBOX:
+		case EffectType::SKYBOX:
 			mat = new OGL::SkyboxMaterial();
 			break;
-		case EFFECT_SPHEREIMPOSTOR:
+		case EffectType::SPHEREIMPOSTOR:
 			mat = new OGL::SphereImpostorMaterial();
 			break;
-		case EFFECT_GASSPHERE_TERRAIN:
+		case EffectType::GASSPHERE_TERRAIN:
 			mat = new OGL::GasGiantSurfaceMaterial();
 			break;
-		case EFFECT_GEN_GASGIANT_TEXTURE:
+		case EffectType::GEN_GASGIANT_TEXTURE:
 			mat = new OGL::GenGasGiantColourMaterial();
 			break;
-		case EFFECT_BILLBOARD_ATLAS:
-		case EFFECT_BILLBOARD:
+		case EffectType::BILLBOARD_ATLAS:
+		case EffectType::BILLBOARD:
 			mat = new OGL::BillboardMaterial();
 			break;
 		default:

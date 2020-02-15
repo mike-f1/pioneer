@@ -76,7 +76,7 @@ namespace Graphics {
 
 		Program *GenGasGiantColourMaterial::CreateProgram(const MaterialDescriptor &desc)
 		{
-			assert(desc.effect == EFFECT_GEN_GASGIANT_TEXTURE);
+			assert(desc.effect == EffectType::GEN_GASGIANT_TEXTURE);
 			assert(desc.dirLights < 5);
 			return new GenGasGiantColourProgram(desc);
 		}

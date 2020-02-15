@@ -7,14 +7,14 @@
  * Text geometry node, mostly for ship labels
  */
 #include "Node.h"
-#include "graphics/Material.h"
-#include "graphics/VertexBuffer.h"
-#include "graphics/Material.h"
 #include "text/DistanceFieldFont.h"
 
 namespace Graphics {
+	class Material;
 	class Renderer;
 	class RenderState;
+	class VertexArray;
+	class VertexBuffer;
 }
 
 namespace SceneGraph {

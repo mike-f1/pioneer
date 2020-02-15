@@ -17,6 +17,7 @@
 #include "graphics/Texture.h"
 #include "graphics/TextureBuilder.h"
 #include "graphics/VertexArray.h"
+#include "terrain/Terrain.h"
 #include "perlin.h"
 #include <algorithm>
 #include <deque>
@@ -496,11 +497,11 @@ void GeoSphere::SetUpMaterials()
 	Graphics::MaterialDescriptor surfDesc;
 	const Uint32 effect_flags = m_terrain->GetSurfaceEffects();
 	if (effect_flags & Terrain::EFFECT_LAVA)
-		surfDesc.effect = Graphics::EFFECT_GEOSPHERE_TERRAIN_WITH_LAVA;
+		surfDesc.effect = Graphics::EffectType::GEOSPHERE_TERRAIN_WITH_LAVA;
 	else if (effect_flags & Terrain::EFFECT_WATER)
-		surfDesc.effect = Graphics::EFFECT_GEOSPHERE_TERRAIN_WITH_WATER;
+		surfDesc.effect = Graphics::EffectType::GEOSPHERE_TERRAIN_WITH_WATER;
 	else
-		surfDesc.effect = Graphics::EFFECT_GEOSPHERE_TERRAIN;
+		surfDesc.effect = Graphics::EffectType::GEOSPHERE_TERRAIN;
 
 	if (IsType(GalaxyEnums::BodyType::TYPE_BROWN_DWARF) ||
 		IsType(GalaxyEnums::BodyType::TYPE_STAR_M)) {
@@ -511,7 +512,7 @@ void GeoSphere::SetUpMaterials()
 		//normal star
 		surfDesc.lighting = false;
 		surfDesc.quality &= ~Graphics::HAS_ATMOSPHERE;
-		surfDesc.effect = Graphics::EFFECT_GEOSPHERE_STAR;
+		surfDesc.effect = Graphics::EffectType::GEOSPHERE_STAR;
 	} else {
 		//planetoid with or without atmosphere
 		const AtmosphereParameters ap(CalcSystemBodyAtmosphereParams());
@@ -533,7 +534,7 @@ void GeoSphere::SetUpMaterials()
 
 	{
 		Graphics::MaterialDescriptor skyDesc;
-		skyDesc.effect = Graphics::EFFECT_GEOSPHERE_SKY;
+		skyDesc.effect = Graphics::EffectType::GEOSPHERE_SKY;
 		skyDesc.lighting = true;
 		skyDesc.quality |= Graphics::HAS_ECLIPSES;
 		m_atmosphereMaterial.Reset(RendererLocator::getRenderer()->CreateMaterial(skyDesc));

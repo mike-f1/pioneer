@@ -51,7 +51,7 @@ namespace Graphics {
 
 		Program *GasGiantSurfaceMaterial::CreateProgram(const MaterialDescriptor &desc)
 		{
-			assert(desc.effect == EFFECT_GASSPHERE_TERRAIN);
+			assert(desc.effect == EffectType::GASSPHERE_TERRAIN);
 			assert(desc.dirLights < 5);
 			std::stringstream ss;
 			ss << stringf("#define NUM_LIGHTS %0{u}\n", desc.dirLights);

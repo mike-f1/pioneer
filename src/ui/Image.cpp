@@ -5,6 +5,7 @@
 #include "Context.h"
 #include "graphics/TextureBuilder.h"
 #include "graphics/RendererLocator.h"
+#include "graphics/VertexArray.h"
 
 namespace UI {
 

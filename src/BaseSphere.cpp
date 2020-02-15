@@ -6,9 +6,11 @@
 #include "GasGiant.h"
 #include "GeoSphere.h"
 
+#include "graphics/Drawables.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
-#include "graphics/Drawables.h"
+#include "graphics/VertexArray.h"
+#include "graphics/VertexBuffer.h"
 
 #include "terrain/Terrain.h"
 

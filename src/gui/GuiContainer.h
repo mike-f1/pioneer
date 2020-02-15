@@ -8,10 +8,14 @@
  */
 
 #include "GuiWidget.h"
-#include "graphics/Drawables.h"
 #include <SDL_stdinc.h>
 #include <list>
 
+namespace Graphics {
+	namespace Drawables {
+		class Rect;
+	}
+}
 namespace Gui {
 	class Container : public Widget {
 	public:

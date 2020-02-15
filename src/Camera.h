@@ -70,6 +70,7 @@ private:
 class Camera {
 public:
 	Camera(RefCountedPtr<CameraContext> context);
+	~Camera();
 
 	RefCountedPtr<CameraContext> GetContext() const { return m_context; }
 

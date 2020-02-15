@@ -19,6 +19,7 @@ namespace Gui {
 			ColourMarkupUse // interprets markup tags
 		};
 		explicit TextLayout(const char *_str, RefCountedPtr<Text::TextureFont> font = RefCountedPtr<Text::TextureFont>(0), ColourMarkupMode markup = ColourMarkupUse);
+		~TextLayout();
 		void Render(const float layoutWidth, const Color &color = Color::WHITE) const;
 		void Update(const float layoutWidth, const Color &color = Color::WHITE);
 		void SetText(const char *_str);

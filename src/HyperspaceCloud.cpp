@@ -12,6 +12,7 @@
 #include "Player.h"
 #include "Ship.h"
 #include "Space.h"
+#include "graphics/Material.h"
 #include "graphics/RenderState.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"

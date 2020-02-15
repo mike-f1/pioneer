@@ -3,7 +3,10 @@
 
 #include "Drawables.h"
 
-#include "graphics/RenderState.h"
+#include "RenderState.h"
+#include "Material.h"
+#include "VertexArray.h"
+#include "VertexBuffer.h"
 #include "Texture.h"
 #include "TextureBuilder.h"
 
@@ -44,6 +47,9 @@ namespace Graphics {
 			}
 			SetupVertexBuffer(vertices, renderer);
 		}
+
+		Circle::~Circle()
+		{}
 
 		void Circle::Draw(Renderer *renderer)
 		{
@@ -109,6 +115,9 @@ namespace Graphics {
 			SetupVertexBuffer(vertices, r);
 		}
 
+		Disk::~Disk()
+		{}
+
 		void Disk::Draw(Renderer *r)
 		{
 			PROFILE_SCOPED()
@@ -156,6 +165,9 @@ namespace Graphics {
 			m_vertexBuffer = (b.m_vertexBuffer);
 			(*m_va.get()) = (*b.m_va.get());
 		}
+
+		Line3D::~Line3D()
+		{}
 
 		void Line3D::SetStart(const vector3f &s)
 		{
@@ -237,6 +249,9 @@ namespace Graphics {
 			PROFILE_SCOPED()
 			// XXX bug in Radeon drivers will cause crash in glLineWidth if width >= 3
 		}
+
+		Lines::~Lines()
+		{}
 
 		void Lines::SetData(const Uint32 vertCount, const vector3f *vertices, const Color &color)
 		{
@@ -323,6 +338,9 @@ namespace Graphics {
 		{
 		}
 
+		PointSprites::~PointSprites()
+		{}
+
 		void PointSprites::SetData(const int count, const vector3f *positions, const Color *colours, const float *sizes, Graphics::Material *pMaterial)
 		{
 			PROFILE_SCOPED()
@@ -379,6 +397,9 @@ namespace Graphics {
 		{
 			PROFILE_SCOPED()
 		}
+
+		Points::~Points()
+		{}
 
 		void Points::SetData(Renderer *r, const int count, const vector3f *positions, const matrix4x4f &trans, const Color &color, const float size)
 		{
@@ -584,11 +605,16 @@ namespace Graphics {
 			m_indexBuffer->Unmap();
 		}
 
+		Sphere3D::~Sphere3D()
+		{}
+
 		void Sphere3D::Draw(Renderer *r)
 		{
 			PROFILE_SCOPED()
 			r->DrawBufferIndexed(m_vertexBuffer.get(), m_indexBuffer.get(), m_renderState, m_material.Get());
 		}
+
+		RefCountedPtr<Material> Sphere3D::GetMaterial() const { return m_material; }
 
 		int Sphere3D::AddVertex(VertexArray &vts, const vector3f &v, const vector3f &n)
 		{
@@ -649,7 +675,7 @@ namespace Graphics {
 
 			VertexArray vertices(ATTRIB_POSITION | ATTRIB_UV0);
 			Graphics::MaterialDescriptor desc;
-			desc.effect = Graphics::EFFECT_DEFAULT;
+			desc.effect = Graphics::EffectType::DEFAULT;
 			desc.textures = 1;
 			desc.lighting = false;
 			desc.vertexColors = false;
@@ -755,6 +781,9 @@ namespace Graphics {
 			m_vertexBuffer->Populate(va);
 		}
 
+		TexturedQuad::~TexturedQuad()
+		{}
+
 		void TexturedQuad::Draw(Graphics::Renderer *r)
 		{
 			PROFILE_SCOPED()
@@ -799,6 +828,9 @@ namespace Graphics {
 			m_vertexBuffer->Populate(bgArr);
 		}
 
+		Rect::~Rect()
+		{}
+
 		void Rect::Update(const vector2f &pos, const vector2f &size, const Color &c)
 		{
 			using namespace Graphics;
@@ -840,6 +872,9 @@ namespace Graphics {
 
 			Update(size, rad, c);
 		}
+
+		RoundEdgedRect::~RoundEdgedRect()
+		{}
 
 		void RoundEdgedRect::Update(const vector2f &size, float rad, const Color &c)
 		{

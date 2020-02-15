@@ -329,7 +329,7 @@ void TestGPUJobsSupport()
 		for (Uint32 i = 0; i < 6; i++) {
 			std::unique_ptr<Graphics::Material> material;
 			Graphics::MaterialDescriptor desc;
-			desc.effect = Graphics::EFFECT_GEN_GASGIANT_TEXTURE;
+			desc.effect = Graphics::EffectType::GEN_GASGIANT_TEXTURE;
 			desc.quality = (octaves << 16) | i;
 			desc.textures = 3;
 			material.reset(RendererLocator::getRenderer()->CreateMaterial(desc));
@@ -346,7 +346,7 @@ void TestGPUJobsSupport()
 			for (Uint32 i = 0; i < 6; i++) {
 				std::unique_ptr<Graphics::Material> material;
 				Graphics::MaterialDescriptor desc;
-				desc.effect = Graphics::EFFECT_GEN_GASGIANT_TEXTURE;
+				desc.effect = Graphics::EffectType::GEN_GASGIANT_TEXTURE;
 				desc.quality = (octaves << 16) | i;
 				desc.textures = 3;
 				material.reset(RendererLocator::getRenderer()->CreateMaterial(desc));

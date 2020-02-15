@@ -8,13 +8,19 @@
 #include "GuiFixed.h"
 #include "GuiLabel.h"
 
+namespace Graphics {
+	namespace Drawables {
+		class RoundEdgedRect;
+	} // namespace Drawables
+} // namespace Graphics
+
 /* A cute horizontal bar readout of some value from 0 to 1,
    with a text label also. Hull and weapon temperature are shown with these  */
 namespace Gui {
 	class MeterBar : public Gui::Fixed {
 	public:
 		MeterBar(float width, const char *label, const ::Color &graphCol);
-		virtual ~MeterBar() {}
+		virtual ~MeterBar();
 		virtual void Draw();
 		virtual void GetSizeRequested(float size[2]);
 		void SetValue(float v) { m_barValue = Clamp(v, 0.0f, 1.0f); }

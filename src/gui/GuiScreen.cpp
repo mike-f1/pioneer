@@ -3,8 +3,11 @@
 
 #include "Gui.h"
 
+#include "graphics/Material.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
+#include "graphics/VertexArray.h"
+#include "graphics/VertexBuffer.h"
 #include "text/TextSupport.h"
 #include "vector3.h" // for projection
 

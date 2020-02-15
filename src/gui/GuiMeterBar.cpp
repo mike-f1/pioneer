@@ -3,6 +3,7 @@
 
 #include "Gui.h"
 
+#include "graphics/Drawables.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 
@@ -21,6 +22,9 @@ namespace Gui {
 		Add(m_label, METERBAR_PADDING, METERBAR_PADDING + METERBAR_BAR_HEIGHT);
 		m_label->Show();
 	}
+
+	MeterBar::~MeterBar()
+	{}
 
 	void MeterBar::Draw()
 	{

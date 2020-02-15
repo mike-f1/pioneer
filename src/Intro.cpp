@@ -5,7 +5,6 @@
 
 #include "Background.h"
 #include "RandomSingleton.h"
-#include "graphics/Drawables.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 

@@ -7,6 +7,7 @@
 #include "Color.h"
 #include "galaxy/StarSystem.h"
 #include "galaxy/SystemPath.h"
+#include "graphics/Drawables.h"
 
 #include "UIView.h"
 #include "gui/GuiImageRadioButton.h"

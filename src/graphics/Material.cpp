@@ -23,7 +23,7 @@ namespace Graphics {
 	}
 
 	MaterialDescriptor::MaterialDescriptor() :
-		effect(EFFECT_DEFAULT),
+		effect(EffectType::DEFAULT),
 		alphaTest(false),
 		glowMap(false),
 		ambientMap(false),

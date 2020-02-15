@@ -53,9 +53,9 @@ namespace Graphics {
 
 		Program *GeoSphereSurfaceMaterial::CreateProgram(const MaterialDescriptor &desc)
 		{
-			assert((desc.effect == EFFECT_GEOSPHERE_TERRAIN) ||
-				(desc.effect == EFFECT_GEOSPHERE_TERRAIN_WITH_LAVA) ||
-				(desc.effect == EFFECT_GEOSPHERE_TERRAIN_WITH_WATER));
+			assert((desc.effect == EffectType::GEOSPHERE_TERRAIN) ||
+				(desc.effect == EffectType::GEOSPHERE_TERRAIN_WITH_LAVA) ||
+				(desc.effect == EffectType::GEOSPHERE_TERRAIN_WITH_WATER));
 			assert(desc.dirLights < 5);
 			std::stringstream ss;
 			ss << stringf("#define NUM_LIGHTS %0{u}\n", desc.dirLights);
@@ -65,9 +65,9 @@ namespace Graphics {
 			}
 			if (desc.quality & HAS_ATMOSPHERE)
 				ss << "#define ATMOSPHERE\n";
-			if (desc.effect == EFFECT_GEOSPHERE_TERRAIN_WITH_LAVA)
+			if (desc.effect == EffectType::GEOSPHERE_TERRAIN_WITH_LAVA)
 				ss << "#define TERRAIN_WITH_LAVA\n";
-			if (desc.effect == EFFECT_GEOSPHERE_TERRAIN_WITH_WATER)
+			if (desc.effect == EffectType::GEOSPHERE_TERRAIN_WITH_WATER)
 				ss << "#define TERRAIN_WITH_WATER\n";
 			if (desc.quality & HAS_ECLIPSES)
 				ss << "#define ECLIPSE\n";
@@ -185,7 +185,7 @@ namespace Graphics {
 
 		Program *GeoSphereSkyMaterial::CreateProgram(const MaterialDescriptor &desc)
 		{
-			assert(desc.effect == EFFECT_GEOSPHERE_SKY);
+			assert(desc.effect == EffectType::GEOSPHERE_SKY);
 			assert(desc.dirLights > 0 && desc.dirLights < 5);
 			std::stringstream ss;
 			ss << stringf("#define NUM_LIGHTS %0{u}\n", desc.dirLights);
@@ -210,7 +210,7 @@ namespace Graphics {
 
 		Program *GeoSphereStarMaterial::CreateProgram(const MaterialDescriptor &desc)
 		{
-			assert((desc.effect == EFFECT_GEOSPHERE_STAR));
+			assert((desc.effect == EffectType::GEOSPHERE_STAR));
 			assert(desc.dirLights < 5);
 			std::stringstream ss;
 			ss << stringf("#define NUM_LIGHTS %0{u}\n", desc.dirLights);

@@ -24,6 +24,8 @@
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/TextureBuilder.h"
+#include "graphics/VertexArray.h"
+#include "graphics/VertexBuffer.h"
 
 #include "gui/GuiLabel.h"
 #include "gui/GuiLabelSet.h"

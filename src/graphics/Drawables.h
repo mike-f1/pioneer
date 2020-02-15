@@ -4,13 +4,26 @@
 #ifndef _DRAWABLES_H
 #define _DRAWABLES_H
 
-#include "graphics/Material.h"
-#include "graphics/VertexArray.h"
-#include "graphics/VertexBuffer.h"
+#include "RefCounted.h"
+#include "Types.h"
+
+#include <memory>
+#include <vector>
+#include <string>
+
+#include "Color.h"
+#include "vector2.h"
+#include "vector3.h"
+#include "matrix4x4.h"
 
 namespace Graphics {
+	class IndexBuffer;
+	class Material;
 	class Renderer;
 	class RenderState;
+	class Texture;
+	class VertexArray;
+	class VertexBuffer;
 
 	namespace Drawables {
 
@@ -23,6 +36,7 @@ namespace Graphics {
 			Circle(Renderer *renderer, const float radius, const Color &c, RenderState *state);
 			Circle(Renderer *renderer, const float radius, const float x, const float y, const float z, const Color &c, RenderState *state);
 			Circle(Renderer *renderer, const float radius, const vector3f &center, const Color &c, RenderState *state);
+			~Circle();
 			void Draw(Renderer *renderer);
 
 		private:
@@ -39,6 +53,7 @@ namespace Graphics {
 		public:
 			Disk(Graphics::Renderer *r, Graphics::RenderState *, const Color &c, float radius);
 			Disk(Graphics::Renderer *r, RefCountedPtr<Material>, Graphics::RenderState *, const int edges = 72, const float radius = 1.0f);
+			~Disk();
 			void Draw(Graphics::Renderer *r);
 
 			void SetColor(const Color &);
@@ -56,7 +71,7 @@ namespace Graphics {
 		public:
 			Line3D();
 			Line3D(const Line3D &b); // this needs an explicit copy constructor due to the std::unique_ptr below
-			~Line3D() {}
+			~Line3D();
 			void SetStart(const vector3f &);
 			void SetEnd(const vector3f &);
 			void SetColor(const Color &);
@@ -78,6 +93,7 @@ namespace Graphics {
 		class Lines {
 		public:
 			Lines();
+			~Lines();
 			void SetData(const Uint32 vertCount, const vector3f *vertices, const Color &color);
 			void SetData(const Uint32 vertCount, const vector3f *vertices, const Color *colors);
 			void Draw(Renderer *, RenderState *, const PrimitiveType pt = Graphics::LINE_SINGLE);
@@ -96,6 +112,7 @@ namespace Graphics {
 		class PointSprites {
 		public:
 			PointSprites();
+			~PointSprites();
 			void SetData(const int count, const vector3f *positions, const Color *colours, const float *sizes, Graphics::Material *pMaterial);
 			void Draw(Renderer *, RenderState *);
 
@@ -113,6 +130,7 @@ namespace Graphics {
 		class Points {
 		public:
 			Points();
+			~Points();
 			void SetData(Renderer *, const int count, const vector3f *positions, const matrix4x4f &trans, const Color &color, const float size);
 			void SetData(Renderer *, const int count, const vector3f *positions, const Color *color, const matrix4x4f &trans, const float size);
 			void Draw(Renderer *, RenderState *);
@@ -133,9 +151,10 @@ namespace Graphics {
 		public:
 			//subdivisions must be 0-4
 			Sphere3D(Renderer *, RefCountedPtr<Material> material, Graphics::RenderState *, int subdivisions = 0, float scale = 1.f, const Uint32 attribs = (ATTRIB_POSITION | ATTRIB_NORMAL | ATTRIB_UV0));
+			~Sphere3D();
 			void Draw(Renderer *r);
 
-			RefCountedPtr<Material> GetMaterial() const { return m_material; }
+			RefCountedPtr<Material> GetMaterial() const;
 
 		private:
 			std::unique_ptr<VertexBuffer> m_vertexBuffer;
@@ -168,7 +187,7 @@ namespace Graphics {
 			// Build a textured quad to display an arbitrary texture.
 			TexturedQuad(Graphics::Renderer *r, Graphics::Texture *texture, const vector2f &pos, const vector2f &size, RenderState *state);
 			TexturedQuad(Graphics::Renderer *r, RefCountedPtr<Graphics::Material> &material, const Graphics::VertexArray &va, RenderState *state);
-
+			~TexturedQuad();
 			void Draw(Graphics::Renderer *r);
 			void Draw(Graphics::Renderer *r, const Color4ub &tint);
 			const Graphics::Texture *GetTexture() const { return m_texture.Get(); }
@@ -185,6 +204,7 @@ namespace Graphics {
 		class Rect {
 		public:
 			Rect(Graphics::Renderer *r, const vector2f &pos, const vector2f &size, const Color &c, RenderState *state, const bool bIsStatic = true);
+			~Rect();
 			void Update(const vector2f &pos, const vector2f &size, const Color &c);
 			void Draw(Graphics::Renderer *r);
 
@@ -199,6 +219,7 @@ namespace Graphics {
 		class RoundEdgedRect {
 		public:
 			RoundEdgedRect(Graphics::Renderer *r, const vector2f &size, const float rad, const Color &c, RenderState *state, const bool bIsStatic = true);
+			~RoundEdgedRect();
 			void Update(const vector2f &size, float rad, const Color &c);
 			void Draw(Graphics::Renderer *r);
 

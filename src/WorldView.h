@@ -7,6 +7,7 @@
 #include "UIView.h"
 #include "gui/GuiWidget.h"
 #include "ship/ShipViewController.h"
+#include "graphics/Drawables.h"
 
 class Body;
 class Camera;

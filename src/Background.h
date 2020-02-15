@@ -30,6 +30,9 @@ namespace Graphics {
 namespace Background {
 	class BackgroundElement {
 	public:
+		BackgroundElement();
+		~BackgroundElement();
+
 		void SetIntensity(float intensity);
 
 	protected:
@@ -65,6 +68,7 @@ namespace Background {
 	public:
 		//does not Fill the starfield
 		Starfield(Random &rand, float amount);
+		~Starfield();
 		void Draw(Graphics::RenderState *);
 		//create or recreate the starfield
 		void Fill(Random &rand, float amount);
@@ -100,6 +104,7 @@ namespace Background {
 		};
 
 		Container(Random &rand, float amountOfBackgroundStars);
+		~Container();
 		void Draw(const matrix4x4d &transform);
 
 		void SetIntensity(float intensity);

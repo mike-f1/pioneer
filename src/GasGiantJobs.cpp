@@ -114,7 +114,7 @@ namespace GasGiantJobs {
 		m_renderState = state;
 
 		Graphics::MaterialDescriptor desc;
-		desc.effect = Graphics::EFFECT_GEN_GASGIANT_TEXTURE;
+		desc.effect = Graphics::EffectType::GEN_GASGIANT_TEXTURE;
 		desc.quality = GGQuality;
 		desc.textures = 3;
 		m_material.reset(RendererLocator::getRenderer()->CreateMaterial(desc));

@@ -7,6 +7,7 @@
 #include "Frame.h"
 #include "IniConfig.h"
 #include "Ship.h"
+#include "graphics/Material.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/RenderState.h"

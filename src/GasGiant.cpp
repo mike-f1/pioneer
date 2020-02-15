@@ -753,7 +753,7 @@ void GasGiant::SetUpMaterials()
 	// Request material for this planet, with atmosphere.
 	// Separate materials for surface and sky.
 	Graphics::MaterialDescriptor surfDesc;
-	surfDesc.effect = Graphics::EFFECT_GASSPHERE_TERRAIN;
+	surfDesc.effect = Graphics::EffectType::GASSPHERE_TERRAIN;
 
 	//planetoid with atmosphere
 	const AtmosphereParameters ap(CalcSystemBodyAtmosphereParams());
@@ -772,7 +772,7 @@ void GasGiant::SetUpMaterials()
 
 	{
 		Graphics::MaterialDescriptor skyDesc;
-		skyDesc.effect = Graphics::EFFECT_GEOSPHERE_SKY;
+		skyDesc.effect = Graphics::EffectType::GEOSPHERE_SKY;
 		skyDesc.lighting = true;
 		skyDesc.quality |= Graphics::HAS_ECLIPSES;
 		m_atmosphereMaterial.Reset(RendererLocator::getRenderer()->CreateMaterial(skyDesc));

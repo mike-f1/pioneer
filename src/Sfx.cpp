@@ -310,7 +310,7 @@ void SfxManager::RenderAll(FrameId fId, FrameId camFrameId)
 
 vector2f SfxManager::CalculateOffset(const enum SFX_TYPE type, const Sfx &inst)
 {
-	if (m_materialData[type].effect == Graphics::EFFECT_BILLBOARD_ATLAS) {
+	if (m_materialData[type].effect == Graphics::EffectType::BILLBOARD_ATLAS) {
 		const int spriteframe = inst.AgeBlend() * (m_materialData[type].num_textures - 1);
 		const Sint32 numImgsWide = m_materialData[type].num_imgs_wide;
 		const int u = (spriteframe % numImgsWide); // % is the "modulo operator", the remainder of i / width;
@@ -348,7 +348,7 @@ bool SfxManager::SplitMaterialData(const std::string &spec, MaterialData &output
 		// extract the fragment and remember it
 		switch (i) {
 		case eEFFECT:
-			output.effect = (spec.substr(start, (end == std::string::npos) ? std::string::npos : end - start) == "billboard") ? Graphics::EFFECT_BILLBOARD : Graphics::EFFECT_BILLBOARD_ATLAS;
+			output.effect = (spec.substr(start, (end == std::string::npos) ? std::string::npos : end - start) == "billboard") ? Graphics::EffectType::BILLBOARD : Graphics::EffectType::BILLBOARD_ATLAS;
 			break;
 		case eNUM_IMGS_WIDE:
 			output.num_imgs_wide = atoi(spec.substr(start, (end == std::string::npos) ? std::string::npos : end - start).c_str());
@@ -399,7 +399,7 @@ void SfxManager::Init()
 	desc.textures = 1;
 
 	// ECM effect is different, not managed by Sfx at all, should it be factored out?
-	desc.effect = Graphics::EFFECT_BILLBOARD;
+	desc.effect = Graphics::EffectType::BILLBOARD;
 	ecmParticle.reset(RendererLocator::getRenderer()->CreateMaterial(desc));
 	ecmParticle->texture0 = Graphics::TextureBuilder::Billboard("textures/ecm.png").GetOrCreateTexture(RendererLocator::getRenderer(), "billboard");
 
@@ -411,19 +411,19 @@ void SfxManager::Init()
 	desc.effect = m_materialData[TYPE_DAMAGE].effect;
 	damageParticle.reset(RendererLocator::getRenderer()->CreateMaterial(desc));
 	damageParticle->texture0 = Graphics::TextureBuilder::Billboard(cfg.String("damageFile")).GetOrCreateTexture(RendererLocator::getRenderer(), "billboard");
-	if (desc.effect == Graphics::EFFECT_BILLBOARD_ATLAS)
+	if (desc.effect == Graphics::EffectType::BILLBOARD_ATLAS)
 		damageParticle->specialParameter0 = &m_materialData[TYPE_DAMAGE].coord_downscale;
 
 	desc.effect = m_materialData[TYPE_SMOKE].effect;
 	smokeParticle.reset(RendererLocator::getRenderer()->CreateMaterial(desc));
 	smokeParticle->texture0 = Graphics::TextureBuilder::Billboard(cfg.String("smokeFile")).GetOrCreateTexture(RendererLocator::getRenderer(), "billboard");
-	if (desc.effect == Graphics::EFFECT_BILLBOARD_ATLAS)
+	if (desc.effect == Graphics::EffectType::BILLBOARD_ATLAS)
 		smokeParticle->specialParameter0 = &m_materialData[TYPE_SMOKE].coord_downscale;
 
 	desc.effect = m_materialData[TYPE_EXPLOSION].effect;
 	explosionParticle.reset(RendererLocator::getRenderer()->CreateMaterial(desc));
 	explosionParticle->texture0 = Graphics::TextureBuilder::Billboard(cfg.String("explosionFile")).GetOrCreateTexture(RendererLocator::getRenderer(), "billboard");
-	if (desc.effect == Graphics::EFFECT_BILLBOARD_ATLAS)
+	if (desc.effect == Graphics::EffectType::BILLBOARD_ATLAS)
 		explosionParticle->specialParameter0 = &m_materialData[TYPE_EXPLOSION].coord_downscale;
 }
 

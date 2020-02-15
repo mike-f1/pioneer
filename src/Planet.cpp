@@ -235,7 +235,7 @@ void Planet::GenerateRings()
 		Graphics::TEXTURE_RGBA_8888);
 
 	Graphics::MaterialDescriptor desc;
-	desc.effect = Graphics::EFFECT_PLANETRING;
+	desc.effect = Graphics::EffectType::PLANETRING;
 	desc.lighting = true;
 	desc.textures = 1;
 	m_ringMaterial.reset(RendererLocator::getRenderer()->CreateMaterial(desc));

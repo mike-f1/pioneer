@@ -7,6 +7,8 @@
 #include "RefCounted.h"
 #include "View.h"
 
+#include <memory>
+
 class Camera;
 class CameraContext;
 

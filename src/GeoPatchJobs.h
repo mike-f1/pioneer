@@ -11,8 +11,8 @@
 #include "JobQueue.h"
 #include "vector3.h"
 #include "galaxy/SystemPath.h"
-#include "terrain/Terrain.h"
 
+class Terrain;
 class GeoSphere;
 
 #define BORDER_SIZE 1
@@ -21,21 +21,8 @@ class SBaseRequest {
 public:
 	SBaseRequest(const vector3d &v0_, const vector3d &v1_, const vector3d &v2_, const vector3d &v3_, const vector3d &cn,
 		const uint32_t depth_, const SystemPath &sysPath_, const GeoPatchID &patchID_, const int edgeLen_, const double fracStep_,
-		Terrain *pTerrain_) :
-		v0(v0_),
-		v1(v1_),
-		v2(v2_),
-		v3(v3_),
-		centroid(cn),
-		depth(depth_),
-		sysPath(sysPath_),
-		patchID(patchID_),
-		edgeLen(edgeLen_),
-		fracStep(fracStep_),
-		pTerrain(pTerrain_)
-	{
-	}
-
+		Terrain *pTerrain_);
+	~SBaseRequest();
 	inline int NUMVERTICES(const int el) const { return el * el; }
 
 	const vector3d v0, v1, v2, v3;

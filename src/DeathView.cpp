@@ -13,6 +13,7 @@
 #include "Player.h"
 #include "ShipCpanel.h"
 #include "graphics/Graphics.h"
+#include "graphics/Material.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 

@@ -5,6 +5,7 @@
 
 #include "Lang.h"
 #include "ModelCache.h"
+#include "graphics/Material.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 #include "scenegraph/SceneGraph.h"

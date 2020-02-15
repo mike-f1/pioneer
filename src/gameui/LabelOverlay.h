@@ -4,10 +4,15 @@
 #ifndef GAMEUI_LABELOVERLAY_H
 #define GAMEUI_LABELOVERLAY_H
 
-#include "graphics/Drawables.h"
 #include "graphics/Frustum.h"
 #include "text/TextureFont.h"
 #include "ui/Align.h"
+
+namespace Graphics {
+	namespace Drawables {
+		class TexturedQuad;
+	}
+}
 
 namespace UI {
 	class Context;

@@ -3,8 +3,10 @@
 
 #include "LabelOverlay.h"
 
+#include "graphics/Drawables.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
+#include "graphics/VertexArray.h"
 
 #include "ui/Context.h"
 

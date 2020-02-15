@@ -5,6 +5,7 @@
 
 #include "FileSystem.h"
 #include "TextSupport.h"
+#include "graphics/Material.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/RenderState.h"
@@ -402,6 +403,16 @@ namespace Text {
 		return m_glyphs[chr];
 	}
 
+	RefCountedPtr<Graphics::Texture> TextureFont::GetTexture() const
+	{
+		return m_texture;
+	}
+
+	Graphics::Material *TextureFont::GetMaterial() const
+	{
+		return m_mat.get();
+	}
+
 	TextureFont::Glyph TextureFont::BakeGlyph(Uint32 chr)
 	{
 		int err;
@@ -621,7 +632,7 @@ namespace Text {
 		m_renderState = RendererLocator::getRenderer()->CreateRenderState(rsd);
 
 		Graphics::MaterialDescriptor desc;
-		desc.effect = Graphics::EFFECT_UI;
+		desc.effect = Graphics::EffectType::UI;
 		desc.vertexColors = true; //to allow per-character colors
 		desc.textures = 1;
 		m_mat.reset(RendererLocator::getRenderer()->CreateMaterial(desc));

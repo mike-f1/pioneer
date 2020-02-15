@@ -5,6 +5,7 @@
 
 #include "FileSystem.h"
 #include "SDLWrappers.h"
+#include "graphics/Material.h"
 #include "graphics/Drawables.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/Texture.h"

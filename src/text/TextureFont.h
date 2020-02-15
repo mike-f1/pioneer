@@ -6,9 +6,7 @@
 
 #include "FontConfig.h"
 #include "RefCounted.h"
-#include "graphics/Material.h"
 #include "graphics/Texture.h"
-#include "graphics/VertexBuffer.h"
 
 #include <unordered_map>
 
@@ -17,7 +15,10 @@ namespace FileSystem {
 }
 
 namespace Graphics {
+	class Material;
 	class RenderState;
+	class VertexArray;
+	class VertexBuffer;
 }
 
 // forward declarations for FreeType types
@@ -79,8 +80,8 @@ namespace Text {
 		static int GetGlyphCount() { return s_glyphCount; }
 		static void ClearGlyphCount() { s_glyphCount = 0; }
 
-		RefCountedPtr<Graphics::Texture> GetTexture() const { return m_texture; }
-		Graphics::Material *GetMaterial() const { return m_mat.get(); }
+		RefCountedPtr<Graphics::Texture> GetTexture() const;
+		Graphics::Material *GetMaterial() const;
 
 	private:
 		TextureFont(const TextureFont &);

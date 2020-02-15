@@ -7,9 +7,11 @@
 #include "GameSaveError.h"
 #include "IniConfig.h"
 #include "Json.h"
+#include "graphics/Material.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/RenderState.h"
 #include "graphics/TextureBuilder.h"
+#include "graphics/VertexBuffer.h"
 #include "scenegraph/FindNodeVisitor.h"
 #include "scenegraph/SceneGraph.h"
 #include "utils.h"
@@ -180,7 +182,7 @@ void NavLights::Render()
 {
 	if (!m_billboardRS) {
 		Graphics::MaterialDescriptor desc;
-		desc.effect = Graphics::EFFECT_BILLBOARD_ATLAS;
+		desc.effect = Graphics::EffectType::BILLBOARD_ATLAS;
 		desc.textures = 1;
 		matHalos4x4.Reset(RendererLocator::getRenderer()->CreateMaterial(desc));
 		texHalos4x4.Reset(Graphics::TextureBuilder::Billboard("textures/halo_4x4.dds").GetOrCreateTexture(RendererLocator::getRenderer(), std::string("billboard")));

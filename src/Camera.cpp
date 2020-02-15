@@ -103,12 +103,15 @@ Camera::Camera(RefCountedPtr<CameraContext> context) :
 	m_context(context)
 {
 	Graphics::MaterialDescriptor desc;
-	desc.effect = Graphics::EFFECT_BILLBOARD;
+	desc.effect = Graphics::EffectType::BILLBOARD;
 	desc.textures = 1;
 
 	m_billboardMaterial.reset(RendererLocator::getRenderer()->CreateMaterial(desc));
 	m_billboardMaterial->texture0 = Graphics::TextureBuilder::Billboard("textures/planet_billboard.dds").GetOrCreateTexture(RendererLocator::getRenderer(), "billboard");
 }
+
+Camera::~Camera()
+{}
 
 static void position_system_lights(Frame *camFrame, Frame *frame, std::vector<Camera::LightSource> &lights)
 {

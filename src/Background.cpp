@@ -15,6 +15,7 @@
 #include "galaxy/Sector.h"
 #include "galaxy/StarSystem.h"
 #include "graphics/Drawables.h"
+#include "graphics/Material.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/RenderState.h"
 #include "graphics/TextureBuilder.h"
@@ -70,6 +71,12 @@ namespace Background {
 		vector2f uv;
 	};
 #pragma pack(pop)
+
+	BackgroundElement::BackgroundElement()
+	{}
+
+	BackgroundElement::~BackgroundElement()
+	{}
 
 	void BackgroundElement::SetIntensity(float intensity)
 	{
@@ -140,7 +147,7 @@ namespace Background {
 		box->Add(vector3f(-vp, -vp, -vp), vector2f(1.0f, 1.0f));
 
 		Graphics::MaterialDescriptor desc;
-		desc.effect = EFFECT_SKYBOX;
+		desc.effect = EffectType::SKYBOX;
 		m_material.Reset(RendererLocator::getRenderer()->CreateMaterial(desc));
 		m_material->texture0 = nullptr;
 
@@ -198,10 +205,13 @@ namespace Background {
 		Fill(rand, amount);
 	}
 
+	Starfield::~Starfield()
+	{}
+
 	void Starfield::Init()
 	{
 		Graphics::MaterialDescriptor desc;
-		desc.effect = Graphics::EFFECT_STARFIELD;
+		desc.effect = EffectType::STARFIELD;
 		desc.textures = 1;
 		desc.vertexColors = true;
 		m_material.Reset(RendererLocator::getRenderer()->CreateMaterial(desc));
@@ -209,7 +219,7 @@ namespace Background {
 		m_material->texture0 = Graphics::TextureBuilder::Billboard("textures/star_point.png").GetOrCreateTexture(RendererLocator::getRenderer(), "billboard");
 
 		Graphics::MaterialDescriptor descStreaks;
-		descStreaks.effect = Graphics::EFFECT_VTXCOLOR;
+		descStreaks.effect = EffectType::VTXCOLOR;
 		descStreaks.vertexColors = true;
 		m_materialStreaks.Reset(RendererLocator::getRenderer()->CreateMaterial(descStreaks));
 		m_materialStreaks->emissive = Color::WHITE;
@@ -424,7 +434,7 @@ namespace Background {
 			dark);
 
 		Graphics::MaterialDescriptor desc;
-		desc.effect = Graphics::EFFECT_STARFIELD;
+		desc.effect = EffectType::STARFIELD;
 		desc.vertexColors = true;
 		m_material.Reset(RendererLocator::getRenderer()->CreateMaterial(desc));
 		m_material->emissive = Color::WHITE;
@@ -472,6 +482,9 @@ namespace Background {
 		rsd.depthWrite = false;
 		m_renderState = RendererLocator::getRenderer()->CreateRenderState(rsd);
 	}
+
+	Container::~Container()
+	{}
 
 	void Container::Refresh(Random &rand, float amountOfBackgroundStars)
 	{

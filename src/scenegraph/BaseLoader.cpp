@@ -3,6 +3,7 @@
 
 #include "BaseLoader.h"
 #include "FileSystem.h"
+#include "graphics/Material.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/TextureBuilder.h"
 #include "utils.h"

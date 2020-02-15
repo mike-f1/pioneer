@@ -17,7 +17,7 @@ namespace Graphics {
 			std::stringstream ss;
 
 			m_name = "billboards";
-			if (desc.effect == EFFECT_BILLBOARD_ATLAS)
+			if (desc.effect == EffectType::BILLBOARD_ATLAS)
 				m_defines = stringf("#define USE_SPRITE_ATLAS\n");
 
 			LoadShaders(m_name, m_defines);

@@ -6,6 +6,7 @@
 #include "GameSaveError.h"
 #include "JsonUtils.h"
 #include "Ship.h"
+#include "graphics/Material.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/RenderState.h"
 #include "graphics/TextureBuilder.h"
@@ -81,7 +82,7 @@ void Shields::Init()
 	desc.textures = 0;
 	desc.lighting = true;
 	desc.alphaTest = false;
-	desc.effect = Graphics::EffectType::EFFECT_SHIELD;
+	desc.effect = Graphics::EffectType::SHIELD;
 	s_matShield.Reset(RendererLocator::getRenderer()->CreateMaterial(desc));
 	s_matShield->diffuse = Color(1.0f, 1.0f, 1.0f, 1.0f);
 

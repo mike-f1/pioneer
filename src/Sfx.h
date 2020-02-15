@@ -81,7 +81,7 @@ private:
 	// types
 	struct MaterialData {
 		MaterialData() :
-			effect(Graphics::EFFECT_BILLBOARD),
+			effect(Graphics::EffectType::BILLBOARD),
 			num_textures(1),
 			num_imgs_wide(1),
 			coord_downscale(1.0f) {}

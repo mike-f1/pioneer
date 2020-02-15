@@ -6,6 +6,7 @@
 #include "SDLWrappers.h"
 #include "graphics/TextureBuilder.h"
 #include "graphics/RendererLocator.h"
+#include "graphics/VertexArray.h"
 
 using namespace UI;
 

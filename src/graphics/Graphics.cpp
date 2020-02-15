@@ -116,7 +116,7 @@ namespace Graphics {
 		initted = true;
 
 		MaterialDescriptor desc;
-		desc.effect = EFFECT_VTXCOLOR;
+		desc.effect = EffectType::VTXCOLOR;
 		desc.vertexColors = true;
 		vtxColorMaterial = renderer->CreateMaterial(desc);
 		vtxColorMaterial->IncRefCount();

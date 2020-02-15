@@ -6,6 +6,7 @@
 #include "GeoSphere.h"
 #include "libs.h"
 #include "perlin.h"
+#include "terrain/Terrain.h"
 
 inline void setColour(Color3ub &r, const vector3d &v)
 {
@@ -19,6 +20,25 @@ inline vector3d GetSpherePoint(const vector3d &v0, const vector3d &v1, const vec
 {
 	return (v0 + x * (1.0 - y) * (v1 - v0) + x * y * (v2 - v0) + (1.0 - x) * y * (v3 - v0)).Normalized();
 }
+
+SBaseRequest::SBaseRequest(const vector3d &v0_, const vector3d &v1_, const vector3d &v2_, const vector3d &v3_, const vector3d &cn,
+	const uint32_t depth_, const SystemPath &sysPath_, const GeoPatchID &patchID_, const int edgeLen_, const double fracStep_,
+	Terrain *pTerrain_) :
+	v0(v0_),
+	v1(v1_),
+	v2(v2_),
+	v3(v3_),
+	centroid(cn),
+	depth(depth_),
+	sysPath(sysPath_),
+	patchID(patchID_),
+	edgeLen(edgeLen_),
+	fracStep(fracStep_),
+	pTerrain(pTerrain_)
+{}
+
+SBaseRequest::~SBaseRequest()
+{}
 
 // ********************************************************************************
 // Overloaded PureJob class to handle generating the mesh for each patch

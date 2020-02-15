@@ -7,13 +7,16 @@
  * Generic node for the model scenegraph
  */
 #include "RefCounted.h"
-#include "graphics/Material.h"
 #include "libs.h"
 
 namespace Serializer {
 	class Reader;
 	class Writer;
 } // namespace Serializer
+
+namespace Graphics {
+	class Material;
+} // namespace Graphics
 
 namespace SceneGraph {
 

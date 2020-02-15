@@ -7,6 +7,8 @@
 #include "GuiWidget.h"
 #include <string>
 
+#include "graphics/Drawables.h"
+
 namespace Text {
 	class TextureFont;
 }

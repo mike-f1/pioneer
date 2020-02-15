@@ -2,7 +2,9 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "GuiImage.h"
+
 #include "GuiScreen.h"
+#include "graphics/Material.h"
 #include "graphics/TextureBuilder.h"
 #include "graphics/RendererLocator.h"
 #include "libs.h"
@@ -31,6 +33,9 @@ namespace Gui {
 		m_height = renderHeight;
 		SetSize(m_width, m_height);
 	}
+
+	Image::~Image()
+	{}
 
 	void Image::InitTexture(const char *filename)
 	{

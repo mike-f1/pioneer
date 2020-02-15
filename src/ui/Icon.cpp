@@ -2,10 +2,12 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "Icon.h"
+
 #include "Context.h"
 #include "FileSystem.h"
 #include "graphics/TextureBuilder.h"
 #include "graphics/RendererLocator.h"
+#include "graphics/VertexArray.h"
 
 static const char CONFIG_FILE[] = "ui/Icons.ini";
 static const char FALLBACK_ICON[] = "Blank";

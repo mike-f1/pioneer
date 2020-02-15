@@ -7,6 +7,8 @@
 #include "text/TextureFont.h"
 
 #include "graphics/RendererLocator.h"
+#include "graphics/VertexArray.h"
+#include "graphics/VertexBuffer.h"
 
 namespace Gui {
 

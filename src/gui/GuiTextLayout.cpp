@@ -5,6 +5,8 @@
 
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
+#include "graphics/VertexArray.h"
+#include "graphics/VertexBuffer.h"
 #include "text/TextSupport.h"
 #include "utils.h"
 
@@ -25,6 +27,9 @@ namespace Gui {
 		prevWidth = -1.0f;
 		prevColor = Color::WHITE;
 	}
+
+	TextLayout::~TextLayout()
+	{}
 
 	void TextLayout::SetText(const char *_str)
 	{

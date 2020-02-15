@@ -10,10 +10,12 @@
 #include "SceneGraph.h"
 #include "scenegraph/Animation.h"
 #include "StringF.h"
+#include "graphics/Material.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/RenderState.h"
 #include "graphics/TextureBuilder.h"
+#include "graphics/VertexBuffer.h"
 #include "utils.h"
 #include <assimp/material.h>
 #include <assimp/postprocess.h>

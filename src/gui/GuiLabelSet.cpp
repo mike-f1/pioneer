@@ -3,6 +3,8 @@
 
 #include "Gui.h"
 
+#include "graphics/VertexBuffer.h"
+
 namespace Gui {
 
 	LabelSet::LabelSet() :
@@ -14,6 +16,30 @@ namespace Gui {
 		m_labelColor = Color::WHITE;
 		m_font = Screen::GetFont();
 	}
+
+	LabelSet::~LabelSet()
+	{}
+
+	LabelSet::LabelSetItem::LabelSetItem(std::string text_, sigc::slot<void> onClick_, float screenx_, float screeny_) :
+		text(text_),
+		hasOwnColor(false),
+		onClick(onClick_),
+		screenx(screenx_),
+		screeny(screeny_)
+	{
+	}
+	LabelSet::LabelSetItem::LabelSetItem(std::string text_, sigc::slot<void> onClick_, float screenx_, float screeny_, const Color &c) :
+		text(text_),
+		color(c),
+		hasOwnColor(true),
+		onClick(onClick_),
+		screenx(screenx_),
+		screeny(screeny_)
+	{
+	}
+
+	LabelSet::LabelSetItem::~LabelSetItem()
+	{}
 
 	bool LabelSet::OnMouseDown(Gui::MouseButtonEvent *e)
 	{

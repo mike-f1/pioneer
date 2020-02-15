@@ -7,6 +7,10 @@
 #include "GuiWidget.h"
 #include <vector>
 
+namespace Graphics {
+	class VertexBuffer;
+}
+
 /*
  * Collection of clickable labels. Used by the WorldView for clickable
  * bodies, and SystemView, SectorView etc.
@@ -16,23 +20,9 @@ namespace Gui {
 	public:
 		class LabelSetItem {
 		public:
-			LabelSetItem(std::string text_, sigc::slot<void> onClick_, float screenx_, float screeny_) :
-				text(text_),
-				hasOwnColor(false),
-				onClick(onClick_),
-				screenx(screenx_),
-				screeny(screeny_)
-			{
-			}
-			LabelSetItem(std::string text_, sigc::slot<void> onClick_, float screenx_, float screeny_, const Color &c) :
-				text(text_),
-				color(c),
-				hasOwnColor(true),
-				onClick(onClick_),
-				screenx(screenx_),
-				screeny(screeny_)
-			{
-			}
+			LabelSetItem(std::string text_, sigc::slot<void> onClick_, float screenx_, float screeny_);
+			LabelSetItem(std::string text_, sigc::slot<void> onClick_, float screenx_, float screeny_, const Color &c);
+			~LabelSetItem();
 			std::string text;
 			Color color;
 			bool hasOwnColor;
@@ -42,6 +32,8 @@ namespace Gui {
 		};
 
 		LabelSet();
+		~LabelSet();
+
 		bool OnMouseDown(MouseButtonEvent *e);
 		virtual void Draw();
 		virtual void GetSizeRequested(float size[2]);

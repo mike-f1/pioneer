@@ -27,6 +27,8 @@
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/RenderState.h"
+#include "graphics/VertexArray.h"
+#include "graphics/VertexBuffer.h"
 #include <algorithm>
 #include <sstream>
 #include <unordered_set>
@@ -235,7 +237,7 @@ void SectorView::InitObject(unsigned int cacheRadius)
 	m_alphaBlendState = RendererLocator::getRenderer()->CreateRenderState(rsd);
 
 	Graphics::MaterialDescriptor bbMatDesc;
-	bbMatDesc.effect = Graphics::EFFECT_SPHEREIMPOSTOR;
+	bbMatDesc.effect = Graphics::EffectType::SPHEREIMPOSTOR;
 	m_starMaterial.Reset(RendererLocator::getRenderer()->CreateMaterial(bbMatDesc));
 
 	m_disk.reset(new Graphics::Drawables::Disk(RendererLocator::getRenderer(), m_solidState, Color::WHITE, 0.2f));
@@ -1377,7 +1379,7 @@ void SectorView::Update(const float frameTime)
 		m_jumpSphereState = RendererLocator::getRenderer()->CreateRenderState(rsd);
 
 		Graphics::MaterialDescriptor matdesc;
-		matdesc.effect = EFFECT_FRESNEL_SPHERE;
+		matdesc.effect = Graphics::EffectType::FRESNEL_SPHERE;
 		m_fresnelMat.Reset(RendererLocator::getRenderer()->CreateMaterial(matdesc));
 		m_fresnelMat->diffuse = Color::WHITE;
 		m_jumpSphere.reset(new Graphics::Drawables::Sphere3D(RendererLocator::getRenderer(), m_fresnelMat, m_jumpSphereState, 4, 1.0f));

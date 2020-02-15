@@ -4,6 +4,8 @@
 #include "GuiContainer.h"
 
 #include "Gui.h"
+#include "graphics/Drawables.h"
+#include "graphics/Material.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 

@@ -6,7 +6,6 @@
 
 #include "FontConfig.h"
 #include "RefCounted.h"
-#include "graphics/Texture.h"
 
 #include <unordered_map>
 
@@ -17,8 +16,10 @@ namespace FileSystem {
 namespace Graphics {
 	class Material;
 	class RenderState;
+	class Texture;
 	class VertexArray;
 	class VertexBuffer;
+	enum class TextureFormat;
 }
 
 // forward declarations for FreeType types

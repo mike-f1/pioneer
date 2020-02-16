@@ -9,6 +9,7 @@
  * 2013-May-05 left out stencil buffer because we don't need it now
  */
 #include "OpenGLLibs.h"
+#include "RefCounted.h"
 #include "graphics/RenderTarget.h"
 
 namespace Graphics {
@@ -16,8 +17,6 @@ namespace Graphics {
 	class RendererOGL;
 
 	namespace OGL {
-
-		class RenderTarget;
 
 		class RenderBuffer : public RefCounted {
 		public:

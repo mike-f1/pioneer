@@ -5,12 +5,9 @@
 
 #include "Body.h"
 #include "Frame.h"
-#include "graphics/Material.h"
 #include "graphics/RenderState.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
-#include "graphics/VertexArray.h"
-#include "graphics/VertexBuffer.h"
 
 const float UPDATE_INTERVAL = 0.1f;
 const Uint16 MAX_POINTS = 100;

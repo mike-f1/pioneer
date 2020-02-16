@@ -7,9 +7,12 @@
  * Render target. Created by filling out a description and calling
  * renderer->CreateRenderTarget.
  */
-#include "Texture.h"
+
+#include <SDL_stdinc.h>
 
 namespace Graphics {
+	class Texture;
+	enum class TextureFormat;
 
 	// A render target may have a color texture, depth buffer/texture or both.
 	// Setting the formats to NONE will skip the texture creation, and you will

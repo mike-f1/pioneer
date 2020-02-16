@@ -6,11 +6,11 @@
 /*
  * Color look-up texture generator for newmodel pattern system
  */
-#include "graphics/Texture.h"
 #include "libs.h"
 #include <SDL_stdinc.h>
 
 namespace Graphics {
+	class Texture;
 	class Renderer;
 }
 

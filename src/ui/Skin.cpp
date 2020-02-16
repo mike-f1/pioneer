@@ -2,8 +2,10 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "Skin.h"
+
 #include "FileSystem.h"
 #include "IniConfig.h"
+#include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/TextureBuilder.h"
 #include "graphics/VertexArray.h"

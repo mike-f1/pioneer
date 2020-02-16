@@ -15,8 +15,10 @@
 #include "ShipCockpit.h"
 #include "galaxy/GalaxyEnums.h"
 #include "galaxy/SystemBody.h"
+#include "graphics/Material.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
+#include "graphics/Texture.h"
 #include "graphics/TextureBuilder.h"
 
 using namespace Graphics;

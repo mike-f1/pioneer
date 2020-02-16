@@ -2,6 +2,9 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "TextureBuilder.h"
+
+#include "Renderer.h"
+#include "Texture.h"
 #include "FileSystem.h"
 #include "utils.h"
 #include <SDL_image.h>
@@ -23,7 +26,7 @@ namespace Graphics {
 		m_forceRGBA(forceRGBA),
 		m_compressTextures(compressTextures),
 		m_anisotropicFiltering(anisoFiltering),
-		m_textureType(TEXTURE_2D),
+		m_textureType(TextureType::T_2D),
 		m_prepared(false)
 	{
 	}
@@ -86,25 +89,25 @@ namespace Graphics {
 	{
 		if (!forceRGBA && sourcePixelFormat->BytesPerPixel == pixelFormatRGB.BytesPerPixel &&
 			sourcePixelFormat->Rmask == pixelFormatRGB.Rmask && sourcePixelFormat->Bmask == pixelFormatRGB.Bmask && sourcePixelFormat->Gmask == pixelFormatRGB.Gmask) {
-			*targetTextureFormat = TEXTURE_RGB_888;
+			*targetTextureFormat = TextureFormat::RGB_888;
 			*targetPixelFormat = &pixelFormatRGB;
 			return true;
 		}
 
 		if (sourcePixelFormat->BytesPerPixel == pixelFormatRGBA.BytesPerPixel &&
 			sourcePixelFormat->Rmask == pixelFormatRGBA.Rmask && sourcePixelFormat->Bmask == pixelFormatRGBA.Bmask && sourcePixelFormat->Gmask == pixelFormatRGBA.Gmask) {
-			*targetTextureFormat = TEXTURE_RGBA_8888;
+			*targetTextureFormat = TextureFormat::RGBA_8888;
 			*targetPixelFormat = &pixelFormatRGBA;
 			return true;
 		}
 
 		if (!forceRGBA && sourcePixelFormat->BytesPerPixel == 3) {
-			*targetTextureFormat = TEXTURE_RGB_888;
+			*targetTextureFormat = TextureFormat::RGB_888;
 			*targetPixelFormat = &pixelFormatRGB;
 			return false;
 		}
 
-		*targetTextureFormat = TEXTURE_RGBA_8888;
+		*targetTextureFormat = TextureFormat::RGBA_8888;
 		*targetPixelFormat = &pixelFormatRGBA;
 		return false;
 	}
@@ -131,10 +134,10 @@ namespace Graphics {
 			bool needConvert = !GetTargetFormat(m_surface->format, &targetTextureFormat, &targetPixelFormat, m_forceRGBA);
 
 			if (needConvert) {
-				if (m_textureType == TEXTURE_2D) {
+				if (m_textureType == TextureType::T_2D) {
 					SDL_Surface *s = SDL_ConvertSurface(m_surface.Get(), targetPixelFormat, SDL_SWSURFACE);
 					m_surface = SDLSurfacePtr::WrapNew(s);
-				} else if (m_textureType == TEXTURE_CUBE_MAP) {
+				} else if (m_textureType == TextureType::T_CUBE_MAP) {
 					assert(m_cubemap.size() == 6);
 					for (unsigned int i = 0; i < 6; ++i) {
 						SDL_Surface *s = SDL_ConvertSurface(m_cubemap[i].Get(), targetPixelFormat, SDL_SWSURFACE);
@@ -154,14 +157,14 @@ namespace Graphics {
 				actualWidth = ceil_pow2(m_surface->w);
 				actualHeight = ceil_pow2(m_surface->h);
 				if (actualWidth != virtualWidth || actualHeight != virtualHeight) {
-					if (m_textureType == TEXTURE_2D) {
+					if (m_textureType == TextureType::T_2D) {
 						SDL_Surface *s = SDL_CreateRGBSurface(SDL_SWSURFACE, actualWidth, actualHeight, targetPixelFormat->BitsPerPixel,
 							targetPixelFormat->Rmask, targetPixelFormat->Gmask, targetPixelFormat->Bmask, targetPixelFormat->Amask);
 						SDL_SetSurfaceBlendMode(m_surface.Get(), SDL_BLENDMODE_NONE);
 						SDL_BlitSurface(m_surface.Get(), 0, s, 0);
 
 						m_surface = SDLSurfacePtr::WrapNew(s);
-					} else if (m_textureType == TEXTURE_CUBE_MAP) {
+					} else if (m_textureType == TextureType::T_CUBE_MAP) {
 						assert(m_cubemap.size() == 6);
 						for (unsigned int i = 0; i < 6; ++i) {
 							SDL_Surface *s = SDL_CreateRGBSurface(SDL_SWSURFACE, actualWidth, actualHeight, targetPixelFormat->BitsPerPixel,
@@ -184,8 +187,8 @@ namespace Graphics {
 			}
 		} else {
 			switch (m_dds.GetTextureFormat()) {
-			case PicoDDS::FORMAT_DXT1: targetTextureFormat = TEXTURE_DXT1; break;
-			case PicoDDS::FORMAT_DXT5: targetTextureFormat = TEXTURE_DXT5; break;
+			case PicoDDS::FORMAT_DXT1: targetTextureFormat = TextureFormat::DXT1; break;
+			case PicoDDS::FORMAT_DXT5: targetTextureFormat = TextureFormat::DXT5; break;
 			default:
 				Output("ERROR: DDS texture with invalid format '%s' (only DXT1 and DXT5 are supported)\n", m_filename.c_str());
 				assert(false);
@@ -196,7 +199,7 @@ namespace Graphics {
 			virtualHeight = actualHeight = m_dds.imgdata_.height;
 			numberOfMipMaps = m_dds.imgdata_.numMipMaps;
 			numberOfImages = m_dds.imgdata_.numImages;
-			if (m_textureType == TEXTURE_CUBE_MAP) {
+			if (m_textureType == TextureType::T_CUBE_MAP) {
 				// Cube map must be fully defined (6 images) to be used correctly
 				assert(numberOfImages == 6);
 			}
@@ -229,12 +232,12 @@ namespace Graphics {
 		assert(!m_surface);
 
 		SDLSurfacePtr s;
-		if (m_textureType == TEXTURE_2D) {
+		if (m_textureType == TextureType::T_2D) {
 			s = LoadSurfaceFromFile(m_filename);
 			if (!s) {
 				s = LoadSurfaceFromFile("textures/unknown.png");
 			}
-		} else if (m_textureType == TEXTURE_CUBE_MAP) {
+		} else if (m_textureType == TextureType::T_CUBE_MAP) {
 			Output("LoadSurface: %s: cannot load non-DDS cubemaps\n", m_filename.c_str());
 		}
 
@@ -254,12 +257,19 @@ namespace Graphics {
 		// XXX if we can't load the fallback texture, then what?
 	}
 
+	Texture *TextureBuilder::CreateTexture(Renderer *r)
+	{
+		Texture *t = r->CreateTexture(GetDescriptor());
+		UpdateTexture(t);
+		return t;
+	}
+
 	void TextureBuilder::UpdateTexture(Texture *texture)
 	{
 		if (m_surface) {
-			if (texture->GetDescriptor().type == TEXTURE_2D && m_textureType == TEXTURE_2D) {
+			if (texture->GetDescriptor().type == TextureType::T_2D && m_textureType == TextureType::T_2D) {
 				texture->Update(m_surface->pixels, vector2f(m_surface->w, m_surface->h), m_descriptor.format, 0);
-			} else if (texture->GetDescriptor().type == TEXTURE_CUBE_MAP && m_textureType == TEXTURE_CUBE_MAP) {
+			} else if (texture->GetDescriptor().type == TextureType::T_CUBE_MAP && m_textureType == TextureType::T_CUBE_MAP) {
 				assert(m_cubemap.size() == 6);
 				TextureCubeData tcd;
 				// Sequence of cube map face storage: +X -X +Y -Y -Z +Z
@@ -276,10 +286,10 @@ namespace Graphics {
 			}
 		} else {
 			assert(m_dds.headerdone_);
-			assert(m_descriptor.format == TEXTURE_DXT1 || m_descriptor.format == TEXTURE_DXT5);
-			if (texture->GetDescriptor().type == TEXTURE_2D && m_textureType == TEXTURE_2D) {
+			assert(m_descriptor.format == TextureFormat::DXT1 || m_descriptor.format == TextureFormat::DXT5);
+			if (texture->GetDescriptor().type == TextureType::T_2D && m_textureType == TextureType::T_2D) {
 				texture->Update(m_dds.imgdata_.imgData, vector2f(m_dds.imgdata_.width, m_dds.imgdata_.height), m_descriptor.format, m_dds.imgdata_.numMipMaps);
-			} else if (texture->GetDescriptor().type == TEXTURE_CUBE_MAP && m_textureType == TEXTURE_CUBE_MAP) {
+			} else if (texture->GetDescriptor().type == TextureType::T_CUBE_MAP && m_textureType == TextureType::T_CUBE_MAP) {
 				TextureCubeData tcd;
 				// Size in bytes of each cube map face
 				size_t face_size = m_dds.imgdata_.size / m_dds.imgdata_.numImages;
@@ -296,6 +306,24 @@ namespace Graphics {
 				assert(0);
 			}
 		}
+	}
+
+	Texture *TextureBuilder::GetOrCreateTexture(Renderer *r, const std::string &type)
+	{
+		PROFILE_SCOPED()
+		if (m_filename.empty()) {
+			return CreateTexture(r);
+		}
+		SDL_LockMutex(m_textureLock);
+		Texture *t = r->GetCachedTexture(type, m_filename);
+		if (t) {
+			SDL_UnlockMutex(m_textureLock);
+			return t;
+		}
+		t = CreateTexture(r);
+		r->AddCachedTexture(type, m_filename, t);
+		SDL_UnlockMutex(m_textureLock);
+		return t;
 	}
 
 	Texture *TextureBuilder::GetWhiteTexture(Renderer *r)

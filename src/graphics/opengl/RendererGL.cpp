@@ -1070,30 +1070,30 @@ namespace Graphics {
 		OGL::RenderTarget *rt = new OGL::RenderTarget(desc);
 		CheckRenderErrors(__FUNCTION__, __LINE__);
 		rt->Bind();
-		if (desc.colorFormat != TEXTURE_NONE) {
+		if (desc.colorFormat != TextureFormat::NONE) {
 			Graphics::TextureDescriptor cdesc(
 				desc.colorFormat,
 				vector2f(desc.width, desc.height),
 				vector2f(desc.width, desc.height),
-				LINEAR_CLAMP,
+				TextureSampleMode::LINEAR_CLAMP,
 				false,
 				false,
 				false,
-				0, Graphics::TEXTURE_2D);
+				0, Graphics::TextureType::T_2D);
 			OGL::TextureGL *colorTex = new OGL::TextureGL(cdesc, false, false);
 			rt->SetColorTexture(colorTex);
 		}
-		if (desc.depthFormat != TEXTURE_NONE) {
+		if (desc.depthFormat != TextureFormat::NONE) {
 			if (desc.allowDepthTexture) {
 				Graphics::TextureDescriptor ddesc(
-					TEXTURE_DEPTH,
+					TextureFormat::DEPTH,
 					vector2f(desc.width, desc.height),
 					vector2f(desc.width, desc.height),
-					LINEAR_CLAMP,
+					TextureSampleMode::LINEAR_CLAMP,
 					false,
 					false,
 					false,
-					0, Graphics::TEXTURE_2D);
+					0, Graphics::TextureType::T_2D);
 				OGL::TextureGL *depthTex = new OGL::TextureGL(ddesc, false, false);
 				rt->SetDepthTexture(depthTex);
 			} else {

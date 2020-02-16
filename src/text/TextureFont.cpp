@@ -9,6 +9,7 @@
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/RenderState.h"
+#include "graphics/Texture.h"
 #include "graphics/VertexArray.h"
 #include "graphics/VertexBuffer.h"
 #include "libs.h"
@@ -621,7 +622,7 @@ namespace Text {
 
 		RendererLocator::getRenderer()->CheckRenderErrors(__FUNCTION__, __LINE__);
 
-		m_texFormat = m_config.IsOutline() ? Graphics::TEXTURE_LUMINANCE_ALPHA_88 : Graphics::TEXTURE_INTENSITY_8;
+		m_texFormat = m_config.IsOutline() ? Graphics::TextureFormat::LUMINANCE_ALPHA_88 : Graphics::TextureFormat::INTENSITY_8;
 		m_bpp = m_config.IsOutline() ? 2 : 1;
 
 		RendererLocator::getRenderer()->CheckRenderErrors(__FUNCTION__, __LINE__);
@@ -636,7 +637,7 @@ namespace Text {
 		desc.vertexColors = true; //to allow per-character colors
 		desc.textures = 1;
 		m_mat.reset(RendererLocator::getRenderer()->CreateMaterial(desc));
-		Graphics::TextureDescriptor textureDescriptor(m_texFormat, vector2f(ATLAS_SIZE), Graphics::NEAREST_CLAMP, false, false, false, 0, Graphics::TEXTURE_2D);
+		Graphics::TextureDescriptor textureDescriptor(m_texFormat, vector2f(ATLAS_SIZE), Graphics::TextureSampleMode::NEAREST_CLAMP, false, false, false, 0, Graphics::TextureType::T_2D);
 		m_texture.Reset(RendererLocator::getRenderer()->CreateTexture(textureDescriptor));
 		{
 			const size_t sz = m_bpp * ATLAS_SIZE * ATLAS_SIZE;

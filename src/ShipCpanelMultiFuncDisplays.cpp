@@ -11,7 +11,7 @@
 #include "Missile.h"
 #include "Player.h"
 #include "Space.h"
-#include "graphics/Material.h"
+#include "graphics/Graphics.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/RenderState.h"

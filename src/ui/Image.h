@@ -6,10 +6,15 @@
 
 #include "SmartPtr.h"
 #include "Widget.h"
-#include "graphics/Drawables.h"
-#include "graphics/Material.h"
-#include "graphics/Texture.h"
 #include "vector2.h"
+
+namespace Graphics {
+	namespace Drawables {
+		class TexturedQuad;
+	}
+	class Material;
+	class Texture;
+}
 
 namespace UI {
 
@@ -46,6 +51,7 @@ namespace UI {
 	protected:
 		friend class Context;
 		Image(Context *context, const std::string &filename, Uint32 sizeControlFlags);
+		virtual ~Image();
 
 	private:
 		RefCountedPtr<Graphics::Texture> m_texture;

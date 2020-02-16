@@ -9,6 +9,7 @@
 
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
+#include "graphics/Texture.h"
 
 namespace UI {
 

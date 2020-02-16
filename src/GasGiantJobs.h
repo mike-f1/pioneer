@@ -10,6 +10,7 @@
 #include "JobQueue.h"
 #include "galaxy/SystemPath.h"
 #include "graphics/opengl/GenGasGiantColourMaterial.h"
+#include "graphics/Texture.h"
 #include "terrain/Terrain.h"
 #include "vector3.h"
 

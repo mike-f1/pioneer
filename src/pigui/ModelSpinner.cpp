@@ -8,6 +8,7 @@
 #include "graphics/RenderTarget.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
+#include "graphics/Texture.h"
 #include "Shields.h"
 #include "scenegraph/Model.h"
 #include "scenegraph/ModelSkin.h"
@@ -39,8 +40,8 @@ void ModelSpinner::CreateRenderTarget()
 
 	Graphics::RenderTargetDesc rtDesc{
 		uint16_t(m_size.x), uint16_t(m_size.y),
-		Graphics::TextureFormat::TEXTURE_RGBA_8888,
-		Graphics::TextureFormat::TEXTURE_DEPTH, true
+		Graphics::TextureFormat::RGBA_8888,
+		Graphics::TextureFormat::DEPTH, true
 	};
 
 	m_renderTarget.reset(RendererLocator::getRenderer()->CreateRenderTarget(rtDesc));

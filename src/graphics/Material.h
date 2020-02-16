@@ -19,7 +19,6 @@
 namespace Graphics {
 
 	class Texture;
-	class RendererOGL;
 
 	// Shorthand for unique effects
 	// The other descriptor parameters may or may not have effect,

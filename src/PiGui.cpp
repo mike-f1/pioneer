@@ -358,14 +358,14 @@ void *PiGui::makeTexture(unsigned char *pixels, int width, int height)
 	// Gone for LINEAR_CLAMP here and RGBA like the original code
 	const vector2f texSize(1.0f, 1.0f);
 	const vector2f dataSize(width, height);
-	const Graphics::TextureDescriptor texDesc(Graphics::TEXTURE_RGBA_8888,
-		dataSize, texSize, Graphics::LINEAR_CLAMP,
-		false, false, false, 0, Graphics::TEXTURE_2D);
+	const Graphics::TextureDescriptor texDesc(Graphics::TextureFormat::RGBA_8888,
+		dataSize, texSize, Graphics::TextureSampleMode::LINEAR_CLAMP,
+		false, false, false, 0, Graphics::TextureType::T_2D);
 	// Create the texture, calling it via renderer directly avoids the caching call of TextureBuilder
 	// However interestingly this gets called twice which would have been a WIN for the TextureBuilder :/
 	Graphics::Texture *pTex = RendererLocator::getRenderer()->CreateTexture(texDesc);
 	// Update it with the actual pixels, this is a two step process due to legacy code
-	pTex->Update(pixels, dataSize, Graphics::TEXTURE_RGBA_8888);
+	pTex->Update(pixels, dataSize, Graphics::TextureFormat::RGBA_8888);
 	// nasty bit as I invoke the TextureGL
 	Graphics::OGL::TextureGL *pGLTex = reinterpret_cast<Graphics::OGL::TextureGL *>(pTex);
 	Uint32 result = pGLTex->GetTextureID();

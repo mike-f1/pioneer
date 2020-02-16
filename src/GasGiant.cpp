@@ -16,6 +16,7 @@
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/RenderState.h"
+#include "graphics/RenderTarget.h"
 #include "graphics/Texture.h"
 #include "graphics/VertexArray.h"
 #include "graphics/VertexBuffer.h"
@@ -438,9 +439,9 @@ bool GasGiant::AddTextureFaceResult(GasGiantJobs::STextureFaceResult *res)
 		const vector2f texSize(1.0f, 1.0f);
 		const vector2f dataSize(uvDims, uvDims);
 		const Graphics::TextureDescriptor texDesc(
-			Graphics::TEXTURE_RGBA_8888,
-			dataSize, texSize, Graphics::LINEAR_CLAMP,
-			true, false, false, 0, Graphics::TEXTURE_CUBE_MAP);
+			Graphics::TextureFormat::RGBA_8888,
+			dataSize, texSize, Graphics::TextureSampleMode::LINEAR_CLAMP,
+			true, false, false, 0, Graphics::TextureType::T_CUBE_MAP);
 		m_surfaceTexture.Reset(RendererLocator::getRenderer()->CreateTexture(texDesc));
 
 		// update with buffer from above
@@ -451,7 +452,7 @@ bool GasGiant::AddTextureFaceResult(GasGiantJobs::STextureFaceResult *res)
 		tcd.negY = m_jobColorBuffers[3].get();
 		tcd.posZ = m_jobColorBuffers[4].get();
 		tcd.negZ = m_jobColorBuffers[5].get();
-		m_surfaceTexture->Update(tcd, dataSize, Graphics::TEXTURE_RGBA_8888);
+		m_surfaceTexture->Update(tcd, dataSize, Graphics::TextureFormat::RGBA_8888);
 
 #if DUMP_TO_TEXTURE
 		for (int iFace = 0; iFace < NUM_PATCHES; iFace++) {
@@ -541,9 +542,9 @@ void GasGiant::GenerateTexture()
 		const vector2f texSize(1.0f, 1.0f);
 		const vector2f dataSize(s_texture_size_small, s_texture_size_small);
 		const Graphics::TextureDescriptor texDesc(
-			Graphics::TEXTURE_RGBA_8888,
-			dataSize, texSize, Graphics::LINEAR_CLAMP,
-			false, false, false, 0, Graphics::TEXTURE_CUBE_MAP);
+			Graphics::TextureFormat::RGBA_8888,
+			dataSize, texSize, Graphics::TextureSampleMode::LINEAR_CLAMP,
+			false, false, false, 0, Graphics::TextureType::T_CUBE_MAP);
 		m_surfaceTextureSmall.Reset(RendererLocator::getRenderer()->CreateTexture(texDesc));
 
 		const Terrain *pTerrain = GetTerrain();
@@ -582,7 +583,7 @@ void GasGiant::GenerateTexture()
 		tcd.negY = bufs[3].get();
 		tcd.posZ = bufs[4].get();
 		tcd.negZ = bufs[5].get();
-		m_surfaceTextureSmall->Update(tcd, dataSize, Graphics::TEXTURE_RGBA_8888);
+		m_surfaceTextureSmall->Update(tcd, dataSize, Graphics::TextureFormat::RGBA_8888);
 	}
 
 	// create small texture
@@ -600,9 +601,9 @@ void GasGiant::GenerateTexture()
 		const vector2f texSize(1.0f, 1.0f);
 		const vector2f dataSize(s_texture_size_gpu[m_detail], s_texture_size_gpu[m_detail]);
 		const Graphics::TextureDescriptor texDesc(
-			Graphics::TEXTURE_RGBA_8888,
-			dataSize, texSize, Graphics::LINEAR_CLAMP,
-			true, false, false, 0, Graphics::TEXTURE_CUBE_MAP);
+			Graphics::TextureFormat::RGBA_8888,
+			dataSize, texSize, Graphics::TextureSampleMode::LINEAR_CLAMP,
+			true, false, false, 0, Graphics::TextureType::T_CUBE_MAP);
 		m_builtTexture.Reset(RendererLocator::getRenderer()->CreateTexture(texDesc));
 
 		const std::string ColorFracName = GetTerrain()->GetColorFractalName();
@@ -852,8 +853,8 @@ void GasGiant::CreateRenderTarget(const Uint16 width, const Uint16 height)
 	Graphics::RenderTargetDesc rtDesc(
 		width,
 		height,
-		Graphics::TEXTURE_NONE, // don't create a texture
-		Graphics::TEXTURE_NONE, // don't create a depth buffer
+		Graphics::TextureFormat::NONE, // don't create a texture
+		Graphics::TextureFormat::NONE, // don't create a depth buffer
 		false);
 	s_renderTarget = RendererLocator::getRenderer()->CreateRenderTarget(rtDesc);
 }

@@ -4,9 +4,9 @@
 #ifndef _GRAPHICS_H
 #define _GRAPHICS_H
 
-#include "RenderTarget.h"
 #include <memory>
 #include <vector>
+#include <SDL_stdinc.h>
 
 /*
  * bunch of reused 3d drawy routines.

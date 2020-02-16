@@ -4,6 +4,7 @@
 #include "BaseLoader.h"
 #include "FileSystem.h"
 #include "graphics/Material.h"
+#include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/TextureBuilder.h"
 #include "utils.h"
@@ -14,7 +15,7 @@ BaseLoader::BaseLoader() :
 	m_model(nullptr)
 {
 	Graphics::Texture *sdfTex = Graphics::TextureBuilder("fonts/label3d.dds",
-		Graphics::LINEAR_CLAMP, true, true, true)
+		Graphics::TextureSampleMode::LINEAR_CLAMP, true, true, true)
 									.GetOrCreateTexture(RendererLocator::getRenderer(), "model");
 	m_labelFont.Reset(new Text::DistanceFieldFont("fonts/sdf_definition.txt", sdfTex));
 }

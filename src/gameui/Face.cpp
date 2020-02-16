@@ -4,8 +4,11 @@
 #include "Face.h"
 #include "FileSystem.h"
 #include "SDLWrappers.h"
-#include "graphics/TextureBuilder.h"
+#include "graphics/Drawables.h"
+#include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
+#include "graphics/Texture.h"
+#include "graphics/TextureBuilder.h"
 #include "graphics/VertexArray.h"
 
 using namespace UI;
@@ -27,7 +30,7 @@ namespace GameUI {
 		FaceParts::PickFaceParts(face, m_seed);
 		FaceParts::BuildFaceImage(faceim.Get(), face);
 
-		m_texture.Reset(Graphics::TextureBuilder(faceim, Graphics::LINEAR_CLAMP, true, true).GetOrCreateTexture(RendererLocator::getRenderer(), std::string("face")));
+		m_texture.Reset(Graphics::TextureBuilder(faceim, Graphics::TextureSampleMode::LINEAR_CLAMP, true, true).GetOrCreateTexture(RendererLocator::getRenderer(), std::string("face")));
 
 		if (!s_material) {
 			Graphics::MaterialDescriptor matDesc;

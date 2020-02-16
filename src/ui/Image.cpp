@@ -3,8 +3,12 @@
 
 #include "Image.h"
 #include "Context.h"
-#include "graphics/TextureBuilder.h"
+#include "graphics/Drawables.h"
+#include "graphics/Material.h"
+#include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
+#include "graphics/Texture.h"
+#include "graphics/TextureBuilder.h"
 #include "graphics/VertexArray.h"
 
 namespace UI {
@@ -39,6 +43,9 @@ namespace UI {
 
 		SetSizeControlFlags(sizeControlFlags);
 	}
+
+	Image::~Image()
+	{}
 
 	Point Image::PreferredSize()
 	{

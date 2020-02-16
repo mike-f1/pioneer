@@ -5,16 +5,20 @@
 #define _SFX_H
 
 #include "FrameId.h"
-#include "graphics/Material.h"
 #include "JsonFwd.h"
+#include "vector3.h"
+#include "vector2.h"
 
+#include <SDL_stdinc.h>
 #include <deque>
 
 class Body;
 class Frame;
 
 namespace Graphics {
+	class Material;
 	class RenderState;
+	enum class EffectType;
 }
 
 enum SFX_TYPE {
@@ -80,11 +84,7 @@ public:
 private:
 	// types
 	struct MaterialData {
-		MaterialData() :
-			effect(Graphics::EffectType::BILLBOARD),
-			num_textures(1),
-			num_imgs_wide(1),
-			coord_downscale(1.0f) {}
+		MaterialData();
 		Graphics::EffectType effect;
 		Uint32 num_textures;
 		int num_imgs_wide;

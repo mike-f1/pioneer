@@ -227,12 +227,12 @@ void Planet::GenerateRings()
 
 	const vector2f texSize(RING_TEXTURE_WIDTH, RING_TEXTURE_LENGTH);
 	const Graphics::TextureDescriptor texDesc(
-		Graphics::TEXTURE_RGBA_8888, texSize, Graphics::LINEAR_REPEAT, true, true, true, 0, Graphics::TEXTURE_2D);
+		Graphics::TextureFormat::RGBA_8888, texSize, Graphics::TextureSampleMode::LINEAR_REPEAT, true, true, true, 0, Graphics::TextureType::T_2D);
 
 	m_ringTexture.Reset(RendererLocator::getRenderer()->CreateTexture(texDesc));
 	m_ringTexture->Update(
 		static_cast<void *>(buf.get()), texSize,
-		Graphics::TEXTURE_RGBA_8888);
+		Graphics::TextureFormat::RGBA_8888);
 
 	Graphics::MaterialDescriptor desc;
 	desc.effect = Graphics::EffectType::PLANETRING;

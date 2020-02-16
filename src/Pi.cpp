@@ -86,6 +86,7 @@
 #include "graphics/opengl/RendererGL.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
+#include "graphics/Texture.h"
 
 #if WITH_DEVKEYS
 #include "graphics/Graphics.h"

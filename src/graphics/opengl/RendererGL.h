@@ -46,7 +46,7 @@ namespace Graphics {
 	public:
 		static void RegisterRenderer();
 
-		RendererOGL(SDL_Window *window, const Graphics::Settings &vs, SDL_GLContext &glContext);
+		RendererOGL(SDL_Window *window, const Settings &vs, SDL_GLContext &glContext);
 		virtual ~RendererOGL() override final;
 
 		virtual const char *GetName() const override final { return "OpenGL 3.1, with extensions, renderer"; }

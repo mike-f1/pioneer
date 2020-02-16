@@ -6,9 +6,15 @@
 
 #include "FaceParts.h"
 #include "SmartPtr.h"
-#include "graphics/Drawables.h"
-#include "graphics/Texture.h"
 #include "ui/Context.h"
+
+namespace Graphics {
+	namespace Drawables {
+		class TexturedQuad;
+	}
+	class Material;
+	class Texture;
+}
 
 namespace GameUI {
 

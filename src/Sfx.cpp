@@ -14,12 +14,12 @@
 #include "Random.h"
 #include "RandomSingleton.h"
 #include "StringF.h"
-#include "graphics/Drawables.h"
 #include "graphics/Graphics.h"
 #include "graphics/Material.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/RenderState.h"
+#include "graphics/Texture.h"
 #include "graphics/TextureBuilder.h"
 
 using namespace Graphics;
@@ -43,14 +43,20 @@ Graphics::RenderState *SfxManager::additiveAlphaState = nullptr;
 Graphics::RenderState *SfxManager::alphaOneState = nullptr;
 SfxManager::MaterialData SfxManager::m_materialData[TYPE_NONE];
 
+SfxManager::MaterialData::MaterialData() :
+	effect(Graphics::EffectType::BILLBOARD),
+	num_textures(1),
+	num_imgs_wide(1),
+	coord_downscale(1.0f)
+{}
+
 Sfx::Sfx(const vector3d &pos, const vector3d &vel, const float speed, const SFX_TYPE type) :
 	m_pos(pos),
 	m_vel(vel),
 	m_age(0.0f),
 	m_speed(speed),
 	m_type(type)
-{
-}
+{}
 
 Sfx::Sfx(const Json &jsonObj)
 {

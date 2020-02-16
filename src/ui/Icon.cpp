@@ -5,8 +5,12 @@
 
 #include "Context.h"
 #include "FileSystem.h"
-#include "graphics/TextureBuilder.h"
+#include "graphics/Drawables.h"
+#include "graphics/Material.h"
+#include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
+#include "graphics/Texture.h"
+#include "graphics/TextureBuilder.h"
 #include "graphics/VertexArray.h"
 
 static const char CONFIG_FILE[] = "ui/Icons.ini";

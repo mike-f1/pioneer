@@ -11,7 +11,8 @@
 
 class FontCache {
 public:
-	FontCache() {}
+	FontCache() = default;
+	~FontCache();
 
 	RefCountedPtr<Text::TextureFont> GetTextureFont(const std::string &name);
 

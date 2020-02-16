@@ -5,6 +5,7 @@
 #include "GuiScreen.h"
 #include "graphics/Material.h"
 #include "graphics/Renderer.h"
+#include "graphics/Texture.h"
 #include "graphics/VertexArray.h"
 #include "graphics/VertexBuffer.h"
 

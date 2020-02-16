@@ -22,6 +22,7 @@
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/RenderState.h"
+#include "graphics/Texture.h"
 #include "graphics/TextureBuilder.h"
 #include "graphics/VertexArray.h"
 

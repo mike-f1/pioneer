@@ -9,6 +9,9 @@
 #include "gui/GuiScreen.h"
 #include "text/TextureFont.h"
 
+FontCache::~FontCache()
+{}
+
 RefCountedPtr<Text::TextureFont> FontCache::GetTextureFont(const std::string &name)
 {
 	std::map<std::string, RefCountedPtr<Text::TextureFont>>::iterator i = m_textureFonts.find(name);

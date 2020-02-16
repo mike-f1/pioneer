@@ -7,10 +7,15 @@
 #include "IniConfig.h"
 #include "SmartPtr.h"
 #include "Widget.h"
-#include "graphics/Drawables.h"
-#include "graphics/Material.h"
-#include "graphics/Texture.h"
 #include "vector2.h"
+
+namespace Graphics {
+	namespace Drawables {
+		class TexturedQuad;
+	}
+	class Material;
+	class Texture;
+}
 
 namespace UI {
 

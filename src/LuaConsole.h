@@ -6,13 +6,17 @@
 
 #include "LuaManager.h"
 #include "RefCounted.h"
-#include "ui/Widget.h"
 #include <deque>
+#include <string>
+#include <vector>
+#include <SDL_keyboard.h>
 
 namespace UI {
 	class TextEntry;
 	class MultiLineText;
 	class Scroller;
+	class Widget;
+	class KeyboardEvent;
 } // namespace UI
 
 class LuaConsole {

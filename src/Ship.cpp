@@ -35,6 +35,8 @@
 #include "WorldView.h"
 #include "collider/CollisionContact.h"
 #include "galaxy/StarSystem.h"
+#include "graphics/Material.h"
+#include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/TextureBuilder.h"
 #include "scenegraph/Animation.h"

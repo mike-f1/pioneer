@@ -43,13 +43,12 @@ SBaseRequest::~SBaseRequest()
 // ********************************************************************************
 
 // Generates full-detail vertices, and also non-edge normals and colors
-void SSingleSplitRequest::GenerateMesh() const
+void SSingleSplitRequest::GenerateMesh()
 {
 	const int borderedEdgeLen = edgeLen + (BORDER_SIZE * 2);
 
 	// generate heights plus a 1 unit border
-	double *bhts = borderHeights.get();
-	vector3d *vrts = borderVertexs.get();
+	unsigned count = 0;
 	for (int y = -BORDER_SIZE; y < borderedEdgeLen - BORDER_SIZE; y++) {
 		const double yfrac = double(y) * fracStep;
 		for (int x = -BORDER_SIZE; x < borderedEdgeLen - BORDER_SIZE; x++) {
@@ -57,43 +56,33 @@ void SSingleSplitRequest::GenerateMesh() const
 			const vector3d p = GetSpherePoint(v0, v1, v2, v3, xfrac, yfrac);
 			const double height = pTerrain->GetHeight(p);
 			assert(height >= 0.0f && height <= 1.0f);
-			*(bhts++) = height;
-			*(vrts++) = p * (height + 1.0);
+			m_tmpBorderHeights[count] = height;
+			m_tmpBorderVertexs[count] = p * (height + 1.0);
+			count++;
 		}
 	}
-	assert(bhts == &borderHeights.get()[numBorderedVerts]);
-
 	// Generate normals & colors for non-edge vertices since they never change
-	Color3ub *col = colors;
-	vector3f *nrm = normals;
-	double *hts = heights;
-	vrts = borderVertexs.get();
+	count = 0;
 	for (int y = BORDER_SIZE; y < borderedEdgeLen - BORDER_SIZE; y++) {
 		for (int x = BORDER_SIZE; x < borderedEdgeLen - BORDER_SIZE; x++) {
 			// height
-			const double height = borderHeights[x + y * borderedEdgeLen];
-			assert(hts != &heights[edgeLen * edgeLen]);
-			*(hts++) = height;
+			const double height = m_tmpBorderHeights[x + y * borderedEdgeLen];
+			m_heights[count] = height;
 
 			// normal
-			const vector3d &x1 = vrts[(x - 1) + y * borderedEdgeLen];
-			const vector3d &x2 = vrts[(x + 1) + y * borderedEdgeLen];
-			const vector3d &y1 = vrts[x + (y - 1) * borderedEdgeLen];
-			const vector3d &y2 = vrts[x + (y + 1) * borderedEdgeLen];
+			const vector3d &x1 = m_tmpBorderVertexs[(x - 1) + y * borderedEdgeLen];
+			const vector3d &x2 = m_tmpBorderVertexs[(x + 1) + y * borderedEdgeLen];
+			const vector3d &y1 = m_tmpBorderVertexs[x + (y - 1) * borderedEdgeLen];
+			const vector3d &y2 = m_tmpBorderVertexs[x + (y + 1) * borderedEdgeLen];
 			const vector3d n = ((x2 - x1).Cross(y2 - y1)).Normalized();
-			assert(nrm != &normals[edgeLen * edgeLen]);
-			*(nrm++) = vector3f(n);
+			m_normals[count] = vector3f(n);
 
 			// color
 			const vector3d p = GetSpherePoint(v0, v1, v2, v3, (x - BORDER_SIZE) * fracStep, (y - BORDER_SIZE) * fracStep);
-			setColour(*col, pTerrain->GetColor(p, height, n));
-			assert(col != &colors[edgeLen * edgeLen]);
-			++col;
+			setColour(m_colors[count], pTerrain->GetColor(p, height, n));
+			count++;
 		}
 	}
-	assert(hts == &heights[edgeLen * edgeLen]);
-	assert(nrm == &normals[edgeLen * edgeLen]);
-	assert(col == &colors[edgeLen * edgeLen]);
 }
 
 // ********************************************************************************
@@ -110,14 +99,14 @@ void SinglePatchJob::OnRun() // RUNS IN ANOTHER THREAD!! MUST BE THREAD SAFE!
 {
 	BasePatchJob::OnRun();
 
-	const SSingleSplitRequest &srd = *mData;
+	SSingleSplitRequest &srd = *mData;
 
 	// fill out the data
 	mData->GenerateMesh();
 
 	// add this patches data
 	SSingleSplitResult *sr = new SSingleSplitResult(srd.patchID.GetPatchFaceIdx(), srd.depth);
-	sr->addResult(srd.heights, srd.normals, srd.colors,
+	sr->addResult(srd.m_heights, srd.m_normals, srd.m_colors,
 		srd.v0, srd.v1, srd.v2, srd.v3,
 		srd.patchID.NextPatchID(srd.depth + 1, 0));
 	// store the result
@@ -147,9 +136,9 @@ void QuadPatchJob::OnRun() // RUNS IN ANOTHER THREAD!! MUST BE THREAD SAFE!
 {
 	BasePatchJob::OnRun();
 
-	const SQuadSplitRequest &srd = *mData;
+	SQuadSplitRequest &srd = *mData;
 
-	mData->GenerateBorderedData();
+	srd.GenerateBorderedData();
 
 	const vector3d v01 = (srd.v0 + srd.v1).Normalized();
 	const vector3d v12 = (srd.v1 + srd.v2).Normalized();
@@ -174,13 +163,13 @@ void QuadPatchJob::OnRun() // RUNS IN ANOTHER THREAD!! MUST BE THREAD SAFE!
 	SQuadSplitResult *sr = new SQuadSplitResult(srd.patchID.GetPatchFaceIdx(), srd.depth);
 	for (int i = 0; i < 4; i++) {
 		// fill out the data
-		mData->GenerateSubPatchData(i,
+		srd.GenerateSubPatchData(i,
 			vecs[i][0], vecs[i][1], vecs[i][2], vecs[i][3],
 			srd.edgeLen, offxy[i][0], offxy[i][1],
 			borderedEdgeLen);
 
 		// add this patches data
-		sr->addResult(i, srd.heights[i], srd.normals[i], srd.colors[i],
+		sr->addResult(i, srd.m_heights[i], srd.m_normals[i], srd.m_colors[i],
 			vecs[i][0], vecs[i][1], vecs[i][2], vecs[i][3],
 			srd.patchID.NextPatchID(srd.depth + 1, i));
 	}
@@ -197,14 +186,13 @@ QuadPatchJob::~QuadPatchJob()
 }
 
 // Generates full-detail vertices, and also non-edge normals and colors
-void SQuadSplitRequest::GenerateBorderedData() const
+void SQuadSplitRequest::GenerateBorderedData()
 {
 	const int borderedEdgeLen = (edgeLen * 2) + (BORDER_SIZE * 2) - 1;
 	const int numBorderedVerts = borderedEdgeLen * borderedEdgeLen;
 
 	// generate heights plus a N=BORDER_SIZE unit border
-	double *bhts = borderHeights.get();
-	vector3d *vrts = borderVertexs.get();
+	unsigned count = 0;
 	for (int y = -BORDER_SIZE; y < (borderedEdgeLen - BORDER_SIZE); y++) {
 		const double yfrac = double(y) * (fracStep * 0.5);
 		for (int x = -BORDER_SIZE; x < (borderedEdgeLen - BORDER_SIZE); x++) {
@@ -212,11 +200,11 @@ void SQuadSplitRequest::GenerateBorderedData() const
 			const vector3d p = GetSpherePoint(v0, v1, v2, v3, xfrac, yfrac);
 			const double height = pTerrain->GetHeight(p);
 			assert(height >= 0.0f && height <= 1.0f);
-			*(bhts++) = height;
-			*(vrts++) = p * (height + 1.0);
+			m_tmpBorderHeights[count] = height;
+			m_tmpBorderVertexs[count] = (p * (height + 1.0));
+			count++;
 		}
 	}
-	assert(bhts == &borderHeights[numBorderedVerts]);
 }
 
 void SQuadSplitRequest::GenerateSubPatchData(
@@ -228,42 +216,34 @@ void SQuadSplitRequest::GenerateSubPatchData(
 	const int edgeLen,
 	const int xoff,
 	const int yoff,
-	const int borderedEdgeLen) const
+	const int borderedEdgeLen)
 {
-	// Generate normals & colors for vertices
-	vector3d *vrts = borderVertexs.get();
-	Color3ub *col = colors[quadrantIndex];
-	vector3f *nrm = normals[quadrantIndex];
-	double *hts = heights[quadrantIndex];
-
 	// step over the small square
+	unsigned count = 0;
 	for (int y = 0; y < edgeLen; y++) {
 		const int by = (y + BORDER_SIZE) + yoff;
 		for (int x = 0; x < edgeLen; x++) {
 			const int bx = (x + BORDER_SIZE) + xoff;
 
 			// height
-			const double height = borderHeights[bx + (by * borderedEdgeLen)];
-			assert(hts != &heights[quadrantIndex][edgeLen * edgeLen]);
-			*(hts++) = height;
+			const double height = m_tmpBorderHeights[bx + (by * borderedEdgeLen)];
+			m_heights[quadrantIndex][count] = height;
 
 			// normal
-			const vector3d &x1 = vrts[(bx - 1) + (by * borderedEdgeLen)];
-			const vector3d &x2 = vrts[(bx + 1) + (by * borderedEdgeLen)];
-			const vector3d &y1 = vrts[bx + ((by - 1) * borderedEdgeLen)];
-			const vector3d &y2 = vrts[bx + ((by + 1) * borderedEdgeLen)];
+			const vector3d &x1 = m_tmpBorderVertexs[(bx - 1) + (by * borderedEdgeLen)];
+			const vector3d &x2 = m_tmpBorderVertexs[(bx + 1) + (by * borderedEdgeLen)];
+			const vector3d &y1 = m_tmpBorderVertexs[bx + ((by - 1) * borderedEdgeLen)];
+			const vector3d &y2 = m_tmpBorderVertexs[bx + ((by + 1) * borderedEdgeLen)];
 			const vector3d n = ((x2 - x1).Cross(y2 - y1)).Normalized();
-			assert(nrm != &normals[quadrantIndex][edgeLen * edgeLen]);
-			*(nrm++) = vector3f(n);
+			m_normals[quadrantIndex][count] = vector3f(n);
 
 			// color
-			const vector3d p = GetSpherePoint(v0, v1, v2, v3, x * fracStep, y * fracStep);
-			setColour(*col, pTerrain->GetColor(p, height, n));
-			assert(col != &colors[quadrantIndex][edgeLen * edgeLen]);
-			++col;
+			//const vector3d p = GetSpherePoint(v0, v1, v2, v3, double(x) * fracStep, double(y) * fracStep);
+			const vector3d p = m_tmpBorderVertexs[bx + (by * borderedEdgeLen)];
+			Color3ub col;
+			setColour(col, pTerrain->GetColor(p, height, n));
+			m_colors[quadrantIndex][count] = col;
+			count++;
 		}
 	}
-	assert(hts == &heights[quadrantIndex][edgeLen * edgeLen]);
-	assert(nrm == &normals[quadrantIndex][edgeLen * edgeLen]);
-	assert(col == &colors[quadrantIndex][edgeLen * edgeLen]);
 }

@@ -35,9 +35,6 @@ GeoPatch::GeoPatch(const RefCountedPtr<GeoPatchContext> &ctx_, GeoSphere *gs,
 	m_v1(v1_),
 	m_v2(v2_),
 	m_v3(v3_),
-	m_heights(nullptr),
-	m_normals(nullptr),
-	m_colors(nullptr),
 	m_parent(nullptr),
 	m_geosphere(gs),
 	m_depth(depth),
@@ -69,9 +66,6 @@ GeoPatch::~GeoPatch()
 	for (int i = 0; i < NUM_KIDS; i++) {
 		m_kids[i].reset();
 	}
-	m_heights.reset();
-	m_normals.reset();
-	m_colors.reset();
 }
 
 void GeoPatch::UpdateVBOs()
@@ -99,9 +93,9 @@ void GeoPatch::UpdateVBOs()
 
 	const int32_t edgeLen = m_ctx->GetEdgeLen();
 	const double frac = m_ctx->GetFrac();
-	const double *pHts = m_heights.get();
-	const vector3f *pNorm = m_normals.get();
-	const Color3ub *pColr = m_colors.get();
+	const double *pHts = m_heights.data();
+	const vector3f *pNorm = m_normals.data();
+	const Color3ub *pColr = m_colors.data();
 
 	double minh = DBL_MAX;
 
@@ -251,8 +245,8 @@ void GeoPatch::UpdateVBOs()
 	m_vertexBuffer->Unmap();
 
 	// Don't need this anymore so throw it away
-	m_normals.reset();
-	m_colors.reset();
+	m_normals.resize(0);
+	m_colors.resize(0);
 
 	RefCountedPtr<Graphics::Material> mat(RendererLocator::getRenderer()->CreateMaterial(Graphics::MaterialDescriptor()));
 	switch (m_depth) {
@@ -300,7 +294,7 @@ void GeoPatch::Render(const vector3d &campos, const matrix4x4d &modelView, const
 	if (m_kids[0]) {
 		for (int i = 0; i < NUM_KIDS; i++)
 			m_kids[i]->Render(campos, modelView, frustum);
-	} else if (m_heights) {
+	} else if (!m_heights.empty()) {
 		RefCountedPtr<Graphics::Material> mat = m_geosphere->GetSurfaceMaterial();
 		Graphics::RenderState *rs = m_geosphere->GetSurfRenderState();
 
@@ -393,7 +387,7 @@ void GeoPatch::LODUpdate(const vector3d &campos, const Graphics::Frustum &frustu
 
 void GeoPatch::RequestSinglePatch()
 {
-	if (!m_heights) {
+	if (m_heights.empty()) {
 		assert(!m_HasJobRequest);
 		m_HasJobRequest = true;
 		SSingleSplitRequest *ssrd = new SSingleSplitRequest(m_v0, m_v1, m_v2, m_v3, m_centroid.Normalized(), m_depth,
@@ -430,9 +424,9 @@ void GeoPatch::ReceiveHeightmaps(SQuadSplitResult *psr)
 
 		for (int i = 0; i < NUM_KIDS; i++) {
 			const SQuadSplitResult::SSplitResultData &data = psr->data(i);
-			m_kids[i]->m_heights.reset(data.heights);
-			m_kids[i]->m_normals.reset(data.normals);
-			m_kids[i]->m_colors.reset(data.colors);
+			m_kids[i]->m_heights = std::move(data.m_heights);
+			m_kids[i]->m_normals = std::move(data.m_normals);
+			m_kids[i]->m_colors = std::move(data.m_colors);
 		}
 		for (int i = 0; i < NUM_KIDS; i++) {
 			m_kids[i]->NeedToUpdateVBOs();
@@ -449,9 +443,9 @@ void GeoPatch::ReceiveHeightmap(const SSingleSplitResult *psr)
 	assert(m_HasJobRequest);
 	{
 		const SSingleSplitResult::SSplitResultData &data = psr->data();
-		m_heights.reset(data.heights);
-		m_normals.reset(data.normals);
-		m_colors.reset(data.colors);
+		m_heights = std::move(data.m_heights);
+		m_normals = std::move(data.m_normals);
+		m_colors = std::move(data.m_colors);
 	}
 	m_HasJobRequest = false;
 }

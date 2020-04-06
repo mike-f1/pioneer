@@ -147,31 +147,31 @@ void Camera::Update()
 
 	// evaluate each body and determine if/where/how to draw it
 	m_sortedBodies.clear();
-	for (Body *b : GameLocator::getGame()->GetSpace()->GetBodies()) {
+	for (Body *body : GameLocator::getGame()->GetSpace()->GetBodies()) {
 		BodyAttrs attrs;
-		attrs.body = b;
+		attrs.body = body;
 		attrs.billboard = false; // false by default
 
 		// determine position and transform for draw
 		//		Frame::GetFrameTransform(b->GetFrame(), camFrame, attrs.viewTransform);		// doesn't use interp coords, so breaks in some cases
-		Frame *f = Frame::GetFrame(b->GetFrame());
+		Frame *f = Frame::GetFrame(body->GetFrame());
 		attrs.viewTransform = f->GetInterpOrientRelTo(camFrame);
 		attrs.viewTransform.SetTranslate(f->GetInterpPositionRelTo(camFrame));
-		attrs.viewCoords = attrs.viewTransform * b->GetInterpPosition();
+		attrs.viewCoords = attrs.viewTransform * body->GetInterpPosition();
 
 		// cull off-screen objects
-		double rad = b->GetClipRadius();
+		double rad = body->GetClipRadius();
 		if (!m_context->GetFrustum().TestPointInfinite(attrs.viewCoords, rad))
 			continue;
 
 		attrs.camDist = attrs.viewCoords.Length();
-		attrs.bodyFlags = b->GetFlags();
+		attrs.bodyFlags = body->GetFlags();
 
 		// approximate pixel width (disc diameter) of body on screen
 		const float pixSize = Graphics::GetScreenHeight() * 2.0 * rad / (attrs.camDist * Graphics::GetFovFactor());
 
 		// terrain objects are visible from distance but might not have any discernable features
-		if (b->IsType(Object::TERRAINBODY)) {
+		if (body->IsType(Object::TERRAINBODY)) {
 			if (pixSize < BILLBOARD_PIXEL_THRESHOLD) {
 				attrs.billboard = true;
 
@@ -181,18 +181,18 @@ void Camera::Update()
 
 				// limit the minimum billboard size for planets so they're always a little visible
 				attrs.billboardSize = std::max(1.0f, pixSize);
-				if (b->IsType(Object::STAR)) {
-					attrs.billboardColor = GalaxyEnums::starRealColors[b->GetSystemBody()->GetType()];
-				} else if (b->IsType(Object::PLANET)) {
+				if (body->IsType(Object::STAR)) {
+					attrs.billboardColor = GalaxyEnums::starRealColors[body->GetSystemBody()->GetType()];
+				} else if (body->IsType(Object::PLANET)) {
 					// XXX this should incorporate some lighting effect
 					// (ie, colour of the illuminating star(s))
-					attrs.billboardColor = b->GetSystemBody()->GetAlbedo();
+					attrs.billboardColor = body->GetSystemBody()->GetAlbedo();
 				} else {
 					attrs.billboardColor = Color::WHITE;
 				}
 
 				// this should always be the main star in the system - except for the star itself!
-				if (!m_lightSources.empty() && !b->IsType(Object::STAR)) {
+				if (!m_lightSources.empty() && !body->IsType(Object::STAR)) {
 					const Graphics::Light &light = m_lightSources[0].GetLight();
 					attrs.billboardColor *= light.GetDiffuse(); // colour the billboard a little with the Starlight
 				}

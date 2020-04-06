@@ -103,6 +103,7 @@ static int l_input_get_bindings(lua_State *l)
 
 	int page_idx = 1;
 	for (auto page : Pi::input.GetBindingPages()) {
+		if (!page.second.shouldBeTranslated) continue;
 		lua_pushunsigned(l, page_idx++);
 		setup_binding_table(l, page.first.c_str(), "page");
 

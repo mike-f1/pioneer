@@ -11,9 +11,16 @@
 
 class InputFrame;
 
+
+enum class MouseButtonBehaviour {
+	Select,
+	Rotate,
+	DriveShip,
+};
+
 class Input {
 public:
-	Input(){};
+	Input() {};
 	void Init();
 	void InitGame();
 
@@ -33,10 +40,12 @@ public:
 		BindingGroup *GetBindingGroup(std::string id) { return &groups[id]; }
 
 		std::map<std::string, BindingGroup> groups;
+
+		bool shouldBeTranslated = true;
 	};
 
 	BindingPage *GetBindingPage(std::string id) { return &bindingPages[id]; }
-	std::map<std::string, BindingPage> GetBindingPages() { return bindingPages; }
+	std::map<std::string, BindingPage> GetBindingPages() { return bindingPages; };
 
 	// Pushes an InputFrame onto the input stack, return true if
 	// correctly pushed
@@ -80,7 +89,7 @@ public:
 	int KeyModState() { return keyModState; }
 
 	// Get the default speed modifier to apply to movement (scrolling, zooming...), depending on the "shift" keys.
-	// This is a default value only, centralized here to promote uniform user expericience.
+	// This is a default value only, centralized here to promote uniform user experience.
 	float GetMoveSpeedShiftModifier();
 
 	int JoystickButtonState(int joystick, int button);

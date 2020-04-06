@@ -647,6 +647,15 @@ namespace KeyBindings {
 		return RESPONSE_NOMATCH;
 	}
 
+	InputResponse MouseBinding::CheckSDLEventAndDispatch(const SDL_Event &event)
+	{
+		if (m_disableBindings) return RESPONSE_NOMATCH;
+		if (event.type == SDL_MOUSEBUTTONDOWN) {
+			return RESPONSE_MATCHED;
+		}
+		return RESPONSE_NOMATCH;
+	}
+
 	void DispatchSDLEvent(const SDL_Event &event)
 	{
 		switch (event.type) {

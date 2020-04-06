@@ -164,39 +164,6 @@ void WorldView::OnRequestTimeAccelDec()
 	GameLocator::getGame()->RequestTimeAccelDec();
 }
 
-void WorldView::Draw3D()
-{
-	PROFILE_SCOPED()
-	assert(GameLocator::getGame());
-	assert(GameLocator::getGame()->GetPlayer());
-	assert(!GameLocator::getGame()->GetPlayer()->IsDead());
-
-	m_cameraContext->ApplyDrawTransforms();
-
-	Body *excludeBody = nullptr;
-	ShipCockpit *cockpit = nullptr;
-	if (shipView.GetCamType() == ShipViewController::CAM_INTERNAL) {
-		excludeBody = GameLocator::getGame()->GetPlayer();
-		if (shipView.m_internalCameraController->GetMode() == InternalCameraController::MODE_FRONT)
-			cockpit = GameLocator::getGame()->GetPlayer()->GetCockpit();
-	}
-	m_camera->Draw(excludeBody, cockpit);
-
-	// Speed lines
-	if (GameConfSingleton::AreSpeedLinesDisplayed())
-		m_speedLines->Render();
-
-	// Contact trails
-	if (GameConfSingleton::AreHudTrailsDisplayed()) {
-		for (auto &contact : GameLocator::getGame()->GetPlayer()->GetSensors()->GetContacts())
-			contact.trail->Render();
-	}
-
-	m_cameraContext->EndFrame();
-
-	UIView::Draw3D();
-}
-
 void WorldView::OnToggleLabels()
 {
 	if (InGameViewsLocator::getInGameViews()->IsWorldView()) {
@@ -260,6 +227,161 @@ void WorldView::Update(const float frameTime)
 	}
 
 	UIView::Update(frameTime);
+}
+
+void WorldView::Draw3D()
+{
+	PROFILE_SCOPED()
+	assert(GameLocator::getGame());
+	assert(GameLocator::getGame()->GetPlayer());
+	assert(!GameLocator::getGame()->GetPlayer()->IsDead());
+
+	m_cameraContext->ApplyDrawTransforms();
+
+	Body *excludeBody = nullptr;
+	ShipCockpit *cockpit = nullptr;
+	if (shipView.GetCamType() == ShipViewController::CAM_INTERNAL) {
+		excludeBody = GameLocator::getGame()->GetPlayer();
+		if (shipView.m_internalCameraController->GetMode() == InternalCameraController::MODE_FRONT)
+			cockpit = GameLocator::getGame()->GetPlayer()->GetCockpit();
+	}
+	m_camera->Draw(excludeBody, cockpit);
+
+	// Speed lines
+	if (GameConfSingleton::AreSpeedLinesDisplayed())
+		m_speedLines->Render();
+
+	// Contact trails
+	if (GameConfSingleton::AreHudTrailsDisplayed()) {
+		for (auto &contact : GameLocator::getGame()->GetPlayer()->GetSensors()->GetContacts())
+			contact.trail->Render();
+	}
+
+	m_cameraContext->EndFrame();
+
+	UIView::Draw3D();
+}
+
+void WorldView::Draw()
+{
+	assert(GameLocator::getGame());
+	assert(GameLocator::getGame()->GetPlayer());
+
+	RendererLocator::getRenderer()->ClearDepthBuffer();
+
+	View::Draw();
+
+	// don't draw crosshairs etc in hyperspace
+	if (GameLocator::getGame()->GetPlayer()->GetFlightState() == Ship::HYPERSPACE) return;
+
+	// combat target indicator
+	DrawCombatTargetIndicator(m_combatTargetIndicator, m_targetLeadIndicator, red);
+
+	// glLineWidth(1.0f);
+	RendererLocator::getRenderer()->CheckRenderErrors(__FUNCTION__, __LINE__);
+}
+
+void WorldView::DrawUI(const float frameTime)
+{
+	if (Pi::IsConsoleActive()) return;
+#if WITH_DEVKEYS
+	if (Pi::showDebugInfo) {
+		std::ostringstream ss;
+
+		if (GameLocator::getGame()->GetPlayer()->GetFlightState() != Ship::HYPERSPACE) {
+			vector3d pos = GameLocator::getGame()->GetPlayer()->GetPosition();
+			vector3d abs_pos = GameLocator::getGame()->GetPlayer()->GetPositionRelTo(Frame::GetRootFrameId());
+
+			const Frame *playerFrame = Frame::GetFrame(GameLocator::getGame()->GetPlayer()->GetFrame());
+
+			ss << stringf("Pos: %0{f.2}, %1{f.2}, %2{f.2}\n", pos.x, pos.y, pos.z);
+			ss << stringf("AbsPos: %0{f.2}, %1{f.2}, %2{f.2}\n", abs_pos.x, abs_pos.y, abs_pos.z);
+
+			const SystemPath &path(playerFrame->GetSystemBody()->GetPath());
+			ss << stringf("Rel-to: %0 [%1{d},%2{d},%3{d},%4{u},%5{u}] ",
+				playerFrame->GetLabel(),
+				path.sectorX, path.sectorY, path.sectorZ, path.systemIndex, path.bodyIndex);
+			ss << stringf("(%0{f.2} km), rotating: %1, has rotation: %2\n",
+				pos.Length() / 1000, (playerFrame->IsRotFrame() ? "yes" : "no"), (playerFrame->HasRotFrame() ? "yes" : "no"));
+
+			//Calculate lat/lon for ship position
+			const vector3d dir = pos.NormalizedSafe();
+			const float lat = RAD2DEG(asin(dir.y));
+			const float lon = RAD2DEG(atan2(dir.x, dir.z));
+
+			ss << stringf("Lat / Lon: %0{f.8} / %1{f.8}\n", lat, lon);
+		}
+
+		char aibuf[256];
+		GameLocator::getGame()->GetPlayer()->AIGetStatusText(aibuf);
+		aibuf[255] = 0;
+		ss << aibuf << std::endl;
+
+		Sint32 viewport[4];
+		RendererLocator::getRenderer()->GetCurrentViewport(&viewport[0]);
+		ImVec2 pos(0.0, 0.5);
+		pos.x = pos.x * viewport[2] + viewport[0];
+		pos.y = pos.y * viewport[3] + viewport[1];
+		pos.y = RendererLocator::getRenderer()->GetWindowHeight() - pos.y;
+
+		ImVec2 size = ImGui::CalcTextSize(ss.str().c_str());
+		ImGuiStyle& style = ImGui::GetStyle();
+		size.x += style.WindowPadding.x * 2;
+		size.y += style.WindowPadding.y * 2;
+
+		pos.y -= size.y / 2.0;
+		ImGui::SetNextWindowBgAlpha(0.7f);
+		ImGui::Begin("dbg", nullptr, ImGuiWindowFlags_NoTitleBar
+					| ImGuiWindowFlags_NoResize
+					| ImGuiWindowFlags_NoMove
+					| ImGuiWindowFlags_NoScrollbar
+					| ImGuiWindowFlags_NoCollapse
+					| ImGuiWindowFlags_NoSavedSettings
+					| ImGuiWindowFlags_NoFocusOnAppearing
+					| ImGuiWindowFlags_NoBringToFrontOnFocus
+					);
+		ImGui::SetWindowPos(pos);
+		ImGui::SetWindowSize(size);
+		ImVec4 color(1.0f, 1.0f, 1.0f, 1.0);
+		ImGui::PushStyleColor(ImGuiCol_Text, color);
+		ImGui::TextUnformatted(ss.str().c_str());
+		ImGui::PopStyleColor(1);
+		ImGui::End();
+	}
+#endif
+	if (!GameLocator::getGame()->IsPaused()) return;
+	Sint32 viewport[4];
+	RendererLocator::getRenderer()->GetCurrentViewport(&viewport[0]);
+	ImVec2 pos(0.5, 0.85);
+	pos.x = pos.x * viewport[2] + viewport[0];
+	pos.y = pos.y * viewport[3] + viewport[1];
+	pos.y = RendererLocator::getRenderer()->GetWindowHeight() - pos.y;
+
+	ImGuiStyle& style = ImGui::GetStyle();
+	ImGui::SetNextWindowBgAlpha(0.7f);
+	ImGui::Begin("pause", nullptr, ImGuiWindowFlags_NoTitleBar
+				| ImGuiWindowFlags_NoResize
+				| ImGuiWindowFlags_NoMove
+				| ImGuiWindowFlags_NoScrollbar
+				| ImGuiWindowFlags_NoCollapse
+				| ImGuiWindowFlags_NoSavedSettings
+				| ImGuiWindowFlags_NoFocusOnAppearing
+				| ImGuiWindowFlags_NoBringToFrontOnFocus
+				);
+	std::string label = Lang::PAUSED;
+	ImVec2 size = ImGui::CalcTextSize(label.c_str());
+	size.x += style.WindowPadding.x * 2;
+	size.y += style.WindowPadding.y * 2;
+
+	pos.x -= size.x / 2.0; // ...and add something to make it depend on zoom
+	pos.y -= size.y / 2.0;
+	ImGui::SetWindowPos(pos);
+	ImGui::SetWindowSize(size);
+	ImVec4 color(1.0f, 0.5f, 0.5f, 1.0);
+	ImGui::PushStyleColor(ImGuiCol_Text, color);
+	ImGui::TextUnformatted(label.c_str());
+	ImGui::PopStyleColor(1);
+	ImGui::End();
 }
 
 void WorldView::BuildUI(UI::Single *container)
@@ -559,128 +681,6 @@ double getSquareDistance(double initialDist, double scalingFactor, int num)
 double getSquareHeight(double distance, double angle)
 {
 	return distance * tan(angle);
-}
-
-void WorldView::Draw()
-{
-	assert(GameLocator::getGame());
-	assert(GameLocator::getGame()->GetPlayer());
-
-	RendererLocator::getRenderer()->ClearDepthBuffer();
-
-	View::Draw();
-
-	// don't draw crosshairs etc in hyperspace
-	if (GameLocator::getGame()->GetPlayer()->GetFlightState() == Ship::HYPERSPACE) return;
-
-	// combat target indicator
-	DrawCombatTargetIndicator(m_combatTargetIndicator, m_targetLeadIndicator, red);
-
-	// glLineWidth(1.0f);
-	RendererLocator::getRenderer()->CheckRenderErrors(__FUNCTION__, __LINE__);
-}
-
-void WorldView::DrawUI(const float frameTime)
-{
-	if (Pi::IsConsoleActive()) return;
-#if WITH_DEVKEYS
-	if (Pi::showDebugInfo) {
-		std::ostringstream ss;
-
-		if (GameLocator::getGame()->GetPlayer()->GetFlightState() != Ship::HYPERSPACE) {
-			vector3d pos = GameLocator::getGame()->GetPlayer()->GetPosition();
-			vector3d abs_pos = GameLocator::getGame()->GetPlayer()->GetPositionRelTo(Frame::GetRootFrameId());
-
-			const Frame *playerFrame = Frame::GetFrame(GameLocator::getGame()->GetPlayer()->GetFrame());
-
-			ss << stringf("Pos: %0{f.2}, %1{f.2}, %2{f.2}\n", pos.x, pos.y, pos.z);
-			ss << stringf("AbsPos: %0{f.2}, %1{f.2}, %2{f.2}\n", abs_pos.x, abs_pos.y, abs_pos.z);
-
-			const SystemPath &path(playerFrame->GetSystemBody()->GetPath());
-			ss << stringf("Rel-to: %0 [%1{d},%2{d},%3{d},%4{u},%5{u}] ",
-				playerFrame->GetLabel(),
-				path.sectorX, path.sectorY, path.sectorZ, path.systemIndex, path.bodyIndex);
-			ss << stringf("(%0{f.2} km), rotating: %1, has rotation: %2\n",
-				pos.Length() / 1000, (playerFrame->IsRotFrame() ? "yes" : "no"), (playerFrame->HasRotFrame() ? "yes" : "no"));
-
-			//Calculate lat/lon for ship position
-			const vector3d dir = pos.NormalizedSafe();
-			const float lat = RAD2DEG(asin(dir.y));
-			const float lon = RAD2DEG(atan2(dir.x, dir.z));
-
-			ss << stringf("Lat / Lon: %0{f.8} / %1{f.8}\n", lat, lon);
-		}
-
-		char aibuf[256];
-		GameLocator::getGame()->GetPlayer()->AIGetStatusText(aibuf);
-		aibuf[255] = 0;
-		ss << aibuf << std::endl;
-
-		Sint32 viewport[4];
-		RendererLocator::getRenderer()->GetCurrentViewport(&viewport[0]);
-		ImVec2 pos(0.0, 0.5);
-		pos.x = pos.x * viewport[2] + viewport[0];
-		pos.y = pos.y * viewport[3] + viewport[1];
-		pos.y = RendererLocator::getRenderer()->GetWindowHeight() - pos.y;
-
-		ImVec2 size = ImGui::CalcTextSize(ss.str().c_str());
-		ImGuiStyle& style = ImGui::GetStyle();
-		size.x += style.WindowPadding.x * 2;
-		size.y += style.WindowPadding.y * 2;
-
-		pos.y -= size.y / 2.0;
-		ImGui::SetNextWindowBgAlpha(0.7f);
-		ImGui::Begin("dbg", nullptr, ImGuiWindowFlags_NoTitleBar
-					| ImGuiWindowFlags_NoResize
-					| ImGuiWindowFlags_NoMove
-					| ImGuiWindowFlags_NoScrollbar
-					| ImGuiWindowFlags_NoCollapse
-					| ImGuiWindowFlags_NoSavedSettings
-					| ImGuiWindowFlags_NoFocusOnAppearing
-					| ImGuiWindowFlags_NoBringToFrontOnFocus
-					);
-		ImGui::SetWindowPos(pos);
-		ImGui::SetWindowSize(size);
-		ImVec4 color(1.0f, 1.0f, 1.0f, 1.0);
-		ImGui::PushStyleColor(ImGuiCol_Text, color);
-		ImGui::TextUnformatted(ss.str().c_str());
-		ImGui::PopStyleColor(1);
-		ImGui::End();
-	}
-#endif
-	if (!GameLocator::getGame()->IsPaused()) return;
-	Sint32 viewport[4];
-	RendererLocator::getRenderer()->GetCurrentViewport(&viewport[0]);
-	ImVec2 pos(0.5, 0.85);
-	pos.x = pos.x * viewport[2] + viewport[0];
-	pos.y = pos.y * viewport[3] + viewport[1];
-	pos.y = RendererLocator::getRenderer()->GetWindowHeight() - pos.y;
-
-	ImGuiStyle& style = ImGui::GetStyle();
-	ImGui::SetNextWindowBgAlpha(0.7f);
-	ImGui::Begin("pause", nullptr, ImGuiWindowFlags_NoTitleBar
-				| ImGuiWindowFlags_NoResize
-				| ImGuiWindowFlags_NoMove
-				| ImGuiWindowFlags_NoScrollbar
-				| ImGuiWindowFlags_NoCollapse
-				| ImGuiWindowFlags_NoSavedSettings
-				| ImGuiWindowFlags_NoFocusOnAppearing
-				| ImGuiWindowFlags_NoBringToFrontOnFocus
-				);
-	std::string label = Lang::PAUSED;
-	ImVec2 size = ImGui::CalcTextSize(label.c_str());
-	size.x += style.WindowPadding.x * 2;
-	size.y += style.WindowPadding.y * 2;
-
-	pos.x -= size.x / 2.0; // ...and add something to make it depend on zoom
-	pos.y -= size.y / 2.0;
-	ImGui::SetWindowPos(pos);
-	ImGui::SetWindowSize(size);
-	ImVec4 color(1.0f, 0.5f, 0.5f, 1.0);
-	ImGui::PushStyleColor(ImGuiCol_Text, color);
-	ImGui::TextUnformatted(label.c_str());
-	ImGui::PopStyleColor(1);
-	ImGui::End();
 }
 
 void WorldView::DrawCombatTargetIndicator(const Indicator &target, const Indicator &lead, const Color &c)

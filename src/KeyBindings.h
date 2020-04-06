@@ -207,6 +207,14 @@ namespace KeyBindings {
 		InputResponse CheckSDLEventAndDispatch(const SDL_Event &event);
 	};
 
+	struct MouseBinding {
+		MouseBinding() {};
+
+		sigc::signal<void, char> Button;
+
+		InputResponse CheckSDLEventAndDispatch(const SDL_Event &event);
+	};
+
 	struct BindingPrototype {
 		const char *label, *function;
 		ActionBinding *kb;

@@ -374,6 +374,8 @@ void RegisterInputBindings()
 	WorldView::RegisterInputBindings();
 
 	SectorView::RegisterInputBindings();
+
+	ObjectViewerView::RegisterInputBindings();
 }
 
 static void draw_progress(float progress)

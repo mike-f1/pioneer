@@ -27,7 +27,7 @@ InGameViews::InGameViews(Game *game, const SystemPath &path, unsigned int cacheR
 	m_infoView(new UIView("InfoView")),
 	m_cpan(new ShipCpanel())
 #if WITH_OBJECTVIEWER
-	,m_objectViewerView(new ObjectViewerView(game))
+	,m_objectViewerView(new ObjectViewerView())
 #endif
 {
 }
@@ -45,7 +45,7 @@ InGameViews::InGameViews(const Json &jsonObj, Game *game, const SystemPath &path
 	m_deathView = new DeathView();
 
 #if WITH_OBJECTVIEWER
-	m_objectViewerView = new ObjectViewerView(game);
+	m_objectViewerView = new ObjectViewerView();
 #endif
 
 	m_cpan = new ShipCpanel(jsonObj);

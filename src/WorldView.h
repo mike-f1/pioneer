@@ -43,6 +43,12 @@ namespace UI {
 	class Label;
 } // namespace UI
 
+namespace Graphics {
+	class Material;
+	class RenderState;
+	class VertexBuffer;
+} // namespace Graphics
+
 class WorldView : public UIView {
 public:
 	static void RegisterInputBindings();

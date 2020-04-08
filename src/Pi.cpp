@@ -546,12 +546,12 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 	FaceParts::Init();
 	draw_progress(0.2f);
 
-	Output("ModelCache::Init()\n");
-	ModelCache::Init(ShipType::types);
-	draw_progress(0.3f);
-
 	Output("Shields::Init()\n");
 	Shields::Init();
+	draw_progress(0.3f);
+
+	Output("ModelCache::Init()\n");
+	ModelCache::Init(ShipType::types);
 	draw_progress(0.4f);
 
 	//unsigned int control_word;

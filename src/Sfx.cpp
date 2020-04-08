@@ -251,8 +251,7 @@ void SfxManager::RenderAll(FrameId fId, FrameId camFrameId)
 
 	PROFILE_SCOPED()
 	if (f->m_sfx) {
-		matrix4x4d ftran;
-		Frame::GetFrameTransform(fId, camFrameId, ftran);
+		matrix4x4d ftran = Frame::GetFrameTransform(fId, camFrameId);
 
 		for (size_t t = TYPE_EXPLOSION; t < TYPE_NONE; t++) {
 			const size_t numInstances = f->m_sfx->GetNumberInstances(SFX_TYPE(t));

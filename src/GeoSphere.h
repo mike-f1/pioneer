@@ -16,12 +16,13 @@ namespace Graphics {
 	class Texture;
 }
 
-class SystemBody;
 class GeoPatch;
 class GeoPatchContext;
+class SystemBody;
 class SQuadSplitRequest;
 class SQuadSplitResult;
 class SSingleSplitResult;
+class Terrain;
 
 #define NUM_PATCHES 6
 
@@ -33,21 +34,7 @@ public:
 	virtual void Update() override;
 	virtual void Render(const matrix4x4d &modelView, vector3d campos, const float radius, const std::vector<Camera::Shadow> &shadows) override;
 
-	virtual double GetHeight(const vector3d &p) const override final
-	{
-		const double h = m_terrain->GetHeight(p);
-#ifdef DEBUG
-		// XXX don't remove this. Fix your fractals instead
-		// Fractals absolutely MUST return heights >= 0.0 (one planet radius)
-		// otherwise atmosphere and other things break.
-		if (h < 0.0) {
-			Output("GetHeight({ %f, %f, %f }) returned %f\n", p.x, p.y, p.z, h);
-			m_terrain->DebugDump();
-			assert(h >= 0.0);
-		}
-#endif /* DEBUG */
-		return h;
-	}
+	virtual double GetHeight(const vector3d &p) const override final;
 
 	static void Init(int detail);
 	static void Uninit();
@@ -56,7 +43,7 @@ public:
 	static bool OnAddQuadSplitResult(const SystemPath &path, SQuadSplitResult *res);
 	static bool OnAddSingleSplitResult(const SystemPath &path, SSingleSplitResult *res);
 	// in sbody radii
-	virtual double GetMaxFeatureHeight() const override final { return m_terrain->GetMaxHeight(); }
+	virtual double GetMaxFeatureHeight() const override final;
 
 	bool AddQuadSplitResult(SQuadSplitResult *res);
 	bool AddSingleSplitResult(SSingleSplitResult *res);
@@ -71,10 +58,7 @@ public:
 private:
 	void BuildFirstPatches();
 	void CalculateMaxPatchDepth();
-	inline vector3d GetColor(const vector3d &p, double height, const vector3d &norm) const
-	{
-		return m_terrain->GetColor(p, height, norm);
-	}
+	inline vector3d GetColor(const vector3d &p, double height, const vector3d &norm) const;
 	void ProcessQuadSplitRequests();
 
 	std::unique_ptr<GeoPatch> m_patches[6];

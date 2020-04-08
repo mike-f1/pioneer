@@ -421,8 +421,12 @@ static int l_pigui_lineOnClock(lua_State *l)
 static int l_pigui_begin(lua_State *l)
 {
 	PROFILE_SCOPED()
-	const std::string name = LuaPull<std::string>(l, 1);
+	std::string name = LuaPull<std::string>(l, 1);
 	ImGuiWindowFlags theflags = LuaPull<ImGuiWindowFlags_>(l, 2);
+	if (name.empty()) {
+		Output("WARNING: In 'l_pigui_begin' no name provided for window\n");
+		name = "placeholder_name";
+	}
 	bool ret = ImGui::Begin(name.c_str(), nullptr, theflags);
 	LuaPush<bool>(l, ret);
 	return 1;

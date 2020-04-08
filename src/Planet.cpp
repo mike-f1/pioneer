@@ -7,7 +7,6 @@
 #include "gameconsts.h"
 #include "galaxy/AtmosphereParameters.h"
 #include "galaxy/RingStyle.h"
-#include "graphics/Graphics.h"
 #include "graphics/Material.h"
 #include "graphics/RenderState.h"
 #include "graphics/Renderer.h"

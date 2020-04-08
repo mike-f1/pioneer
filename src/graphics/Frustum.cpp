@@ -134,12 +134,13 @@ namespace Graphics {
 		return true;
 	}
 
-	void Frustum::TranslatePoint(const vector3d &in, vector3d &out) const
+	vector3d Frustum::TranslatePoint(const vector3d &in) const
 	{
-		out = in;
+		vector3d out = in;
 		while (out.LengthSqr() > m_translateThresholdSqr) {
 			out *= TRANSLATE_STEP;
 		}
+		return out;
 	}
 
 } // namespace Graphics

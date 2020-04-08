@@ -14,7 +14,7 @@
 std::vector<Frame> Frame::s_frames;
 std::vector<CollisionSpace> Frame::s_collisionSpaces;
 
-Frame::Frame(const Dummy &d, FrameId parent, const char *label, unsigned int flags, double radius) :
+Frame::Frame(const Dummy &d, const FrameId &parent, const char *label, unsigned int flags, double radius) :
 	m_parent(parent),
 	m_sbody(nullptr),
 	m_astroBody(nullptr),
@@ -42,7 +42,7 @@ Frame::Frame(const Dummy &d, FrameId parent, const char *label, unsigned int fla
 		m_label = label;
 }
 
-Frame::Frame(const Dummy &d, FrameId parent) :
+Frame::Frame(const Dummy &d, const FrameId &parent) :
 	m_parent(parent),
 	m_sbody(nullptr),
 	m_astroBody(nullptr),
@@ -126,7 +126,7 @@ Frame &Frame::operator=(Frame &&other)
 	return *this;
 }
 
-void Frame::ToJson(Json &frameObj, FrameId fId, Space *space)
+void Frame::ToJson(Json &frameObj, const FrameId &fId, Space *space)
 {
 	Frame *f = Frame::GetFrame(fId);
 
@@ -162,7 +162,7 @@ Frame::~Frame()
 	}
 }
 
-FrameId Frame::CreateFrame(FrameId parent, const char *label, unsigned int flags, double radius)
+FrameId Frame::CreateFrame(const FrameId &parent, const char *label, unsigned int flags, double radius)
 {
 	Dummy dummy;
 	dummy.madeWithFactory = true;
@@ -171,7 +171,7 @@ FrameId Frame::CreateFrame(FrameId parent, const char *label, unsigned int flags
 	return (s_frames.size() - 1);
 }
 
-FrameId Frame::FromJson(const Json &frameObj, Space *space, FrameId parent, double at_time)
+FrameId Frame::FromJson(const Json &frameObj, Space *space, const FrameId &parent, double at_time)
 {
 	Dummy dummy;
 	dummy.madeWithFactory = true;
@@ -189,7 +189,7 @@ FrameId Frame::FromJson(const Json &frameObj, Space *space, FrameId parent, doub
 		f->m_thisId = frameObj["frameId"];
 
 		// Check if frames order in load and save are the same
-		assert((s_frames.size() - 1) != f->m_thisId.id());
+		assert((s_frames.size() - 1) == f->m_thisId.id());
 
 		f->m_flags = frameObj["flags"];
 		f->m_radius = frameObj["radius"];
@@ -241,7 +241,7 @@ void Frame::DeleteFrames()
 	s_collisionSpaces.clear();
 }
 
-FrameId Frame::CreateCameraFrame(FrameId parent)
+FrameId Frame::CreateCameraFrame(const FrameId &parent)
 {
 	Dummy dummy;
 	dummy.madeWithFactory = true;
@@ -250,7 +250,7 @@ FrameId Frame::CreateCameraFrame(FrameId parent)
 	return (s_frames.size() - 1);
 }
 
-void Frame::DeleteCameraFrame(FrameId camera)
+void Frame::DeleteCameraFrame(const FrameId &camera)
 {
 	if (!camera)
 		return;
@@ -272,7 +272,7 @@ void Frame::DeleteCameraFrame(FrameId camera)
 	s_frames.pop_back();
 }
 
-void Frame::PostUnserializeFixup(FrameId fId, Space *space)
+void Frame::PostUnserializeFixup(const FrameId &fId, Space *space)
 {
 	Frame *f = Frame::GetFrame(fId);
 	f->UpdateRootRelativeVars();
@@ -290,7 +290,7 @@ void Frame::CollideFrames(void (*callback)(CollisionContact *))
 	});
 }
 
-void Frame::RemoveChild(FrameId fId)
+void Frame::RemoveChild(const FrameId &fId)
 {
 	PROFILE_SCOPED()
 	if (!fId.valid()) return;
@@ -319,7 +319,7 @@ CollisionSpace *Frame::GetCollisionSpace() const
 }
 
 // doesn't consider stasis velocity
-vector3d Frame::GetVelocityRelTo(FrameId relToId) const
+vector3d Frame::GetVelocityRelTo(const FrameId &relToId) const
 {
 	if (m_thisId == relToId) return vector3d(0, 0, 0); // early-out to avoid unnecessary computation
 
@@ -331,7 +331,7 @@ vector3d Frame::GetVelocityRelTo(FrameId relToId) const
 		return diff;
 }
 
-vector3d Frame::GetPositionRelTo(FrameId relToId) const
+vector3d Frame::GetPositionRelTo(const FrameId &relToId) const
 {
 	// early-outs for simple cases, required for accuracy in large systems
 	if (m_thisId == relToId) return vector3d(0, 0, 0);
@@ -360,7 +360,7 @@ vector3d Frame::GetPositionRelTo(FrameId relToId) const
 		return diff;
 }
 
-vector3d Frame::GetInterpPositionRelTo(FrameId relToId) const
+vector3d Frame::GetInterpPositionRelTo(const FrameId &relToId) const
 {
 	const Frame *relTo = Frame::GetFrame(relToId);
 
@@ -387,13 +387,13 @@ vector3d Frame::GetInterpPositionRelTo(FrameId relToId) const
 		return diff;
 }
 
-matrix3x3d Frame::GetOrientRelTo(FrameId relToId) const
+matrix3x3d Frame::GetOrientRelTo(const FrameId &relToId) const
 {
 	if (m_thisId == relToId) return matrix3x3d::Identity();
 	return Frame::GetFrame(relToId)->m_rootOrient.Transpose() * m_rootOrient;
 }
 
-matrix3x3d Frame::GetInterpOrientRelTo(FrameId relToId) const
+matrix3x3d Frame::GetInterpOrientRelTo(const FrameId &relToId) const
 {
 	if (m_thisId == relToId) return matrix3x3d::Identity();
 	return Frame::GetFrame(relToId)->m_rootInterpOrient.Transpose() * m_rootInterpOrient;
@@ -432,12 +432,14 @@ void Frame::UpdateInterpTransform(double alpha)
 	}
 }
 
-void Frame::GetFrameTransform(const FrameId fFromId, const FrameId fToId, matrix4x4d &m)
+matrix4x4d Frame::GetFrameTransform(const FrameId &fFromId, const FrameId &fToId)
 {
+	matrix4x4d res;
 	matrix3x3d forient = Frame::GetFrame(fFromId)->GetOrientRelTo(fToId);
 	vector3d fpos = Frame::GetFrame(fFromId)->GetPositionRelTo(fToId);
-	m = forient;
-	m.SetTranslate(fpos);
+	res = forient;
+	res.SetTranslate(fpos);
+	return res;
 }
 
 void Frame::ClearMovement()

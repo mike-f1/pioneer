@@ -10,6 +10,8 @@
 #include "graphics/RendererLocator.h"
 #include "graphics/Drawables.h"
 
+#include "terrain/Terrain.h"
+
 BaseSphere::BaseSphere(const SystemBody *body) :
 	SystemBodyWrapper(body),
 	m_terrain(Terrain::InstanceTerrain(body)) {}

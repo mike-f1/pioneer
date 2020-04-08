@@ -15,13 +15,13 @@
 
 void SetCache(RefCountedPtr<StarSystem> ssys, StarSystemCache *cache)
 {
-	assert(!m_cache && !ssys);
+	assert(cache && ssys);
 	ssys->m_cache = cache;
 }
 
 void SetCache(RefCountedPtr<Sector> sec, SectorCache *cache)
 {
-	assert(!m_cache);
+	assert(cache && sec);
 	sec->m_cache = cache;
 }
 

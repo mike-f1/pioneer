@@ -3,7 +3,6 @@
 
 #include "GeoPatchContext.h"
 
-#include "graphics/Graphics.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/VertexBuffer.h"

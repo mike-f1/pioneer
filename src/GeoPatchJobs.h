@@ -10,6 +10,7 @@
 #include "GeoPatchID.h"
 #include "JobQueue.h"
 #include "vector3.h"
+#include "galaxy/SystemPath.h"
 #include "terrain/Terrain.h"
 
 class GeoSphere;

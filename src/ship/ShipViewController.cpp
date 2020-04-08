@@ -178,9 +178,10 @@ void ShipViewController::SetCamType(enum CamType c)
 
 void ShipViewController::ChangeInternalCameraMode(InternalCameraController::Mode m)
 {
-	if (m_internalCameraController->GetMode() == m) return;
-	// TODO: find a way around this, or move it to a dedicated system.
-	Sound::PlaySfx("Click", 0.3, 0.3, false);
+	if (m_internalCameraController->GetMode() != m) {
+		// TODO: find a way around this, or move it to a dedicated system.
+		Sound::PlaySfx("Click", 0.3, 0.3, false);
+	}
 	m_internalCameraController->SetMode(m);
 	GameLocator::getGame()->GetPlayer()->GetPlayerController()->SetMouseForRearView(m_camType == CAM_INTERNAL && m_internalCameraController->GetMode() == InternalCameraController::MODE_REAR);
 }

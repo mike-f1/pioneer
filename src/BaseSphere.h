@@ -9,7 +9,8 @@
 #include "galaxy/AtmosphereParameters.h"
 #include "galaxy/SystemBodyWrapper.h"
 #include "graphics/Material.h" // <- For some inlined function...
-#include "terrain/Terrain.h"
+
+class Terrain;
 
 namespace Graphics {
 	class RenderState;

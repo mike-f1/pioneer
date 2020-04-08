@@ -31,7 +31,7 @@ namespace Graphics {
 
 		// translate the given point outside the frustum to a point inside
 		// returns scale factor to make object at that point appear correctly
-		void TranslatePoint(const vector3d &in, vector3d &out) const;
+		vector3d TranslatePoint(const vector3d &in) const;
 
 	private:
 		void InitFromMatrix(const matrix4x4d &m);

@@ -171,8 +171,7 @@ void Camera::Update()
 				attrs.billboard = true;
 
 				// project the position
-				vector3d pos;
-				m_context->GetFrustum().TranslatePoint(attrs.viewCoords, pos);
+				vector3d pos = m_context->GetFrustum().TranslatePoint(attrs.viewCoords);
 				attrs.billboardPos = vector3f(pos);
 
 				// limit the minimum billboard size for planets so they're always a little visible
@@ -218,8 +217,7 @@ void Camera::Draw(const Body *excludeBody, ShipCockpit *cockpit)
 
 	RendererLocator::getRenderer()->ClearScreen();
 
-	matrix4x4d trans2bg;
-	Frame::GetFrameTransform(rootFrameId, camFrameId, trans2bg);
+	matrix4x4d trans2bg = Frame::GetFrameTransform(rootFrameId, camFrameId);
 	trans2bg.ClearToRotOnly();
 
 	// Pick up to four suitable system light sources (stars)

@@ -33,10 +33,10 @@ class Frame {
 public:
 
 	Frame() = delete;
-	Frame(const Dummy &d, FrameId parent, const char *label, unsigned int flags = FLAG_DEFAULT, double radius = 0.0);
+	Frame(const Dummy &d, const FrameId &parent, const char *label, unsigned int flags = FLAG_DEFAULT, double radius = 0.0);
 	// Used *only* for Camera frame:
 	// it doesn't set up CollisionSpace, and use default values for label, flags and radius
-	Frame(const Dummy &d, FrameId parent);
+	Frame(const Dummy &d, const FrameId &parent);
 
 	Frame(const Frame &) = delete;
 	Frame(Frame &&) noexcept;
@@ -48,19 +48,20 @@ public:
 		FLAG_ROTATING = (1 << 1),
 		FLAG_HAS_ROT = (1 << 2) };
 
-	static FrameId CreateFrame(FrameId parent, const char *label, unsigned int flags = FLAG_DEFAULT, double radius = 0.0);
-	static FrameId FromJson(const Json &jsonObj, Space *space, FrameId parent, double at_time);
+	static FrameId CreateFrame(const FrameId &parent, const char *label, unsigned int flags = FLAG_DEFAULT, double radius = 0.0);
+	static FrameId FromJson(const Json &jsonObj, Space *space, const FrameId &parent, double at_time);
 
 	// Used to speed up creation/deletion of Frame for camera
-	static FrameId CreateCameraFrame(FrameId parent);
-	static void DeleteCameraFrame(FrameId camera);
+	// avoiding initialization of CollisionSpace
+	static FrameId CreateCameraFrame(const FrameId &parent);
+	static void DeleteCameraFrame(const FrameId &camera);
 
-	static void ToJson(Json &jsonObj, FrameId fId, Space *space);
-	static void PostUnserializeFixup(FrameId fId, Space *space);
+	static void ToJson(Json &jsonObj, const FrameId &fId, Space *space);
+	static void PostUnserializeFixup(const FrameId &fId, Space *space);
 
 	static void DeleteFrames();
 
-	static Frame *GetFrame(FrameId fId)
+	static Frame *GetFrame(const FrameId &fId)
 	{
 		if (fId.valid()) {
 			if (unsigned(fId.id()) < s_frames.size()) return &s_frames[fId];
@@ -111,8 +112,8 @@ public:
 	SystemBody *GetSystemBody() const { return m_sbody; }
 	Body *GetBody() const { return m_astroBody; }
 
-	void AddChild(FrameId fId) { m_children.push_back(fId); }
-	void RemoveChild(FrameId fId);
+	void AddChild(const FrameId &fId) { m_children.push_back(fId); }
+	void RemoveChild(const FrameId &fId);
 	bool HasChildren() const { return !m_children.empty(); }
 	unsigned GetNumChildren() const { return static_cast<Uint32>(m_children.size()); }
 	IterationProxy<std::vector<FrameId>> GetChildren() { return MakeIterationProxy(m_children); }
@@ -135,16 +136,16 @@ public:
 	// must attain this velocity within rotating frame to be stationary.
 	vector3d GetStasisVelocity(const vector3d &pos) const { return -vector3d(0, m_angSpeed, 0).Cross(pos); }
 
-	vector3d GetPositionRelTo(FrameId relTo) const;
-	vector3d GetVelocityRelTo(FrameId relTo) const;
-	matrix3x3d GetOrientRelTo(FrameId relTo) const;
+	vector3d GetPositionRelTo(const FrameId &relTo) const;
+	vector3d GetVelocityRelTo(const FrameId &relTo) const;
+	matrix3x3d GetOrientRelTo(const FrameId &relTo) const;
 
 	// Same as above except it does interpolation between
 	// physics ticks so rendering is smooth above physics hz
-	vector3d GetInterpPositionRelTo(FrameId relTo) const;
-	matrix3x3d GetInterpOrientRelTo(FrameId relTo) const;
+	vector3d GetInterpPositionRelTo(const FrameId &relTo) const;
+	matrix3x3d GetInterpOrientRelTo(const FrameId &relTo) const;
 
-	static void GetFrameTransform(FrameId fFrom, FrameId fTo, matrix4x4d &m);
+	static matrix4x4d GetFrameTransform(const FrameId &fFrom, const FrameId &fTo);
 
 	std::unique_ptr<SfxManager> m_sfx; // the last survivor. actually m_children is pretty grim too.
 

@@ -235,8 +235,7 @@ void WorldView::Update(const float frameTime)
 	if (GameConfSingleton::AreSpeedLinesDisplayed()) {
 		m_speedLines->Update(GameLocator::getGame()->GetTimeStep());
 
-		matrix4x4d trans;
-		Frame::GetFrameTransform(playerFrameId, camFrameId, trans);
+		matrix4x4d trans = Frame::GetFrameTransform(playerFrameId, camFrameId);
 
 		if (m_speedLines.get() && GameConfSingleton::AreSpeedLinesDisplayed()) {
 			m_speedLines->Update(GameLocator::getGame()->GetTimeStep());
@@ -248,8 +247,7 @@ void WorldView::Update(const float frameTime)
 	}
 
 	if (GameConfSingleton::AreHudTrailsDisplayed()) {
-		matrix4x4d trans;
-		Frame::GetFrameTransform(playerFrameId, camFrameId, trans);
+		matrix4x4d trans = Frame::GetFrameTransform(playerFrameId, camFrameId);
 
 		for (auto &item : GameLocator::getGame()->GetPlayer()->GetSensors()->GetContacts())
 			item.trail->SetTransform(trans);

@@ -9,7 +9,6 @@
 #include "Projectile.h"
 #include "StringF.h"
 #include "scenegraph/Model.h"
-#include "scenegraph/MatrixTransform.h"
 #include "JsonUtils.h"
 
 FixedGuns::FixedGuns(Body* b)
@@ -54,8 +53,6 @@ void FixedGuns::LoadFromJson(const Json &jsonObj, Space *space)
 {
 	//Json projectileObj = jsonObj["projectile"];
 	Json gunArray = jsonObj["guns"];
-
-	assert(m_mounts.size() == gunArray.size());
 
 	m_guns.reserve(gunArray.size());
 	try {

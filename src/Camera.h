@@ -26,12 +26,6 @@ public:
 	CameraContext(float width, float height, float fovAng, float zNear, float zFar);
 	~CameraContext();
 
-	float GetWidth() const { return m_width; }
-	float GetHeight() const { return m_height; }
-	float GetFovAng() const { return m_fovAng; }
-	float GetZNear() const { return m_zNear; }
-	float GetZFar() const { return m_zFar; }
-
 	// frame to position the camera relative to
 	void SetCameraFrame(FrameId frame) { m_frame = frame; }
 
@@ -44,7 +38,7 @@ public:
 	// get the frustum. use for projection
 	const Graphics::Frustum &GetFrustum() const { return m_frustum; }
 
-	// generate and destroy the camere frame, used mostly to transform things to camera space
+	// generate and destroy the camera frame, used mostly to transform things to camera space
 	void BeginFrame();
 	void EndFrame();
 
@@ -77,7 +71,7 @@ class Camera {
 public:
 	Camera(RefCountedPtr<CameraContext> context);
 
-	const CameraContext *GetContext() const { return m_context.Get(); }
+	RefCountedPtr<CameraContext> GetContext() const { return m_context; }
 
 	void Update();
 	void Draw(const Body *excludeBody = nullptr, ShipCockpit *cockpit = nullptr);

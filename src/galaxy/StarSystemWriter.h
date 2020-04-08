@@ -59,12 +59,12 @@ public:
 
 	void AddSpaceStation(SystemBody *station)
 	{
-		assert(station->GetSuperType() == SystemBody::SUPERTYPE_STARPORT);
+		assert(station->GetSuperType() == GalaxyEnums::BodySuperType::SUPERTYPE_STARPORT);
 		m_ssys->m_spaceStations.push_back(station);
 	}
 	void AddStar(SystemBody *star)
 	{
-		assert(star->GetSuperType() == SystemBody::SUPERTYPE_STAR);
+		assert(star->GetSuperType() == GalaxyEnums::BodySuperType::SUPERTYPE_STAR);
 		m_ssys->m_stars.push_back(star);
 	}
 

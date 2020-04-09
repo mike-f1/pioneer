@@ -7,7 +7,7 @@
 #include "matrix3x3.h"
 #include "vector3.h"
 #include <math.h>
-#include <stdio.h>
+#include <cassert>
 
 template <typename T>
 class matrix4x4 {

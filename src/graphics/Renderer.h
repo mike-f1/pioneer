@@ -8,9 +8,17 @@
 #include "Light.h"
 #include "Stats.h"
 #include "Types.h"
-#include "libs.h"
+
+#include "matrix4x4.h"
+#include "RefCounted.h"
+
+#include <string>
 #include <map>
 #include <memory>
+#include <sstream>
+#include <utility>
+
+struct SDL_Window;
 
 namespace Graphics {
 
@@ -18,7 +26,6 @@ namespace Graphics {
  * Renderer base class. A Renderer draws points, lines, triangles.
  * It is also used to create render states, materials and vertex/index buffers.
  */
-
 	class Material;
 	class MaterialDescriptor;
 	class RenderState;

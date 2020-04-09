@@ -4,8 +4,6 @@
 #include "GeoPatchJobs.h"
 
 #include "GeoSphere.h"
-#include "libs.h"
-#include "perlin.h"
 #include "terrain/Terrain.h"
 
 inline void setColour(Color3ub &r, const vector3d &v)

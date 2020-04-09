@@ -4,7 +4,9 @@
 #ifndef KEYBINDINGS_H
 #define KEYBINDINGS_H
 
-#include "libs.h"
+#include <SDL_stdinc.h>
+#include <string>
+#include <sstream>
 #include <iosfwd>
 
 #include "InputFrame.h"

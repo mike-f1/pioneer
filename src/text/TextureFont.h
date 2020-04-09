@@ -6,8 +6,11 @@
 
 #include "FontConfig.h"
 #include "RefCounted.h"
+#include "Color.h"
 
 #include <unordered_map>
+#include <map>
+#include <memory>
 
 namespace FileSystem {
 	class FileData;

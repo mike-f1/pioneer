@@ -6,8 +6,13 @@
 /*
  * Generic node for the model scenegraph
  */
+
+#include "Color.h"
 #include "RefCounted.h"
-#include "libs.h"
+#include "matrix4x4.h"
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace Serializer {
 	class Reader;

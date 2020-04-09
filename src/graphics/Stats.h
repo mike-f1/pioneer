@@ -5,8 +5,6 @@
 #define _STATS_H
 
 #include "SDL_stdinc.h"
-#include <utility>
-#include <vector>
 
 namespace Graphics {
 

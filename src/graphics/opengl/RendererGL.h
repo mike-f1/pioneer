@@ -17,6 +17,7 @@
 #include "graphics/Renderer.h"
 #include <stack>
 #include <unordered_map>
+#include <SDL_video.h>
 
 namespace Graphics {
 

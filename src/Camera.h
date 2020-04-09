@@ -8,8 +8,13 @@
 #include "FrameId.h"
 #include "graphics/Frustum.h"
 #include "graphics/Light.h"
+#include "RefCounted.h"
 #include "matrix4x4.h"
 #include "vector3.h"
+
+#include <memory>
+#include <list>
+#include <vector>
 
 class Body;
 class Frame;

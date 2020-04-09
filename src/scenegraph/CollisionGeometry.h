@@ -11,9 +11,9 @@
 
 #include "Node.h"
 
-namespace Graphics {
-	class Surface;
-}
+#include <vector>
+#include "vector3.h"
+#include <SDL_stdinc.h>
 
 class GeomTree;
 class Geom;

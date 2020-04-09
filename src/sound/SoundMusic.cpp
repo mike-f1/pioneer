@@ -4,7 +4,6 @@
 #include "SoundMusic.h"
 
 #include "LuaEvent.h"
-#include "libs.h" //for clamp
 #include <map>
 
 float Sound::MusicPlayer::m_volume = 0.0;

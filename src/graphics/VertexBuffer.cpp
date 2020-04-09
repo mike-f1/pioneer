@@ -3,6 +3,13 @@
 
 #include "graphics/VertexBuffer.h"
 
+#include "vector2.h"
+#include "vector3.h"
+#include "Color.h"
+
+#include <cassert>
+#include <algorithm>
+
 namespace Graphics {
 
 	Uint32 VertexBufferDesc::GetAttribSize(VertexAttribFormat f)

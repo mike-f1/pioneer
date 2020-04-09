@@ -3,7 +3,8 @@
 #ifndef NV_MESH_WELD_H
 #define NV_MESH_WELD_H
 
-#include "libs.h"
+#include <SDL_stdinc.h>
+#include <vector>
 
 // Weld function to remove array duplicates in linear time using hashing.
 

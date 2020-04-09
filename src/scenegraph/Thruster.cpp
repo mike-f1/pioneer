@@ -2,6 +2,7 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "Thruster.h"
+
 #include "BaseLoader.h"
 #include "Easing.h"
 #include "NodeVisitor.h"
@@ -13,6 +14,8 @@
 #include "graphics/TextureBuilder.h"
 #include "graphics/VertexArray.h"
 #include "graphics/VertexBuffer.h"
+
+#include "utils.h"
 
 namespace SceneGraph {
 

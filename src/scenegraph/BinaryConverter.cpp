@@ -1,6 +1,7 @@
 // Copyright © 2008-2019 Pioneer Developers. See AUTHORS.txt for details
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 #include "BinaryConverter.h"
+
 #include "FileSystem.h"
 #include "GameSaveError.h"
 #include "LZ4Format.h"
@@ -9,7 +10,9 @@
 #include "StringF.h"
 #include "scenegraph/Animation.h"
 #include "scenegraph/Label3D.h"
+#include "scenegraph/LoaderDefinitions.h"
 #include "scenegraph/MatrixTransform.h"
+#include "scenegraph/Model.h"
 #include "scenegraph/Serializer.h"
 #include "utils.h"
 

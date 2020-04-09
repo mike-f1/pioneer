@@ -10,6 +10,9 @@
 #include "galaxy/SystemBodyWrapper.h"
 #include "graphics/Material.h" // <- For some inlined function...
 
+#include <vector>
+#include <memory>
+
 class Terrain;
 
 namespace Graphics {

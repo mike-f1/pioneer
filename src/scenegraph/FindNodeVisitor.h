@@ -8,6 +8,8 @@
  * Note, does not remove duplicates
  */
 #include "NodeVisitor.h"
+#include <string>
+#include <vector>
 
 namespace SceneGraph {
 

@@ -2,6 +2,10 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "BaseLoader.h"
+
+#include "Model.h"
+#include "LoaderDefinitions.h"
+
 #include "FileSystem.h"
 #include "graphics/Material.h"
 #include "graphics/Renderer.h"

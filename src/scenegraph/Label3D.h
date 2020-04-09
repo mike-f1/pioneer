@@ -8,6 +8,8 @@
  */
 #include "Node.h"
 #include "text/DistanceFieldFont.h"
+#include <memory>
+#include <string>
 
 namespace Graphics {
 	class Material;

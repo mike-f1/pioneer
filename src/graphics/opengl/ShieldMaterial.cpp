@@ -2,9 +2,8 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "ShieldMaterial.h"
+
 #include "RendererGL.h"
-#include "Shields.h"
-#include "StringF.h"
 #include "TextureGL.h"
 #include "graphics/Graphics.h"
 #include "graphics/Material.h"
@@ -67,7 +66,7 @@ namespace Graphics {
 				for (Sint32 i = 0; i < srp.numHits && i < MAX_SHIELD_HITS; i++) {
 					p->radii[i].Set(srp.radii[i]);
 				}
-				p->numHits.Set(int(std::min(srp.numHits, MAX_SHIELD_HITS)));
+				p->numHits.Set(int(std::min(srp.numHits, Sint32(MAX_SHIELD_HITS))));
 			} else {
 				p->shieldStrength.Set(0.0f);
 				p->shieldCooldown.Set(0.0f);

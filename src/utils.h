@@ -44,6 +44,20 @@ void IndentedOutput(const char *format, ...) __attribute((format(printf, 1, 2)))
 void IndentIncrease();
 void IndentDecrease();
 
+template <class T>
+inline const T &Clamp(const T &x, const T &min, const T &max) { return x > max ? max : (x < min ? min : x); }
+
+inline double DEG2RAD(double x) { return x * (M_PI / 180.); }
+inline float DEG2RAD(float x) { return x * (float(M_PI) / 180.f); }
+inline double RAD2DEG(double x) { return x * (180. / M_PI); }
+inline float RAD2DEG(float x) { return x * (180.f / float(M_PI)); }
+
+// from StackOverflow: http://stackoverflow.com/a/1500517/52251
+// Q: "Compile time sizeof_array without using a macro"
+template <typename T, size_t N>
+char (&COUNTOF_Helper(T (&array)[N]))[N];
+#define COUNTOF(array) (sizeof(COUNTOF_Helper(array)))
+
 // Helper for timing functions with multiple stages
 // Used on a branch to help time loading.
 struct MsgTimer {

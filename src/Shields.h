@@ -7,22 +7,19 @@
  * Mesh shields for ships and other objects.
  */
 #include "JsonFwd.h"
-#include "libs.h"
+#include "graphics/ShieldRenderParameters.h"
+
+#include "RefCounted.h"
+#include "matrix4x4.h"
+#include "vector3.h"
+#include "Color.h"
 #include <deque>
+#include <vector>
 
 namespace SceneGraph {
 	class Model;
 	class StaticGeometry;
 } // namespace SceneGraph
-
-struct ShieldRenderParameters {
-	static const Uint32 MAX_SHIELD_HITS = 5; // Also defined in ShieldMaterial.h
-	float strength;
-	float coolDown;
-	vector3f hitPos[MAX_SHIELD_HITS];
-	float radii[MAX_SHIELD_HITS];
-	Sint32 numHits;
-};
 
 class Shields {
 public:

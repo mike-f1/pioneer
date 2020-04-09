@@ -9,7 +9,12 @@
  */
 #include "CollMesh.h"
 #include "NodeVisitor.h"
-#include "libs.h"
+
+#include <SDL_stdinc.h>
+#include <vector>
+#include "RefCounted.h"
+#include "matrix4x4.h"
+#include "vector3.h"
 
 namespace SceneGraph {
 	class Group;

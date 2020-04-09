@@ -2,8 +2,12 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "Animation.h"
-#include "scenegraph/Model.h"
+
+#include "Node.h"
+#include "MatrixTransform.h"
+
 #include <iostream>
+#include "utils.h"
 
 namespace SceneGraph {
 

@@ -8,7 +8,11 @@
  * An animation has a number of channels, each of which
  * animate the position/rotation of a single MatrixTransform node
  */
+
 #include "AnimationChannel.h"
+
+#include <string>
+#include <vector>
 
 namespace SceneGraph {
 

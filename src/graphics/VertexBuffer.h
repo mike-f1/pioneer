@@ -19,7 +19,10 @@
  * Expansion possibilities: range-based Map
  */
 #include "Types.h"
-#include "libs.h"
+
+#include <SDL_stdinc.h>
+#include "matrix4x4.h"
+#include "RefCounted.h"
 
 namespace Graphics {
 

@@ -16,6 +16,7 @@
 #include "CollisionGeometry.h"
 #include "FileSystem.h"
 #include "LOD.h"
+#include "LoaderDefinitions.h"
 #include "StaticGeometry.h"
 #include "Thruster.h"
 #include <functional>

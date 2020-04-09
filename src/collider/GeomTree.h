@@ -4,7 +4,11 @@
 #ifndef _GEOMTREE_H
 #define _GEOMTREE_H
 
-#include "libs.h"
+#include "../Aabb.h"
+
+#include "vector3.h"
+#include <vector>
+#include <memory>
 
 namespace Serializer {
 	class Reader;

@@ -9,6 +9,7 @@
 #include "BaseLoader.h"
 #include "CollisionGeometry.h"
 #include "StaticGeometry.h"
+#include "LoaderDefinitions.h"
 
 #include <assimp/types.h>
 
@@ -18,6 +19,10 @@ struct aiScene;
 struct aiNodeAnim;
 
 namespace SceneGraph {
+
+	class Model;
+	class Group;
+	class Animation;
 
 	class Loader : public BaseLoader {
 	public:

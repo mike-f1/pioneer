@@ -7,11 +7,15 @@
  * Newmodel .model config file parser.
  * It's pretty bad, someone please redesign.
  */
+
 #include "FileSystem.h"
-#include "Loader.h"
+#include "Color.h"
 #include <stdexcept>
 
 namespace SceneGraph {
+
+	class ModelDefinition;
+	class MaterialDefinition;
 
 	struct ParseError : public std::runtime_error {
 		ParseError(const std::string &str) :

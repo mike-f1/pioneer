@@ -5,7 +5,6 @@
 #define _MUSIC_H
 
 #include "Sound.h"
-#include <SDL.h>
 #include <string>
 #include <vector>
 

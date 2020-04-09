@@ -2,10 +2,10 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "LuaEvent.h"
+
 #include "LuaManager.h"
 #include "LuaObject.h"
 #include "LuaUtils.h"
-#include "libs.h"
 
 namespace LuaEvent {
 

@@ -7,6 +7,7 @@
 #include "Color.h"
 #include "GuiFixed.h"
 #include "GuiLabel.h"
+#include "utils.h"
 
 namespace Graphics {
 	namespace Drawables {

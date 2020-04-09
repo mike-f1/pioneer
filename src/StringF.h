@@ -4,7 +4,9 @@
 #ifndef _STRINGF_H
 #define _STRINGF_H
 
-#include "libs.h"
+#include "fixed.h"
+#include "utils.h"
+
 #include <SDL_stdinc.h>
 #include <string>
 

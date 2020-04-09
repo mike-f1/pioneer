@@ -11,6 +11,8 @@
 #include "graphics/Material.h"
 #include <sstream>
 
+#include "utils.h"
+
 namespace Graphics {
 	namespace OGL {
 

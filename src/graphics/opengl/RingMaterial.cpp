@@ -2,10 +2,13 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "RingMaterial.h"
+
 #include "RendererGL.h"
 #include "StringF.h"
 #include "TextureGL.h"
 #include "graphics/Graphics.h"
+
+#include "utils.h"
 
 namespace Graphics {
 	namespace OGL {

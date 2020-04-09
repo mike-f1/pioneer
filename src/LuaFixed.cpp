@@ -2,8 +2,8 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "LuaFixed.h"
+
 #include "LuaUtils.h"
-#include "libs.h"
 
 static int l_fixed_new(lua_State *L)
 {

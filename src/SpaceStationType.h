@@ -4,7 +4,13 @@
 #ifndef _SPACESTATIONTYPE_H
 #define _SPACESTATIONTYPE_H
 
-#include "libs.h"
+#include <SDL_stdinc.h>
+#include <map>
+#include <string>
+#include <vector>
+#include "vector3.h"
+#include "matrix4x4.h"
+#include "Random.h"
 
 //Space station definition, loaded from data/stations
 

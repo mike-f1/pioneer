@@ -8,6 +8,7 @@
 #include <string>
 
 #include "graphics/Drawables.h"
+#include "utils.h"
 
 namespace Text {
 	class TextureFont;

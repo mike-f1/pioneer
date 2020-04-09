@@ -4,8 +4,9 @@
 #ifndef TEXT_FONTCONFIG_H
 #define TEXT_FONTCONFIG_H
 
-#include "libs.h"
 #include <string>
+#include <vector>
+#include <SDL_stdinc.h>
 
 namespace Text {
 

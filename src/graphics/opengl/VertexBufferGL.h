@@ -6,6 +6,8 @@
 #include "OpenGLLibs.h"
 #include "graphics/VertexBuffer.h"
 
+#include <memory>
+
 namespace Graphics {
 	namespace OGL {
 

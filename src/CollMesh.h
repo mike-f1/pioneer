@@ -7,6 +7,9 @@
 #include "Aabb.h"
 #include "RefCounted.h"
 
+#include <vector>
+#include <algorithm>
+
 class GeomTree;
 
 namespace Serializer {

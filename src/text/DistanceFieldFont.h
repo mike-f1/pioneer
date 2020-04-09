@@ -23,7 +23,10 @@
  * (etc)
  */
 #include "StringRange.h"
-#include "libs.h"
+#include "RefCounted.h"
+#include <string>
+#include <map>
+#include "vector2.h"
 
 namespace Graphics {
 	class Texture;

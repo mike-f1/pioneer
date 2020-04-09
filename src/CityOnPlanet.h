@@ -8,8 +8,12 @@
 #include "FrameId.h"
 #include "Object.h"
 #include "Random.h"
+#include "vector3.h"
+#include "matrix4x4.h"
 
 #include <set>
+#include <vector>
+#include <string>
 
 class Geom;
 class Planet;

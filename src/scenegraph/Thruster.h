@@ -7,7 +7,11 @@
  * Spaceship thruster
  */
 #include "Node.h"
-#include "libs.h"
+
+#include "vector3.h"
+#include "matrix4x4.h"
+#include "Color.h"
+#include "RefCounted.h"
 
 namespace Graphics {
 	class VertexBuffer;

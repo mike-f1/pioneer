@@ -2,8 +2,10 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "LuaColor.h"
+
 #include "LuaUtils.h"
-#include "libs.h"
+
+#include <algorithm>
 
 inline Color4ub ColorClamp(float r, float g, float b, float a)
 {

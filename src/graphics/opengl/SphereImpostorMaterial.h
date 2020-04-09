@@ -7,7 +7,7 @@
  */
 #include "MaterialGL.h"
 #include "Program.h"
-#include "libs.h"
+
 namespace Graphics {
 
 	namespace OGL {

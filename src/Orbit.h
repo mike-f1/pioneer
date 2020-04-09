@@ -4,7 +4,8 @@
 #ifndef ORBIT_H
 #define ORBIT_H
 
-#include "libs.h"
+#include <cassert>
+
 #include "matrix3x3.h"
 #include "vector3.h"
 

@@ -11,6 +11,8 @@
 #include "graphics/VertexArray.h"
 #include "graphics/VertexBuffer.h"
 
+#include "profiler/Profiler.h"
+
 namespace SceneGraph {
 
 	Label3D::Label3D(RefCountedPtr<Text::DistanceFieldFont> font) :

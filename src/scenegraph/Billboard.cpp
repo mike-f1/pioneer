@@ -14,6 +14,8 @@
 #include "graphics/VertexArray.h"
 #include "graphics/VertexBuffer.h"
 
+#include "utils.h"
+
 namespace SceneGraph {
 
 	Billboard::Billboard(Graphics::VertexArray &bbVA, float size) :

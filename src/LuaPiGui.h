@@ -11,7 +11,7 @@
 
 class Body;
 
-bool first_body_is_more_important_than(Body* body, Body* other);
+bool first_body_is_more_important_than(const Body* body, const Body* other);
 
 struct TScreenSpace
 {

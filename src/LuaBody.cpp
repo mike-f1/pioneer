@@ -32,7 +32,7 @@
 #include "gui/GuiTexturedQuad.h"
 
 // Defined in LuaPiGui.h
-extern bool first_body_is_more_important_than(Body*, Body*);
+extern bool first_body_is_more_important_than(const Body*, const Body*);
 extern int pushOnScreenPositionDirection(lua_State *l, vector3d position);
 
 /*
@@ -239,8 +239,8 @@ static int l_body_get_system_body(lua_State *l)
 
 static int l_body_is_more_important_than(lua_State *l)
 {
-	Body *body = LuaObject<Body>::CheckFromLua(1);
-	Body *other = LuaObject<Body>::CheckFromLua(2);
+	const Body *body = LuaObject<Body>::CheckFromLua(1);
+	const Body *other = LuaObject<Body>::CheckFromLua(2);
 
 	// compare body and other
 	// push true if body is "more important" than other

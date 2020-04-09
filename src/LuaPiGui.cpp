@@ -1448,7 +1448,7 @@ TScreenSpace lua_world_space_to_screen_space(const Body *body)
 	}
 }
 
-bool first_body_is_more_important_than(Body *body, Body *other)
+bool first_body_is_more_important_than(const Body *body, const Body *other)
 {
 
 	Object::Type a = body->GetType();
@@ -1535,10 +1535,41 @@ bool first_body_is_more_important_than(Body *body, Body *other)
 	return result;
 }
 
+struct GroupInfo {
+	Body *m_mainBody;
+	vector2d m_centreCoords; // screen space centre of group
+	std::vector<Body *> m_bodies;
+	bool m_hasNavTarget;
+
+	GroupInfo(const TScreenSpace &tss, bool isNavTarget, size_t reserve) :
+		m_mainBody(tss._body),
+		m_centreCoords(tss._screenPosition),
+		m_hasNavTarget(isNavTarget)
+	{
+		m_bodies.reserve(reserve);
+		m_bodies.push_back(tss._body);
+	}
+
+	void Add(const TScreenSpace &tss, bool isNavTarget)
+	{
+		m_hasNavTarget |= isNavTarget;
+		// Insert ordered
+		std::vector<Body *>::iterator ub = std::upper_bound(m_bodies.begin(), m_bodies.end(), tss._body, [](const Body *a, const Body *b) {
+			return first_body_is_more_important_than(a, b);
+		});
+		m_bodies.insert(ub, tss._body);
+		if (isNavTarget || first_body_is_more_important_than(tss._body, m_mainBody)) {
+			m_mainBody = tss._body;
+		}
+		m_centreCoords += (tss._screenPosition - m_centreCoords) / m_bodies.size();
+	}
+};
+
 static int l_pigui_get_projected_bodies_grouped(lua_State *l)
 {
 	PROFILE_SCOPED()
 	const vector2d gap = LuaPull<vector2d>(l, 1);
+	const double maxDistance = LuaPull<double>(l, 2, std::numeric_limits<double>::max());
 
 	TSS_vector filtered;
 	filtered.reserve(GameLocator::getGame()->GetSpace()->GetNumBodies());
@@ -1546,81 +1577,61 @@ static int l_pigui_get_projected_bodies_grouped(lua_State *l)
 	for (Body *body : GameLocator::getGame()->GetSpace()->GetBodies()) {
 		if (body == GameLocator::getGame()->GetPlayer()) continue;
 		if (body->GetType() == Object::PROJECTILE) continue;
+		if (GameLocator::getGame()->GetPlayer()->GetPositionRelTo(body).Length() > maxDistance) continue;
 		const TScreenSpace res = lua_world_space_to_screen_space(body); // defined in LuaPiGui.cpp
 		if (!res._onScreen) continue;
 		filtered.emplace_back(res);
 		filtered.back()._body = body;
 	}
 
-	std::vector<TSS_vector> groups;
+	const Body *navTarget = GameLocator::getGame()->GetPlayer()->GetNavTarget();
+	const Body *combatTarget = GameLocator::getGame()->GetPlayer()->GetCombatTarget();
+
+	std::vector<GroupInfo> groups;
 	groups.reserve(filtered.size());
 
 	// Perform half-matrix double for
 	for (TSS_vector::iterator it = filtered.begin(); it != filtered.end(); ++it) {
-		TSS_vector group;
-		group.reserve(filtered.end() - it + 1);
+		TScreenSpace tssElement = *it;
+		GroupInfo group(tssElement, tssElement._body == navTarget, filtered.end() - it + 1);
 
-		// First element should always be the "media";
-		// so push twice that element:
-		//printf("  Body 1 = %s (%f, %f)\n", (*it)._body->GetLabel().c_str(), (*it)._screenPosition.x, (*it)._screenPosition.y);
-		group.push_back((*it));
-		// Zeroed body so you could distinguish between a "media" element and a "real" element
-		group.back()._body = nullptr;
-		group.push_back((*it));
-
-		// Find near displayed bodies in remaining list of bodies
-		for (TSS_vector::iterator it2 = --filtered.end(); it2 != it;) {
-			//printf("    Body 2 = %s (%f, %f)\n", (*it2)._body->GetLabel().c_str(), (*it2)._screenPosition.x, (*it2)._screenPosition.y);
-			if ((std::abs((*group.begin())._screenPosition.x - (*it2)._screenPosition.x) > gap.x) ||
-				(std::abs((*group.begin())._screenPosition.y - (*it2)._screenPosition.y) > gap.y)) {
+		if (tssElement._body != combatTarget) {
+			// Find near displayed bodies in remaining list of bodies
+			for (TSS_vector::iterator it2 = --filtered.end(); it2 != it;) {
+				if ((std::abs(group.m_centreCoords.x - (*it2)._screenPosition.x) > gap.x) ||
+					(std::abs(group.m_centreCoords.y - (*it2)._screenPosition.y) > gap.y)) {
+					it2--;
+					continue;
+				}
+				// There's a "nearest": push it on group and remove from filtered
+				group.Add(*it2, (*it2)._body == navTarget);
+				// nearly-swap&pop: copy last element over *it2 and...
+				(*it2) = filtered.back();
+				// ensure it2 never point past-the-end (thus to rbegin)
 				it2--;
-				continue;
+				// ..."pop"
+				filtered.pop_back();
 			}
-			//printf("      %s and %s are near!\n", (*it)._body->GetLabel().c_str(), (*it2)._body->GetLabel().c_str());
-			// There's a "nearest": push it on group, remove from filtered and recalc group center
-			group.push_back(*it2);
-			// nearly-swap&pop: copy last element over *it2 and...
-			(*it2) = filtered.back();
-			// ensure it2 never point past-the-end (thus to rbegin)
-			it2--;
-			// ..."pop"
-			filtered.pop_back();
-			// recalc group (starting with second element because first is the center itself)
-			vector3d media = std::accumulate(group.begin() + 1, group.end(), vector3d(0.0), [](const vector3d &a, const TScreenSpace &ss) {
-				//printf("      Third level with '%s'\n", ss._body->GetLabel().c_str());
-				return a + ss._body->GetPositionRelTo(GameLocator::getGame()->GetPlayer());
-			});
-			media /= double(group.size() - 1);
-			group.front() = lua_world_space_to_screen_space(media);
-			group.front()._body = nullptr; // <- just in case...
 		}
 		groups.push_back(std::move(group));
 	}
 
-	// Sort each groups member according to a given function (skipping first element)
-	std::for_each(begin(groups), end(groups), [](TSS_vector &group) {
-		std::sort(begin(group) + 1, end(group), [](TScreenSpace &a, TScreenSpace &b) {
-			return first_body_is_more_important_than(a._body, b._body);
-		});
-	});
-
 	LuaTable result(l, groups.size(), 0);
 	int index = 1;
 
-	std::for_each(begin(groups), end(groups), [&l, &result, &index](TSS_vector &group) {
-		int index2 = 1;
-		LuaTable table_group(l, group.size(), 0);
+	std::for_each(begin(groups), end(groups), [&l, &result, &index](const GroupInfo &group) {
+		LuaTable table_group(l, 0, 5);
 
-		std::for_each(begin(group), end(group), [&l, &table_group, &index2](TScreenSpace &on_screen_object) {
-			LuaTable object(l, 0, 3);
-			object.Set("onscreen", on_screen_object._onScreen);
-			object.Set("screenCoordinates", on_screen_object._screenPosition);
-			if (on_screen_object._body != nullptr)
-				object.Set("body", on_screen_object._body);
+		table_group.Set("screenCoordinates", group.m_centreCoords);
+		table_group.Set("mainBody", group.m_mainBody);
+		table_group.Set("multiple", group.m_bodies.size() > 1 ? true : false);
+		table_group.Set("hasNavTarget", group.m_hasNavTarget);
 
-			table_group.Set(index2++, object);
-			lua_pop(l, 1);
-		});
+		LuaTable bodies_table(l, group.m_bodies.size(), 0);
+		bodies_table.LoadVector(group.m_bodies.begin(), group.m_bodies.end());
+		table_group.Set("bodies", bodies_table);
+		lua_pop(l, 1);
+
 		result.Set(index++, table_group);
 		lua_pop(l, 1);
 	});

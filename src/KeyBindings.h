@@ -8,15 +8,20 @@
 #include <string>
 #include <sstream>
 #include <iosfwd>
+#include <functional>
 
 #include "InputFrame.h"
 
+#include <sigc++/sigc++.h> // <- for mouse buttons
+
 namespace KeyBindings {
-	enum Type {
+	enum class BindType {
 		BINDING_DISABLED,
 		KEYBOARD_KEY,
 		JOYSTICK_BUTTON,
 		JOYSTICK_HAT,
+		MOUSE_WHEEL, // TODO: implementme!
+		MOUSE_MOTION, // TODO: implementme!
 		MOUSE_BUTTON // TODO: implementme!
 	};
 
@@ -30,13 +35,13 @@ namespace KeyBindings {
 		static KeyBinding FromJoystickHat(Uint8 joystick, Uint8 hat, Uint8 direction);
 
 		KeyBinding() :
-			type(BINDING_DISABLED)
+			type(BindType::BINDING_DISABLED)
 		{
 			u.keyboard.key = SDLK_UNKNOWN;
 			u.keyboard.mod = KMOD_NONE;
 		}
 		KeyBinding(SDL_Keycode key, SDL_Keymod mod = KMOD_NONE) :
-			type(KEYBOARD_KEY)
+			type(BindType::KEYBOARD_KEY)
 		{
 			u.keyboard.key = key;
 			u.keyboard.mod = mod;
@@ -52,12 +57,12 @@ namespace KeyBindings {
 
 		void Clear() { memset(this, 0, sizeof(*this)); }
 
-		bool Enabled() const { return (type != BINDING_DISABLED); }
+		bool Enabled() const { return (type != BindType::BINDING_DISABLED); }
 
 		friend std::ostream &operator<<(std::ostream &oss, const KeyBinding &kb);
 
 	private:
-		Type type;
+		BindType type;
 		union {
 			struct {
 				SDL_Keycode key;
@@ -89,9 +94,6 @@ namespace KeyBindings {
 		KeyBinding binding1;
 		KeyBinding binding2;
 
-		sigc::signal<void> onPress;
-		sigc::signal<void> onRelease;
-
 		ActionBinding() {}
 		ActionBinding(KeyBinding b1, KeyBinding b2 = KeyBinding()) :
 			binding1(b1),
@@ -108,9 +110,14 @@ namespace KeyBindings {
 		std::string ToString() const;
 
 		bool IsActive() const;
+
+		void StoreOnActionCallback(std::function<void(bool)> fun);
+
 		InputResponse CheckSDLEventAndDispatch(const SDL_Event &event);
 
 		bool Matches(const SDL_Keysym &sym) const;
+	private:
+		std::function<void(bool)> m_fun;
 	};
 
 	enum AxisDirection {
@@ -188,23 +195,27 @@ namespace KeyBindings {
 			positive(KeyBinding(k1)),
 			negative(KeyBinding(k2)) {}
 
-		sigc::signal<void, float> onAxis;
-
 		void SetFromString(const char *str) { return SetFromString(std::string(str)); }
 		void SetFromString(const std::string str);
 		std::string ToString() const;
 
+		void StoreOnAxisCallback(std::function<void(float)> fun);
+
 		bool IsActive() const;
 		float GetValue() const;
 		InputResponse CheckSDLEventAndDispatch(const SDL_Event &event);
+	private:
+		std::function<void(float)> m_fun;
 	};
 
 	struct WheelBinding {
 		WheelBinding() {};
 
-		sigc::signal<void, bool> onAxis;
+		void StoreOnWheelCallback(std::function<void(bool)> fun);
 
 		InputResponse CheckSDLEventAndDispatch(const SDL_Event &event);
+	private:
+		std::function<void(bool)> m_fun;
 	};
 
 	struct MouseBinding {
@@ -215,25 +226,9 @@ namespace KeyBindings {
 		InputResponse CheckSDLEventAndDispatch(const SDL_Event &event);
 	};
 
-	struct BindingPrototype {
-		const char *label, *function;
-		ActionBinding *kb;
-		JoyAxisBinding *ab;
-	};
-
 	void InitBindings();
-	void UpdateBindings();
 	void EnableBindings();
 	void DisableBindings();
-
-	void DispatchSDLEvent(const SDL_Event &event);
-
-#define KEY_BINDING(name, a, b, c, d) extern ActionBinding name;
-#define AXIS_BINDING(name, a, b, c) extern JoyAxisBinding name;
-#include "KeyBindings.inc.h"
-
-#define BINDING_PAGE(name) extern const BindingPrototype BINDING_PROTOS_##name[];
-#include "KeyBindings.inc.h"
 
 } // namespace KeyBindings
 

@@ -52,7 +52,6 @@ namespace Graphics {
 
 class WorldView : public UIView {
 public:
-	static void RegisterInputBindings();
 	friend class NavTunnelWidget;
 	WorldView(Game *game);
 	WorldView(const Json &jsonObj, Game *game);
@@ -93,6 +92,7 @@ protected:
 
 private:
 	void InitObject(Game *game);
+	void RegisterInputBindings();
 
 	enum IndicatorSide {
 		INDICATOR_HIDDEN,
@@ -120,13 +120,11 @@ private:
 	void DrawCombatTargetIndicator(const Indicator &target, const Indicator &lead, const Color &c);
 	void DrawEdgeMarker(const Indicator &marker, const Color &c);
 
-	void OnToggleLabels();
+	void OnToggleLabels(bool down);
+	void OnRequestTimeAccelInc(bool down);
+	void OnRequestTimeAccelDec(bool down);
 
 	void OnPlayerChangeTarget();
-	/// Handler for "requestTimeAccelerationInc" event
-	void OnRequestTimeAccelInc();
-	/// Handler for "requestTimeAccelerationDec" event
-	void OnRequestTimeAccelDec();
 
 	NavTunnelWidget *m_navTunnel;
 	std::unique_ptr<SpeedLines> m_speedLines;
@@ -135,9 +133,6 @@ private:
 	bool m_guiOn;
 
 	sigc::connection m_onPlayerChangeTargetCon;
-	sigc::connection m_onToggleHudModeCon;
-	sigc::connection m_onIncTimeAccelCon;
-	sigc::connection m_onDecTimeAccelCon;
 
 	RefCountedPtr<CameraContext> m_cameraContext;
 	std::unique_ptr<Camera> m_camera;
@@ -150,7 +145,7 @@ private:
 	Graphics::Drawables::Line3D m_edgeMarker;
 	Graphics::Drawables::Lines m_indicator;
 
-	static class BaseBinding : public InputFrame {
+	struct BaseBinding {
 	public:
 		using Action = KeyBindings::ActionBinding;
 		using Axis =  KeyBindings::AxisBinding;
@@ -159,9 +154,9 @@ private:
 		Action *increaseTimeAcceleration;
 		Action *decreaseTimeAcceleration;
 
-		virtual void RegisterBindings();
-	} BaseBindings;
+	} m_wviewBindings;
 
+	std::unique_ptr<InputFrame> m_inputFrame;
 };
 
 class NavTunnelWidget : public Gui::Widget {

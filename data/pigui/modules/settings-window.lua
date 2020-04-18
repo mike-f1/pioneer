@@ -267,7 +267,7 @@ local function showVideoOptions()
 	end
 end
 
-local function captureBinding(id,num)
+local function captureBinding(id, num)
 
 	local info
 

@@ -22,7 +22,10 @@ public:
 	ShipViewController(WorldView *v) :
 		InteractionController(v),
 		m_camType(CAM_INTERNAL),
-		headtracker_input_priority(false) {}
+		headtracker_input_priority(false)
+	{
+		RegisterInputBindings();
+	}
 
 	~ShipViewController();
 
@@ -49,7 +52,7 @@ public:
 	// Here temporarely because of initialization order
 	void SetCamType(Ship *ship, enum CamType c);
 
-	static struct InputBinding : public InputFrame {
+	struct InputBinding {
 		using Action = KeyBindings::ActionBinding;
 		using Axis = KeyBindings::AxisBinding;
 		using Wheel = KeyBindings::WheelBinding;
@@ -74,19 +77,19 @@ public:
 
 		Wheel *mouseWheel;
 
-		virtual void RegisterBindings();
-	} InputBindings;
+	} m_inputBindings;
+
+	std::unique_ptr<InputFrame> m_inputFrame;
 
 private:
 	void ChangeInternalCameraMode(InternalCameraController::Mode m);
 
-	void OnCamReset();
+	void RegisterInputBindings();
+
+	void OnCamReset(bool down);
 	void OnMouseWheel(bool up);
 
 	enum CamType m_camType;
-
-	sigc::connection m_onResetCam;
-	sigc::connection m_onMouseWheelCon;
 
 	std::unique_ptr<InternalCameraController> m_internalCameraController;
 	std::unique_ptr<ExternalCameraController> m_externalCameraController;

@@ -4,12 +4,19 @@
 #ifndef _LUACONSOLE_H
 #define _LUACONSOLE_H
 
+#include "InputFrame.h"
 #include "LuaManager.h"
 #include "RefCounted.h"
 #include <deque>
+#include <memory>
 #include <string>
 #include <vector>
 #include <SDL_keyboard.h>
+
+namespace KeyBindings {
+	struct ActionBinding;
+	struct WheelBinding;
+}
 
 namespace UI {
 	class TextEntry;
@@ -24,7 +31,9 @@ public:
 	LuaConsole();
 	virtual ~LuaConsole();
 
-	void Toggle();
+	void OnToggle(bool down);
+
+	void CheckEvent(const SDL_Event &event);
 
 	bool IsActive() const { return m_active; }
 	void AddOutput(const std::string &line);
@@ -37,6 +46,8 @@ public:
 	static void Register();
 
 private:
+	void RegisterInputBindings();
+
 	bool OnKeyDown(const UI::KeyboardEvent &event);
 	void OnChange(const std::string &text);
 	void OnEnter(const std::string &text);
@@ -74,6 +85,19 @@ private:
 	int m_debugSocket;
 	std::vector<int> m_debugConnections;
 #endif
+
+	struct ConsoleBinding {
+		using Action = KeyBindings::ActionBinding;
+		using Axis =  KeyBindings::AxisBinding;
+		using Wheel = KeyBindings::WheelBinding;
+
+		Action *toggleLuaConsole;
+
+		Wheel *mouseWheel;
+
+	} m_consoleBindings;
+
+	std::unique_ptr<InputFrame> m_inputFrame;
 };
 
 #endif /* _LUACONSOLE_H */

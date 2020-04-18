@@ -63,6 +63,7 @@
 #include "Sfx.h"
 #include "Shields.h"
 #include "ShipCpanel.h"
+#include "ShipCpanelMultiFuncDisplays.h"
 #include "ShipType.h"
 #include "Space.h"
 #include "SpaceStation.h"
@@ -364,20 +365,6 @@ void TestGPUJobsSupport()
 	}
 }
 
-// TODO: make this a part of the class and/or improve the mechanism
-void RegisterInputBindings()
-{
-	PlayerShipController::RegisterInputBindings();
-
-	ShipViewController::InputBindings.RegisterBindings();
-
-	WorldView::RegisterInputBindings();
-
-	SectorView::RegisterInputBindings();
-
-	ObjectViewerView::RegisterInputBindings();
-}
-
 static void draw_progress(float progress)
 {
 	RendererLocator::getRenderer()->ClearScreen();
@@ -474,8 +461,6 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 	// we can only do bindings once joysticks are initialised.
 	if (!no_gui) // This re-saves the config file. With no GUI we want to allow multiple instances in parallel.
 		KeyBindings::InitBindings();
-
-	RegisterInputBindings();
 
 	TestGPUJobsSupport();
 
@@ -647,7 +632,6 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 #endif
 
 	m_luaConsole.reset(new LuaConsole());
-	KeyBindings::toggleLuaConsole.onPress.connect(sigc::mem_fun(m_luaConsole.get(), &LuaConsole::Toggle));
 
 	draw_progress(1.0f);
 
@@ -702,7 +686,7 @@ void Pi::OnChangeDetailLevel()
 
 bool Pi::HandleEscKey()
 {
-	if (!InGameViewsLocator::getInGameViews()) return false;
+	if (!InGameViewsLocator::getInGameViews()) return true;
 
 	switch (InGameViewsLocator::getInGameViews()->GetViewType()) {
 	case ViewType::OBJECT:
@@ -937,7 +921,6 @@ void Pi::HandleEvents()
 			default: break;
 			}
 		}
-
 		if (skipTextInput && event.type == SDL_TEXTINPUT) {
 			skipTextInput = false;
 			continue;
@@ -946,21 +929,21 @@ void Pi::HandleEvents()
 			continue;
 
 		bool consoleActive = Pi::IsConsoleActive();
-		if (!consoleActive) {
-			KeyBindings::DispatchSDLEvent(event);
+		if (consoleActive) {
+			m_luaConsole->CheckEvent(event);
 		} else {
-			KeyBindings::toggleLuaConsole.CheckSDLEventAndDispatch(event);
 		}
+
+		//if (Pi::IsConsoleActive())
+		//	continue;
+
+		Gui::HandleSDLEvent(&event);
+		input.HandleSDLEvent(event);
+
 		if (consoleActive != Pi::IsConsoleActive()) {
 			skipTextInput = true;
 			continue;
 		}
-
-		if (Pi::IsConsoleActive())
-			continue;
-
-		Gui::HandleSDLEvent(&event);
-		input.HandleSDLEvent(event);
 	}
 }
 
@@ -1280,7 +1263,7 @@ void Pi::MainLoop()
 
 		RendererLocator::getRenderer()->ClearDepthBuffer();
 
-		if (InGameViewsLocator::getInGameViews()->DrawGui()) {
+		if (InGameViewsLocator::getInGameViews()->ShouldDrawGui()) {
 			Gui::Draw();
 		}
 
@@ -1288,7 +1271,7 @@ void Pi::MainLoop()
 		// wrong, because we shouldn't this when the HUD is disabled, but
 		// probably sure draw it if they switch to eg infoview while the HUD is
 		// disabled so we need much smarter control for all this rubbish
-		if ((!GameLocator::getGame() || !InGameViewsLocator::getInGameViews()->IsDeathView()) && InGameViewsLocator::getInGameViews()->DrawGui()) {
+		if ((!GameLocator::getGame() || !InGameViewsLocator::getInGameViews()->IsDeathView()) && InGameViewsLocator::getInGameViews()->ShouldDrawGui()) {
 			Pi::ui->Update();
 			Pi::ui->Draw();
 		}
@@ -1299,7 +1282,7 @@ void Pi::MainLoop()
 			// FIXME: Always begin a camera frame because WorldSpaceToScreenSpace
 			// requires it and is exposed to pigui.
 			InGameViewsLocator::getInGameViews()->GetWorldView()->BeginCameraFrame();
-			PiGui::NewFrame(RendererLocator::getRenderer()->GetSDLWindow(), InGameViewsLocator::getInGameViews()->DrawGui());
+			PiGui::NewFrame(RendererLocator::getRenderer()->GetSDLWindow(), InGameViewsLocator::getInGameViews()->ShouldDrawGui());
 
 			InGameViewsLocator::getInGameViews()->DrawUI(m_frameTime);
 

@@ -4,6 +4,8 @@
 #include "JsonFwd.h"
 #include "RefCounted.h"
 
+#include <memory>
+
 class Game;
 class SystemPath;
 
@@ -40,7 +42,7 @@ public:
 
 	void SetView(ViewType vt);
 
-	bool DrawGui();
+	bool ShouldDrawGui();
 
 	ViewType GetViewType() const { return m_currentViewType; }
 
@@ -59,7 +61,7 @@ public:
 	UIView *GetGalacticView() const { return m_galacticView; }
 	SystemInfoView *GetSystemInfoView() const { return m_systemInfoView; }
 	SystemView *GetSystemView() const { return m_systemView; }
-	WorldView *GetWorldView() const { return m_worldView; }
+	WorldView *GetWorldView() const { return m_worldView.get(); }
 	DeathView *GetDeathView() const { return m_deathView; }
 	UIView *GetSpaceStationView() const { return m_spaceStationView; }
 	UIView *GetInfoView() const { return m_infoView; }
@@ -81,7 +83,7 @@ private:
 	UIView *m_galacticView;
 	SystemInfoView *m_systemInfoView;
 	SystemView *m_systemView;
-	WorldView *m_worldView;
+	std::unique_ptr<WorldView> m_worldView;
 	DeathView *m_deathView;
 	UIView *m_spaceStationView;
 	UIView *m_infoView;

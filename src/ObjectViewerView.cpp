@@ -64,53 +64,41 @@ ObjectViewerView::ObjectViewerView() :
 	cameraContext->SetCameraFrame(Frame::GetRootFrameId());
 	cameraContext->SetCameraPosition(vector3d(0.0));
 	cameraContext->SetCameraOrient(matrix3x3d::Identity());
+
+	RegisterInputBindings();
 }
 
-ObjectViewerView::ObjectViewerBinding ObjectViewerView::ObjectViewerBindings;
-
-void ObjectViewerView::ObjectViewerBinding::RegisterBindings()
+ObjectViewerView::~ObjectViewerView()
 {
+	Pi::input.RemoveInputFrame(m_inputFrame.get());
 }
 
 void ObjectViewerView::RegisterInputBindings()
 {
 	using namespace KeyBindings;
+	using namespace std::placeholders;
 
-	Input::BindingPage *page = Pi::input.GetBindingPage("ObjectViewer");
-	page->shouldBeTranslated = false;
-	Input::BindingGroup *group = page->GetBindingGroup("Miscellaneous");
+	m_inputFrame.reset(new InputFrame("ObjectViewer"));
 
-	ObjectViewerBindings.resetZoom = Pi::input.AddActionBinding("ResetZoom", group, ActionBinding(SDLK_SPACE));
-	ObjectViewerBindings.actions.push_back(ObjectViewerBindings.resetZoom);
+	auto &page = Pi::input.GetBindingPage("ObjectViewer");
+	page.shouldBeTranslated = false;
 
-	group = page->GetBindingGroup("ViewMovementControls");
+	auto &groupMisce = page.GetBindingGroup("Miscellaneous");
 
-	ObjectViewerBindings.zoomIn = Pi::input.AddActionBinding("ZoomIn", group, ActionBinding(SDLK_PLUS));
-	ObjectViewerBindings.actions.push_back(ObjectViewerBindings.zoomIn);
+	m_objectViewerBindings.resetZoom = m_inputFrame->AddActionBinding("ResetZoom", groupMisce, ActionBinding(SDLK_SPACE));
 
-	ObjectViewerBindings.zoomOut = Pi::input.AddActionBinding("ZoomOut", group, ActionBinding(SDLK_MINUS));
-	ObjectViewerBindings.actions.push_back(ObjectViewerBindings.zoomOut);
+	auto &groupVMC = page.GetBindingGroup("ViewMovementControls");
+	m_objectViewerBindings.zoom = m_inputFrame->AddAxisBinding("Zoom", groupVMC, AxisBinding(SDLK_PLUS, SDLK_MINUS));
+	m_objectViewerBindings.rotateLeftRight = m_inputFrame->AddAxisBinding("RotateLeftRight", groupVMC, AxisBinding(SDLK_LEFT, SDLK_RIGHT));
+	m_objectViewerBindings.rotateUpDown = m_inputFrame->AddAxisBinding("RotateUpDown", groupVMC, AxisBinding(SDLK_DOWN, SDLK_UP));
 
-	ObjectViewerBindings.rotateLeft = Pi::input.AddActionBinding("RotateLeft", group, ActionBinding(SDLK_RIGHT));
-	ObjectViewerBindings.actions.push_back(ObjectViewerBindings.rotateLeft);
+	m_objectViewerBindings.rotateLightLeft = m_inputFrame->AddActionBinding("RotateLightLeft", groupVMC, ActionBinding(SDLK_r));
+	m_objectViewerBindings.rotateLightRight = m_inputFrame->AddActionBinding("RotateLightRight", groupVMC, ActionBinding(SDLK_f));
 
-	ObjectViewerBindings.rotateRight = Pi::input.AddActionBinding("RotateRight", group, ActionBinding(SDLK_LEFT));
-	ObjectViewerBindings.actions.push_back(ObjectViewerBindings.rotateRight);
+	m_objectViewerBindings.mouseWheel = m_inputFrame->AddWheelBinding("MouseWheel", groupVMC, WheelBinding());
+	m_objectViewerBindings.mouseWheel->StoreOnWheelCallback(std::bind(&ObjectViewerView::OnMouseWheel, this, _1));
 
-	ObjectViewerBindings.rotateUp = Pi::input.AddActionBinding("RotateUp", group, ActionBinding(SDLK_DOWN));
-	ObjectViewerBindings.actions.push_back(ObjectViewerBindings.rotateUp);
-
-	ObjectViewerBindings.rotateDown = Pi::input.AddActionBinding("RotateDown", group, ActionBinding(SDLK_UP));
-	ObjectViewerBindings.actions.push_back(ObjectViewerBindings.rotateDown);
-
-	ObjectViewerBindings.rotateLightLeft = Pi::input.AddActionBinding("RotateLightLeft", group, ActionBinding(SDLK_r));
-	ObjectViewerBindings.actions.push_back(ObjectViewerBindings.rotateLightLeft);
-
-	ObjectViewerBindings.rotateLightRight = Pi::input.AddActionBinding("RotateLightRight", group, ActionBinding(SDLK_f));
-	ObjectViewerBindings.actions.push_back(ObjectViewerBindings.rotateLightRight);
-
-	ObjectViewerBindings.mouseWheel = Pi::input.AddWheelBinding("MouseWheel", group, WheelBinding());
-	ObjectViewerBindings.wheel = ObjectViewerBindings.mouseWheel;
+	Pi::input.PushInputFrame(m_inputFrame.get());
 }
 
 void ObjectViewerView::OnSwitchTo()
@@ -120,18 +108,14 @@ void ObjectViewerView::OnSwitchTo()
 	m_camRot = INITIAL_CAM_ANGLES;
 	m_lightAngle = LIGHT_START_ANGLE;
 
-	if (!Pi::input.PushInputFrame(&ObjectViewerBindings)) return;
-
-	m_onMouseWheelCon = ObjectViewerBindings.mouseWheel->onAxis.connect(sigc::mem_fun(this, &ObjectViewerView::OnMouseWheel));
+	m_inputFrame->SetActive(true);
 
 	UIView::OnSwitchTo();
 }
 
 void ObjectViewerView::OnSwitchFrom()
 {
-	if (!Pi::input.RemoveInputFrame(&ObjectViewerBindings)) return;
-
-	m_onMouseWheelCon.disconnect();
+	m_inputFrame->SetActive(false);
 
 	UIView::OnSwitchFrom();
 }
@@ -161,10 +145,13 @@ void ObjectViewerView::Update(const float frameTime)
 	const float moveSpeed = MOVEMENT_SPEED * WHEEL_SENSITIVITY * Pi::input.GetMoveSpeedShiftModifier();
 	float move = moveSpeed * frameTime;
 
-	if (ObjectViewerBindings.zoomIn->IsActive())
-		m_zoomChange = Zooming::IN;
-	if (ObjectViewerBindings.zoomOut->IsActive())
-		m_zoomChange = Zooming::OUT;
+	if (m_objectViewerBindings.zoom->IsActive()) {
+		if (m_objectViewerBindings.zoom->GetValue() > 0) {
+			m_zoomChange = Zooming::IN;
+		} else {
+			m_zoomChange = Zooming::OUT;
+		}
+	}
 
 	float zoom_change = 1.0;
 	switch (m_zoomChange) {
@@ -184,14 +171,14 @@ void ObjectViewerView::Update(const float frameTime)
 	m_viewingDist = Clamp(m_viewingDist, min_distance, 1e12f);
 	m_zoomChange = Zooming::NONE;
 
-	if (ObjectViewerBindings.resetZoom->IsActive() && m_lastTarget != nullptr) {
+	if (m_objectViewerBindings.resetZoom->IsActive() && m_lastTarget != nullptr) {
 		OnResetViewParams();
 	}
 
-	if (ObjectViewerBindings.rotateLightLeft->IsActive()) {
+	if (m_objectViewerBindings.rotateLightLeft->IsActive()) {
 		m_lightRotate = RotateLight::LEFT;
 	}
-	if (ObjectViewerBindings.rotateLightRight->IsActive()) {
+	if (m_objectViewerBindings.rotateLightRight->IsActive()) {
 		m_lightRotate = RotateLight::RIGHT;
 	}
 
@@ -203,14 +190,12 @@ void ObjectViewerView::Update(const float frameTime)
 	m_lightAngle = Clamp(m_lightAngle, float(-DEG2RAD(180.0)), float(DEG2RAD(180.0)));
 	m_lightRotate = RotateLight::NONE;
 
-	if (ObjectViewerBindings.rotateDown->IsActive())
-		m_camRot = matrix4x4d::RotateXMatrix(+move * 5.0) * m_camRot;
-	if (ObjectViewerBindings.rotateUp->IsActive())
-		m_camRot = matrix4x4d::RotateXMatrix(-move * 5.0) * m_camRot;
-	if (ObjectViewerBindings.rotateLeft->IsActive())
-		m_camRot = matrix4x4d::RotateYMatrix(-move * 5.0) * m_camRot;
-	if (ObjectViewerBindings.rotateRight->IsActive())
-		m_camRot = matrix4x4d::RotateYMatrix(+move * 5.0) * m_camRot;
+	if (m_objectViewerBindings.rotateUpDown->IsActive()) {
+		m_camRot = matrix4x4d::RotateXMatrix(m_objectViewerBindings.rotateUpDown->GetValue() * move * 5.0) * m_camRot;
+	}
+	if (m_objectViewerBindings.rotateLeftRight->IsActive()) {
+		m_camRot = matrix4x4d::RotateYMatrix(m_objectViewerBindings.rotateLeftRight->GetValue() * move * 5.0) * m_camRot;
+	}
 
 	int btnState = Pi::input.MouseButtonState(SDL_BUTTON_RIGHT);
 	int m[2];

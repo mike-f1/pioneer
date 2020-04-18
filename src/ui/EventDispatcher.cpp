@@ -7,6 +7,8 @@
 #include "text/TextSupport.h"
 #include <climits>
 
+#include "profiler/Profiler.h"
+
 namespace UI {
 
 	static inline MouseButtonEvent::ButtonType MouseButtonFromSDLButton(Uint8 sdlButton)
@@ -18,6 +20,7 @@ namespace UI {
 
 	bool EventDispatcher::DispatchSDLEvent(const SDL_Event &event)
 	{
+		PROFILE_SCOPED()
 		switch (event.type) {
 		case SDL_KEYDOWN:
 			return Dispatch(KeyboardEvent(KeyboardEvent::KEY_DOWN, KeySym(event.key.keysym.sym, SDL_Keymod(event.key.keysym.mod)), event.key.repeat));

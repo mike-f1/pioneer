@@ -102,19 +102,19 @@ static int l_input_get_bindings(lua_State *l)
 	using namespace KeyBindings;
 
 	int page_idx = 1;
-	for (auto page : Pi::input.GetBindingPages()) {
+	for (auto &page : Pi::input.GetBindingPages()) {
 		if (!page.second.shouldBeTranslated) continue;
 		lua_pushunsigned(l, page_idx++);
 		setup_binding_table(l, page.first.c_str(), "page");
 
 		int group_idx = 1;
-		for (auto group : page.second.groups) {
+		for (auto &group : page.second.groups) {
 			lua_pushunsigned(l, group_idx++);
 			setup_binding_table(l, group.first.c_str(), "group");
 
 			int binding_idx = 1;
-			for (auto type : group.second.bindings) {
-				if (type.second == Input::BindingGroup::EntryType::ENTRY_ACTION) {
+			for (auto &type : group.second.bindings) {
+				if (type.second == BindingGroup::EntryType::ACTION) {
 					lua_pushunsigned(l, binding_idx++);
 					ActionBinding *ab = Pi::input.GetActionBinding(type.first);
 					if (!ab) continue; // Should never happen, but include it here for future proofing.
@@ -122,7 +122,7 @@ static int l_input_get_bindings(lua_State *l)
 
 					push_key_binding(l, &ab->binding1, "binding1", "bindingDescription1");
 					push_key_binding(l, &ab->binding2, "binding2", "bindingDescription2");
-				} else if (type.second == Input::BindingGroup::EntryType::ENTRY_AXIS) {
+				} else if (type.second == BindingGroup::EntryType::AXIS) {
 					lua_pushunsigned(l, binding_idx++);
 					AxisBinding *ab = Pi::input.GetAxisBinding(type.first);
 					if (!ab) continue; // Should never happen, but include it here for future proofing.

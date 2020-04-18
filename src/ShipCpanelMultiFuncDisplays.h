@@ -4,10 +4,17 @@
 #ifndef _SHIPCPANELMULTIFUNCDISPLAYS_H
 #define _SHIPCPANELMULTIFUNCDISPLAYS_H
 
+#include "InputFrame.h"
 #include "JsonFwd.h"
 #include "Object.h"
 #include "graphics/Drawables.h"
 #include "gui/GuiWidget.h"
+
+namespace KeyBindings {
+	struct ActionBinding;
+	struct AxisBinding;
+	struct WheelBinding;
+}
 
 namespace Graphics {
 	class RenderState;
@@ -32,7 +39,6 @@ public:
 	RadarWidget(const Json &jsonObj);
 	virtual ~RadarWidget();
 	void GetSizeRequested(float size[2]);
-	void ToggleMode();
 	void InitScaling(void);
 	void Draw();
 	virtual void Update();
@@ -43,13 +49,14 @@ public:
 
 private:
 	void InitObject();
+	void RegisterInputBindings();
+
+	void ToggleMode(bool down);
 
 	void DrawBlobs(bool below);
 	void GenerateBaseGeometry();
 	void GenerateRingsAndSpokes();
 	void DrawRingsAndSpokes(bool blend);
-
-	sigc::connection m_toggleScanModeConnection;
 
 	struct Contact {
 		Object::Type type;
@@ -60,8 +67,10 @@ private:
 	Graphics::Drawables::Lines m_contactLines;
 	Graphics::Drawables::Points m_contactBlobs;
 
-	enum RadarMode { RADAR_MODE_AUTO,
-		RADAR_MODE_MANUAL };
+	enum class RadarMode {
+		MODE_AUTO,
+		MODE_MANUAL
+	};
 	RadarMode m_mode;
 
 	float m_currentRange, m_manualRange, m_targetRange;
@@ -84,6 +93,17 @@ private:
 
 	Graphics::Drawables::Lines m_scanLines;
 	Graphics::Drawables::Lines m_edgeLines;
+
+	struct RadarWidgetBinding {
+		using Action = KeyBindings::ActionBinding;
+		using Axis = KeyBindings::AxisBinding;
+
+		Action *toggleScanMode;
+		Axis *changeScanRange;
+
+	} m_radarWidgetBindings;
+
+	std::unique_ptr<InputFrame> m_inputFrame;
 };
 
 #endif /* _SHIPCPANELMULTIFUNCDISPLAYS_H */

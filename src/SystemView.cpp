@@ -243,9 +243,6 @@ SystemView::SystemView() :
 	b->SetRenderDimensions(26, 17);
 	Add(b, time_controls_left + 121, time_controls_top);
 
-	m_onMouseWheelCon =
-		Pi::input.onMouseWheel.connect(sigc::mem_fun(this, &SystemView::MouseWheel));
-
 	Graphics::TextureBuilder b1 = Graphics::TextureBuilder::UI("icons/periapsis.png");
 	m_periapsisIcon.reset(new Gui::TexturedQuad(b1.GetOrCreateTexture(RendererLocator::getRenderer(), "ui")));
 	Graphics::TextureBuilder b2 = Graphics::TextureBuilder::UI("icons/apoapsis.png");
@@ -263,12 +260,44 @@ SystemView::SystemView() :
 
 	m_orbitVts.reset(new vector3f[N_VERTICES_MAX]);
 	m_orbitColors.reset(new Color[N_VERTICES_MAX]);
+
+	RegisterInputBindings();
 }
 
 SystemView::~SystemView()
 {
+	Pi::input.RemoveInputFrame(m_inputFrame.get());
+
 	m_contacts.clear();
-	m_onMouseWheelCon.disconnect();
+}
+
+void SystemView::RegisterInputBindings()
+{
+	using namespace KeyBindings;
+	using namespace std::placeholders;
+
+	m_inputFrame.reset(new InputFrame("SystemView"));
+
+	BindingPage &page = Pi::input.GetBindingPage("SystemView");
+	page.shouldBeTranslated = false;
+	BindingGroup &group = page.GetBindingGroup("Miscellaneous");
+
+	m_systemViewBindings.mouseWheel = m_inputFrame->AddWheelBinding("MouseWheel", group, WheelBinding());
+	m_systemViewBindings.mouseWheel->StoreOnWheelCallback(std::bind(&SystemView::OnMouseWheel, this, _1));
+
+	Pi::input.PushInputFrame(m_inputFrame.get());
+}
+
+void SystemView::OnSwitchTo()
+{
+	m_inputFrame->SetActive(true);
+	UIView::OnSwitchTo();
+}
+
+void SystemView::OnSwitchFrom()
+{
+	m_inputFrame->SetActive(false);
+	UIView::OnSwitchFrom();
 }
 
 void SystemView::OnClickAccel(float step)
@@ -828,14 +857,12 @@ void SystemView::Update(const float frameTime)
 	UIView::Update(frameTime);
 }
 
-void SystemView::MouseWheel(bool up)
+void SystemView::OnMouseWheel(bool up)
 {
-	if (InGameViewsLocator::getInGameViews()->IsSystemView()) {
-		if (!up)
-			m_zoomTo *= ((ZOOM_OUT_SPEED - 1) * WHEEL_SENSITIVITY + 1) / Pi::input.GetMoveSpeedShiftModifier();
-		else
-			m_zoomTo *= ((ZOOM_IN_SPEED - 1) * WHEEL_SENSITIVITY + 1) * Pi::input.GetMoveSpeedShiftModifier();
-	}
+	if (!up)
+		m_zoomTo *= ((ZOOM_OUT_SPEED - 1) * WHEEL_SENSITIVITY + 1) / Pi::input.GetMoveSpeedShiftModifier();
+	else
+		m_zoomTo *= ((ZOOM_IN_SPEED - 1) * WHEEL_SENSITIVITY + 1) * Pi::input.GetMoveSpeedShiftModifier();
 }
 
 void SystemView::RefreshShips()

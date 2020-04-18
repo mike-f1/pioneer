@@ -509,7 +509,7 @@ static int l_get_rotation_damping(lua_State *l)
 static int l_toggle_rotation_damping(lua_State *l)
 {
 	Player *player = LuaObject<Player>::CheckFromLua(1);
-	player->GetPlayerController()->ToggleRotationDamping();
+	player->GetPlayerController()->SetRotationDamping(!player->GetPlayerController()->GetRotationDamping());
 	return 0;
 }
 

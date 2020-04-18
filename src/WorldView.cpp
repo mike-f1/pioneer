@@ -74,29 +74,6 @@ WorldView::WorldView(const Json &jsonObj, Game *game) :
 	shipView.LoadFromJson(worldViewObj);
 }
 
-WorldView::BaseBinding WorldView::BaseBindings;
-
-void WorldView::BaseBinding::RegisterBindings()
-{
-}
-
-void WorldView::RegisterInputBindings()
-{
-	using namespace KeyBindings;
-
-	Input::BindingPage *page = Pi::input.GetBindingPage("General");
-	Input::BindingGroup *group = page->GetBindingGroup("Miscellaneous");
-
-	BaseBindings.toggleHudMode = Pi::input.AddActionBinding("BindToggleHudMode", group, ActionBinding(SDLK_TAB));
-	BaseBindings.actions.push_back(BaseBindings.toggleHudMode);
-	BaseBindings.increaseTimeAcceleration = Pi::input.AddActionBinding("BindIncreaseTimeAcceleration", group, ActionBinding(SDLK_PAGEUP));
-	BaseBindings.actions.push_back(BaseBindings.increaseTimeAcceleration);
-	BaseBindings.decreaseTimeAcceleration = Pi::input.AddActionBinding("BindDecreaseTimeAcceleration", group, ActionBinding(SDLK_PAGEDOWN));
-	BaseBindings.actions.push_back(BaseBindings.decreaseTimeAcceleration);
-
-	Pi::input.PushInputFrame(&BaseBindings);
-}
-
 void WorldView::InitObject(Game *game)
 {
 	float size[2];
@@ -126,21 +103,36 @@ void WorldView::InitObject(Game *game)
 	m_camera.reset(new Camera(m_cameraContext));
 	shipView.Init(game->GetPlayer());
 
-	m_onPlayerChangeTargetCon = game->GetPlayer()->onPlayerChangeTarget.connect(sigc::mem_fun(this, &WorldView::OnPlayerChangeTarget));
+	RegisterInputBindings();
 
-	m_onToggleHudModeCon = BaseBindings.toggleHudMode->onPress.connect(sigc::mem_fun(this, &WorldView::OnToggleLabels));
-	m_onIncTimeAccelCon = BaseBindings.increaseTimeAcceleration->onPress.connect(sigc::mem_fun(this, &WorldView::OnRequestTimeAccelInc));
-	m_onDecTimeAccelCon = BaseBindings.decreaseTimeAcceleration->onPress.connect(sigc::mem_fun(this, &WorldView::OnRequestTimeAccelDec));
+	m_onPlayerChangeTargetCon = game->GetPlayer()->onPlayerChangeTarget.connect(sigc::mem_fun(this, &WorldView::OnPlayerChangeTarget));
+}
+
+void WorldView::RegisterInputBindings()
+{
+	using namespace KeyBindings;
+	using namespace std::placeholders;
+
+	m_inputFrame.reset(new InputFrame("WorldView"));
+
+	BindingPage &page = Pi::input.GetBindingPage("General");
+	BindingGroup &group = page.GetBindingGroup("Miscellaneous");
+
+	m_wviewBindings.toggleHudMode = m_inputFrame->AddActionBinding("BindToggleHudMode", group, ActionBinding(SDLK_TAB));
+	m_wviewBindings.toggleHudMode->StoreOnActionCallback(std::bind(&WorldView::OnToggleLabels, this, _1));
+	m_wviewBindings.increaseTimeAcceleration = m_inputFrame->AddActionBinding("BindIncreaseTimeAcceleration", group, ActionBinding(SDLK_PAGEUP));
+	m_wviewBindings.increaseTimeAcceleration->StoreOnActionCallback(std::bind(&WorldView::OnRequestTimeAccelInc, this, _1));
+	m_wviewBindings.decreaseTimeAcceleration = m_inputFrame->AddActionBinding("BindDecreaseTimeAcceleration", group, ActionBinding(SDLK_PAGEDOWN));
+	m_wviewBindings.decreaseTimeAcceleration->StoreOnActionCallback(std::bind(&WorldView::OnRequestTimeAccelDec, this, _1));
+
+	Pi::input.PushInputFrame(m_inputFrame.get());
 }
 
 WorldView::~WorldView()
 {
-	if (!Pi::input.RemoveInputFrame(&BaseBindings)) return;
+	Pi::input.RemoveInputFrame(m_inputFrame.get());
 
 	m_onPlayerChangeTargetCon.disconnect();
-	m_onToggleHudModeCon.disconnect();
-	m_onIncTimeAccelCon.disconnect();
-	m_onDecTimeAccelCon.disconnect();
 }
 
 void WorldView::SaveToJson(Json &jsonObj)
@@ -152,20 +144,23 @@ void WorldView::SaveToJson(Json &jsonObj)
 	jsonObj["world_view"] = worldViewObj; // Add world view object to supplied object.
 }
 
-void WorldView::OnRequestTimeAccelInc()
+void WorldView::OnRequestTimeAccelInc(bool down)
 {
+	if (down) return;
 	// requests an increase in time acceleration
 	GameLocator::getGame()->RequestTimeAccelInc();
 }
 
-void WorldView::OnRequestTimeAccelDec()
+void WorldView::OnRequestTimeAccelDec(bool down)
 {
+	if (down) return;
 	// requests a decrease in time acceleration
 	GameLocator::getGame()->RequestTimeAccelDec();
 }
 
-void WorldView::OnToggleLabels()
+void WorldView::OnToggleLabels(bool down)
 {
+	if (down) return;
 	if (InGameViewsLocator::getInGameViews()->IsWorldView()) {
 		if (m_guiOn && m_labelsOn) {
 			m_labelsOn = false;
@@ -393,11 +388,7 @@ void WorldView::OnSwitchTo()
 	UIView::OnSwitchTo();
 	shipView.Activated();
 
-	if (!Pi::input.PushInputFrame(&BaseBindings)) return;
-
-	m_onToggleHudModeCon = BaseBindings.toggleHudMode->onPress.connect(sigc::mem_fun(this, &WorldView::OnToggleLabels));
-	m_onIncTimeAccelCon = BaseBindings.increaseTimeAcceleration->onPress.connect(sigc::mem_fun(this, &WorldView::OnRequestTimeAccelInc));
-	m_onDecTimeAccelCon = BaseBindings.decreaseTimeAcceleration->onPress.connect(sigc::mem_fun(this, &WorldView::OnRequestTimeAccelDec));
+	m_inputFrame->SetActive(true);
 }
 
 void WorldView::OnSwitchFrom()
@@ -405,11 +396,7 @@ void WorldView::OnSwitchFrom()
 	shipView.Deactivated();
 	m_guiOn = true;
 
-	if (!Pi::input.RemoveInputFrame(&BaseBindings)) return;
-
-	m_onToggleHudModeCon.disconnect();
-	m_onIncTimeAccelCon.disconnect();
-	m_onDecTimeAccelCon.disconnect();
+	m_inputFrame->SetActive(false);
 }
 
 // XXX paying fine remotely can't really be done until crime and

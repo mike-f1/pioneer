@@ -39,6 +39,10 @@
     "description": "Descriptive name for the Camera Yaw axis.",
     "message": "Camera Yaw"
   },
+  "BIND_CHANGE_SCAN_RANGE": {
+    "description": "Descriptive name for change scan range axis.",
+    "message": "Change Radar Range"
+  },
   "BIND_CYCLE_CAMERA_MODE": {
     "description": "Descriptive name for the CycleCameraMode action.",
     "message": "Cycle Camera Mode"
@@ -83,45 +87,25 @@
     "description": "Descriptive name for the reset view action",
     "message": "Reset View"
   },
-  "BIND_MAP_VIEW_ROTATE_DOWN": {
-    "description": "Descriptive name for the rotate down view action",
-    "message": "Rotate Down View"
+  "BIND_MAP_VIEW_ROTATE_UP_DOWN": {
+    "description": "Descriptive name for the rotate up/down view axis",
+    "message": "Rotate Up/Down View"
   },
-  "BIND_MAP_VIEW_ROTATE_LEFT": {
-    "description": "Descriptive name for the rotate left view action",
-    "message": "Rotate Left View"
+  "BIND_MAP_VIEW_ROTATE_LEFT_RIGHT": {
+    "description": "Descriptive name for the rotate left/right view axis",
+    "message": "Rotate Left/Right View"
   },
-  "BIND_MAP_VIEW_ROTATE_RIGHT": {
-    "description": "Descriptive name for the rotate right view action",
-    "message": "Rotate Right View"
+  "BIND_MAP_VIEW_SHIFT_FORWARD_BACKWARD": {
+    "description": "Descriptive name for the move forward/backward view axis",
+    "message": "Shift Forward/Backward View"
   },
-  "BIND_MAP_VIEW_ROTATE_UP": {
-    "description": "Descriptive name for the rotate up view action",
-    "message": "Rotate Up View"
+  "BIND_MAP_VIEW_SHIFT_LEFT_RIGHT": {
+    "description": "Descriptive name for the move left/right view axis",
+    "message": "Shift Left/Right View"
   },
-  "BIND_MAP_VIEW_SHIFT_BACKWARD": {
-    "description": "Descriptive name for the move backward view action",
-    "message": "Shift Backward View"
-  },
-  "BIND_MAP_VIEW_SHIFT_DOWN": {
-    "description": "Descriptive name for the move down view action",
-    "message": "Shift Down View"
-  },
-  "BIND_MAP_VIEW_SHIFT_FORWARD": {
-    "description": "Descriptive name for the move forward view action",
-    "message": "Shift Forward View"
-  },
-  "BIND_MAP_VIEW_SHIFT_LEFT": {
-    "description": "Descriptive name for the move left view action",
-    "message": "Shift Left View"
-  },
-  "BIND_MAP_VIEW_SHIFT_RIGHT": {
-    "description": "Descriptive name for the move right view action",
-    "message": "Shift Right View"
-  },
-  "BIND_MAP_VIEW_SHIFT_UP": {
-    "description": "Descriptive name for the move up view action",
-    "message": "Shift Up View"
+  "BIND_MAP_VIEW_SHIFT_UP_DOWN": {
+    "description": "Descriptive name for the move up/down view axis",
+    "message": "Shift Up/Down View"
   },
   "BIND_MAP_WARP_TO_CURRENT": {
     "description": "Descriptive name for the move view to current system action",
@@ -135,13 +119,9 @@
     "description": "Descriptive name for the automatic move view to selection action",
     "message": "Automatic Warp to Selection"
   },
-  "BIND_MAP_VIEW_ZOOM_IN": {
-    "description": "Descriptive name for the zoom in view action",
-    "message": "Zoom In View"
-  },
-  "BIND_MAP_VIEW_ZOOM_OUT": {
-    "description": "Descriptive name for the zoom out view action",
-    "message": "Zoom Out View"
+  "BIND_MAP_VIEW_ZOOM": {
+    "description": "Descriptive name for the zoom in view axis",
+    "message": "Zoom View"
   },
   "BIND_PRIMARY_FIRE": {
     "description": "Descriptive name for the PrimaryFire action.",
@@ -182,6 +162,10 @@
   "BIND_TOGGLE_ROTATION_DAMPING": {
     "description": "Descriptive name for the ToggleRotationDamping action.",
     "message": "Toggle Rotation Damping"
+  },
+  "BIND_TOGGLE_SCAN_MODE": {
+    "description": "Descriptive name for the toggle auto range action.",
+    "message": "Toggle Radar Auto Range"
   },
   "BIND_TOGGLE_SET_SPEED": {
     "description": "Descriptive name for the ToggleSetSpeed action.",
@@ -226,6 +210,10 @@
     "description": "Header for the General input page.",
     "message": "General Controls"
   },
+  "PAGE_RADAR_VIEW": {
+    "description": "Header for the RadarControls input page.",
+    "message": "Radar - Controls"
+  },
   "PAGE_SHIP_CONTROLS": {
     "description": "Header for the ShipControls input page.",
     "message": "Ship - Controls"
@@ -269,5 +257,9 @@
   "TEXT_KEY_POSITIVE": {
     "description": "Indicates the positive half of a key-binding pair.",
     "message": "Positive:"
+  },
+  "TOGGLE_CONSOLE": {
+    "description": "Activate or deactivate Lua console",
+    "message": "Toggle Lua Console"
   }
 }

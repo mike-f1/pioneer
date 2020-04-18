@@ -318,7 +318,6 @@ void GeoPatch::Render(const vector3d &campos, const matrix4x4d &modelView, const
 			RendererLocator::getRenderer()->SetWireFrameMode(false);
 		}
 #endif
-		RendererLocator::getRenderer()->GetStats().AddToStatCount(Graphics::Stats::STAT_PATCHES, 1);
 	}
 }
 

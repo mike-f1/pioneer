@@ -44,74 +44,51 @@ PlayerShipController::PlayerShipController() :
 	m_fovY = GameConfSingleton::getInstance().Float("FOVVertical");
 	m_lowThrustPower = GameConfSingleton::getInstance().Float("DefaultLowThrustPower");
 
-	if (!InputBindings.primaryFire) {
-		Error("PlayerShipController was not properly initialized!\n"
-			  "You must call PlayerShipController::RegisterInputBindings before initializing a PlayerShipController");
-	}
-
-	Pi::input.PushInputFrame(&InputBindings);
-
-	m_connRotationDampingToggleKey = InputBindings.toggleRotationDamping->onPress.connect(
-		sigc::mem_fun(this, &PlayerShipController::ToggleRotationDamping));
-
-	m_fireMissileKey = InputBindings.secondaryFire->onPress.connect(
-		sigc::mem_fun(this, &PlayerShipController::FireMissile));
-
-	m_setSpeedMode = InputBindings.toggleSetSpeed->onPress.connect(
-		sigc::mem_fun(this, &PlayerShipController::ToggleSetSpeedMode));
+	RegisterInputBindings();
 }
-
-PlayerShipController::InputBinding PlayerShipController::InputBindings;
 
 void PlayerShipController::RegisterInputBindings()
 {
 	using namespace KeyBindings;
-	auto controlsPage = Pi::input.GetBindingPage("ShipControls");
+	using namespace std::placeholders;
 
-	auto weaponsGroup = controlsPage->GetBindingGroup("Weapons");
-	InputBindings.targetObject = Pi::input.AddActionBinding("BindTargetObject", weaponsGroup, ActionBinding(SDLK_y));
-	InputBindings.actions.push_back(InputBindings.targetObject);
-	InputBindings.primaryFire = Pi::input.AddActionBinding("BindPrimaryFire", weaponsGroup, ActionBinding(SDLK_SPACE));
-	InputBindings.actions.push_back(InputBindings.primaryFire);
-	InputBindings.secondaryFire = Pi::input.AddActionBinding("BindSecondaryFire", weaponsGroup, ActionBinding(SDLK_m));
-	InputBindings.actions.push_back(InputBindings.secondaryFire);
+	m_inputFrame.reset(new InputFrame("PlayerShip"));
 
-	auto flightGroup = controlsPage->GetBindingGroup("ShipOrient");
-	InputBindings.pitch = Pi::input.AddAxisBinding("BindAxisPitch", flightGroup, AxisBinding(SDLK_k, SDLK_i));
-	InputBindings.axes.push_back(InputBindings.pitch);
-	InputBindings.yaw = Pi::input.AddAxisBinding("BindAxisYaw", flightGroup, AxisBinding(SDLK_j, SDLK_l));
-	InputBindings.axes.push_back(InputBindings.yaw);
-	InputBindings.roll = Pi::input.AddAxisBinding("BindAxisRoll", flightGroup, AxisBinding(SDLK_u, SDLK_o));
-	InputBindings.axes.push_back(InputBindings.roll);
-	InputBindings.killRot = Pi::input.AddActionBinding("BindKillRot", flightGroup, ActionBinding(SDLK_p, SDLK_x));
-	InputBindings.actions.push_back(InputBindings.killRot);
-	InputBindings.toggleRotationDamping = Pi::input.AddActionBinding("BindToggleRotationDamping", flightGroup, ActionBinding(SDLK_v));
-	InputBindings.actions.push_back(InputBindings.toggleRotationDamping);
+	auto &controlsPage = Pi::input.GetBindingPage("ShipControls");
 
-	auto thrustGroup = controlsPage->GetBindingGroup("ManualControl");
-	InputBindings.thrustForward = Pi::input.AddAxisBinding("BindAxisThrustForward", thrustGroup, AxisBinding(SDLK_w, SDLK_s));
-	InputBindings.axes.push_back(InputBindings.thrustForward);
-	InputBindings.thrustUp = Pi::input.AddAxisBinding("BindAxisThrustUp", thrustGroup, AxisBinding(SDLK_r, SDLK_f));
-	InputBindings.axes.push_back(InputBindings.thrustUp);
-	InputBindings.thrustLeft = Pi::input.AddAxisBinding("BindAxisThrustLeft", thrustGroup, AxisBinding(SDLK_a, SDLK_d));
-	InputBindings.axes.push_back(InputBindings.thrustLeft);
-	InputBindings.thrustLowPower = Pi::input.AddActionBinding("BindThrustLowPower", thrustGroup, ActionBinding(SDLK_LSHIFT));
-	InputBindings.actions.push_back(InputBindings.thrustLowPower);
+	auto &weaponsGroup = controlsPage.GetBindingGroup("Weapons");
+	m_inputBindings.targetObject = m_inputFrame->AddActionBinding("BindTargetObject", weaponsGroup, ActionBinding(SDLK_y));
+	m_inputBindings.primaryFire = m_inputFrame->AddActionBinding("BindPrimaryFire", weaponsGroup, ActionBinding(SDLK_SPACE));
+	m_inputBindings.secondaryFire = m_inputFrame->AddActionBinding("BindSecondaryFire", weaponsGroup, ActionBinding(SDLK_m));
+	m_inputBindings.secondaryFire->StoreOnActionCallback(std::bind(&PlayerShipController::FireMissile, this, _1));
 
-	auto speedGroup = controlsPage->GetBindingGroup("SpeedControl");
-	InputBindings.speedControl = Pi::input.AddAxisBinding("BindSpeedControl", speedGroup, AxisBinding(SDLK_RETURN, SDLK_RSHIFT));
-	InputBindings.axes.push_back(InputBindings.speedControl);
-	InputBindings.toggleSetSpeed = Pi::input.AddActionBinding("BindToggleSetSpeed", speedGroup, ActionBinding(SDLK_v));
-	InputBindings.actions.push_back(InputBindings.toggleSetSpeed);
+	auto &flightGroup = controlsPage.GetBindingGroup("ShipOrient");
+	m_inputBindings.pitch = m_inputFrame->AddAxisBinding("BindAxisPitch", flightGroup, AxisBinding(SDLK_k, SDLK_i));
+	m_inputBindings.yaw = m_inputFrame->AddAxisBinding("BindAxisYaw", flightGroup, AxisBinding(SDLK_j, SDLK_l));
+	m_inputBindings.roll = m_inputFrame->AddAxisBinding("BindAxisRoll", flightGroup, AxisBinding(SDLK_u, SDLK_o));
+	m_inputBindings.killRot = m_inputFrame->AddActionBinding("BindKillRot", flightGroup, ActionBinding(SDLK_p, SDLK_x));
+	m_inputBindings.toggleRotationDamping = m_inputFrame->AddActionBinding("BindToggleRotationDamping", flightGroup, ActionBinding(SDLK_v));
+	m_inputBindings.toggleRotationDamping->StoreOnActionCallback(std::bind(&PlayerShipController::ToggleRotationDamping, this, _1));
+
+	auto &thrustGroup = controlsPage.GetBindingGroup("ManualControl");
+	m_inputBindings.thrustForward = m_inputFrame->AddAxisBinding("BindAxisThrustForward", thrustGroup, AxisBinding(SDLK_w, SDLK_s));
+	m_inputBindings.thrustUp = m_inputFrame->AddAxisBinding("BindAxisThrustUp", thrustGroup, AxisBinding(SDLK_r, SDLK_f));
+	m_inputBindings.thrustLeft = m_inputFrame->AddAxisBinding("BindAxisThrustLeft", thrustGroup, AxisBinding(SDLK_a, SDLK_d));
+	m_inputBindings.thrustLowPower = m_inputFrame->AddActionBinding("BindThrustLowPower", thrustGroup, ActionBinding(SDLK_LSHIFT));
+
+	auto &speedGroup = controlsPage.GetBindingGroup("SpeedControl");
+	m_inputBindings.speedControl = m_inputFrame->AddAxisBinding("BindSpeedControl", speedGroup, AxisBinding(SDLK_RETURN, SDLK_RSHIFT));
+	m_inputBindings.toggleSetSpeed = m_inputFrame->AddActionBinding("BindToggleSetSpeed", speedGroup, ActionBinding(SDLK_v));
+	m_inputBindings.toggleSetSpeed->StoreOnActionCallback(std::bind(&PlayerShipController::ToggleSetSpeedMode, this, _1));
+
+	m_inputFrame->SetActive(true);
+
+	Pi::input.PushInputFrame(m_inputFrame.get());
 }
 
 PlayerShipController::~PlayerShipController()
 {
-	Pi::input.RemoveInputFrame(&InputBindings);
-
-	m_connRotationDampingToggleKey.disconnect();
-	m_fireMissileKey.disconnect();
-	m_setSpeedMode.disconnect();
+	Pi::input.RemoveInputFrame(m_inputFrame.get());
 }
 
 void PlayerShipController::SaveToJson(Json &jsonObj, Space *space)
@@ -262,7 +239,7 @@ void PlayerShipController::PollControls(const float timeStep, const bool force_r
 		// vector3d wantAngVel(0.0);
 		double angThrustSoftness = 10.0;
 
-		const float linearThrustPower = (InputBindings.thrustLowPower->IsActive() ? m_lowThrustPower : 1.0f);
+		const float linearThrustPower = (m_inputBindings.thrustLowPower->IsActive() ? m_lowThrustPower : 1.0f);
 
 		// have to use this function. SDL mouse position event is bugged in windows
 		if (Pi::input.MouseButtonState(SDL_BUTTON_RIGHT)) {
@@ -299,12 +276,12 @@ void PlayerShipController::PollControls(const float timeStep, const bool force_r
 
 		if (m_flightControlState == CONTROL_FIXSPEED) {
 			double oldSpeed = m_setSpeed;
-			if (stickySpeedKey && !InputBindings.speedControl->IsActive())
+			if (stickySpeedKey && !m_inputBindings.speedControl->IsActive())
 				stickySpeedKey = false;
 
 			if (!stickySpeedKey) {
 				const double MAX_SPEED = 300000000;
-				m_setSpeed += InputBindings.speedControl->GetValue() * std::max(std::abs(m_setSpeed) * 0.05, 1.0);
+				m_setSpeed += m_inputBindings.speedControl->GetValue() * std::max(std::abs(m_setSpeed) * 0.05, 1.0);
 				m_setSpeed = Clamp(m_setSpeed, -MAX_SPEED, MAX_SPEED);
 
 				if (((oldSpeed < 0.0) && (m_setSpeed >= 0.0)) ||
@@ -317,14 +294,14 @@ void PlayerShipController::PollControls(const float timeStep, const bool force_r
 			}
 		}
 
-		if (InputBindings.thrustForward->IsActive())
-			m_ship->SetThrusterState(2, -linearThrustPower * InputBindings.thrustForward->GetValue());
-		if (InputBindings.thrustUp->IsActive())
-			m_ship->SetThrusterState(1, linearThrustPower * InputBindings.thrustUp->GetValue());
-		if (InputBindings.thrustLeft->IsActive())
-			m_ship->SetThrusterState(0, -linearThrustPower * InputBindings.thrustLeft->GetValue());
+		if (m_inputBindings.thrustForward->IsActive())
+			m_ship->SetThrusterState(2, -linearThrustPower * m_inputBindings.thrustForward->GetValue());
+		if (m_inputBindings.thrustUp->IsActive())
+			m_ship->SetThrusterState(1, linearThrustPower * m_inputBindings.thrustUp->GetValue());
+		if (m_inputBindings.thrustLeft->IsActive())
+			m_ship->SetThrusterState(0, -linearThrustPower * m_inputBindings.thrustLeft->GetValue());
 
-		if (InputBindings.primaryFire->IsActive() || (Pi::input.MouseButtonState(SDL_BUTTON_LEFT) && Pi::input.MouseButtonState(SDL_BUTTON_RIGHT))) {
+		if (m_inputBindings.primaryFire->IsActive() || (Pi::input.MouseButtonState(SDL_BUTTON_LEFT) && Pi::input.MouseButtonState(SDL_BUTTON_RIGHT))) {
 			//XXX worldview? madness, ask from ship instead
 			GunDir dir = InGameViewsLocator::getInGameViews()->GetWorldView()->GetActiveWeapon() ? GunDir::GUN_REAR : GunDir::GUN_FRONT;
 			m_ship->SetGunsState(dir, 1);
@@ -334,13 +311,13 @@ void PlayerShipController::PollControls(const float timeStep, const bool force_r
 		}
 
 		vector3d wantAngVel = vector3d(
-			InputBindings.pitch->GetValue(),
-			InputBindings.yaw->GetValue(),
-			InputBindings.roll->GetValue());
+			m_inputBindings.pitch->GetValue(),
+			m_inputBindings.yaw->GetValue(),
+			m_inputBindings.roll->GetValue());
 
-		if (InputBindings.killRot->IsActive()) SetFlightControlState(CONTROL_FIXHEADING_KILLROT);
+		if (m_inputBindings.killRot->IsActive()) SetFlightControlState(CONTROL_FIXHEADING_KILLROT);
 
-		if (InputBindings.thrustLowPower->IsActive())
+		if (m_inputBindings.thrustLowPower->IsActive())
 			angThrustSoftness = 50.0;
 
 		if (wantAngVel.Length() >= 0.001 || force_rotation_damping || m_rotationDamping) {
@@ -358,12 +335,12 @@ void PlayerShipController::PollControls(const float timeStep, const bool force_r
 
 bool PlayerShipController::IsAnyAngularThrusterKeyDown()
 {
-	return !Pi::IsConsoleActive() && (InputBindings.pitch->IsActive() || InputBindings.yaw->IsActive() || InputBindings.roll->IsActive());
+	return !Pi::IsConsoleActive() && (m_inputBindings.pitch->IsActive() || m_inputBindings.yaw->IsActive() || m_inputBindings.roll->IsActive());
 }
 
 bool PlayerShipController::IsAnyLinearThrusterKeyDown()
 {
-	return !Pi::IsConsoleActive() && (InputBindings.thrustForward->IsActive() || InputBindings.thrustLeft->IsActive() || InputBindings.thrustUp->IsActive());
+	return !Pi::IsConsoleActive() && (m_inputBindings.thrustForward->IsActive() || m_inputBindings.thrustLeft->IsActive() || m_inputBindings.thrustUp->IsActive());
 }
 
 void PlayerShipController::SetFlightControlState(FlightControlState s)
@@ -398,20 +375,23 @@ void PlayerShipController::SetRotationDamping(bool enabled)
 	m_rotationDamping = enabled;
 }
 
-void PlayerShipController::ToggleRotationDamping()
+void PlayerShipController::ToggleRotationDamping(bool down)
 {
+	if (down) return;
 	m_rotationDamping = !m_rotationDamping;
 }
 
-void PlayerShipController::FireMissile()
+void PlayerShipController::FireMissile(bool down)
 {
+	if (down) return;
 	if (!GameLocator::getGame()->GetPlayer()->GetCombatTarget())
 		return;
 	LuaObject<Ship>::CallMethod(GameLocator::getGame()->GetPlayer(), "FireMissileAt", "any", static_cast<Ship *>(GameLocator::getGame()->GetPlayer()->GetCombatTarget()));
 }
 
-void PlayerShipController::ToggleSetSpeedMode()
+void PlayerShipController::ToggleSetSpeedMode(bool down)
 {
+	if (down) return;
 	if (GetFlightControlState() != CONTROL_FIXSPEED) {
 		SetFlightControlState(CONTROL_FIXSPEED);
 	} else {

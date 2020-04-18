@@ -50,7 +50,7 @@ InGameViews::InGameViews(const Json &jsonObj, Game *game, const SystemPath &path
 
 	m_cpan = new ShipCpanel(jsonObj);
 	m_sectorView = new SectorView(jsonObj, game->GetGalaxy(), cacheRadius);
-	m_worldView = new WorldView(jsonObj, game);
+	m_worldView.reset(new WorldView(jsonObj, game));
 }
 
 void InGameViews::SaveToJson(Json &jsonObj)
@@ -72,7 +72,6 @@ InGameViews::~InGameViews()
 	delete m_systemInfoView;
 	delete m_systemView;
 	delete m_galacticView;
-	delete m_worldView;
 	delete m_sectorView;
 	delete m_cpan;
 }
@@ -106,7 +105,7 @@ void InGameViews::SetView(ViewType vt)
 	if (m_currentView) m_currentView->Attach();
 }
 
-bool InGameViews::DrawGui() {
+bool InGameViews::ShouldDrawGui() {
 	return (!IsWorldView() ? true : m_worldView->DrawGui());
 }
 

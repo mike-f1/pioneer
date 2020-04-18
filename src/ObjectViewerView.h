@@ -24,8 +24,8 @@ class Game;
 
 class ObjectViewerView : public UIView {
 public:
-	static void RegisterInputBindings();
 	ObjectViewerView();
+	~ObjectViewerView();
 	virtual void Update(const float frameTime) override;
 	virtual void Draw3D() override;
 	virtual void DrawUI(const float frameTime) override;
@@ -37,6 +37,8 @@ protected:
 	virtual void OnSwitchFrom() override;
 
 private:
+	void RegisterInputBindings();
+
 	float m_viewingDist;
 	Body *m_lastTarget, *m_newTarget;
 	matrix4x4d m_camRot;
@@ -84,30 +86,26 @@ private:
 	void OnNextSeed();
 	void OnPrevSeed();
 
-	sigc::connection m_onMouseWheelCon;
-
-	static struct ObjectViewerBinding : public InputFrame {
+	struct ObjectViewerBinding {
 	public:
 		using Action = KeyBindings::ActionBinding;
 		using Axis =  KeyBindings::AxisBinding;
 		using Wheel = KeyBindings::WheelBinding;
 
 		Action *resetZoom;
-		Action *zoomIn;
-		Action *zoomOut;
+		Axis *zoom;
 
-		Action *rotateLeft;
-		Action *rotateRight;
-		Action *rotateUp;
-		Action *rotateDown;
+		Axis *rotateLeftRight;
+		Axis *rotateUpDown;
 
 		Action *rotateLightLeft;
 		Action *rotateLightRight;
 
 		Wheel *mouseWheel;
 
-		virtual void RegisterBindings();
-	} ObjectViewerBindings;
+	} m_objectViewerBindings;
+
+	std::unique_ptr<InputFrame> m_inputFrame;
 };
 
 #endif /* _OBJECTVIEWERVIEW_H */

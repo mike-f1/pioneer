@@ -25,7 +25,7 @@
 #include "SpaceStation.h"
 #include "galaxy/Galaxy.h"
 #include "galaxy/GalaxyGenerator.h"
-#include "ship/PlayerShipController.h"
+#include "ship/PlayerShipController.h" // <- Only to avoid spinning "like mad" when hitting time accel
 
 #if WITH_OBJECTVIEWER
 #include "ObjectViewerView.h"

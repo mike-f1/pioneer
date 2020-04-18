@@ -27,7 +27,6 @@ namespace Graphics {
 
 class SectorView : public UIView {
 public:
-	static void RegisterInputBindings();
 	SectorView(const SystemPath &path, RefCountedPtr<Galaxy> galaxy, unsigned int cacheRadius);
 	SectorView(const Json &jsonObj, RefCountedPtr<Galaxy> galaxy, unsigned int cacheRadius);
 	virtual ~SectorView();
@@ -93,6 +92,7 @@ protected:
 private:
 	void InitDefaults();
 	void InitObject(unsigned int cacheRadius);
+	void RegisterInputBindings();
 
 	void PrepareLegs(const matrix4x4f &trans, const vector3f &pos, int z_diff);
 	void PrepareGrid(const matrix4x4f &trans, int radius);
@@ -118,8 +118,8 @@ private:
 
 	void ShrinkCache();
 
-	void OnMapLockHyperspaceToggle();
-	void OnToggleSelectionFollowView();
+	void OnMapLockHyperspaceToggle(bool down);
+	void OnToggleSelectionFollowView(bool down);
 	void OnMouseWheel(bool up);
 	void UpdateBindings();
 
@@ -158,11 +158,7 @@ private:
 	std::set<const Faction *> m_visibleFactions;
 	std::set<const Faction *> m_hiddenFactions;
 
-	sigc::connection m_onMouseWheelCon;
-	sigc::connection m_mapLockHyperspaceTargetCon;
-	sigc::connection m_mapToggleSelectionFollowViewCon;
-
-	static struct SectorBinding : public InputFrame {
+	struct SectorBinding {
 	public:
 		using Action = KeyBindings::ActionBinding;
 		using Axis =  KeyBindings::AxisBinding;
@@ -175,25 +171,19 @@ private:
 		Action *mapWarpToHyperspaceTarget;
 		Action *mapViewReset;
 
-		Action *mapViewShiftLeft;
-		Action *mapViewShiftRight;
-		Action *mapViewShiftUp;
-		Action *mapViewShiftDown;
-		Action *mapViewShiftForward;
-		Action *mapViewShiftBackward;
+		Axis *mapViewShiftLeftRight;
+		Axis *mapViewShiftUpDown;
+		Axis *mapViewShiftForwardBackward;
 
-		Action *mapViewZoomIn;
-		Action *mapViewZoomOut;
+		Axis *mapViewZoom;
 
-		Action *mapViewRotateLeft;
-		Action *mapViewRotateRight;
-		Action *mapViewRotateUp;
-		Action *mapViewRotateDown;
+		Axis *mapViewRotateLeftRight;
+		Axis *mapViewRotateUpDown;
 
 		Wheel *mouseWheel;
+	} m_sectorBindings;
 
-		virtual void RegisterBindings();
-	} SectorBindings;
+	std::unique_ptr<InputFrame> m_inputFrame;
 
 	RefCountedPtr<SectorCache::Slave> m_sectorCache;
 	std::string m_previousSearch;

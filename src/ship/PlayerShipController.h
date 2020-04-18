@@ -3,9 +3,10 @@
 
 #pragma once
 
-#include "Input.h"
 #include "InputFrame.h"
 #include "ShipController.h"
+
+#include "vector3.h"
 
 namespace KeyBindings {
 	struct ActionBinding;
@@ -17,7 +18,7 @@ class PlayerShipController : public ShipController {
 public:
 	PlayerShipController();
 	~PlayerShipController();
-	static void RegisterInputBindings();
+
 	Type GetType() override { return PLAYER; }
 	void SaveToJson(Json &jsonObj, Space *s) override;
 	void LoadFromJson(const Json &jsonObj) override;
@@ -38,9 +39,7 @@ public:
 
 	bool GetRotationDamping() const { return m_rotationDamping; }
 	void SetRotationDamping(bool enabled);
-	void ToggleRotationDamping();
-	void FireMissile();
-	void ToggleSetSpeedMode();
+	void FireMissile(bool down);
 
 	//targeting
 	//XXX AI should utilize one or more of these
@@ -52,7 +51,12 @@ public:
 	void SetSetSpeedTarget(Body *const target);
 
 private:
-	static struct InputBinding : public InputFrame {
+	void RegisterInputBindings();
+
+	void ToggleRotationDamping(bool down);
+	void ToggleSetSpeedMode(bool down);
+
+	struct InputBinding {
 		// We create a local alias for ease of typing these bindings.
 		using AxisBinding = KeyBindings::AxisBinding;
 		using ActionBinding = KeyBindings::ActionBinding;
@@ -78,7 +82,9 @@ private:
 		// Speed Control
 		AxisBinding *speedControl;
 		ActionBinding *toggleSetSpeed;
-	} InputBindings;
+	} m_inputBindings;
+
+	std::unique_ptr<InputFrame> m_inputFrame;
 
 	bool IsAnyAngularThrusterKeyDown();
 	bool IsAnyLinearThrusterKeyDown();
@@ -104,8 +110,4 @@ private:
 	int m_navTargetIndex;
 	int m_setSpeedTargetIndex;
 	vector3d m_mouseDir;
-
-	sigc::connection m_connRotationDampingToggleKey;
-	sigc::connection m_fireMissileKey;
-	sigc::connection m_setSpeedMode;
 };

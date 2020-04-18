@@ -64,11 +64,35 @@ LuaConsole::LuaConsole() :
 
 	m_historyPosition = -1;
 
+	RegisterInputBindings();
+
 	RegisterAutoexec();
 }
 
-void LuaConsole::Toggle()
+void LuaConsole::RegisterInputBindings()
 {
+	using namespace KeyBindings;
+	using namespace std::placeholders;
+
+	auto &page = Pi::input.GetBindingPage("General");
+	auto &group = page.GetBindingGroup("Miscellaneous");
+
+	m_inputFrame.reset(new InputFrame("Console"));
+
+	m_consoleBindings.toggleLuaConsole = m_inputFrame->AddActionBinding("ToggleConsole", group, ActionBinding(SDLK_BACKSLASH));
+	m_consoleBindings.toggleLuaConsole->StoreOnActionCallback(std::bind(&LuaConsole::OnToggle, this, _1));
+
+	m_consoleBindings.mouseWheel = m_inputFrame->AddWheelBinding("MouseWheel", group, WheelBinding());
+
+	Pi::input.PushInputFrame(m_inputFrame.get());
+
+	// Explicitly activate console as it is always active
+	m_inputFrame->SetActive(true);
+}
+
+void LuaConsole::OnToggle(bool down)
+{
+	if (down) return;
 	if (m_active)
 		Pi::ui->DropLayer();
 	else {
@@ -76,6 +100,11 @@ void LuaConsole::Toggle()
 		Pi::ui->SelectWidget(m_entry);
 	}
 	m_active = !m_active;
+}
+
+void LuaConsole::CheckEvent(const SDL_Event &event)
+{
+	m_consoleBindings.toggleLuaConsole->CheckSDLEventAndDispatch(event);
 }
 
 static int capture_traceback(lua_State *L)
@@ -170,11 +199,13 @@ void LuaConsole::RegisterAutoexec()
 	LUA_DEBUG_END(L, 0);
 }
 
-LuaConsole::~LuaConsole() {}
+LuaConsole::~LuaConsole()
+{
+	Pi::input.RemoveInputFrame(m_inputFrame.get());
+}
 
 bool LuaConsole::OnKeyDown(const UI::KeyboardEvent &event)
 {
-
 	switch (event.keysym.sym) {
 	case SDLK_ESCAPE: {
 		// pressing the ESC key will drop our layer, but we still have to make sure we are marked as not active anymore

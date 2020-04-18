@@ -1833,7 +1833,7 @@ static int l_pigui_radial_menu(lua_State *l)
 static int l_pigui_should_draw_ui(lua_State *l)
 {
 	PROFILE_SCOPED()
-	LuaPush(l, InGameViewsLocator::getInGameViews()->DrawGui());
+	LuaPush(l, InGameViewsLocator::getInGameViews()->ShouldDrawGui());
 	return 1;
 }
 

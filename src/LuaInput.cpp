@@ -12,6 +12,7 @@
 #include "LuaObject.h"
 #include "LuaUtils.h"
 #include "Pi.h"
+
 /*
  * Interface: Input
  *
@@ -40,6 +41,55 @@ static void push_key_binding(lua_State *l, KeyBindings::KeyBinding *kb, const ch
 		lua_setfield(l, -2, description);
 	}
 }
+
+static void set_action(lua_State *l, const char *binding_name, KeyBindings::ActionBinding *ab)
+{
+	setup_binding_table(l, binding_name, "action");
+
+	push_key_binding(l, &ab->GetBinding(0), "binding1", "bindingDescription1");
+	push_key_binding(l, &ab->GetBinding(1), "binding2", "bindingDescription2");
+}
+
+static void set_axis(lua_State *l, const char *binding_name, KeyBindings::AxisBinding *ax)
+{
+	setup_binding_table(l, binding_name, "axis");
+
+	if (ax->GetAxis().Enabled()) {
+		lua_pushstring(l, ax->GetAxis().ToString().c_str());
+		lua_setfield(l, -2, "axis");
+		lua_pushstring(l, ax->GetAxis().Description().c_str());
+		lua_setfield(l, -2, "axisDescription");
+	}
+	if (ax->GetWheel().Enabled()) {
+		lua_pushstring(l, ax->GetWheel().ToString().c_str());
+		lua_setfield(l, -2, "wheel");
+		lua_pushstring(l, ax->GetWheel().Description().c_str());
+		lua_setfield(l, -2, "wheelDescription");
+	}
+
+	push_key_binding(l, &ax->GetKey(KeyBindings::KeyDirection::POS), "positive", "positiveDescription");
+	push_key_binding(l, &ax->GetKey(KeyBindings::KeyDirection::NEG), "negative", "negativeDescription");
+}
+
+static int l_input_find_binding(lua_State *l)
+{
+	const char *binding_id = luaL_checkstring(l, 1);
+
+	KeyBindings::ActionBinding *ab = Pi::input.GetActionBinding(binding_id);
+	if (ab) {
+		set_action(l, binding_id, ab);
+		return 1;
+	}
+	KeyBindings::AxisBinding *ax = Pi::input.GetAxisBinding(binding_id);
+	if (ax) {
+		set_axis(l, binding_id, ax);
+		return 1;
+	}
+
+	lua_pushnil(l);
+	return 1;
+}
+
 /*
  * Function: GetBindings
  *
@@ -63,13 +113,17 @@ static void push_key_binding(lua_State *l, KeyBindings::KeyBinding *kb, const ch
  * >				id = 'BindToggleLuaConsole', -- the internal ID of the binding; used as a translation key and passed to Input.SetKeyBinding
  * >				binding1 = 'Key96', -- the first bound key or axis (value stored in config file)
  * >				bindingDescription1 = '`', -- display text for the first bound key or axis
- * >				binding2 = 'Key96', -- the second bound key or axis (value stored in config file)
+ * >				binding2 = 'MWh[0|1|2|3][ModX]', -- the second bound key or axis (value stored in config file)
  * >				bindingDescription2 = '`', -- display text for the second bound key or axis
  * >			},
  * >			{ -- an axis binding
  * >				type = 'axis',
  * >				id = 'BindAxisPitch',
  * >				axis = 'Joy[UUID]/Axis3/DZ0.0/E1.0', -- The joystick binding (value stored in the config file)
+ * >				axisDescription = '`', -- a more friendly/descriptive text string (translated)
+ * >				OR
+ * >				wheel = 'MWh[0|1|2|3]', -- The binding for mouse wheel (0 up, 1 down, 2 right, 3 left)
+ * >				wheelDescription = '`', -- a more friendly/descriptive text string (translated)
  * >				positive = 'Key96', -- the key bound to the positive half of the axis
  * >				positiveDescription = '`', -- as normal for key bindings
  * >				negative = 'Key96', -- the key bound to the negative half of the axis
@@ -118,28 +172,14 @@ static int l_input_get_bindings(lua_State *l)
 					lua_pushunsigned(l, binding_idx++);
 					ActionBinding *ab = Pi::input.GetActionBinding(type.first);
 					if (!ab) continue; // Should never happen, but include it here for future proofing.
-					setup_binding_table(l, type.first.c_str(), "action");
-
-					push_key_binding(l, &ab->binding1, "binding1", "bindingDescription1");
-					push_key_binding(l, &ab->binding2, "binding2", "bindingDescription2");
+					set_action(l, type.first.c_str(), ab);
 				} else if (type.second == BindingGroup::EntryType::AXIS) {
 					lua_pushunsigned(l, binding_idx++);
-					AxisBinding *ab = Pi::input.GetAxisBinding(type.first);
-					if (!ab) continue; // Should never happen, but include it here for future proofing.
-					setup_binding_table(l, type.first.c_str(), "axis");
-
-					if (ab->axis.Enabled()) {
-						lua_pushstring(l, ab->axis.ToString().c_str());
-						lua_setfield(l, -2, "axis");
-						lua_pushstring(l, ab->axis.Description().c_str());
-						lua_setfield(l, -2, "axisDescription");
-					}
-
-					push_key_binding(l, &ab->positive, "positive", "positiveDescription");
-					push_key_binding(l, &ab->negative, "negative", "negativeDescription");
+					AxisBinding *ax = Pi::input.GetAxisBinding(type.first);
+					if (!ax) continue; // Should never happen, but include it here for future proofing.
+					set_axis(l, type.first.c_str(), ax);
 				} else {
-					// Skip mouse wheel (...for now, because...)
-					// TODO: mouse wheel could be an axis binding...
+					assert(0 && "Please provide code for this case as it shouldn't never happens :P");
 					continue;
 				}
 
@@ -189,8 +229,8 @@ static int l_input_set_action_binding(lua_State *l)
 			return luaL_error(l, "invalid second key binding given to Input.SetKeyBinding");
 	} else
 		kb2.Clear();
-	action->binding1 = kb1;
-	action->binding2 = kb2;
+	action->GetBinding(0) = kb1;
+	action->GetBinding(1) = kb2;
 	GameConfSingleton::getInstance().SetString(binding_id, action->ToString());
 	GameConfSingleton::getInstance().Save();
 	return 0;
@@ -200,32 +240,41 @@ static int l_input_set_axis_binding(lua_State *l)
 {
 	const char *binding_id = luaL_checkstring(l, 1);
 	const char *binding_config_axis = lua_tostring(l, 2);
-	const char *binding_config_positive = lua_tostring(l, 3);
-	const char *binding_config_negative = lua_tostring(l, 4);
+	const char *binding_config_wheel = lua_tostring(l, 3);
+	const char *binding_config_positive = lua_tostring(l, 4);
+	const char *binding_config_negative = lua_tostring(l, 5);
 	KeyBindings::AxisBinding *binding = Pi::input.GetAxisBinding(binding_id);
 
 	KeyBindings::JoyAxisBinding ab;
 	if (binding_config_axis) {
 		if (!KeyBindings::JoyAxisBinding::FromString(binding_config_axis, ab))
-			return luaL_error(l, "invalid axis binding given to Input.SetKeyBinding");
+			return luaL_error(l, "invalid axis binding given to Input.SetAxisBinding");
 	} else
 		ab.Clear();
+
+	KeyBindings::WheelAxisBinding wb;
+	if (binding_config_wheel) {
+		if (!KeyBindings::WheelAxisBinding::FromString(binding_config_wheel, wb))
+			return luaL_error(l, "invalid wheel binding given to Input.SetAxisBinding: %s", binding_config_wheel);
+	} else
+		wb.Clear();
 
 	KeyBindings::KeyBinding kb1, kb2;
 	if (binding_config_positive) {
 		if (!KeyBindings::KeyBinding::FromString(binding_config_positive, kb1))
-			return luaL_error(l, "invalid first key binding given to Input.SetKeyBinding");
+			return luaL_error(l, "invalid first key binding given to Input.SetAxisBinding");
 	} else
 		kb1.Clear();
 	if (binding_config_negative) {
 		if (!KeyBindings::KeyBinding::FromString(binding_config_negative, kb2))
-			return luaL_error(l, "invalid second key binding given to Input.SetKeyBinding");
+			return luaL_error(l, "invalid second key binding given to Input.SetAxisBinding");
 	} else
 		kb2.Clear();
 
-	binding->axis = ab;
-	binding->positive = kb1;
-	binding->negative = kb2;
+	binding->GetAxis() = ab;
+	binding->GetWheel() = wb;
+	binding->GetKey(KeyBindings::KeyDirection::POS) = kb1;
+	binding->GetKey(KeyBindings::KeyDirection::NEG) = kb2;
 	GameConfSingleton::getInstance().SetString(binding_id, binding->ToString());
 	GameConfSingleton::getInstance().Save();
 	return 0;
@@ -275,6 +324,7 @@ void LuaInput::Register()
 		{ "EnableBindings", l_input_enable_bindings },
 		{ "DisableBindings", l_input_disable_bindings },
 		{ "GetBindings", l_input_get_bindings },
+		{ "FindBinding", l_input_find_binding },
 		{ "SetActionBinding", l_input_set_action_binding },
 		{ "SetAxisBinding", l_input_set_axis_binding },
 		{ "GetMouseYInverted", l_input_get_mouse_y_inverted },

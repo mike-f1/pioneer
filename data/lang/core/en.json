@@ -939,6 +939,26 @@
     "description": "",
     "message": "Sep"
   },
+  "MOUSE_WHEEL": {
+    "description": "",
+    "message": "Mouse Wheel"
+  },
+  "UP": {
+    "description": "",
+    "message": "Up"
+  },
+  "DOWN": {
+    "description": "",
+    "message": "Down"
+  },
+  "LEFT": {
+    "description": "",
+    "message": "Left"
+  },
+  "RIGHT": {
+    "description": "",
+    "message": "Right"
+  },
   "NAME_OBJECT": {
     "description": "For an item or object",
     "message": "Name"

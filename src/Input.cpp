@@ -9,6 +9,8 @@
 
 #include "profiler/Profiler.h"
 
+std::string speedModifier = "SpeedModifier";
+
 void Input::Init()
 {
 	GameConfig &config = GameConfSingleton::getInstance();
@@ -23,18 +25,41 @@ void Input::InitGame()
 {
 	//reset input states
 	m_keyState.clear();
-	m_keyModState = 0;
-	std::fill(m_mouseButton, m_mouseButton + COUNTOF(m_mouseButton), 0);
-	std::fill(m_mouseMotion, m_mouseMotion + COUNTOF(m_mouseMotion), 0);
+	m_keyModStateUnified = KMOD_NONE;
+	m_mouseButton.fill(false);
+	m_mouseMotion.fill(0);
+
 	for (std::map<SDL_JoystickID, JoystickState>::iterator stick = m_joysticks.begin(); stick != m_joysticks.end(); ++stick) {
 		JoystickState &state = stick->second;
 		std::fill(state.buttons.begin(), state.buttons.end(), false);
 		std::fill(state.hats.begin(), state.hats.end(), 0);
 		std::fill(state.axes.begin(), state.axes.end(), 0.f);
 	}
+
+	RegisterInputBindings();
 }
 
-void Input::CheckPage(const std::string &pageId)
+void Input::TerminateGame()
+{
+	DeleteActionBinding(speedModifier);
+	m_speedModifier = nullptr;
+}
+
+void Input::RegisterInputBindings()
+{
+	using namespace KeyBindings;
+
+	auto &page = GetBindingPage("General");
+	auto &group = page.GetBindingGroup("Miscellaneous");
+
+	m_speedModifier = GetActionBinding(speedModifier);
+	if (!m_speedModifier) {
+		m_speedModifier = AddActionBinding(speedModifier, group, ActionBinding(SDLK_CAPSLOCK));
+	}
+}
+
+#ifdef DEBUG_DUMP_PAGES
+void Input::DebugDumpPage(const std::string &pageId)
 {
 	Output("Check binding page '%s'\n", pageId.c_str());
 	std::map<std::string, BindingPage>::const_iterator itPage = m_bindingPages.find(pageId);
@@ -54,6 +79,7 @@ void Input::CheckPage(const std::string &pageId)
 		}
 	}
 }
+#endif // DEBUG_DUMP_PAGES
 
 bool Input::PushInputFrame(InputFrame *frame)
 {
@@ -98,13 +124,17 @@ int countPrefix(const std::map<std::string, MapValueType> &map, const std::strin
 
 KeyBindings::ActionBinding *Input::AddActionBinding(std::string &id, BindingGroup &group, KeyBindings::ActionBinding binding)
 {
-	int count = countPrefix<KeyBindings::ActionBinding>(m_actionBindings, id);
+	// Load from the config
+	std::string config_str = GameConfSingleton::getInstance().String(id.c_str());
+	if (config_str.length() > 0) binding.SetFromString(config_str);
 
-	if (count != 0) {
+	int occurences = countPrefix<KeyBindings::ActionBinding>(m_actionBindings, id);
+
+	if (occurences != 0) {
 		#ifndef NDEBUG
 			Output("HINT: Binding '%s' is used more than once\n", id.c_str());
 		#endif // NDEBUG
-		id += "_" + std::to_string(count);
+		id += "_" + std::to_string(occurences);
 	}
 
 	// throw an error if we attempt to bind an action onto an already-bound axis in the same group.
@@ -114,10 +144,6 @@ KeyBindings::ActionBinding *Input::AddActionBinding(std::string &id, BindingGrou
 
 	group.bindings[id] = BindingGroup::EntryType::ACTION;
 
-	// Load from the config
-	std::string config_str = GameConfSingleton::getInstance().String(id.c_str());
-	if (config_str.length() > 0) binding.SetFromString(config_str);
-
 	m_actionBindings[id] = binding;
 
 	return &m_actionBindings[id];
@@ -125,13 +151,17 @@ KeyBindings::ActionBinding *Input::AddActionBinding(std::string &id, BindingGrou
 
 KeyBindings::AxisBinding *Input::AddAxisBinding(std::string &id, BindingGroup &group, KeyBindings::AxisBinding binding)
 {
-	int count = countPrefix<KeyBindings::AxisBinding>(m_axisBindings, id);
+	// Load from the config
+	std::string config_str = GameConfSingleton::getInstance().String(id.c_str());
+	if (config_str.length() > 0) binding.SetFromString(config_str);
 
-	if (count != 0) {
+	int occurences = countPrefix<KeyBindings::AxisBinding>(m_axisBindings, id);
+
+	if (occurences != 0) {
 		#ifndef NDEBUG
 			Output("HINT: Binding '%s' is used more than once\n", id.c_str());
 		#endif // NDEBUG
-		id += "_" + std::to_string(count);
+		id += "_" + std::to_string(occurences);
 	}
 
 	// throw an error if we attempt to bind an axis onto an already-bound action in the same group.
@@ -141,36 +171,26 @@ KeyBindings::AxisBinding *Input::AddAxisBinding(std::string &id, BindingGroup &g
 
 	group.bindings[id] = BindingGroup::EntryType::AXIS;
 
-	// Load from the config
-	std::string config_str = GameConfSingleton::getInstance().String(id.c_str());
-	if (config_str.length() > 0) binding.SetFromString(config_str);
-
 	m_axisBindings[id] = binding;
 
 	return &m_axisBindings[id];
 }
 
-KeyBindings::WheelBinding *Input::AddWheelBinding(std::string &id, BindingGroup &group, KeyBindings::WheelBinding binding)
+std::tuple<bool, int, int> Input::GetMouseMotion(MouseMotionBehaviour mmb)
 {
-	int count = countPrefix<KeyBindings::WheelBinding>(m_wheelBindings, id);
-
-	if (count != 0) {
-		#ifndef NDEBUG
-			Output("HINT: Binding '%s' is used more than once\n", id.c_str());
-		#endif // NDEBUG
-		id += "_" + std::to_string(count);
+	if (m_mouseMotion[0] == 0 && m_mouseMotion[1] == 0) return std::make_tuple(false, 0, 0);
+	switch (mmb) {
+		case MouseMotionBehaviour::Rotate:
+			if (m_mouseButton[SDL_BUTTON_MIDDLE]) return std::make_tuple(true, m_mouseMotion[0], m_mouseMotion[1]);
+		break;
+		case MouseMotionBehaviour::DriveShip:
+			if (m_mouseButton[SDL_BUTTON_RIGHT]) return std::make_tuple(true, m_mouseMotion[0], m_mouseMotion[1]);
+		break;
+		case MouseMotionBehaviour::Select:
+			if (m_mouseButton[SDL_BUTTON_LEFT]) return std::make_tuple(true, m_mouseMotion[0], m_mouseMotion[1]);
+		break;
 	}
-
-	// throw an error if we attempt to bind an axis onto an already-bound action in the same group.
-	if (group.bindings.count(id) && group.bindings[id] != BindingGroup::EntryType::WHEEL) {
-		Error("Attempt to bind already-registered action '%s' as a wheel on the same group.\n", id.c_str());
-	}
-
-	group.bindings[id] = BindingGroup::EntryType::WHEEL;
-
-	m_wheelBindings[id] = binding;
-
-	return &m_wheelBindings[id];
+	return std::make_tuple(false, 0, 0);
 }
 
 void Input::HandleSDLEvent(const SDL_Event &event)
@@ -179,35 +199,42 @@ void Input::HandleSDLEvent(const SDL_Event &event)
 	switch (event.type) {
 	case SDL_KEYDOWN:
 		m_keyState[event.key.keysym.sym] = true;
-		m_keyModState = event.key.keysym.mod;
+		m_keyModStateUnified = KeyBindings::KeymodUnifyLR(SDL_Keymod(event.key.keysym.mod));
 		onKeyPress.emit(event.key.keysym);
 		break;
 	case SDL_KEYUP:
 		m_keyState[event.key.keysym.sym] = false;
-		m_keyModState = event.key.keysym.mod;
+		m_keyModStateUnified = KeyBindings::KeymodUnifyLR(SDL_Keymod(event.key.keysym.mod));
 		onKeyRelease.emit(event.key.keysym);
 		break;
 	case SDL_MOUSEBUTTONDOWN:
-		if (event.button.button < COUNTOF(m_mouseButton)) {
-			m_mouseButton[event.button.button] = 1;
-			onMouseButtonDown.emit(event.button.button,
-				event.button.x, event.button.y);
+		if (event.button.button < m_mouseButton.size()) {
+			m_mouseButton[event.button.button] = true;
 		}
 		break;
 	case SDL_MOUSEBUTTONUP:
-		if (event.button.button < COUNTOF(m_mouseButton)) {
-			m_mouseButton[event.button.button] = 0;
-			onMouseButtonUp.emit(event.button.button,
-				event.button.x, event.button.y);
+		if (event.button.button < m_mouseButton.size()) {
+			m_mouseButton[event.button.button] = false;
 		}
 		break;
-	case SDL_MOUSEWHEEL:
-		onMouseWheel.emit(event.wheel.y > 0); // true = up
-		break;
+	case SDL_MOUSEWHEEL: {
+		if (event.wheel.x < 0) {
+			m_wheelState = KeyBindings::WheelDirection::LEFT;
+		} else if (event.wheel.x > 0) {
+			m_wheelState = KeyBindings::WheelDirection::RIGHT;
+		}
+		// This is "prioritizing" up/down over left/right
+		if (event.wheel.y < 0) {
+			m_wheelState = KeyBindings::WheelDirection::DOWN;
+		} else if (event.wheel.y > 0) {
+			m_wheelState = KeyBindings::WheelDirection::UP;
+		}
+	}
+	break;
 	case SDL_MOUSEMOTION:
 		m_mouseMotion[0] += event.motion.xrel;
 		m_mouseMotion[1] += event.motion.yrel;
-		break;
+	break;
 	case SDL_JOYAXISMOTION:
 		if (!m_joysticks[event.jaxis.which].joystick)
 			break;
@@ -215,7 +242,7 @@ void Input::HandleSDLEvent(const SDL_Event &event)
 			m_joysticks[event.jaxis.which].axes[event.jaxis.axis] = 1.f;
 		else
 			m_joysticks[event.jaxis.which].axes[event.jaxis.axis] = -event.jaxis.value / 32767.f;
-		break;
+	break;
 	case SDL_JOYBUTTONUP:
 	case SDL_JOYBUTTONDOWN:
 		if (!m_joysticks[event.jaxis.which].joystick)
@@ -228,6 +255,8 @@ void Input::HandleSDLEvent(const SDL_Event &event)
 		m_joysticks[event.jhat.which].hats[event.jhat.hat] = event.jhat.value;
 		break;
 	}
+
+	if (m_speedModifier) m_speedModifier->CheckSDLEventAndDispatch(event);
 
 	//Output("ProcessSDLEvent of InputFrames\n");
 	for (auto it = m_inputFrames.rbegin(); it != m_inputFrames.rend(); it++) {
@@ -265,10 +294,9 @@ void Input::InitJoysticks()
 	}
 }
 
-void Input::FindAndEraseEntryInGroups(const std::string &id)
+void Input::FindAndEraseEntryInPagesAndGroups(const std::string &id)
 {
 	for (auto &page : m_bindingPages) {
-		bool jumpOut = false;
 		BindingPage &bindPage = page.second;
 		for (auto &group : bindPage.groups) {
 			BindingGroup &bindGroup = group.second;
@@ -335,10 +363,10 @@ SDL_JoystickGUID Input::JoystickGUID(int joystick)
 
 float Input::GetMoveSpeedShiftModifier()
 {
-	// Suggestion: make x1000 speed on pressing both keys?
-	if (KeyState(SDLK_LSHIFT)) return 100.f;
-	if (KeyState(SDLK_RSHIFT)) return 10.f;
-	return 1;
+	float speed = 1.0f;
+	if (m_speedModifier->GetBinding(0).IsActive()) speed *= 5.f;
+	if (m_speedModifier->GetBinding(1).IsActive()) speed *= 50.f;
+	return speed;
 }
 
 int Input::JoystickButtonState(int joystick, int button)

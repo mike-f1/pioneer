@@ -14,7 +14,6 @@
 namespace KeyBindings {
 	struct ActionBinding;
 	struct AxisBinding;
-	struct WheelBinding;
 }
 
 class Body;
@@ -52,8 +51,6 @@ private:
 		NONE
 	} m_zoomChange;
 
-	void OnMouseWheel(bool up);
-
 	enum class RotateLight {
 		LEFT,
 		RIGHT,
@@ -90,7 +87,6 @@ private:
 	public:
 		using Action = KeyBindings::ActionBinding;
 		using Axis =  KeyBindings::AxisBinding;
-		using Wheel = KeyBindings::WheelBinding;
 
 		Action *resetZoom;
 		Axis *zoom;
@@ -100,8 +96,6 @@ private:
 
 		Action *rotateLightLeft;
 		Action *rotateLightRight;
-
-		Wheel *mouseWheel;
 
 	} m_objectViewerBindings;
 

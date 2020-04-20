@@ -44,7 +44,7 @@ static const float FAR_THRESHOLD = 10.0f;
 static const float FAR_LIMIT = 38.f;
 static const float FAR_MAX = 46.f;
 
-static const float ZOOM_SPEED = 15;
+static const float ZOOM_SPEED = 25;
 static const float WHEEL_SENSITIVITY = .03f; // Should be a variable in user settings.
 
 SectorView::SectorView(const SystemPath &path, RefCountedPtr<Galaxy> galaxy, unsigned int cacheRadius) :
@@ -155,9 +155,6 @@ void SectorView::RegisterInputBindings()
 
 	m_sectorBindings.mapViewRotateLeftRight = m_inputFrame->AddAxisBinding("BindMapViewRotateLeftRight", groupVMC, AxisBinding(SDLK_RIGHT, SDLK_LEFT));
 	m_sectorBindings.mapViewRotateUpDown = m_inputFrame->AddAxisBinding("BindMapViewRotateUpDown", groupVMC, AxisBinding(SDLK_DOWN, SDLK_UP));
-
-	m_sectorBindings.mouseWheel = m_inputFrame->AddWheelBinding("MouseWheel", groupVMC, WheelBinding());
-	m_sectorBindings.mouseWheel->StoreOnWheelCallback(std::bind(&SectorView::OnMouseWheel, this, _1));
 
 	Pi::input.PushInputFrame(m_inputFrame.get());
 }
@@ -1245,7 +1242,7 @@ void SectorView::Update(const float frameTime)
 		m_posMovingTo += shift * rot;
 
 		if (m_sectorBindings.mapViewZoom->IsActive()) {
-			m_zoomMovingTo -= m_sectorBindings.mapViewZoom->GetValue() * move;
+			m_zoomMovingTo -= m_sectorBindings.mapViewZoom->GetValue() * move * 5.0f;
 		}
 		m_zoomMovingTo = Clamp(m_zoomMovingTo, 0.1f, FAR_MAX);
 
@@ -1259,13 +1256,9 @@ void SectorView::Update(const float frameTime)
 		}
 	}
 
-	if (Pi::input.MouseButtonState(SDL_BUTTON_RIGHT)) {
-		int motion[2];
-		Pi::input.GetMouseMotion(motion);
-
-		m_rotXMovingTo += 0.2f * float(motion[1]);
-		m_rotZMovingTo += 0.2f * float(motion[0]);
-	}
+	auto motion = Pi::input.GetMouseMotion(MouseMotionBehaviour::Rotate);
+	m_rotXMovingTo += 0.2f * float(std::get<2>(motion));
+	m_rotZMovingTo += 0.2f * float(std::get<1>(motion));
 
 	m_rotXMovingTo = Clamp(m_rotXMovingTo, -170.0f, -10.0f);
 
@@ -1349,14 +1342,6 @@ void SectorView::Update(const float frameTime)
 	}
 
 	UIView::Update(frameTime);
-}
-
-void SectorView::OnMouseWheel(bool up)
-{
-	if (!up)
-		m_zoomMovingTo += ZOOM_SPEED * WHEEL_SENSITIVITY * Pi::input.GetMoveSpeedShiftModifier();
-	else
-		m_zoomMovingTo -= ZOOM_SPEED * WHEEL_SENSITIVITY * Pi::input.GetMoveSpeedShiftModifier();
 }
 
 void SectorView::ShrinkCache()

@@ -43,6 +43,7 @@ class Pi {
 public:
 	static void Init(const std::map<std::string, std::string> &options, bool no_gui = false);
 	static void InitGame();
+	static void TerminateGame();
 	static void StartGame();
 	static void RequestEndGame(); // request that the game is ended as soon as safely possible
 	static void EndGame();

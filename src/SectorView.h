@@ -18,7 +18,6 @@ class Galaxy;
 namespace KeyBindings {
 	struct ActionBinding;
 	struct AxisBinding;
-	struct WheelBinding;
 }
 
 namespace Graphics {
@@ -120,7 +119,6 @@ private:
 
 	void OnMapLockHyperspaceToggle(bool down);
 	void OnToggleSelectionFollowView(bool down);
-	void OnMouseWheel(bool up);
 	void UpdateBindings();
 
 	RefCountedPtr<Galaxy> m_galaxy;
@@ -162,7 +160,6 @@ private:
 	public:
 		using Action = KeyBindings::ActionBinding;
 		using Axis =  KeyBindings::AxisBinding;
-		using Wheel = KeyBindings::WheelBinding;
 
 		Action *mapLockHyperspaceTarget;
 		Action *mapToggleSelectionFollowView;
@@ -180,7 +177,6 @@ private:
 		Axis *mapViewRotateLeftRight;
 		Axis *mapViewRotateUpDown;
 
-		Wheel *mouseWheel;
 	} m_sectorBindings;
 
 	std::unique_ptr<InputFrame> m_inputFrame;

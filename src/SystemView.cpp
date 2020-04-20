@@ -37,8 +37,8 @@ using namespace Graphics;
 const double SystemView::PICK_OBJECT_RECT_SIZE = 12.0;
 const Uint16 SystemView::N_VERTICES_MAX = 100;
 static const float MIN_ZOOM = 1e-30f; // Just to avoid having 0
-static const float MAX_ZOOM = 1e30f;
-static const float ZOOM_IN_SPEED = 2;
+static const float MAX_ZOOM = 1e20f;
+static const float ZOOM_IN_SPEED = 2.0f;
 static const float ZOOM_OUT_SPEED = 1.f / ZOOM_IN_SPEED;
 static const float WHEEL_SENSITIVITY = .1f; // Should be a variable in user settings.
 static const double DEFAULT_VIEW_DISTANCE = 10.0;
@@ -279,11 +279,9 @@ void SystemView::RegisterInputBindings()
 	m_inputFrame.reset(new InputFrame("SystemView"));
 
 	BindingPage &page = Pi::input.GetBindingPage("SystemView");
-	page.shouldBeTranslated = false;
 	BindingGroup &group = page.GetBindingGroup("Miscellaneous");
 
-	m_systemViewBindings.mouseWheel = m_inputFrame->AddWheelBinding("MouseWheel", group, WheelBinding());
-	m_systemViewBindings.mouseWheel->StoreOnWheelCallback(std::bind(&SystemView::OnMouseWheel, this, _1));
+	m_systemViewBindings.zoomView = m_inputFrame->AddAxisBinding("BindViewZoom", group, AxisBinding(WheelDirection::UP));
 
 	Pi::input.PushInputFrame(m_inputFrame.get());
 }
@@ -786,13 +784,20 @@ void SystemView::Update(const float frameTime)
 {
 	// XXX ugly hack checking for console here
 	if (!Pi::IsConsoleActive()) {
-		if (Pi::input.KeyState(SDLK_EQUALS) ||
-			m_zoomInButton->IsPressed())
-			m_zoomTo *= pow(ZOOM_IN_SPEED * Pi::input.GetMoveSpeedShiftModifier(), frameTime);
-		if (Pi::input.KeyState(SDLK_MINUS) ||
-			m_zoomOutButton->IsPressed())
-			m_zoomTo *= pow(ZOOM_OUT_SPEED / Pi::input.GetMoveSpeedShiftModifier(), frameTime);
-
+		float speed = 0.0f;
+		if (m_systemViewBindings.zoomView->IsActive()) {
+			speed = m_systemViewBindings.zoomView->GetValue();
+			if (speed < 0.0f) {
+				m_zoomTo *= -speed * (((ZOOM_OUT_SPEED - 1) * WHEEL_SENSITIVITY + 1) / Pi::input.GetMoveSpeedShiftModifier());
+			} else {
+				m_zoomTo *= +speed * (((ZOOM_IN_SPEED - 1) * WHEEL_SENSITIVITY + 1) * Pi::input.GetMoveSpeedShiftModifier());
+			}
+		} else {
+			if (m_zoomInButton->IsPressed())
+				m_zoomTo *= pow(ZOOM_IN_SPEED * Pi::input.GetMoveSpeedShiftModifier(), frameTime);
+			if (m_zoomOutButton->IsPressed())
+				m_zoomTo *= pow(ZOOM_OUT_SPEED / Pi::input.GetMoveSpeedShiftModifier(), frameTime);
+		}
 		// transfer planner buttons
 		if (m_plannerIncreaseStartTimeButton->IsPressed()) {
 			m_planner->AddStartTime(10.);
@@ -847,22 +852,11 @@ void SystemView::Update(const float frameTime)
 	AnimationCurves::Approach(m_rot_x, m_rot_x_to, frameTime);
 	AnimationCurves::Approach(m_rot_y, m_rot_y_to, frameTime);
 
-	if (Pi::input.MouseButtonState(SDL_BUTTON_RIGHT)) {
-		int motion[2];
-		Pi::input.GetMouseMotion(motion);
-		m_rot_x_to += motion[1] * 20 * frameTime;
-		m_rot_y_to += motion[0] * 20 * frameTime;
-	}
+	auto motion = Pi::input.GetMouseMotion(MouseMotionBehaviour::Rotate);
+	m_rot_x_to += std::get<2>(motion) * 20 * frameTime;
+	m_rot_y_to += std::get<1>(motion) * 20 * frameTime;
 
 	UIView::Update(frameTime);
-}
-
-void SystemView::OnMouseWheel(bool up)
-{
-	if (!up)
-		m_zoomTo *= ((ZOOM_OUT_SPEED - 1) * WHEEL_SENSITIVITY + 1) / Pi::input.GetMoveSpeedShiftModifier();
-	else
-		m_zoomTo *= ((ZOOM_IN_SPEED - 1) * WHEEL_SENSITIVITY + 1) * Pi::input.GetMoveSpeedShiftModifier();
 }
 
 void SystemView::RefreshShips()

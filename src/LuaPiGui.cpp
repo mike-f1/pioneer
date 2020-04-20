@@ -795,6 +795,54 @@ static int l_pigui_text_colored(lua_State *l)
 	return 0;
 }
 
+static int get_standard_modifiers(ImGuiIO &io)
+{
+	int mod = KMOD_NONE;
+
+	if (io.KeyAlt) mod |= KMOD_ALT;
+	if (io.KeyShift) mod |= KMOD_SHIFT;
+	if (io.KeyCtrl) mod |= KMOD_CTRL;
+	if (io.KeySuper) mod |= KMOD_GUI;
+
+	return mod;
+}
+
+static int l_pigui_get_wheelbinding(lua_State *l)
+{
+	PROFILE_SCOPED()
+	std::string binding = "";
+
+	ImGuiIO io = ImGui::GetIO();
+
+	// Escape is used to clear an existing binding
+	// io.KeysDown uses scancodes, but we want to use keycodes.
+	if (io.KeysDown[SDL_GetScancodeFromKey(SDLK_ESCAPE)]) {
+		binding = "disabled";
+		LuaPush<std::string>(l, binding);
+		return 1;
+	}
+
+	int mod = get_standard_modifiers(io);
+
+	// check if it would use the wheel as axis
+	if (io.MouseWheelH > 0.0) {
+		binding = KeyBindings::WheelAxisBinding(KeyBindings::WheelDirection::LEFT, SDL_Keymod(mod)).ToString();
+	} else if (io.MouseWheelH < 0.0) {
+		binding = KeyBindings::WheelAxisBinding(KeyBindings::WheelDirection::RIGHT, SDL_Keymod(mod)).ToString();
+	}
+	if (io.MouseWheel > 0.0) {
+		binding = KeyBindings::WheelAxisBinding(KeyBindings::WheelDirection::UP, SDL_Keymod(mod)).ToString();
+	} else if (io.MouseWheel < 0.0) {
+		binding = KeyBindings::WheelAxisBinding(KeyBindings::WheelDirection::DOWN, SDL_Keymod(mod)).ToString();
+	}
+
+	if (!binding.compare(""))
+		lua_pushnil(l);
+	else
+		LuaPush<std::string>(l, binding);
+	return 1;
+}
+
 static int l_pigui_get_axisbinding(lua_State *l)
 {
 	PROFILE_SCOPED()
@@ -814,15 +862,16 @@ static int l_pigui_get_axisbinding(lua_State *l)
 		return 1;
 	}
 
-	// otherwise actually check the joystick
+	int mod = get_standard_modifiers(io);
 
+	// otherwise actually check the joystick
 	auto joysticks = Pi::input.GetJoysticksState();
 
 	for (auto js : joysticks) {
 		std::vector<float> axes = js.second.axes;
 		for (size_t a = 0; a < axes.size(); a++) {
-			if (axes[a] > 0.25 || axes[a] < -0.25) {
-				binding = "Joy" + Pi::input.JoystickGUIDString(js.first) + "/Axis" + std::to_string(a);
+			if (axes[a] > 0.5 || axes[a] < -0.5) {
+				binding = KeyBindings::JoyAxisBinding(js.second.guid, a, SDL_Keymod(mod)).ToString();
 				break;
 			}
 		}
@@ -841,7 +890,6 @@ static int l_pigui_get_keybinding(lua_State *l)
 	PROFILE_SCOPED()
 	ImGuiIO io = ImGui::GetIO();
 	int key = 0;
-	int mod = 0;
 
 	std::string binding;
 
@@ -862,13 +910,26 @@ static int l_pigui_get_keybinding(lua_State *l)
 		return 1;
 	}
 
-	// No modifier if the key is a modifier
-	// These are all in a continous range
-	if (!(key >= SDLK_LCTRL && key <= SDLK_RGUI)) {
-		if (io.KeyAlt) mod |= KMOD_ALT;
-		if (io.KeyShift) mod |= KMOD_SHIFT;
-		if (io.KeyCtrl) mod |= KMOD_CTRL;
-		if (io.KeySuper) mod |= KMOD_GUI;
+	int mod = get_standard_modifiers(io);
+
+	// check mouse wheel activation
+	if (io.MouseWheel > 0.0) {
+		binding = KeyBindings::KeyBinding(KeyBindings::WheelDirection::UP, SDL_Keymod(mod)).ToString();
+		LuaPush<std::string>(l, binding);
+		return 1;
+	} else if (io.MouseWheel < 0.0) {
+		binding = KeyBindings::KeyBinding(KeyBindings::WheelDirection::DOWN, SDL_Keymod(mod)).ToString();
+		LuaPush<std::string>(l, binding);
+		return 1;
+	}
+	if (io.MouseWheelH > 0.0) {
+		binding = KeyBindings::KeyBinding(KeyBindings::WheelDirection::LEFT, SDL_Keymod(mod)).ToString();
+		LuaPush<std::string>(l, binding);
+		return 1;
+	} else if (io.MouseWheelH < 0.0) {
+		binding = KeyBindings::KeyBinding(KeyBindings::WheelDirection::RIGHT, SDL_Keymod(mod)).ToString();
+		LuaPush<std::string>(l, binding);
+		return 1;
 	}
 
 	// Check joysticks if no keys are held down
@@ -879,7 +940,7 @@ static int l_pigui_get_keybinding(lua_State *l)
 			std::vector<bool> buttons = js.second.buttons;
 			for (size_t b = 0; b < buttons.size(); b++) {
 				if (buttons[b]) {
-					binding = "Joy" + Pi::input.JoystickGUIDString(js.first) + "/Button" + std::to_string(b);
+					binding = KeyBindings::KeyBinding(js.second.guid, b, SDL_Keymod(mod)).ToString();
 					break;
 				}
 			}
@@ -891,7 +952,7 @@ static int l_pigui_get_keybinding(lua_State *l)
 					case SDL_HAT_RIGHT:
 					case SDL_HAT_UP:
 					case SDL_HAT_DOWN:
-						binding = "Joy" + Pi::input.JoystickGUIDString(js.first) + "/Hat" + std::to_string(h) + "Dir" + std::to_string(js.second.hats[h]);
+						binding = KeyBindings::KeyBinding(js.second.guid, h, hatDir, SDL_Keymod(mod)).ToString();
 						break;
 					default:
 						continue;
@@ -902,10 +963,9 @@ static int l_pigui_get_keybinding(lua_State *l)
 			if (binding.compare("")) break;
 		}
 	} else if (key != 0) {
-		// hard coding is bad, but is instantiating a keybinding every frame worse?
-		binding = "Key" + std::to_string(key);
-		if (mod > 0) binding += "Mod" + std::to_string(mod);
+		binding = KeyBindings::KeyBinding(key, SDL_Keymod(mod)).ToString();
 	}
+
 	if (!binding.compare(""))
 		lua_pushnil(l);
 	else
@@ -2178,6 +2238,7 @@ void LuaObject<PiGui>::RegisterClass()
 		{ "SetWindowFocus", l_pigui_set_window_focus },
 		{ "GetKeyBinding", l_pigui_get_keybinding },
 		{ "GetAxisBinding", l_pigui_get_axisbinding },
+		{ "GetWheelBinding", l_pigui_get_wheelbinding },
 		{ "PushStyleColor", l_pigui_push_style_color },
 		{ "PopStyleColor", l_pigui_pop_style_color },
 		{ "PushStyleVar", l_pigui_push_style_var },

@@ -13,7 +13,6 @@ class Ship;
 namespace KeyBindings {
 	struct ActionBinding;
 	struct AxisBinding;
-	struct WheelBinding;
 }
 
 class ShipViewController : public InteractionController {
@@ -55,7 +54,6 @@ public:
 	struct InputBinding {
 		using Action = KeyBindings::ActionBinding;
 		using Axis = KeyBindings::AxisBinding;
-		using Wheel = KeyBindings::WheelBinding;
 
 		Axis *cameraYaw;
 		Axis *cameraPitch;
@@ -75,8 +73,6 @@ public:
 		Action *cycleCameraMode;
 		Action *resetCamera;
 
-		Wheel *mouseWheel;
-
 	} m_inputBindings;
 
 	std::unique_ptr<InputFrame> m_inputFrame;
@@ -87,7 +83,6 @@ private:
 	void RegisterInputBindings();
 
 	void OnCamReset(bool down);
-	void OnMouseWheel(bool up);
 
 	enum CamType m_camType;
 

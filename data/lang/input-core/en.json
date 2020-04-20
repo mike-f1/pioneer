@@ -1,4 +1,8 @@
 {
+  "AXIS": {
+    "description": "...an axis...",
+    "message": "Axis"
+  },
   "BIND_AXIS_PITCH": {
     "description": "Descriptive name for the Pitch axis.",
     "message": "Pitch"
@@ -226,6 +230,14 @@
     "description": "Header for the SectorView input page.",
     "message": "Sector - View"
   },
+  "PAGE_SYSTEM_VIEW": {
+    "description": "Header for the SystemView input page.",
+    "message": "System - View"
+  },
+  "SPEED_MODIFIER": {
+    "description": "General modifier used to scroll/rotate/zoom faster",
+    "message": "Speed Modifier"
+  },
   "TEXT_ALT_BINDING": {
     "description": "",
     "message": "Alt. Binding:"
@@ -261,5 +273,9 @@
   "TOGGLE_CONSOLE": {
     "description": "Activate or deactivate Lua console",
     "message": "Toggle Lua Console"
+  },
+  "WHEEL": {
+    "description": "Mouse wheel",
+    "message": "Wheel"
   }
 }

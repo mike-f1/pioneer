@@ -35,7 +35,6 @@ namespace Gui {
 namespace KeyBindings {
 	struct ActionBinding;
 	struct AxisBinding;
-	struct WheelBinding;
 }
 
 namespace UI {

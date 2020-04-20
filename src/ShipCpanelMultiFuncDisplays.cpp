@@ -281,7 +281,7 @@ void RadarWidget::Update()
 			} else {
 				m_manualRange = m_currentRange;
 			}
-			m_manualRange = Clamp(m_manualRange * 1.05f, RADAR_RANGE_MIN, RADAR_RANGE_MAX);
+			m_manualRange = Clamp(m_manualRange * 1.15f, RADAR_RANGE_MIN, RADAR_RANGE_MAX);
 		} else if (m_radarWidgetBindings.changeScanRange->GetValue() < 0.0) {
 			if (m_mode == RadarMode::MODE_AUTO) {
 				m_manualRange = m_targetRange;
@@ -289,7 +289,7 @@ void RadarWidget::Update()
 			} else {
 				m_manualRange = m_currentRange;
 			}
-			m_manualRange = Clamp(m_manualRange * 0.95f, RADAR_RANGE_MIN, RADAR_RANGE_MAX);
+			m_manualRange = Clamp(m_manualRange * 0.85f, RADAR_RANGE_MIN, RADAR_RANGE_MAX);
 		}
 	}
 

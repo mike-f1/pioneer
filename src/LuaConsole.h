@@ -89,11 +89,8 @@ private:
 	struct ConsoleBinding {
 		using Action = KeyBindings::ActionBinding;
 		using Axis =  KeyBindings::AxisBinding;
-		using Wheel = KeyBindings::WheelBinding;
 
 		Action *toggleLuaConsole;
-
-		Wheel *mouseWheel;
 
 	} m_consoleBindings;
 

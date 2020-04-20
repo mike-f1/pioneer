@@ -46,9 +46,6 @@ void ShipViewController::RegisterInputBindings()
 	m_inputBindings.resetCamera = m_inputFrame->AddActionBinding("BindResetCamera", group, ActionBinding(SDLK_HOME));
 	m_inputBindings.resetCamera->StoreOnActionCallback(std::bind(&ShipViewController::OnCamReset, this, _1));
 
-	m_inputBindings.mouseWheel = m_inputFrame->AddWheelBinding("MouseWheel", group, WheelBinding());
-	m_inputBindings.mouseWheel->StoreOnWheelCallback(std::bind(&ShipViewController::OnMouseWheel, this, _1));
-
 	Pi::input.PushInputFrame(m_inputFrame.get());
 }
 
@@ -57,20 +54,6 @@ void ShipViewController::OnCamReset(bool down)
 	if (down) return;
 	auto *cam = static_cast<MoveableCameraController *>(m_activeCameraController);
 	if (cam) cam->Reset();
-}
-
-void ShipViewController::OnMouseWheel(bool up)
-{
-	if (m_activeCameraController == nullptr) return;
-
-	if (m_activeCameraController->IsExternal()) {
-		MoveableCameraController *cam = static_cast<MoveableCameraController *>(m_activeCameraController);
-
-		if (!up) // Zoom out
-			cam->ZoomEvent(ZOOM_SPEED * WHEEL_SENSITIVITY);
-		else
-			cam->ZoomEvent(-ZOOM_SPEED * WHEEL_SENSITIVITY);
-	}
 }
 
 ShipViewController::~ShipViewController()
@@ -224,15 +207,13 @@ void ShipViewController::Update(const float frameTime)
 		cam->ZoomEventUpdate(frameTime);
 	}
 
-	int mouseMotion[2];
-	Pi::input.GetMouseMotion(mouseMotion);
-
 	// external camera mouselook
-	if (!headtracker_input_priority && Pi::input.MouseButtonState(SDL_BUTTON_MIDDLE)) {
+	auto motion = Pi::input.GetMouseMotion(MouseMotionBehaviour::Rotate);
+	if (!headtracker_input_priority && std::get<0>(motion)) {
 		// invert the mouse input to convert between screen coordinates and
 		// right-hand coordinate system rotation.
-		cam->YawCamera(-mouseMotion[0] * MOUSELOOK_SPEED);
-		cam->PitchCamera(-mouseMotion[1] * MOUSELOOK_SPEED);
+		cam->YawCamera(-std::get<1>(motion) * MOUSELOOK_SPEED);
+		cam->PitchCamera(-std::get<2>(motion) * MOUSELOOK_SPEED);
 	}
 
 	m_activeCameraController->Update();

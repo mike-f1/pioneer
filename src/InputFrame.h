@@ -11,7 +11,6 @@ struct BindingGroup;
 namespace KeyBindings {
 	struct ActionBinding;
 	struct AxisBinding;
-	struct WheelBinding;
 };
 
 enum class InputResponse {
@@ -41,7 +40,6 @@ public:
 
 	KeyBindings::ActionBinding *AddActionBinding(std::string id, BindingGroup &group, KeyBindings::ActionBinding binding);
 	KeyBindings::AxisBinding *AddAxisBinding(std::string id, BindingGroup &group, KeyBindings::AxisBinding binding);
-	KeyBindings::WheelBinding *AddWheelBinding(std::string id, BindingGroup &group, KeyBindings::WheelBinding binding);
 
 	// Call this at startup and register all the bindings associated with the frame.
 	virtual void RegisterBindings() {};
@@ -59,10 +57,8 @@ private:
 
 	typedef std::pair<std::string, KeyBindings::ActionBinding *> TActionPair;
 	typedef std::pair<std::string, KeyBindings::AxisBinding *> TAxisPair;
-	typedef std::pair<std::string, KeyBindings::WheelBinding *> TWheelPair;
 	std::vector<TActionPair> m_actions;
 	std::vector<TAxisPair> m_axes;
-	TWheelPair m_wheel = { "", nullptr };
 
 	// Check the event against all the inputs in this frame.
 	InputResponse ProcessSDLEvent(const SDL_Event &event);

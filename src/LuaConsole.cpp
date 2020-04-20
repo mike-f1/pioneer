@@ -82,8 +82,6 @@ void LuaConsole::RegisterInputBindings()
 	m_consoleBindings.toggleLuaConsole = m_inputFrame->AddActionBinding("ToggleConsole", group, ActionBinding(SDLK_BACKSLASH));
 	m_consoleBindings.toggleLuaConsole->StoreOnActionCallback(std::bind(&LuaConsole::OnToggle, this, _1));
 
-	m_consoleBindings.mouseWheel = m_inputFrame->AddWheelBinding("MouseWheel", group, WheelBinding());
-
 	Pi::input.PushInputFrame(m_inputFrame.get());
 
 	// Explicitly activate console as it is always active

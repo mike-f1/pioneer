@@ -95,9 +95,6 @@ void ObjectViewerView::RegisterInputBindings()
 	m_objectViewerBindings.rotateLightLeft = m_inputFrame->AddActionBinding("RotateLightLeft", groupVMC, ActionBinding(SDLK_r));
 	m_objectViewerBindings.rotateLightRight = m_inputFrame->AddActionBinding("RotateLightRight", groupVMC, ActionBinding(SDLK_f));
 
-	m_objectViewerBindings.mouseWheel = m_inputFrame->AddWheelBinding("MouseWheel", groupVMC, WheelBinding());
-	m_objectViewerBindings.mouseWheel->StoreOnWheelCallback(std::bind(&ObjectViewerView::OnMouseWheel, this, _1));
-
 	Pi::input.PushInputFrame(m_inputFrame.get());
 }
 
@@ -197,17 +194,15 @@ void ObjectViewerView::Update(const float frameTime)
 		m_camRot = matrix4x4d::RotateYMatrix(m_objectViewerBindings.rotateLeftRight->GetValue() * move * 5.0) * m_camRot;
 	}
 
-	int btnState = Pi::input.MouseButtonState(SDL_BUTTON_RIGHT);
-	int m[2];
-	Pi::input.GetMouseMotion(m);
-	if (btnState) {
-		m_camRot = matrix4x4d::RotateXMatrix(-0.002 * m[1]) *
-			matrix4x4d::RotateYMatrix(-0.002 * m[0]) * m_camRot;
+	auto motion = Pi::input.GetMouseMotion(MouseMotionBehaviour::Rotate);
+	if (std::get<0>(motion)) {
+		m_camRot = matrix4x4d::RotateXMatrix(-0.002 * std::get<2>(motion)) *
+			matrix4x4d::RotateYMatrix(-0.002 * std::get<1>(motion)) * m_camRot;
 	} else {
-		btnState = Pi::input.MouseButtonState(SDL_BUTTON_MIDDLE);
-		if (btnState) {
-			m_camTwist = matrix3x3d::RotateX(-0.002 * m[1]) *
-				matrix3x3d::RotateY(-0.002 * m[0]) * m_camTwist;
+		motion = Pi::input.GetMouseMotion(MouseMotionBehaviour::DriveShip);
+		if (std::get<0>(motion)) {
+			m_camTwist = matrix3x3d::RotateX(-0.002 * std::get<2>(motion)) *
+				matrix3x3d::RotateY(-0.002 * std::get<1>(motion)) * m_camTwist;
 			//m_camTwist.Print();
 		}
 	}
@@ -470,15 +465,6 @@ void ObjectViewerView::OnLightRotateLeft()
 void ObjectViewerView::OnLightRotateRight()
 {
 	m_lightRotate = RotateLight::RIGHT;
-}
-
-void ObjectViewerView::OnMouseWheel(bool up)
-{
-	if (up) {
-		m_zoomChange = Zooming::OUT;
-	} else {
-		m_zoomChange = Zooming::IN;
-	}
 }
 
 #endif

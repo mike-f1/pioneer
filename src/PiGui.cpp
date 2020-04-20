@@ -411,6 +411,7 @@ void PiGui::NewFrame(SDL_Window *window, bool skip)
 	}
 #endif
 }
+
 void PiGui::Render(double delta, std::string handler)
 {
 	PROFILE_SCOPED()

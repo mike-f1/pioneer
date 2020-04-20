@@ -13,10 +13,6 @@ InputFrame::~InputFrame()
 	for (TAxisPair &ab : m_axes) {
 		bool success = Pi::input.DeleteAxisBinding(ab.first);
 	}
-
-	if (!m_wheel.first.empty()) {
-		bool success = Pi::input.DeleteWheelBinding(m_wheel.first);
-	}
 }
 
 KeyBindings::ActionBinding *InputFrame::AddActionBinding(std::string id, BindingGroup &group, KeyBindings::ActionBinding binding)
@@ -31,13 +27,6 @@ KeyBindings::AxisBinding *InputFrame::AddAxisBinding(std::string id, BindingGrou
 	KeyBindings::AxisBinding *axisBind = Pi::input.AddAxisBinding(id, group, binding);
 	m_axes.push_back({id, axisBind});
 	return axisBind;
-}
-
-KeyBindings::WheelBinding *InputFrame::AddWheelBinding(std::string id, BindingGroup &group, KeyBindings::WheelBinding binding)
-{
-	KeyBindings::WheelBinding *wheelBind = Pi::input.AddWheelBinding(id, group, binding);
-	m_wheel = {id, wheelBind};
-	return wheelBind;
 }
 
 InputResponse InputFrame::ProcessSDLEvent(const SDL_Event &event)
@@ -55,12 +44,6 @@ InputResponse InputFrame::ProcessSDLEvent(const SDL_Event &event)
 
 	for (TAxisPair &axis : m_axes) {
 		auto resp = axis.second->CheckSDLEventAndDispatch(event);
-		if (resp == InputResponse::MATCHED) return resp;
-		matched = matched || resp != InputResponse::NOMATCH;
-	}
-
-	if (m_wheel.second != nullptr) {
-		auto resp = m_wheel.second->CheckSDLEventAndDispatch(event);
 		if (resp == InputResponse::MATCHED) return resp;
 		matched = matched || resp != InputResponse::NOMATCH;
 	}

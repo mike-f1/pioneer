@@ -8,10 +8,11 @@
 #include "utils.h"
 
 #include <algorithm>
+#include <utility>
 
 class InputFrame;
 
-enum class MouseButtonBehaviour {
+enum class MouseMotionBehaviour {
 	Select,
 	Rotate,
 	DriveShip,
@@ -27,7 +28,6 @@ struct BindingGroup {
 	enum class EntryType {
 		ACTION,
 		AXIS,
-		WHEEL
 	};
 
 	std::map<std::string, EntryType> bindings;
@@ -50,11 +50,10 @@ public:
 	Input() {};
 	void Init();
 	void InitGame();
+	void TerminateGame();
 
 	BindingPage &GetBindingPage(const std::string &id) { return m_bindingPages[id]; }
 	const std::map<std::string, BindingPage> &GetBindingPages() { return m_bindingPages; };
-
-	void CheckPage(const std::string &pageId);
 
 	// Pushes an InputFrame onto the input stack, return true if
 	// correctly pushed
@@ -84,7 +83,7 @@ public:
 	bool DeleteActionBinding(const std::string &id)
 	{
 		if (m_actionBindings.erase(id) != 0) {
-			FindAndEraseEntryInGroups(id);
+			FindAndEraseEntryInPagesAndGroups(id);
 			return true;
 		}
 		return false;
@@ -101,25 +100,15 @@ public:
 	bool DeleteAxisBinding(const std::string &id)
 	{
 		if (m_axisBindings.erase(id) != 0) {
-			FindAndEraseEntryInGroups(id);
-			return true;
-		}
-		return false;
-	}
-
-	// PS: 'id' may change if the same string is already in use
-	KeyBindings::WheelBinding *AddWheelBinding(std::string &id, BindingGroup &group, KeyBindings::WheelBinding binding);
-	bool DeleteWheelBinding(const std::string &id)
-	{
-		if (m_wheelBindings.erase(id) != 0) {
-			FindAndEraseEntryInGroups(id);
+			FindAndEraseEntryInPagesAndGroups(id);
 			return true;
 		}
 		return false;
 	}
 
 	bool KeyState(SDL_Keycode k) { return m_keyState[k]; }
-	int KeyModState() { return m_keyModState; }
+
+	SDL_Keymod KeyModStateUnified() { return m_keyModStateUnified; }
 
 	// Get the default speed modifier to apply to movement (scrolling, zooming...), depending on the "shift" keys.
 	// This is a default value only, centralized here to promote uniform user experience.
@@ -155,35 +144,52 @@ public:
 	void SetMouseYInvert(bool state) { m_mouseYInvert = state; }
 	bool IsMouseYInvert() { return m_mouseYInvert; }
 
-	int MouseButtonState(int button) { return m_mouseButton[button]; }
-	void SetMouseButtonState(int button, bool state) { m_mouseButton[button] = state; }
+	int MouseButtonState(int button) { return m_mouseButton.at(button); }
+	void SetMouseButtonState(int button, bool state) { m_mouseButton.at(button) = state; }
 
-	void GetMouseMotion(int motion[2])
-	{
-		memcpy(motion, m_mouseMotion, sizeof(int) * 2);
-	}
+	// Return true if the behaviour is the current one and if at least a value is != 0,
+	// second and third parameters are mouse movement relative coordinates
+	std::tuple<bool, int, int> GetMouseMotion(MouseMotionBehaviour mmb);
 
-	sigc::signal<void, const SDL_Keysym &> onKeyPress;
+	KeyBindings::WheelDirection GetWheelState() const { return m_wheelState; }
+
+	sigc::signal<void, const SDL_Keysym &> onKeyPress; // <- Here only for 'ctrl-functions' in Pi.cpp
 	sigc::signal<void, const SDL_Keysym &> onKeyRelease;
-	sigc::signal<void, int, int, int> onMouseButtonUp;
-	sigc::signal<void, int, int, int> onMouseButtonDown;
-	sigc::signal<void, bool> onMouseWheel;
 
 	void ResetMouseMotion()
 	{
-		m_mouseMotion[0] = m_mouseMotion[1] = 0;
+		m_mouseMotion.fill(0);
+		m_wheelState = KeyBindings::WheelDirection::NONE;
 	}
 
 	void HandleSDLEvent(const SDL_Event &ev);
+
+#ifdef DEBUG_DUMP_PAGES
+	void DebugDumpPage(const std::string &pageId);
+#endif // 0
+
 private:
 	void InitJoysticks();
+	void RegisterInputBindings();
 
-	void FindAndEraseEntryInGroups(const std::string &id);
+	// The only current "action": this is a general binding
+	// used to speed up scrolling/rotation/... of various setting
+	// TODO:
+	// * when game ends it should be removed
+	// * allow customization of values
+	KeyBindings::ActionBinding *m_speedModifier;
+
+	// Ok, wanna free pages and groups when an Axis or an Action
+	// binding is deleted (e.g. deleting InputFrames).
+	// (...and this means an ~O(n^3) time :P )
+	void FindAndEraseEntryInPagesAndGroups(const std::string &id);
 
 	std::map<SDL_Keycode, bool> m_keyState;
-	int m_keyModState;
-	char m_mouseButton[6];
-	int m_mouseMotion[2];
+	SDL_Keymod m_keyModStateUnified;
+
+	KeyBindings::WheelDirection m_wheelState; // Store last wheel position (must reset every frame)
+	std::array<int, 2> m_mouseMotion; // Store last frame relative mouse motion (must reset every frame)
+	std::array<bool, 6> m_mouseButton; // Store mouse button state
 
 	bool m_joystickEnabled;
 	bool m_mouseYInvert;
@@ -192,7 +198,6 @@ private:
 	std::map<std::string, BindingPage> m_bindingPages;
 	std::map<std::string, KeyBindings::ActionBinding> m_actionBindings;
 	std::map<std::string, KeyBindings::AxisBinding> m_axisBindings;
-	std::map<std::string, KeyBindings::WheelBinding> m_wheelBindings;
 
 	std::vector<InputFrame *> m_inputFrames;
 };

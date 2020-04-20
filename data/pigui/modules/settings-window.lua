@@ -13,8 +13,15 @@ local lui = Lang.GetResource("ui-core")
 local linput = Lang.GetResource("input-core")
 
 -- convert an axis binding style ID to a translation resource identifier
+
+-- NOTE: An 'id' must be unique, therefore when different bindings
+-- in different groups or pages use the same name, the subsequent
+-- bindings will append a "_x" suffix, where 'x' is a digit.
+-- Therefore there's a need to remove this suffix when present
+
 local function localize_binding_id(str)
-	return linput[str:gsub("([^A-Z0-9_])([A-Z0-9])", "%1_%2"):upper()]
+	local str2 = str:gsub("_%d+$", "")
+	return linput[str2:gsub("([^A-Z0-9_])([A-Z0-9])", "%1_%2"):upper()]
 end
 
 local utils = import("utils")
@@ -148,8 +155,8 @@ local function showVideoOptions()
 			aaModes[lui.OFF] = curAA
 			curAA = 2
 		else
-			table.insert(aaLabels, 'x'..curAA)
-			aaModes['x'..curAA] = curAA
+			table.insert(aaLabels, 'x' .. curAA)
+			aaModes['x' .. curAA] = curAA
 			curAA = curAA * 2
 		end
 	end
@@ -269,19 +276,7 @@ end
 
 local function captureBinding(id, num)
 
-	local info
-
-	for _,page in pairs(binding_pages) do
-		for _,group in pairs(page) do
-			if group.id then
-				for _,i in pairs(group) do
-					if i.id == id then
-						info = i
-					end
-				end
-			end
-		end
-	end
+	local info = Input.FindBinding(id)
 
 	ui.setNextWindowPosCenter('Always')
 	ui.withStyleColorsAndVars({WindowBg = Color(20, 20, 80, 230)}, {WindowBorderSize = 1}, function()
@@ -298,35 +293,39 @@ local function captureBinding(id, num)
 
 				local bindingKey = Engine.pigui.GetKeyBinding()
 				local setBinding = false
-				if(bindingKey and num==1 and bindingKey~=info.binding1) or (bindingKey and num==2 and bindingKey~=info.binding2) then setBinding = true end
+				if (bindingKey and num == 1 and bindingKey ~= info.binding1) or (bindingKey and num == 2 and bindingKey ~= info.binding2) then setBinding = true end
 
 				if setBinding and  num == 1 then Input.SetActionBinding(info.id, bindingKey, info.binding2)
-				elseif setBinding and num==2 then Input.SetActionBinding(info.id, info.binding1, bindingKey)
+				elseif setBinding and num == 2 then Input.SetActionBinding(info.id, info.binding1, bindingKey)
 				end
 			elseif info.type == 'axis' then
 				local desc
 				if num == 1 then desc = info.axisDescription
-				elseif num == 2 then desc = info.positiveDescription
+				elseif num == 2 then desc = info.wheelDescription
+				elseif num == 3 then desc = info.positiveDescription
 				else desc = info.negativeDescription end
 				desc = desc or '<None>'
 				ui.text(desc)
 
 				if num == 1 then
 					local bindingAxis = Engine.pigui.GetAxisBinding()
-
-					if bindingAxis and bindingAxis~=info.axis then
-						Input.SetAxisBinding(info.id, bindingAxis, info.positive, info.negative)
+					if bindingAxis and bindingAxis ~= info.axis then
+						Input.SetAxisBinding(info.id, bindingAxis, info.wheel, info.positive, info.negative)
 					end
 				elseif num == 2 then
+					local bindingWheel = Engine.pigui.GetWheelBinding()
+					if bindingWheel and bindingWheel ~= info.wheel then
+						Input.SetAxisBinding(info.id, info.axis, bindingWheel, info.positive, info.negative)
+					end
+				elseif num == 3 then
 					local bindingKey = Engine.pigui.GetKeyBinding()
-
 					if bindingKey and bindingKey ~= info.positive then
-						Input.SetAxisBinding(info.id, info.axis, bindingKey, info.negative)
+						Input.SetAxisBinding(info.id, info.axis, info.wheel, bindingKey, info.negative)
 					end
 				else
 					local bindingKey = Engine.pigui.GetKeyBinding()
 					if bindingKey and bindingKey ~= info.negative then
-						Input.SetAxisBinding(info.id, info.axis, info.positive, bindingKey)
+						Input.SetAxisBinding(info.id, info.axis, info.wheel, info.positive, bindingKey)
 					end
 				end
 			end
@@ -346,19 +345,19 @@ local function showSoundOptions()
 
 	local c
 
-	c,masterMuted = checkbox(lui.MUTE.."##master", masterMuted)
+	c,masterMuted = checkbox(lui.MUTE .. "##master", masterMuted)
 	if c then Engine.SetMasterMuted(masterMuted) end
 	ui.sameLine()
 	c,masterLevel = slider(lui.MASTER_VOL, masterLevel, 0, 100)
 	if c then Engine.SetMasterVolume(masterLevel/100) end
 
-	c,musicMuted = checkbox(lui.MUTE.."##music", musicMuted)
+	c,musicMuted = checkbox(lui.MUTE .. "##music", musicMuted)
 	if c then Engine.SetMusicMuted(musicMuted) end
 	ui.sameLine()
 	c,musicLevel = slider(lui.MUSIC, musicLevel, 0, 100)
 	if c then Engine.SetMusicVolume(musicLevel/100) end
 
-	c,effectsMuted = checkbox(lui.MUTE.."##effects", effectsMuted)
+	c,effectsMuted = checkbox(lui.MUTE .. "##effects", effectsMuted)
 	if c then Engine.SetEffectsMuted(effectsMuted) end
 	ui.sameLine()
 	c,effectsLevel = slider(lui.EFFECTS, effectsLevel, 0, 100)
@@ -390,18 +389,18 @@ local function actionBinding(info)
 	local bindings = { info.binding1, info.binding2 }
 	local descs = { info.bindingDescription1, info.bindingDescription2 }
 
-	if (ui.collapsingHeader(localize_binding_id(info.id), {})) then
+	if (ui.collapsingHeader(localize_binding_id(info.id) .. "##" .. info.id, {})) then
 		ui.columns(3,"##bindings",false)
 		ui.nextColumn()
 		ui.text(linput.TEXT_BINDING)
-		bindingTextButton((descs[1] or '')..'##'..info.id..'1', (descs[1] or ''), true, function()
+		bindingTextButton((descs[1] or '') .. '##' .. info.id .. '1', (descs[1] or ''), true, function()
 			showKeyCapture = true
 			keyCaptureId = info.id
 			keyCaptureNum = 1
 		end)
 		ui.nextColumn()
 		ui.text(linput.TEXT_ALT_BINDING)
-		bindingTextButton((descs[2] or '')..'##'..info.id..'2', (descs[2] or ''), true, function()
+		bindingTextButton((descs[2] or '') .. '##' .. info.id .. '2', (descs[2] or ''), true, function()
 			showKeyCapture = true
 			keyCaptureId = info.id
 			keyCaptureNum = 2
@@ -411,13 +410,13 @@ local function actionBinding(info)
 end
 
 local function axisBinding(info)
-	local bindings = { info.axis, info.positive, info.negative }
-	local descs = { info.axisDescription, info.positiveDescription, info.negativeDescription }
-	if (ui.collapsingHeader(localize_binding_id(info.id), {})) then
+	local descs = { info.axisDescription, info.wheelDescription, info.positiveDescription, info.negativeDescription }
+
+	if (ui.collapsingHeader(localize_binding_id(info.id) .. "##" .. info.id, {})) then
 		ui.columns(3,"##axisjoybindings",false)
-		ui.text("Axis:")
+		ui.text(linput.AXIS .. ":")
 		ui.nextColumn()
-		bindingTextButton((descs[1] or '')..'##'..info.id..'axis', (descs[1] or ''), true, function()
+		bindingTextButton((descs[1] or '') .. '##' .. info.id .. 'axis', (descs[1] or ''), true, function()
 			showKeyCapture = true
 			keyCaptureId = info.id
 			keyCaptureNum = 1
@@ -427,37 +426,48 @@ local function axisBinding(info)
 			local c, inverted, deadzone, sensitivity = nil, info.axis:sub(1,1) == "-",
 				tonumber(info.axis:match"/DZ(%d+%.%d*)" or 0) * 100,
 				tonumber(info.axis:match"/E(%d+%.%d*)" or 1) * 100
+			local modifiers = tostring(info.axis:match"Mod%d+" or "")
 			local axis = info.axis:match("Joy[0-9a-f]+/Axis%d+")
 			local function set_axis()
-				local _ax = (inverted and "-" or "") .. axis .. "/DZ" .. deadzone / 100.0 .. "/E" .. sensitivity / 100.0
-				Input.SetAxisBinding(info.id, _ax, info.positive, info.negative)
+				local _ax = (inverted and "-" or "") .. axis .. "/DZ" .. deadzone / 100.0 .. "/E" .. sensitivity / 100.0 .. modifiers
+				Input.SetAxisBinding(info.id, _ax, info.wheel, info.positive, info.negative)
 			end
-			c,inverted = ui.checkbox("Inverted##"..info.id, inverted, linput.TEXT_INVERT_AXIS)
+			c,inverted = ui.checkbox("Inverted##" .. info.id, inverted, linput.TEXT_INVERT_AXIS)
 			set_axis()
 			ui.nextColumn()
 			ui.nextColumn()
-			c, deadzone = slider("Deadzone##"..info.id, deadzone, 0, 100, linput.TEXT_AXIS_DEADZONE)
+			c, deadzone = slider("Deadzone##" .. info.id, deadzone, 0, 100, linput.TEXT_AXIS_DEADZONE)
 			set_axis()
 			ui.nextColumn()
-			c, sensitivity = slider("Sensitivity##"..info.id, sensitivity, 0, 100, linput.TEXT_AXIS_SENSITIVITY)
+			c, sensitivity = slider("Sensitivity##" .. info.id, sensitivity, 0, 100, linput.TEXT_AXIS_SENSITIVITY)
 			set_axis()
 		end
 		ui.nextColumn()
-		ui.columns(3,"##axiskeybindings",false)
-		ui.text(linput.TEXT_KEY_BINDINGS)
+		ui.columns(3,"##axiswheelbindings",false)
+		ui.text(linput.WHEEL .. ":")
 		ui.nextColumn()
-		ui.text(linput.TEXT_KEY_POSITIVE)
-		bindingTextButton((descs[2] or '')..'##'..info.id..'positive', (descs[2] or ''), true, function()
+		bindingTextButton((descs[2] or '') .. '##' .. info.id .. 'wheel', (descs[2] or ''), true, function()
 			showKeyCapture = true
 			keyCaptureId = info.id
 			keyCaptureNum = 2
 		end)
 		ui.nextColumn()
-		ui.text(linput.TEXT_KEY_NEGATIVE)
-		bindingTextButton((descs[3] or '')..'##'..info.id..'negative', (descs[3] or ''), true, function()
+		ui.nextColumn()
+		ui.columns(3,"##axiskeybindings",false)
+		ui.text(linput.TEXT_KEY_BINDINGS)
+		ui.nextColumn()
+		ui.text(linput.TEXT_KEY_POSITIVE)
+		bindingTextButton((descs[3] or '') .. '##' .. info.id .. 'positive', (descs[3] or ''), true, function()
 			showKeyCapture = true
 			keyCaptureId = info.id
 			keyCaptureNum = 3
+		end)
+		ui.nextColumn()
+		ui.text(linput.TEXT_KEY_NEGATIVE)
+		bindingTextButton((descs[4] or '') .. '##' .. info.id .. 'negative', (descs[4] or ''), true, function()
+			showKeyCapture = true
+			keyCaptureId = info.id
+			keyCaptureNum = 4
 		end)
 		ui.columns(1,"",false)
 	end
@@ -515,25 +525,25 @@ local function optionsWindow()
 		ui.setNextWindowPosCenter('Always')
 		ui.withStyleColorsAndVars({["WindowBg"] = Color(20, 20, 80, 230)}, {WindowBorderSize = 1}, function()
 			ui.window("Options", {"NoTitleBar", "NoResize"}, function()
-				mainButton(icons.view_sidereal, lui.VIDEO, showTab=='video', function()
+				mainButton(icons.view_sidereal, lui.VIDEO, showTab == 'video', function()
 					showTab = 'video'
 				end)
 				ui.sameLine()
-				mainButton(icons.sound, lui.SOUND, showTab=='sound', function()
+				mainButton(icons.sound, lui.SOUND, showTab == 'sound', function()
 					showTab = 'sound'
 				end)
 				ui.sameLine()
-				mainButton(icons.language, lui.LANGUAGE, showTab=='language', function()
+				mainButton(icons.language, lui.LANGUAGE, showTab == 'language', function()
 					showTab = 'language'
 				end)
 				ui.sameLine()
-				mainButton(icons.controls, lui.CONTROLS, showTab=='controls', function()
+				mainButton(icons.controls, lui.CONTROLS, showTab == 'controls', function()
 					showTab = 'controls'
 				end)
 
 				ui.separator()
 
-				ui.child("options_tab", Vector2(-1, optionsWinSize.y - mainButtonSize.y*3 - 4), function()
+				ui.child("options_tab", Vector2(-1, optionsWinSize.y - mainButtonSize.y * 3 - 4), function()
 					optionsTabs[showTab]()
 				end)
 

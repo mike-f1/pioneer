@@ -83,7 +83,6 @@ private:
 	void OnToggleGridButtonClick(void);
 	void OnToggleL4L5ButtonClick(Gui::MultiStateImageButton *);
 	void ResetViewpoint();
-	void OnMouseWheel(bool up);
 	void RefreshShips(void);
 	void DrawShips(const double t, const vector3d &offset);
 	void PrepareGrid();
@@ -147,9 +146,8 @@ private:
 	struct SystemViewBinding {
 		using Action = KeyBindings::ActionBinding;
 		using Axis =  KeyBindings::AxisBinding;
-		using Wheel = KeyBindings::WheelBinding;
 
-		Wheel *mouseWheel;
+		Axis *zoomView;
 
 	} m_systemViewBindings;
 

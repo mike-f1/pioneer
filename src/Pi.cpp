@@ -1021,6 +1021,11 @@ void Pi::InitGame()
 	LuaInitGame();
 }
 
+void Pi::TerminateGame()
+{
+	input.TerminateGame();
+}
+
 static void OnPlayerDockOrUndock()
 {
 	GameLocator::getGame()->RequestTimeAccel(Game::TIMEACCEL_1X);
@@ -1089,6 +1094,7 @@ void Pi::Start(const SystemPath &startPath)
 				Graphics::GetScreenHeight(),
 				GameConfSingleton::GetAmountBackgroundStars()
 				));
+			TerminateGame();
 			m_mainState = MainState::MAIN_MENU;
 		break;
 		case MainState::TO_TOMBSTONE:

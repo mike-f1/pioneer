@@ -18,7 +18,11 @@ void Input::Init()
 	m_joystickEnabled = (config.Int("EnableJoystick")) ? true : false;
 	m_mouseYInvert = (config.Int("InvertMouseY")) ? true : false;
 
+	m_inputFrames.reserve(16);
+
 	InitJoysticks();
+
+	RegisterInputBindings();
 }
 
 void Input::InitGame()
@@ -35,14 +39,10 @@ void Input::InitGame()
 		std::fill(state.hats.begin(), state.hats.end(), 0);
 		std::fill(state.axes.begin(), state.axes.end(), 0.f);
 	}
-
-	RegisterInputBindings();
 }
 
 void Input::TerminateGame()
 {
-	DeleteActionBinding(speedModifier);
-	m_speedModifier = nullptr;
 }
 
 void Input::RegisterInputBindings()
@@ -56,6 +56,7 @@ void Input::RegisterInputBindings()
 	if (!m_speedModifier) {
 		m_speedModifier = AddActionBinding(speedModifier, group, ActionBinding(SDLK_CAPSLOCK));
 	}
+	m_speedModifier->SetBTrait(BehaviourMod::DISALLOW_MODIFIER | BehaviourMod::ALLOW_KEYBOARD_ONLY);
 }
 
 #ifdef DEBUG_DUMP_PAGES

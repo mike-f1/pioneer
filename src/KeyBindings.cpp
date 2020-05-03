@@ -17,6 +17,23 @@ static bool m_disableBindings = 0;
 
 namespace KeyBindings {
 
+	typedef std::underlying_type<BehaviourMod>::type bm;
+
+	BehaviourMod operator |(BehaviourMod lhs, BehaviourMod rhs)
+	{
+		return static_cast<BehaviourMod> (static_cast<bm>(lhs) | static_cast<bm>(rhs));
+	}
+
+	BehaviourMod operator &(BehaviourMod lhs, BehaviourMod rhs)
+	{
+		return static_cast<BehaviourMod> (static_cast<bm>(lhs) & static_cast<bm>(rhs));
+	}
+
+	bool BehaviourTrait::HaveBTrait(BehaviourMod masked) const
+	{
+		return (masked & m_bmTrait);
+	}
+
 	SDL_Keymod KeymodUnifyLR(SDL_Keymod mod)
 	{
 		unsigned imod = mod;
@@ -130,102 +147,23 @@ namespace KeyBindings {
 		return oss.str();
 	}
 
-	bool KeyBinding::IsActive() const
+	KeyBinding::KeyBinding(const SDL_JoystickGUID &joystickGuid, Uint8 button, SDL_Keymod mod) :
+		BehaviourTrait(),
+		type(BindType::JOYSTICK_BUTTON),
+		m_mod(mod)
 	{
-		if (!m_mod.IsActive()) return false;
-		switch (type) {
-		case BindType::BINDING_DISABLED:
-			return false;
-		case BindType::KEYBOARD_KEY: {
-			if (!Pi::input.KeyState(u.keyboard.key)) {
-				return false;
-			}
-			return m_mod.IsActive();
-		}
-		case BindType::JOYSTICK_BUTTON: {
-			return Pi::input.JoystickButtonState(u.joystickButton.joystick, u.joystickButton.button) != 0;
-		}
-		case BindType::JOYSTICK_HAT: {
-			// SDL_HAT generates diagonal directions by ORing two cardinal directions.
-			int hatState = Pi::input.JoystickHatState(u.joystickHat.joystick, u.joystickHat.hat);
-			return (hatState & u.joystickHat.direction) == u.joystickHat.direction;
-		}
-		case BindType::MOUSE_WHEEL: {
-			WheelDirection wheelDir = Pi::input.GetWheelState();
-			if (wheelDir != u.mouseWheel.dir) return false;
-			return true;
-		}
-		default:
-			abort();
-		}
+		u.joystickButton.joystick = Pi::input.JoystickFromGUID(joystickGuid);
+		u.joystickButton.button = button;
 	}
 
-	bool KeyBinding::Matches(const SDL_Keysym &sym) const
+	KeyBinding::KeyBinding(const SDL_JoystickGUID &joystickGuid, Uint8 hat, Uint8 dir, SDL_Keymod mod) :
+		BehaviourTrait(),
+		type(BindType::JOYSTICK_HAT),
+		m_mod(mod)
 	{
-		return (type == BindType::KEYBOARD_KEY) &&
-			(sym.sym == u.keyboard.key) &&
-			(m_mod.Matches(SDL_Keymod(sym.mod)));
-	}
-
-	bool KeyBinding::Matches(const SDL_JoyButtonEvent &joy) const
-	{
-		return (type == BindType::JOYSTICK_BUTTON) &&
-			(joy.which == u.joystickButton.joystick) &&
-			(joy.button == u.joystickButton.button) &&
-			(m_mod.IsActive());
-	}
-
-	bool KeyBinding::Matches(const SDL_JoyHatEvent &joy) const
-	{
-		return (type == BindType::JOYSTICK_HAT) &&
-			(joy.which == u.joystickHat.joystick) &&
-			(joy.hat == u.joystickHat.hat) &&
-			(joy.value == u.joystickHat.direction) &&
-			(m_mod.IsActive());
-	}
-
-	bool KeyBinding::Matches(const SDL_MouseWheelEvent &mwe) const
-	{
-		return (type == BindType::MOUSE_WHEEL) && (
-			((mwe.y < 0) && (u.mouseWheel.dir == WheelDirection::DOWN)) ||
-			((mwe.y > 0) && (u.mouseWheel.dir == WheelDirection::UP)) ||
-			((mwe.x < 0) && (u.mouseWheel.dir == WheelDirection::LEFT)) ||
-			((mwe.x > 0) && (u.mouseWheel.dir == WheelDirection::RIGHT))
-			) && (m_mod.IsActive());
-	}
-
-	std::string KeyBinding::Description() const
-	{
-		std::ostringstream oss;
-
-		oss << m_mod.Description();
-
-		switch (type) {
-		case BindType::BINDING_DISABLED:
-		break;
-		case BindType::KEYBOARD_KEY: {
-			oss << SDL_GetKeyName(u.keyboard.key);
-		};
-		break;
-		case BindType::JOYSTICK_BUTTON: {
-			oss << Pi::input.JoystickName(u.joystickButton.joystick);
-			oss << Lang::BUTTON << int(u.joystickButton.button);
-		};
-		break;
-		case BindType::JOYSTICK_HAT: {
-			oss << Pi::input.JoystickName(u.joystickHat.joystick);
-			oss << Lang::HAT << int(u.joystickHat.hat);
-			oss << Lang::DIRECTION << int(u.joystickHat.direction);
-		}
-		break;
-		case BindType::MOUSE_WHEEL: {
-			oss << GetMouseWheelDescription(u.mouseWheel.dir);
-		}
-		break;
-		default:
-			assert(0 && "invalid binding type");
-		}
-		return oss.str();
+		u.joystickHat.joystick = Pi::input.JoystickFromGUID(joystickGuid);
+		u.joystickHat.hat = hat;
+		u.joystickHat.direction = dir;
 	}
 
 /**
@@ -280,13 +218,17 @@ namespace KeyBindings {
 			kb.u.keyboard.key = SDL_Keycode(atoi(p));
 			p += strspn(p, digits);
 
-			if (strncmp(p, "Mod", 3) == 0) {
+			if (strncmp(p, "Mod", 3) == 0 && !kb.HaveBTrait(BehaviourMod::DISALLOW_MODIFIER)) {
 				p += 3;
 				kb.m_mod = Modifiers(SDL_Keymod(atoi(p)));
 			} else {
 				kb.m_mod = Modifiers();
 			}
 		} else if (strncmp(p, "Joy", 3) == 0) {
+			if (kb.HaveBTrait(BehaviourMod::ALLOW_KEYBOARD_ONLY)) {
+				kb.Clear();
+				return true;
+			}
 			p += 3;
 
 			const int JoyUUIDLength = 33;
@@ -304,11 +246,19 @@ namespace KeyBindings {
 				return false;
 			}
 			if (strncmp(p, "Button", 6) == 0) {
+				if (kb.HaveBTrait(BehaviourMod::ALLOW_KEYBOARD_ONLY)) {
+					kb.Clear();
+					return true;
+				}
 				p += 6;
 				kb.type = BindType::JOYSTICK_BUTTON;
 				kb.u.joystickButton.joystick = joy;
 				kb.u.joystickButton.button = atoi(p);
 			} else if (strncmp(p, "Hat", 3) == 0) {
+				if (kb.HaveBTrait(BehaviourMod::ALLOW_KEYBOARD_ONLY)) {
+					kb.Clear();
+					return true;
+				}
 				p += 3;
 				kb.type = BindType::JOYSTICK_HAT;
 				kb.u.joystickHat.joystick = joy;
@@ -325,13 +275,17 @@ namespace KeyBindings {
 			}
 
 			p += strspn(p, digits);
-			if (strncmp(p, "Mod", 3) == 0) {
+			if (strncmp(p, "Mod", 3) == 0 && !kb.HaveBTrait(BehaviourMod::DISALLOW_MODIFIER)) {
 				p += 3;
 				kb.m_mod = Modifiers(SDL_Keymod(atoi(p)));
 			} else {
 				kb.m_mod = Modifiers();
 			}
 		} else if (strncmp(p, "MWh", 3) == 0) {
+			if (kb.HaveBTrait(BehaviourMod::ALLOW_KEYBOARD_ONLY)) {
+				kb.Clear();
+				return true;
+			}
 			kb.type = BindType::MOUSE_WHEEL;
 			p += 3;
 
@@ -341,7 +295,7 @@ namespace KeyBindings {
 			}
 
 			p +=1;
-			if (strncmp(p, "Mod", 3) == 0) {
+			if (strncmp(p, "Mod", 3) == 0 && !kb.HaveBTrait(BehaviourMod::DISALLOW_MODIFIER)) {
 				p += 3;
 				kb.m_mod = Modifiers(SDL_Keymod(atoi(p)));
 			} else {
@@ -349,31 +303,6 @@ namespace KeyBindings {
 			}
 		}
 		return true;
-	}
-
-	KeyBinding KeyBinding::FromString(const char *str)
-	{
-		KeyBinding kb;
-		if (!KeyBinding::FromString(str, kb))
-			kb.Clear();
-		return kb;
-	}
-
-	KeyBinding::KeyBinding(const SDL_JoystickGUID &joystickGuid, Uint8 button, SDL_Keymod mod) :
-		type(BindType::JOYSTICK_BUTTON),
-		m_mod(mod)
-	{
-		u.joystickButton.joystick = Pi::input.JoystickFromGUID(joystickGuid);
-		u.joystickButton.button = button;
-	}
-
-	KeyBinding::KeyBinding(const SDL_JoystickGUID &joystickGuid, Uint8 hat, Uint8 dir, SDL_Keymod mod) :
-		type(BindType::JOYSTICK_HAT),
-		m_mod(mod)
-	{
-		u.joystickHat.joystick = Pi::input.JoystickFromGUID(joystickGuid);
-		u.joystickHat.hat = hat;
-		u.joystickHat.direction = dir;
 	}
 
 	std::string KeyBinding::ToString() const
@@ -389,17 +318,20 @@ namespace KeyBindings {
 			}
 		break;
 		case BindType::JOYSTICK_BUTTON: {
+				if (HaveBTrait(BehaviourMod::ALLOW_KEYBOARD_ONLY)) break;
 				oss << "Joy" << Pi::input.JoystickGUIDString(u.joystickButton.joystick);
 				oss << "/Button" << int(u.joystickButton.button);
 		}
 		break;
 		case BindType::JOYSTICK_HAT: {
+				if (HaveBTrait(BehaviourMod::ALLOW_KEYBOARD_ONLY)) break;
 				oss << "Joy" << Pi::input.JoystickGUIDString(u.joystickButton.joystick);
 				oss << "/Hat" << int(u.joystickHat.hat);
 				oss << "Dir" << int(u.joystickHat.direction);
 		}
 		break;
 		case BindType::MOUSE_WHEEL: {
+				if (HaveBTrait(BehaviourMod::ALLOW_KEYBOARD_ONLY)) break;
 				oss << "MWh" << WheelDirectionToChar(u.mouseWheel.dir);
 		}
 		break;
@@ -407,32 +339,141 @@ namespace KeyBindings {
 			assert(0 && "KeyBinding type field is invalid");
 		}
 
-		oss << m_mod.ToString();
+		if (!HaveBTrait(BehaviourMod::DISALLOW_MODIFIER)) oss << m_mod.ToString();
 		return oss.str();
 	}
 
-	void ActionBinding::SetFromString(const char *str)
+	std::string KeyBinding::Description() const
+	{
+		std::ostringstream oss;
+
+		if (!HaveBTrait(BehaviourMod::DISALLOW_MODIFIER)) oss << m_mod.Description();
+
+		switch (type) {
+		case BindType::BINDING_DISABLED:
+		break;
+		case BindType::KEYBOARD_KEY: {
+			oss << SDL_GetKeyName(u.keyboard.key);
+		};
+		break;
+		case BindType::JOYSTICK_BUTTON: {
+			if (HaveBTrait(BehaviourMod::ALLOW_KEYBOARD_ONLY)) break;
+			oss << Pi::input.JoystickName(u.joystickButton.joystick);
+			oss << Lang::BUTTON << int(u.joystickButton.button);
+		};
+		break;
+		case BindType::JOYSTICK_HAT: {
+			if (HaveBTrait(BehaviourMod::ALLOW_KEYBOARD_ONLY)) break;
+			oss << Pi::input.JoystickName(u.joystickHat.joystick);
+			oss << Lang::HAT << int(u.joystickHat.hat);
+			oss << Lang::DIRECTION << int(u.joystickHat.direction);
+		}
+		break;
+		case BindType::MOUSE_WHEEL: {
+			if (HaveBTrait(BehaviourMod::ALLOW_KEYBOARD_ONLY)) break;
+			oss << GetMouseWheelDescription(u.mouseWheel.dir);
+		}
+		break;
+		default:
+			assert(0 && "invalid binding type");
+		}
+		return oss.str();
+	}
+
+	bool KeyBinding::IsActive() const
+	{
+		if (!m_mod.IsActive() && !HaveBTrait(BehaviourMod::DISALLOW_MODIFIER)) return false;
+		switch (type) {
+		case BindType::BINDING_DISABLED:
+			return false;
+		case BindType::KEYBOARD_KEY: {
+			if (!Pi::input.KeyState(u.keyboard.key)) {
+				return false;
+			}
+			return true;
+		}
+		case BindType::JOYSTICK_BUTTON: {
+			return Pi::input.JoystickButtonState(u.joystickButton.joystick, u.joystickButton.button) != 0;
+		}
+		case BindType::JOYSTICK_HAT: {
+			// SDL_HAT generates diagonal directions by ORing two cardinal directions.
+			int hatState = Pi::input.JoystickHatState(u.joystickHat.joystick, u.joystickHat.hat);
+			return (hatState & u.joystickHat.direction) == u.joystickHat.direction;
+		}
+		case BindType::MOUSE_WHEEL: {
+			WheelDirection wheelDir = Pi::input.GetWheelState();
+			if (wheelDir != u.mouseWheel.dir) return false;
+			return true;
+		}
+		default:
+			abort();
+		}
+	}
+
+	bool KeyBinding::Matches(const SDL_Keysym &sym) const
+	{
+		return (type == BindType::KEYBOARD_KEY) &&
+			(sym.sym == u.keyboard.key) &&
+			(m_mod.Matches(SDL_Keymod(sym.mod)) ||
+			HaveBTrait(BehaviourMod::DISALLOW_MODIFIER));
+	}
+
+	bool KeyBinding::Matches(const SDL_JoyButtonEvent &joy) const
+	{
+		return (type == BindType::JOYSTICK_BUTTON) &&
+			(joy.which == u.joystickButton.joystick) &&
+			(joy.button == u.joystickButton.button) &&
+			(m_mod.IsActive() ||
+			HaveBTrait(BehaviourMod::DISALLOW_MODIFIER));
+	}
+
+	bool KeyBinding::Matches(const SDL_JoyHatEvent &joy) const
+	{
+		return (type == BindType::JOYSTICK_HAT) &&
+			(joy.which == u.joystickHat.joystick) &&
+			(joy.hat == u.joystickHat.hat) &&
+			(joy.value == u.joystickHat.direction)  &&
+			(m_mod.IsActive() ||
+			HaveBTrait(BehaviourMod::DISALLOW_MODIFIER));
+	}
+
+	bool KeyBinding::Matches(const SDL_MouseWheelEvent &mwe) const
+	{
+		return (type == BindType::MOUSE_WHEEL) && (
+			((mwe.y < 0) && (u.mouseWheel.dir == WheelDirection::DOWN)) ||
+			((mwe.y > 0) && (u.mouseWheel.dir == WheelDirection::UP)) ||
+			((mwe.x < 0) && (u.mouseWheel.dir == WheelDirection::LEFT)) ||
+			((mwe.x > 0) && (u.mouseWheel.dir == WheelDirection::RIGHT))
+			) && (m_mod.IsActive() || HaveBTrait(BehaviourMod::DISALLOW_MODIFIER));
+	}
+
+	void ActionBinding::SetFromBindings(KeyBinding &b1, KeyBinding &b2)
+	{
+		BehaviourMod bm = m_binding[0].m_bmTrait;
+		m_binding[0] = b1;
+		m_binding[0].m_bmTrait = bm;
+		m_binding[1] = b2;
+		m_binding[1].m_bmTrait = bm;
+	}
+
+	void ActionBinding::SetFromString(const std::string &str)
 	{
 		const size_t BUF_SIZE = 64;
-		const size_t len = strlen(str);
+		const size_t len = str.length();
+		BehaviourMod bm = m_binding[0].m_bmTrait;
 		if (len >= BUF_SIZE) {
 			Output("invalid ActionBinding string\n");
-			m_binding[0] = KeyBinding::FromString(str);
+			if (!KeyBinding::FromString(str.data(), m_binding[0])) m_binding[0].Clear();
 			m_binding[1].Clear();
 		} else {
-			const char *sep = strchr(str, ',');
-			if (sep) {
-				char buf[BUF_SIZE];
-				const size_t len1 = sep - str;
-				const size_t len2 = len - len1 - 1;
-				memcpy(buf, str, len1);
-				buf[len1] = '\0';
-				m_binding[0] = KeyBinding::FromString(buf);
-				memcpy(buf, sep + 1, len2);
-				buf[len2] = '\0';
-				m_binding[1] = KeyBinding::FromString(buf);
+			size_t sep = str.find(',');
+			if (sep != std::string::npos) {
+				std::string str1 = str.substr(0, sep);
+				std::string str2 = str.substr(sep + 1);
+				if (!KeyBinding::FromString(str1.data(), m_binding[0])) m_binding[0].Clear();
+				if (!KeyBinding::FromString(str2.data(), m_binding[1])) m_binding[1].Clear();
 			} else {
-				m_binding[0] = KeyBinding::FromString(str);
+				if (!KeyBinding::FromString(str.data(), m_binding[0])) m_binding[0].Clear();
 				m_binding[1].Clear();
 			}
 		}
@@ -455,6 +496,7 @@ namespace KeyBindings {
 
 	bool ActionBinding::IsActive() const
 	{
+		if (m_disabled) return false;
 		return m_binding[0].IsActive() || m_binding[1].IsActive();
 	}
 
@@ -466,7 +508,7 @@ namespace KeyBindings {
 
 	InputResponse ActionBinding::CheckSDLEventAndDispatch(const SDL_Event &event)
 	{
-		if (m_disableBindings) return InputResponse::NOMATCH;
+		if (m_disableBindings || m_disabled) return InputResponse::NOMATCH;
 		switch (event.type) {
 		case SDL_KEYDOWN: {
 			if (m_binding[0].Matches(event.key.keysym) || m_binding[1].Matches(event.key.keysym) ) {
@@ -603,14 +645,6 @@ namespace KeyBindings {
 		}
 	}
 
-	WheelAxisBinding WheelAxisBinding::FromString(const char *str)
-	{
-		WheelAxisBinding ab;
-		if (!WheelAxisBinding::FromString(str, ab))
-			ab.Clear();
-		return ab;
-	}
-
 	std::string WheelAxisBinding::ToString() const
 	{
 		std::ostringstream oss;
@@ -744,8 +778,10 @@ namespace KeyBindings {
 		} else
 			ab.m_direction = AxisDirection::POSITIVE;
 
-		if (strncmp(p, "Joy", 3) != 0)
+		if (strncmp(p, "Joy", 3) != 0) {
+			ab.Clear();
 			return false;
+		}
 		p += 3;
 
 		const int JoyUUIDLength = 33;
@@ -753,6 +789,7 @@ namespace KeyBindings {
 
 		// read the UUID
 		if (!ReadToTok('/', &p, joyUUIDBuf, JoyUUIDLength)) {
+			ab.Clear();
 			return false;
 		}
 		// force terminate
@@ -760,14 +797,17 @@ namespace KeyBindings {
 		// now, map the GUID to a joystick number
 		const int joystick = Pi::input.JoystickFromGUIDString(joyUUIDBuf);
 		if (joystick == -1) {
+			ab.Clear();
 			return false;
 		}
 		// found a joystick
 		assert(joystick < 256);
 		ab.m_joystick = Uint8(joystick);
 
-		if (strncmp(p, "Axis", 4) != 0)
+		if (strncmp(p, "Axis", 4) != 0) {
+			ab.Clear();
 			return false;
+		}
 
 		p += 4;
 		ab.m_axis = atoi(p);
@@ -797,14 +837,6 @@ namespace KeyBindings {
 		return true;
 	}
 
-	JoyAxisBinding JoyAxisBinding::FromString(const char *str)
-	{
-		JoyAxisBinding ab;
-		if (!JoyAxisBinding::FromString(str, ab))
-			ab.Clear();
-		return ab;
-	}
-
 	std::string JoyAxisBinding::ToString() const
 	{
 		if (!Enabled()) return std::string("disabled");
@@ -825,37 +857,45 @@ namespace KeyBindings {
 		return oss.str();
 	}
 
-	void AxisBinding::SetFromString(const std::string str)
+	void AxisBinding::SetFromBindings(JoyAxisBinding &ax, WheelAxisBinding &wheel, KeyBinding &pos, KeyBinding &neg)
+	{
+		m_axis = ax;
+		m_wheel = wheel;
+		m_positive = pos;
+		m_negative = neg;
+	}
+
+	void AxisBinding::SetFromString(const std::string &str)
 	{
 		size_t ofs = 0;
 		size_t nextpos = str.find(',');
 		if (nextpos == std::string::npos) return;
 
 		if (str.substr(ofs, 8) != "disabled")
-			axis = JoyAxisBinding::FromString(str.substr(0, nextpos).c_str());
+			if (!JoyAxisBinding::FromString(str.substr(0, nextpos).c_str(), m_axis)) m_axis.Clear();
 
 		ofs = nextpos + 1;
 		nextpos = str.find(',', ofs);
 		if (str.substr(ofs, 8) != "disabled")
-			m_wheel = WheelAxisBinding::FromString(str.substr(ofs, nextpos - ofs).c_str());
+			if (!WheelAxisBinding::FromString(str.substr(ofs, nextpos - ofs).c_str(), m_wheel)) m_wheel.Clear();
 
 		ofs = nextpos + 1;
 		nextpos = str.find(',', ofs);
 		if (str.substr(ofs, 8) != "disabled")
-			positive = KeyBinding::FromString(str.substr(ofs, nextpos - ofs).c_str());
+			if (!KeyBinding::FromString(str.substr(ofs, nextpos - ofs).c_str(), m_positive)) m_positive.Clear();
 
 		ofs = nextpos + 1;
 		if (str.substr(ofs, 8) != "disabled")
-			negative = KeyBinding::FromString(str.substr(ofs).c_str());
+			if (!KeyBinding::FromString(str.substr(ofs).c_str(), m_negative)) m_negative.Clear();
 	}
 
 	std::string AxisBinding::ToString() const
 	{
 		std::ostringstream oss;
-		oss << axis.ToString() << ',';
+		oss << m_axis.ToString() << ',';
 		oss << m_wheel.ToString() << ',';
-		oss << positive.ToString() << ',';
-		oss << negative.ToString();
+		oss << m_positive.ToString() << ',';
+		oss << m_negative.ToString();
 		return oss.str();
 	}
 
@@ -867,28 +907,30 @@ namespace KeyBindings {
 
 	bool AxisBinding::IsActive() const
 	{
-		return axis.IsActive() || m_wheel.IsActive() || positive.IsActive() || negative.IsActive();
+		if (m_disabled) return false;
+		return m_axis.IsActive() || m_wheel.IsActive() || m_positive.IsActive() || m_negative.IsActive();
 	}
 
 	float AxisBinding::GetValue() const
 	{
+		if (m_disabled) return 0.0;
 		// Holding the positive and negative keys cancel each other out,
 		float value = 0.0f;
-		value += positive.IsActive() ? 1.0 : 0.0;
-		value -= negative.IsActive() ? 1.0 : 0.0;
+		value += m_positive.IsActive() ? 1.0 : 0.0;
+		value -= m_negative.IsActive() ? 1.0 : 0.0;
 
 		// And input on the axis device supercedes both of them.
-		return axis.IsActive() ? axis.GetValue() : (m_wheel.IsActive() ? m_wheel.GetValue() : value);
+		return m_axis.IsActive() ? m_axis.GetValue() : (m_wheel.IsActive() ? m_wheel.GetValue() : value);
 	}
 
 	InputResponse AxisBinding::CheckSDLEventAndDispatch(const SDL_Event &event)
 	{
-		if (m_disableBindings) return InputResponse::NOMATCH;
+		if (m_disableBindings || m_disabled) return InputResponse::NOMATCH;
 		float value = GetValue();
 		switch (event.type) {
 		case SDL_KEYDOWN:
 		case SDL_KEYUP: {
-			if (positive.Matches(event.key.keysym) && negative.Matches(event.key.keysym)) {
+			if (m_positive.Matches(event.key.keysym) && m_negative.Matches(event.key.keysym)) {
 				if (m_fun != nullptr) m_fun(value);
 				return InputResponse::MATCHED;
 			}
@@ -903,14 +945,14 @@ namespace KeyBindings {
 		break;
 		case SDL_JOYBUTTONDOWN:
 		case SDL_JOYBUTTONUP: {
-			if (positive.Matches(event.jbutton) || negative.Matches(event.jbutton)) {
+			if (m_positive.Matches(event.jbutton) || m_negative.Matches(event.jbutton)) {
 				if (m_fun != nullptr) m_fun(value);
 				return InputResponse::MATCHED;
 			}
 		}
 		break;
 		case SDL_JOYHATMOTION: {
-			if (positive.Matches(event.jhat) || positive.Matches(event.jhat)) {
+			if (m_positive.Matches(event.jhat) || m_positive.Matches(event.jhat)) {
 				if (m_fun != nullptr) m_fun(value);
 				// XXX to emit onRelease, we need to have access to the state of the joystick hat prior to this event,
 				// so that we can detect the case of switching from a direction that matches the binding to some other direction
@@ -919,7 +961,7 @@ namespace KeyBindings {
 		}
 		break;
 		case SDL_JOYAXISMOTION: {
-			if (axis.Matches(event.jaxis)) {
+			if (m_axis.Matches(event.jaxis)) {
 				if (m_fun != nullptr) m_fun(value);
 				return InputResponse::MATCHED;
 			}

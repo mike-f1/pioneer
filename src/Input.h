@@ -62,12 +62,6 @@ public:
 	// Get a read-only list of input frames.
 	const std::vector<InputFrame *> &GetInputFrames() { return m_inputFrames; }
 
-	// Check if a specific input frame is currently on the stack.
-	bool HasInputFrame(InputFrame *frame)
-	{
-		return std::count(m_inputFrames.begin(), m_inputFrames.end(), frame) > 0;
-	}
-
 	// Remove an arbitrary input frame from the input stack.
 	// return true if it was such frame
 	bool RemoveInputFrame(InputFrame *frame);
@@ -172,11 +166,17 @@ private:
 	void InitJoysticks();
 	void RegisterInputBindings();
 
+	// Check if a specific input frame is currently on the stack.
+	bool HasInputFrame(InputFrame *frame)
+	{
+		return std::count(m_inputFrames.begin(), m_inputFrames.end(), frame) > 0;
+	}
+
 	// The only current "action": this is a general binding
-	// used to speed up scrolling/rotation/... of various setting
+	// used to speed up scroll/rotation/... of various bindings
 	// TODO:
 	// * when game ends it should be removed
-	// * allow customization of values
+	// * allow customization of speed values
 	KeyBindings::ActionBinding *m_speedModifier;
 
 	// Ok, wanna free pages and groups when an Axis or an Action

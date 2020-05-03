@@ -80,6 +80,7 @@ void LuaConsole::RegisterInputBindings()
 	m_inputFrame.reset(new InputFrame("Console"));
 
 	m_consoleBindings.toggleLuaConsole = m_inputFrame->AddActionBinding("ToggleConsole", group, ActionBinding(SDLK_BACKSLASH));
+	m_consoleBindings.toggleLuaConsole->SetBTrait(BehaviourMod::ALLOW_KEYBOARD_ONLY);
 	m_consoleBindings.toggleLuaConsole->StoreOnActionCallback(std::bind(&LuaConsole::OnToggle, this, _1));
 
 	Pi::input.PushInputFrame(m_inputFrame.get());

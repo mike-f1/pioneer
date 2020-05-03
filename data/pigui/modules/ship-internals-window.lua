@@ -98,11 +98,11 @@ end
 local function button_wheelstate()
 	local wheelstate = player:GetWheelState() -- 0.0 is up, 1.0 is down
 	if wheelstate == 0.0 then -- gear is up
-		if mainMenuButton(icons.landing_gear_down, false, lui.HUD_BUTTON_LANDING_GEAR_IS_UP) or (ui.noModifierHeld() and ui.isKeyReleased(ui.keys.f6)) then
+		if mainMenuButton(icons.landing_gear_down, false, lui.HUD_BUTTON_LANDING_GEAR_IS_UP) then
 			player:ToggleWheelState()
 		end
 	elseif wheelstate == 1.0 then -- gear is down
-		if mainMenuButton(icons.landing_gear_up, false, lui.HUD_BUTTON_LANDING_GEAR_IS_DOWN) or (ui.noModifierHeld() and ui.isKeyReleased(ui.keys.f6)) then
+		if mainMenuButton(icons.landing_gear_up, false, lui.HUD_BUTTON_LANDING_GEAR_IS_DOWN) then
 			player:ToggleWheelState()
 		end
 	else

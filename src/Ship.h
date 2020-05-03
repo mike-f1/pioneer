@@ -93,6 +93,9 @@ public:
 	void SetGunsState(GunDir dir, int state);
 
 	void UpdateMass();
+
+	// TODO: it seems that wheels status interface should be improved,
+	// isn't easier to change a "direction" which means "move to {down|up}"
 	virtual bool SetWheelState(bool down); // returns success of state change, NOT state itself
 	void Blastoff();
 	bool Undock();

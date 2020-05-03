@@ -42,7 +42,6 @@ local function button_hyperspace()
 		shown = false
 	end
 
-
 	if shown then
 		ui.sameLine()
 		if disabled then
@@ -125,8 +124,8 @@ local function button_flight_control()
 			local distance = Format.Speed(speed)
 			tooltip = tooltip .. " " .. distance
 		end
-  end
-	if mainMenuButton(icon, false, tooltip) or (flightstate == "FLYING" and ui.noModifierHeld() and ui.isKeyReleased(ui.keys.f5)) then
+	end
+	if mainMenuButton(icon, false, tooltip) then
 		local newState = "CONTROL_MANUAL"
 		if ui.ctrlHeld() and flightcontrolstate == "CONTROL_FIXSPEED" then
 			newState = "CONTROL_FIXHEADING_FORWARD"

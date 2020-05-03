@@ -197,8 +197,8 @@ Ship::Ship(const Json &jsonObj, Space *space) :
 		lua_pop(l, 2);
 
 		m_controller = 0;
-		const ShipController::Type ctype = shipObj["controller_type"];
-		if (ctype == ShipController::PLAYER)
+		const ShipController::ControllerType ctype = shipObj["controller_type"];
+		if (ctype == ShipController::ControllerType::PLAYER)
 			SetController(new PlayerShipController());
 		else
 			SetController(new ShipController());

@@ -36,7 +36,7 @@ public:
 	~InputFrame();
 
 	bool IsActive() const { return m_active; }
-	void SetActive(bool is_active) { m_active = is_active; }
+	void SetActive(bool is_active);
 
 	KeyBindings::ActionBinding *AddActionBinding(std::string id, BindingGroup &group, KeyBindings::ActionBinding binding);
 	KeyBindings::AxisBinding *AddAxisBinding(std::string id, BindingGroup &group, KeyBindings::AxisBinding binding);

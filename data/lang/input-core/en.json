@@ -171,6 +171,10 @@
     "description": "Descriptive name for the toggle auto range action.",
     "message": "Toggle Radar Auto Range"
   },
+  "BIND_TOGGLE_UC": {
+    "description": "Descriptive name for extract/retract under carriage action.",
+    "message": "Toggle Under Carriage"
+  },
   "BIND_TOGGLE_SET_SPEED": {
     "description": "Descriptive name for the ToggleSetSpeed action.",
     "message": "Toggle Speed Control Mode"

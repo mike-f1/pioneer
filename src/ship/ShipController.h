@@ -32,13 +32,13 @@ enum FlightControlState { // <enum scope='FlightControlState' name=ShipControlle
 class ShipController {
 public:
 	//needed for serialization
-	enum Type {
+	enum class ControllerType {
 		AI = 0,
 		PLAYER = 1
 	};
 	ShipController() {}
 	virtual ~ShipController() {}
-	virtual Type GetType() { return AI; }
+	virtual ControllerType GetType() { return ControllerType::AI; }
 	virtual void SaveToJson(Json &jsonObj, Space *s) {}
 	virtual void LoadFromJson(const Json &jsonObj) {}
 	virtual void PostLoadFixup(Space *) {}

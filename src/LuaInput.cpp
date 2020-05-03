@@ -32,7 +32,7 @@ static void setup_binding_table(lua_State *l, const char *id, const char *type)
 	lua_setfield(l, -2, "type");
 }
 
-static void push_key_binding(lua_State *l, KeyBindings::KeyBinding *kb, const char *binding, const char *description)
+static void push_key_binding(lua_State *l, const KeyBindings::KeyBinding *kb, const char *binding, const char *description)
 {
 	if (kb->Enabled()) {
 		lua_pushstring(l, kb->ToString().c_str());
@@ -229,8 +229,9 @@ static int l_input_set_action_binding(lua_State *l)
 			return luaL_error(l, "invalid second key binding given to Input.SetKeyBinding");
 	} else
 		kb2.Clear();
-	action->GetBinding(0) = kb1;
-	action->GetBinding(1) = kb2;
+
+	action->SetFromBindings(kb1, kb2);
+
 	GameConfSingleton::getInstance().SetString(binding_id, action->ToString());
 	GameConfSingleton::getInstance().Save();
 	return 0;
@@ -255,7 +256,7 @@ static int l_input_set_axis_binding(lua_State *l)
 	KeyBindings::WheelAxisBinding wb;
 	if (binding_config_wheel) {
 		if (!KeyBindings::WheelAxisBinding::FromString(binding_config_wheel, wb))
-			return luaL_error(l, "invalid wheel binding given to Input.SetAxisBinding: %s", binding_config_wheel);
+			return luaL_error(l, "invalid wheel binding given to Input.SetAxisBinding");
 	} else
 		wb.Clear();
 
@@ -271,10 +272,8 @@ static int l_input_set_axis_binding(lua_State *l)
 	} else
 		kb2.Clear();
 
-	binding->GetAxis() = ab;
-	binding->GetWheel() = wb;
-	binding->GetKey(KeyBindings::KeyDirection::POS) = kb1;
-	binding->GetKey(KeyBindings::KeyDirection::NEG) = kb2;
+	binding->SetFromBindings(ab, wb, kb1, kb2);
+
 	GameConfSingleton::getInstance().SetString(binding_id, binding->ToString());
 	GameConfSingleton::getInstance().Save();
 	return 0;

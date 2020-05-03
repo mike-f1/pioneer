@@ -52,7 +52,7 @@ void PlayerShipController::RegisterInputBindings()
 	using namespace KeyBindings;
 	using namespace std::placeholders;
 
-	m_inputFrame.reset(new InputFrame("PlayerShip"));
+	m_inputFrame.reset(new InputFrame("PlayerShipController"));
 
 	auto &controlsPage = Pi::input.GetBindingPage("ShipControls");
 
@@ -75,6 +75,8 @@ void PlayerShipController::RegisterInputBindings()
 	m_inputBindings.thrustUp = m_inputFrame->AddAxisBinding("BindAxisThrustUp", thrustGroup, AxisBinding(SDLK_r, SDLK_f));
 	m_inputBindings.thrustLeft = m_inputFrame->AddAxisBinding("BindAxisThrustLeft", thrustGroup, AxisBinding(SDLK_a, SDLK_d));
 	m_inputBindings.thrustLowPower = m_inputFrame->AddActionBinding("BindThrustLowPower", thrustGroup, ActionBinding(SDLK_LSHIFT));
+	m_inputBindings.toggleUC = m_inputFrame->AddActionBinding("BindToggleUC", thrustGroup, ActionBinding(SDLK_g));
+	m_inputBindings.toggleUC->StoreOnActionCallback(std::bind(&PlayerShipController::ToggleUC, this, _1));
 
 	auto &speedGroup = controlsPage.GetBindingGroup("SpeedControl");
 	m_inputBindings.speedControl = m_inputFrame->AddAxisBinding("BindSpeedControl", speedGroup, AxisBinding(SDLK_RETURN, SDLK_RSHIFT));
@@ -379,6 +381,12 @@ void PlayerShipController::ToggleRotationDamping(bool down)
 {
 	if (down) return;
 	m_rotationDamping = !m_rotationDamping;
+}
+
+void PlayerShipController::ToggleUC(bool down)
+{
+	if (down) return;
+	m_ship->SetWheelState(is_equal_exact(m_ship->GetWheelState(), 0.0f));
 }
 
 void PlayerShipController::FireMissile(bool down)

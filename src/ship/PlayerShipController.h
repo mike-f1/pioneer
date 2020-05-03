@@ -19,7 +19,7 @@ public:
 	PlayerShipController();
 	~PlayerShipController();
 
-	Type GetType() override { return PLAYER; }
+	ControllerType GetType() override { return ControllerType::PLAYER; }
 	void SaveToJson(Json &jsonObj, Space *s) override;
 	void LoadFromJson(const Json &jsonObj) override;
 	void PostLoadFixup(Space *s) override;
@@ -54,6 +54,7 @@ private:
 	void RegisterInputBindings();
 
 	void ToggleRotationDamping(bool down);
+	void ToggleUC(bool down);
 	void ToggleSetSpeedMode(bool down);
 
 	struct InputBinding {
@@ -78,6 +79,7 @@ private:
 		AxisBinding *thrustUp;
 		AxisBinding *thrustLeft;
 		ActionBinding *thrustLowPower;
+		ActionBinding *toggleUC;
 
 		// Speed Control
 		AxisBinding *speedControl;

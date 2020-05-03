@@ -7,7 +7,6 @@
 #include "GameLocator.h"
 #include "GameSaveError.h"
 #include "Object.h" // <- here only for comment in AIFaceDirection (line 320)
-#include "PlayerShipController.h"
 
 void Propulsion::SaveToJson(Json &jsonObj, Space *space)
 {
@@ -436,8 +435,17 @@ double Propulsion::AIFaceDirection(const vector3d &dir, double av)
 	// baseclass version in Ship would always be 0. the version in Player
 	// would be constructed from user input. that adjustment could then be
 	// considered by this method when computing the required change
-	if (m_dBody->IsType(Object::PLAYER) && (PlayerShipController::InputBindings.roll->IsActive()))
+	// * Update XX May 2020: removed KeyBinding and PlayerShipController as
+	// * it seems, by commenting below line, these aren't needed. But the
+	// * above comment still valid and (probably) would drive to a better and
+	// * deeper separation between these classes... Or it may be that the below
+	// * line was breaking something which has not recognized... So left all
+	// * here, waiting to solve the original issue :/
+
+	//if (m_dBody->IsType(Object::PLAYER) && (PlayerShipController::InputBindings.roll->IsActive())) {
+	if (m_dBody->IsType(Object::PLAYER)) {
 		diff.z = GetAngThrusterState().z;
+	}
 	SetAngThrusterState(diff);
 	return ang;
 }

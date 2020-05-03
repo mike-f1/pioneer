@@ -80,11 +80,9 @@ private:
 		ActionBinding *toggleSetSpeed;
 	} InputBindings;
 
-	// FIXME: separate the propusion controller from the input system, pass in wanted velocity correction directly.
-	friend class Propulsion;
-
 	bool IsAnyAngularThrusterKeyDown();
 	bool IsAnyLinearThrusterKeyDown();
+
 	//do a variety of checks to see if input is allowed
 	void CheckControlsLock();
 	Body *m_combatTarget;

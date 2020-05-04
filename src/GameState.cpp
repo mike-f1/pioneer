@@ -17,7 +17,7 @@
 #include "galaxy/StarSystem.h"
 #include "utils.h"
 
-static const int s_saveVersion = 89;
+static const int s_saveVersion = 90;
 
 void GameState::MakeNewGame(const SystemPath &path,
 		const double startDateTime,
@@ -26,7 +26,7 @@ void GameState::MakeNewGame(const SystemPath &path,
 	Output("Starting new game at (%i;%i;%i;%i;%i)\n", path.sectorX, path.sectorY, path.sectorZ, path.systemIndex, path.bodyIndex);
 	Game *game = new Game(path, startDateTime, sectorRadius);
 
-	// TODO: Before setting InGameViews because it seems there some
+	// TODO: Set locator before InGameViews because it seems there some
 	// calls to GameLocator during initialization... :P
 	GameLocator::provideGame(game);
 

@@ -62,6 +62,18 @@ void PlayerShipController::RegisterInputBindings()
 	m_inputBindings.secondaryFire = m_inputFrame->AddActionBinding("BindSecondaryFire", weaponsGroup, ActionBinding(SDLK_m));
 	m_inputBindings.secondaryFire->StoreOnActionCallback(std::bind(&PlayerShipController::FireMissile, this, _1));
 
+	std::string bindRecString = "BindWCRecall";
+	for (int i = 0; i < WEAPON_CONFIG_SLOTS; i++) {
+		m_inputBindings.weaponConfigRecall[i] =
+			m_inputFrame->AddActionBinding(bindRecString + std::to_string(i + 1), weaponsGroup, ActionBinding(SDLK_1 + i));
+	}
+
+	std::string bindStoString = "BindWCStore";
+	for (int i = 0; i < WEAPON_CONFIG_SLOTS; i++) {
+		m_inputBindings.weaponConfigStore[i] =
+			m_inputFrame->AddActionBinding(bindStoString + std::to_string(i + 1), weaponsGroup, ActionBinding(KeyBinding(SDLK_1 + i, KMOD_LCTRL)));
+	}
+
 	auto &flightGroup = controlsPage.GetBindingGroup("ShipOrient");
 	m_inputBindings.pitch = m_inputFrame->AddAxisBinding("BindAxisPitch", flightGroup, AxisBinding(SDLK_k, SDLK_i));
 	m_inputBindings.yaw = m_inputFrame->AddAxisBinding("BindAxisYaw", flightGroup, AxisBinding(SDLK_j, SDLK_l));
@@ -103,6 +115,16 @@ void PlayerShipController::SaveToJson(Json &jsonObj, Space *space)
 	playerShipControllerObj["index_for_combat_target"] = space->GetIndexForBody(m_combatTarget);
 	playerShipControllerObj["index_for_nav_target"] = space->GetIndexForBody(m_navTarget);
 	playerShipControllerObj["index_for_set_speed_target"] = space->GetIndexForBody(m_setSpeedTarget);
+	Json gunStatusesSlots = Json::array();
+	for (std::vector<int> statuses : m_gunStatuses) {
+		Json gunStatusesSlot = Json::array();
+		for (int num = 0; num < statuses.size(); num++) {
+			gunStatusesSlot.push_back(statuses[num]);
+		}
+		gunStatusesSlots.push_back(gunStatusesSlot);
+	}
+	playerShipControllerObj["gun_statuses"] = gunStatusesSlots;
+
 	jsonObj["player_ship_controller"] = playerShipControllerObj; // Add player ship controller object to supplied object.
 }
 
@@ -119,6 +141,15 @@ void PlayerShipController::LoadFromJson(const Json &jsonObj)
 		m_combatTargetIndex = playerShipControllerObj["index_for_combat_target"];
 		m_navTargetIndex = playerShipControllerObj["index_for_nav_target"];
 		m_setSpeedTargetIndex = playerShipControllerObj["index_for_set_speed_target"];
+
+		Json gunStatuses = playerShipControllerObj["gun_statuses"];
+		assert(gunStatuses.size() == WEAPON_CONFIG_SLOTS);
+		for (unsigned slot = 0; slot < WEAPON_CONFIG_SLOTS; slot++) {
+			Json gunStatus = gunStatuses[slot];
+			for (int gs = 0; gs < gunStatus.size(); gs++) {
+				m_gunStatuses[slot].push_back(gunStatus[gs]);
+			}
+		}
 	} catch (Json::type_error &) {
 		throw SavedGameCorruptException();
 	}
@@ -136,13 +167,10 @@ void PlayerShipController::StaticUpdate(const float timeStep)
 	vector3d v;
 	matrix4x4d m;
 
-	int mouseMotion[2];
-	SDL_GetRelativeMouseState(mouseMotion + 0, mouseMotion + 1); // call to flush
-
 	if (m_ship->GetFlightState() == Ship::FLYING) {
 		switch (m_flightControlState) {
 		case CONTROL_FIXSPEED:
-			PollControls(timeStep, true, mouseMotion);
+			PollControls(timeStep, true);
 			if (IsAnyLinearThrusterKeyDown()) break;
 			v = -m_ship->GetOrient().VectorZ() * m_setSpeed;
 			if (m_setSpeedTarget) {
@@ -157,7 +185,7 @@ void PlayerShipController::StaticUpdate(const float timeStep)
 		case CONTROL_FIXHEADING_RADIALLY_INWARD:
 		case CONTROL_FIXHEADING_RADIALLY_OUTWARD:
 		case CONTROL_FIXHEADING_KILLROT:
-			PollControls(timeStep, true, mouseMotion);
+			PollControls(timeStep, true);
 			if (IsAnyAngularThrusterKeyDown()) break;
 			v = m_ship->GetVelocity().NormalizedSafe();
 			if (m_flightControlState == CONTROL_FIXHEADING_BACKWARD ||
@@ -179,7 +207,7 @@ void PlayerShipController::StaticUpdate(const float timeStep)
 			m_ship->AIFaceDirection(v);
 			break;
 		case CONTROL_MANUAL:
-			PollControls(timeStep, false, mouseMotion);
+			PollControls(timeStep, false);
 			break;
 		case CONTROL_AUTOPILOT:
 			if (m_ship->AIIsActive()) break;
@@ -197,6 +225,42 @@ void PlayerShipController::StaticUpdate(const float timeStep)
 		}
 	} else
 		SetFlightControlState(CONTROL_MANUAL);
+
+	int i = 0;
+	std::for_each(begin(m_inputBindings.weaponConfigRecall), end(m_inputBindings.weaponConfigRecall),
+	[&](KeyBindings::ActionBinding *wCR) {
+		assert(wCR != nullptr);
+		if (wCR->IsActive()) {
+			int numMountedGuns = m_ship->GetMountedGunsNum();
+			int numStoredGuns = m_gunStatuses[i].size();
+			if (numMountedGuns > numStoredGuns) {
+				// Use stored status where present and do nothing on remaining guns
+				for (size_t j = 0; j < numStoredGuns; j++) {
+					m_ship->SetActivationStateOfGun(j, m_gunStatuses[i][j]);
+				}
+			} else {
+				// Use status and drop unused
+				for (size_t j = 0; j < numMountedGuns; j++) {
+					m_ship->SetActivationStateOfGun(j, m_gunStatuses[i][j]);
+				}
+				m_gunStatuses[i].resize(numMountedGuns);
+			}
+		}
+		i++;
+	});
+	i = 0; // reuse variable
+	std::for_each(begin(m_inputBindings.weaponConfigStore), end(m_inputBindings.weaponConfigStore),
+	[&](KeyBindings::ActionBinding *wCS) {
+		assert(wCS != nullptr);
+		if (wCS->IsActive()) {
+			int numGuns = m_ship->GetMountedGunsNum();
+			m_gunStatuses[i].resize(numGuns);
+			for (size_t j = 0; j < numGuns; j++) {
+				m_gunStatuses[i][j] = m_ship->GetActivationStateOfGun(j) ? 1 : 0;
+			}
+		}
+		i++;
+	});
 
 	//call autopilot AI, if active (also applies to set speed and heading lock modes)
 	OS::EnableFPE();
@@ -228,7 +292,7 @@ static double clipmouse(double cur, double inp)
 	return inp;
 }
 
-void PlayerShipController::PollControls(const float timeStep, const bool force_rotation_damping, int *mouseMotion)
+void PlayerShipController::PollControls(const float timeStep, const bool force_rotation_damping)
 {
 	static bool stickySpeedKey = false;
 	CheckControlsLock();
@@ -244,7 +308,9 @@ void PlayerShipController::PollControls(const float timeStep, const bool force_r
 		const float linearThrustPower = (m_inputBindings.thrustLowPower->IsActive() ? m_lowThrustPower : 1.0f);
 
 		// have to use this function. SDL mouse position event is bugged in windows
-		if (Pi::input.MouseButtonState(SDL_BUTTON_RIGHT)) {
+		auto motion = Pi::input->GetMouseMotion(MouseMotionBehaviour::DriveShip);
+		if (std::get<0>(motion)) {
+			std::array<int, 2> mouseMotion = {std::get<1>(motion), std::get<2>(motion)};
 			// use ship rotation relative to system, unchanged by frame transitions
 			matrix3x3d rot = m_ship->GetOrientRelTo(Frame::GetFrame(m_ship->GetFrame())->GetNonRotFrame());
 			if (!m_mouseActive && !m_disableMouseFacing) {
@@ -303,7 +369,8 @@ void PlayerShipController::PollControls(const float timeStep, const bool force_r
 		if (m_inputBindings.thrustLeft->IsActive())
 			m_ship->SetThrusterState(0, -linearThrustPower * m_inputBindings.thrustLeft->GetValue());
 
-		if (m_inputBindings.primaryFire->IsActive() || (Pi::input.MouseButtonState(SDL_BUTTON_LEFT) && Pi::input.MouseButtonState(SDL_BUTTON_RIGHT))) {
+		auto fire = Pi::input->GetMouseMotion(MouseMotionBehaviour::Fire);
+		if (m_inputBindings.primaryFire->IsActive() || std::get<0>(fire)) {
 			//XXX worldview? madness, ask from ship instead
 			GunDir dir = InGameViewsLocator::getInGameViews()->GetWorldView()->GetActiveWeapon() ? GunDir::GUN_REAR : GunDir::GUN_FRONT;
 			m_ship->SetGunsState(dir, 1);

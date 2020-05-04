@@ -7,11 +7,14 @@
 #include "ShipController.h"
 
 #include "vector3.h"
+#include <array>
 
 namespace KeyBindings {
 	struct ActionBinding;
 	struct AxisBinding;
 } // namespace KeyBindings
+
+constexpr int WEAPON_CONFIG_SLOTS = 4;
 
 // autopilot AI + input
 class PlayerShipController : public ShipController {
@@ -25,7 +28,7 @@ public:
 	void PostLoadFixup(Space *s) override;
 	void StaticUpdate(float timeStep) override;
 	// Poll controls, set thruster states, gun states and target velocity
-	void PollControls(float timeStep, const bool force_rotation_damping, int *mouseMotion);
+	void PollControls(float timeStep, const bool force_rotation_damping);
 	bool IsMouseActive() const { return m_mouseActive; }
 	void SetDisableMouseFacing(bool disabled) { m_disableMouseFacing = disabled; }
 	double GetSetSpeed() const override { return m_setSpeed; }
@@ -66,6 +69,9 @@ private:
 		ActionBinding *targetObject;
 		ActionBinding *primaryFire;
 		ActionBinding *secondaryFire;
+
+		std::array<ActionBinding *, WEAPON_CONFIG_SLOTS> weaponConfigRecall;
+		std::array<ActionBinding *, WEAPON_CONFIG_SLOTS> weaponConfigStore;
 
 		// Flight
 		AxisBinding *pitch;
@@ -112,4 +118,7 @@ private:
 	int m_navTargetIndex;
 	int m_setSpeedTargetIndex;
 	vector3d m_mouseDir;
+
+	// TODO: Store/Recall barrels configuration
+	std::array<std::vector<int>, WEAPON_CONFIG_SLOTS> m_gunStatuses;
 };

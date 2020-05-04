@@ -179,13 +179,15 @@ KeyBindings::AxisBinding *Input::AddAxisBinding(std::string &id, BindingGroup &g
 
 std::tuple<bool, int, int> Input::GetMouseMotion(MouseMotionBehaviour mmb)
 {
-	if (m_mouseMotion[0] == 0 && m_mouseMotion[1] == 0) return std::make_tuple(false, 0, 0);
 	switch (mmb) {
 		case MouseMotionBehaviour::Rotate:
 			if (m_mouseButton[SDL_BUTTON_MIDDLE]) return std::make_tuple(true, m_mouseMotion[0], m_mouseMotion[1]);
 		break;
 		case MouseMotionBehaviour::DriveShip:
 			if (m_mouseButton[SDL_BUTTON_RIGHT]) return std::make_tuple(true, m_mouseMotion[0], m_mouseMotion[1]);
+		break;
+		case MouseMotionBehaviour::Fire:
+			if (m_mouseButton[SDL_BUTTON_LEFT] && m_mouseButton[SDL_BUTTON_RIGHT]) return std::make_tuple(true, m_mouseMotion[0], m_mouseMotion[1]);
 		break;
 		case MouseMotionBehaviour::Select:
 			if (m_mouseButton[SDL_BUTTON_LEFT]) return std::make_tuple(true, m_mouseMotion[0], m_mouseMotion[1]);

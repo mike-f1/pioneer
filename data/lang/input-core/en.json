@@ -187,6 +187,38 @@
     "description": "Descriptive name for the View Zoom axis",
     "message": "View Zoom"
   },
+  "BIND_WCRECALL_1": {
+    "description": "Descriptive name for the 'Recall weapon configuration 1' action",
+    "message": "Recall weapon configuration 1"
+  },
+  "BIND_WCRECALL_2": {
+    "description": "Descriptive name for the 'Recall weapon configuration 2' action",
+    "message": "Recall weapon configuration 2"
+  },
+  "BIND_WCRECALL_3": {
+    "description": "Descriptive name for the 'Recall weapon configuration 3' action",
+    "message": "Recall weapon configuration 3"
+  },
+  "BIND_WCRECALL_4": {
+    "description": "Descriptive name for the 'Recall weapon configuration 4' action",
+    "message": "Recall weapon configuration 4"
+  },
+  "BIND_WCSTORE_1": {
+    "description": "Descriptive name for the 'Store weapon configuration 1' action",
+    "message": "Store weapon configuration 1"
+  },
+  "BIND_WCSTORE_2": {
+    "description": "Descriptive name for the 'Store weapon configuration 2' action",
+    "message": "Store weapon configuration 2"
+  },
+  "BIND_WCSTORE_3": {
+    "description": "Descriptive name for the 'Store weapon configuration 3' action",
+    "message": "Store weapon configuration 3"
+  },
+  "BIND_WCSTORE_4": {
+    "description": "Descriptive name for the 'Store weapon configuration 4' action",
+    "message": "Store weapon configuration 4"
+  },
   "GROUP_GENERAL_VIEW_CONTROLS": {
     "description": "Header for the GeneralViewControls input group.",
     "message": "General View Controls"

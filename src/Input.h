@@ -15,7 +15,21 @@ class InputFrame;
 enum class MouseMotionBehaviour {
 	Select,
 	Rotate,
+	Fire,
 	DriveShip,
+};
+
+// When this get deleted, automatically restore previous state
+// TODO: would be good to catch if InputFrames are changed (e.g. size is changed) in the means
+class InputFrameStatusTicket {
+	friend class Input;
+public:
+	~InputFrameStatusTicket();
+	InputFrameStatusTicket &operator =(InputFrameStatusTicket &) = delete;
+	InputFrameStatusTicket(const InputFrameStatusTicket &) = delete;
+private:
+	InputFrameStatusTicket(const std::vector<InputFrame *> &inputFrames);
+	std::map<InputFrame *, bool> m_statuses;
 };
 
 // The Page->Group->Binding system serves as a thin veneer for the UI to make
@@ -138,7 +152,7 @@ public:
 	void SetMouseYInvert(bool state) { m_mouseYInvert = state; }
 	bool IsMouseYInvert() { return m_mouseYInvert; }
 
-	int MouseButtonState(int button) { return m_mouseButton.at(button); }
+	int MouseButtonState(int button) { return m_mouseButton.at(button); } // <- Still used for Pi::SetMouseGrab
 	void SetMouseButtonState(int button, bool state) { m_mouseButton.at(button) = state; }
 
 	// Return true if the behaviour is the current one and if at least a value is != 0,

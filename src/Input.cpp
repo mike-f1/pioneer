@@ -26,7 +26,7 @@ InputFrameStatusTicket::~InputFrameStatusTicket()
 	});
 }
 
-void Input::Init()
+Input::Input()
 {
 	GameConfig &config = GameConfSingleton::getInstance();
 

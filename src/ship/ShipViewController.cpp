@@ -8,6 +8,7 @@
 
 #include "Game.h"
 #include "GameLocator.h"
+#include "Input.h"
 #include "Pi.h"
 #include "Player.h"
 #include "PlayerShipController.h"
@@ -25,7 +26,7 @@ void ShipViewController::RegisterInputBindings()
 
 	m_inputFrame.reset(new InputFrame("ShipView"));
 
-	BindingPage &page = Pi::input.GetBindingPage("ShipView");
+	BindingPage &page = Pi::input->GetBindingPage("ShipView");
 
 	BindingGroup &group = page.GetBindingGroup("GeneralViewControls");
 
@@ -46,7 +47,7 @@ void ShipViewController::RegisterInputBindings()
 	m_inputBindings.resetCamera = m_inputFrame->AddActionBinding("BindResetCamera", group, ActionBinding(SDLK_HOME));
 	m_inputBindings.resetCamera->StoreOnActionCallback(std::bind(&ShipViewController::OnCamReset, this, _1));
 
-	Pi::input.PushInputFrame(m_inputFrame.get());
+	Pi::input->PushInputFrame(m_inputFrame.get());
 }
 
 void ShipViewController::OnCamReset(bool down)
@@ -58,7 +59,7 @@ void ShipViewController::OnCamReset(bool down)
 
 ShipViewController::~ShipViewController()
 {
-	Pi::input.RemoveInputFrame(m_inputFrame.get());
+	Pi::input->RemoveInputFrame(m_inputFrame.get());
 }
 
 void ShipViewController::LoadFromJson(const Json &jsonObj)
@@ -208,7 +209,7 @@ void ShipViewController::Update(const float frameTime)
 	}
 
 	// external camera mouselook
-	auto motion = Pi::input.GetMouseMotion(MouseMotionBehaviour::Rotate);
+	auto motion = Pi::input->GetMouseMotion(MouseMotionBehaviour::Rotate);
 	if (!headtracker_input_priority && std::get<0>(motion)) {
 		// invert the mouse input to convert between screen coordinates and
 		// right-hand coordinate system rotation.

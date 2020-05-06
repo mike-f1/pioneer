@@ -654,6 +654,8 @@ void SpaceStation::PositionDockedShip(Ship *ship, int port) const
 
 void SpaceStation::StaticUpdate(const float timeStep)
 {
+	PROFILE_SCOPED()
+
 	DockingUpdate(timeStep);
 	m_navLights->Update(timeStep);
 }

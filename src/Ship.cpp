@@ -1159,6 +1159,7 @@ void Ship::UpdateFuel(const float timeStep)
 
 void Ship::StaticUpdate(const float timeStep)
 {
+	PROFILE_SCOPED()
 	// do player sounds before dead check, so they also turn off
 	if (IsType(Object::PLAYER)) DoThrusterSounds();
 

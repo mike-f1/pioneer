@@ -18,6 +18,7 @@
 #include "GameState.h"
 #include "InGameViews.h"
 #include "InGameViewsLocator.h"
+#include "Input.h"
 #include "Intro.h"
 #include "JobQueue.h"
 #include "KeyBindings.h"
@@ -119,7 +120,7 @@ Pi::PiBinding Pi::m_piBindings;
 #ifdef ENABLE_SERVER_AGENT
 ServerAgent *Pi::serverAgent;
 #endif
-Input Pi::input;
+std::unique_ptr<Input> Pi::input;
 std::unique_ptr<LuaConsole> Pi::m_luaConsole;
 float Pi::m_frameTime;
 bool Pi::doingMouseGrab;
@@ -455,7 +456,8 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 	Pi::CreateRenderTarget(videoSettings.width, videoSettings.height);
 	RandomSingleton::Init(time(0));
 
-	input.Init();
+	Output("Initialize Input\n");
+	Pi::input.reset(new Input());
 
 	RegisterInputBindings();
 
@@ -656,7 +658,7 @@ void Pi::Quit()
 	if (Pi::ffmpegFile != nullptr) {
 		_pclose(Pi::ffmpegFile);
 	}
-	input.RemoveInputFrame(m_inputFrame.get());
+	input->RemoveInputFrame(m_inputFrame.get());
 	m_inputFrame.reset();
 	Projectile::FreeModel();
 	Beam::FreeModel();
@@ -721,7 +723,7 @@ void Pi::HandleEvents()
 	// unified input system
 	bool skipTextInput = false;
 
-	Pi::input.ResetFrameInput();
+	Pi::input->ResetFrameInput();
 	while (SDL_PollEvent(&event)) {
 		if (event.type == SDL_QUIT) {
 			Pi::RequestQuit();
@@ -771,7 +773,7 @@ void Pi::HandleEvents()
 		//	continue;
 
 		Gui::HandleSDLEvent(&event);
-		input.HandleSDLEvent(event);
+		input->HandleSDLEvent(event);
 
 		if (consoleActive != Pi::IsConsoleActive()) {
 			skipTextInput = true;
@@ -805,7 +807,7 @@ void Pi::RegisterInputBindings()
 
 	m_inputFrame.reset(new InputFrame("ObjectViewer"));
 
-	auto &page = Pi::input.GetBindingPage("TweakAndSetting");
+	auto &page = Pi::input->GetBindingPage("TweakAndSetting");
 	page.shouldBeTranslated = false;
 
 	auto &group = page.GetBindingGroup("None");
@@ -845,7 +847,7 @@ void Pi::RegisterInputBindings()
 
 	m_inputFrame->SetActive(true);
 
-	Pi::input.PushInputFrame(m_inputFrame.get());
+	Pi::input->PushInputFrame(m_inputFrame.get());
 }
 
 void Pi::QuickSave(bool down)
@@ -1008,7 +1010,7 @@ void Pi::InitGame()
 	// this is a bit brittle. skank may be forgotten and survive between
 	// games
 
-	input.InitGame();
+	input->InitGame();
 
 	if (!GameConfSingleton::getInstance().Int("DisableSound")) AmbientSounds::Init();
 
@@ -1017,7 +1019,7 @@ void Pi::InitGame()
 
 void Pi::TerminateGame()
 {
-	input.TerminateGame();
+	input->TerminateGame();
 }
 
 static void OnPlayerDockOrUndock()
@@ -1102,7 +1104,7 @@ void Pi::Start(const SystemPath &startPath)
 		case MainState::TOMBSTONE:
 			time += m_frameTime;
 			CutSceneLoop(m_frameTime, m_cutscene.get());
-			if ((time > 2.0) && (input.IsAnyKeyJustPressed())) {
+			if ((time > 2.0) && (input->IsAnyKeyJustPressed())) {
 				m_cutscene.reset();
 				m_mainState = MainState::TO_MAIN_MENU;
 			}
@@ -1248,7 +1250,7 @@ void Pi::MainLoop()
 		InGameViewsLocator::getInGameViews()->Draw3DView();
 
 		// hide cursor for ship control. Do this before imgui runs, to prevent the mouse pointer from jumping
-		Pi::SetMouseGrab(input.MouseButtonState(SDL_BUTTON_RIGHT) | input.MouseButtonState(SDL_BUTTON_MIDDLE));
+		Pi::SetMouseGrab(input->MouseButtonState(SDL_BUTTON_RIGHT) | input->MouseButtonState(SDL_BUTTON_MIDDLE));
 
 		// XXX HandleEvents at the moment must be after view->Draw3D and before
 		// Gui::Draw so that labels drawn to screen can have mouse events correctly

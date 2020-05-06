@@ -11,6 +11,7 @@
 #include "GameSaveError.h"
 #include "InGameViews.h"
 #include "InGameViewsLocator.h"
+#include "Input.h"
 #include "KeyBindings.h"
 #include "LuaObject.h"
 #include "OS.h"
@@ -54,7 +55,7 @@ void PlayerShipController::RegisterInputBindings()
 
 	m_inputFrame.reset(new InputFrame("PlayerShipController"));
 
-	auto &controlsPage = Pi::input.GetBindingPage("ShipControls");
+	auto &controlsPage = Pi::input->GetBindingPage("ShipControls");
 
 	auto &weaponsGroup = controlsPage.GetBindingGroup("Weapons");
 	m_inputBindings.targetObject = m_inputFrame->AddActionBinding("BindTargetObject", weaponsGroup, ActionBinding(SDLK_y));
@@ -97,12 +98,12 @@ void PlayerShipController::RegisterInputBindings()
 
 	m_inputFrame->SetActive(true);
 
-	Pi::input.PushInputFrame(m_inputFrame.get());
+	Pi::input->PushInputFrame(m_inputFrame.get());
 }
 
 PlayerShipController::~PlayerShipController()
 {
-	Pi::input.RemoveInputFrame(m_inputFrame.get());
+	Pi::input->RemoveInputFrame(m_inputFrame.get());
 }
 
 void PlayerShipController::SaveToJson(Json &jsonObj, Space *space)
@@ -328,7 +329,7 @@ void PlayerShipController::PollControls(const float timeStep, const bool force_r
 			double modx = clipmouse(objDir.x, m_mouseX);
 			m_mouseX -= modx;
 
-			const bool invertY = (Pi::input.IsMouseYInvert() ? !m_invertMouse : m_invertMouse);
+			const bool invertY = (Pi::input->IsMouseYInvert() ? !m_invertMouse : m_invertMouse);
 
 			m_mouseY += mouseMotion[1] * accel * radiansPerPixel * (invertY ? -1 : 1);
 			double mody = clipmouse(objDir.y, m_mouseY);

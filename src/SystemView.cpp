@@ -10,6 +10,7 @@
 #include "GameLog.h"
 #include "InGameViews.h"
 #include "InGameViewsLocator.h"
+#include "Input.h"
 #include "Lang.h"
 #include "LuaObject.h"
 #include "Pi.h"
@@ -266,7 +267,7 @@ SystemView::SystemView() :
 
 SystemView::~SystemView()
 {
-	Pi::input.RemoveInputFrame(m_inputFrame.get());
+	Pi::input->RemoveInputFrame(m_inputFrame.get());
 
 	m_contacts.clear();
 }
@@ -278,12 +279,12 @@ void SystemView::RegisterInputBindings()
 
 	m_inputFrame.reset(new InputFrame("SystemView"));
 
-	BindingPage &page = Pi::input.GetBindingPage("SystemView");
+	BindingPage &page = Pi::input->GetBindingPage("SystemView");
 	BindingGroup &group = page.GetBindingGroup("Miscellaneous");
 
 	m_systemViewBindings.zoomView = m_inputFrame->AddAxisBinding("BindViewZoom", group, AxisBinding(WheelDirection::UP));
 
-	Pi::input.PushInputFrame(m_inputFrame.get());
+	Pi::input->PushInputFrame(m_inputFrame.get());
 }
 
 void SystemView::OnSwitchTo()
@@ -788,15 +789,15 @@ void SystemView::Update(const float frameTime)
 		if (m_systemViewBindings.zoomView->IsActive()) {
 			speed = m_systemViewBindings.zoomView->GetValue();
 			if (speed < 0.0f) {
-				m_zoomTo *= -speed * (((ZOOM_OUT_SPEED - 1) * WHEEL_SENSITIVITY + 1) / Pi::input.GetMoveSpeedShiftModifier());
+				m_zoomTo *= -speed * (((ZOOM_OUT_SPEED - 1) * WHEEL_SENSITIVITY + 1) / Pi::input->GetMoveSpeedShiftModifier());
 			} else {
-				m_zoomTo *= +speed * (((ZOOM_IN_SPEED - 1) * WHEEL_SENSITIVITY + 1) * Pi::input.GetMoveSpeedShiftModifier());
+				m_zoomTo *= +speed * (((ZOOM_IN_SPEED - 1) * WHEEL_SENSITIVITY + 1) * Pi::input->GetMoveSpeedShiftModifier());
 			}
 		} else {
 			if (m_zoomInButton->IsPressed())
-				m_zoomTo *= pow(ZOOM_IN_SPEED * Pi::input.GetMoveSpeedShiftModifier(), frameTime);
+				m_zoomTo *= pow(ZOOM_IN_SPEED * Pi::input->GetMoveSpeedShiftModifier(), frameTime);
 			if (m_zoomOutButton->IsPressed())
-				m_zoomTo *= pow(ZOOM_OUT_SPEED / Pi::input.GetMoveSpeedShiftModifier(), frameTime);
+				m_zoomTo *= pow(ZOOM_OUT_SPEED / Pi::input->GetMoveSpeedShiftModifier(), frameTime);
 		}
 		// transfer planner buttons
 		if (m_plannerIncreaseStartTimeButton->IsPressed()) {
@@ -852,7 +853,7 @@ void SystemView::Update(const float frameTime)
 	AnimationCurves::Approach(m_rot_x, m_rot_x_to, frameTime);
 	AnimationCurves::Approach(m_rot_y, m_rot_y_to, frameTime);
 
-	auto motion = Pi::input.GetMouseMotion(MouseMotionBehaviour::Rotate);
+	auto motion = Pi::input->GetMouseMotion(MouseMotionBehaviour::Rotate);
 	m_rot_x_to += std::get<2>(motion) * 20 * frameTime;
 	m_rot_y_to += std::get<1>(motion) * 20 * frameTime;
 

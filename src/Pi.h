@@ -6,17 +6,16 @@
 
 #include "buildopts.h"
 
-#include "Input.h"
-#include "gameconsts.h"
-
 #include "RefCounted.h"
 
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
 
 class Cutscene;
+class Input;
 class InputFrame;
 class LuaConsole;
 class LuaNameGen;
@@ -50,7 +49,7 @@ namespace UI {
 
 class Pi {
 public:
-	static void CreateRenderTarget(const Uint16 width, const Uint16 height);
+	static void CreateRenderTarget(const uint16_t width, const uint16_t height);
 	static void DrawRenderTarget();
 	static void BeginRenderTarget();
 	static void EndRenderTarget();
@@ -94,7 +93,7 @@ public:
 	static bool doProfileOne;
 #endif
 
-	static Input input;
+	static std::unique_ptr<Input> input;
 	static std::unique_ptr<LuaConsole> m_luaConsole;
 
 	static JobQueue *GetAsyncJobQueue();
@@ -171,7 +170,7 @@ private:
 	static std::unique_ptr<InputFrame> m_inputFrame;
 	// private members
 	static std::vector<InternalRequests> internalRequests;
-	static const Uint32 SYNC_JOBS_PER_LOOP = 1;
+	static const uint32_t SYNC_JOBS_PER_LOOP = 1;
 	static std::unique_ptr<AsyncJobQueue> asyncJobQueue;
 	static std::unique_ptr<SyncJobQueue> syncJobQueue;
 

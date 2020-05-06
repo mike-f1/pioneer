@@ -4,6 +4,7 @@
 #include "LuaConsole.h"
 
 #include "FileSystem.h"
+#include "Input.h"
 #include "KeyBindings.h"
 #include "LuaManager.h"
 #include "LuaUtils.h"
@@ -74,7 +75,7 @@ void LuaConsole::RegisterInputBindings()
 	using namespace KeyBindings;
 	using namespace std::placeholders;
 
-	auto &page = Pi::input.GetBindingPage("General");
+	auto &page = Pi::input->GetBindingPage("General");
 	auto &group = page.GetBindingGroup("Miscellaneous");
 
 	m_inputFrame.reset(new InputFrame("Console"));
@@ -83,7 +84,7 @@ void LuaConsole::RegisterInputBindings()
 	m_consoleBindings.toggleLuaConsole->SetBTrait(BehaviourMod::ALLOW_KEYBOARD_ONLY);
 	m_consoleBindings.toggleLuaConsole->StoreOnActionCallback(std::bind(&LuaConsole::OnToggle, this, _1));
 
-	Pi::input.PushInputFrame(m_inputFrame.get());
+	Pi::input->PushInputFrame(m_inputFrame.get());
 
 	// Explicitly activate console binding as it is always active
 	m_inputFrame->SetActive(true);
@@ -200,7 +201,7 @@ void LuaConsole::RegisterAutoexec()
 
 LuaConsole::~LuaConsole()
 {
-	Pi::input.RemoveInputFrame(m_inputFrame.get());
+	Pi::input->RemoveInputFrame(m_inputFrame.get());
 }
 
 bool LuaConsole::OnKeyDown(const UI::KeyboardEvent &event)

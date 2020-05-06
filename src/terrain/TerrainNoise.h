@@ -4,6 +4,7 @@
 #ifndef _TERRAINNOISE_H
 #define _TERRAINNOISE_H
 
+#include "FracDef.h"
 #include "perlin.h"
 #include "../utils.h"
 

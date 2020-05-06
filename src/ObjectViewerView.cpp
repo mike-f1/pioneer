@@ -14,6 +14,7 @@
 #include "GameConfSingleton.h"
 #include "GameLocator.h"
 #include "KeyBindings.h"
+#include "Input.h"
 #include "Pi.h"
 #include "Player.h"
 #include "Random.h"
@@ -70,7 +71,7 @@ ObjectViewerView::ObjectViewerView() :
 
 ObjectViewerView::~ObjectViewerView()
 {
-	Pi::input.RemoveInputFrame(m_inputFrame.get());
+	Pi::input->RemoveInputFrame(m_inputFrame.get());
 }
 
 void ObjectViewerView::RegisterInputBindings()
@@ -80,7 +81,7 @@ void ObjectViewerView::RegisterInputBindings()
 
 	m_inputFrame.reset(new InputFrame("ObjectViewer"));
 
-	auto &page = Pi::input.GetBindingPage("ObjectViewer");
+	auto &page = Pi::input->GetBindingPage("ObjectViewer");
 	page.shouldBeTranslated = false;
 
 	auto &groupMisce = page.GetBindingGroup("Miscellaneous");
@@ -95,7 +96,7 @@ void ObjectViewerView::RegisterInputBindings()
 	m_objectViewerBindings.rotateLightLeft = m_inputFrame->AddActionBinding("RotateLightLeft", groupVMC, ActionBinding(SDLK_r));
 	m_objectViewerBindings.rotateLightRight = m_inputFrame->AddActionBinding("RotateLightRight", groupVMC, ActionBinding(SDLK_f));
 
-	Pi::input.PushInputFrame(m_inputFrame.get());
+	Pi::input->PushInputFrame(m_inputFrame.get());
 }
 
 void ObjectViewerView::OnSwitchTo()
@@ -145,7 +146,7 @@ void ObjectViewerView::Update(const float frameTime)
 	}
 	if (m_lastTarget == nullptr) return;
 
-	const float moveSpeed = MOVEMENT_SPEED * WHEEL_SENSITIVITY * Pi::input.GetMoveSpeedShiftModifier();
+	const float moveSpeed = MOVEMENT_SPEED * WHEEL_SENSITIVITY * Pi::input->GetMoveSpeedShiftModifier();
 	float move = moveSpeed * frameTime;
 
 	if (m_objectViewerBindings.zoom->IsActive()) {
@@ -200,12 +201,12 @@ void ObjectViewerView::Update(const float frameTime)
 		m_camRot = matrix4x4d::RotateYMatrix(m_objectViewerBindings.rotateLeftRight->GetValue() * move * 5.0) * m_camRot;
 	}
 
-	auto motion = Pi::input.GetMouseMotion(MouseMotionBehaviour::Rotate);
+	auto motion = Pi::input->GetMouseMotion(MouseMotionBehaviour::Rotate);
 	if (std::get<0>(motion)) {
 		m_camRot = matrix4x4d::RotateXMatrix(-0.002 * std::get<2>(motion)) *
 			matrix4x4d::RotateYMatrix(-0.002 * std::get<1>(motion)) * m_camRot;
 	} else {
-		motion = Pi::input.GetMouseMotion(MouseMotionBehaviour::DriveShip);
+		motion = Pi::input->GetMouseMotion(MouseMotionBehaviour::DriveShip);
 		if (std::get<0>(motion)) {
 			m_camTwist = matrix3x3d::RotateX(-0.002 * std::get<2>(motion)) *
 				matrix3x3d::RotateY(-0.002 * std::get<1>(motion)) * m_camTwist;

@@ -68,8 +68,7 @@ struct BindingPage {
 
 class Input {
 public:
-	Input() {};
-	void Init();
+	Input();
 	void InitGame();
 	void TerminateGame();
 

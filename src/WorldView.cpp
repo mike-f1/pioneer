@@ -115,7 +115,7 @@ void WorldView::RegisterInputBindings()
 
 	m_inputFrame.reset(new InputFrame("WorldView"));
 
-	BindingPage &page = Pi::input.GetBindingPage("General");
+	BindingPage &page = Pi::input->GetBindingPage("General");
 	BindingGroup &group = page.GetBindingGroup("Miscellaneous");
 
 	m_wviewBindings.toggleHudMode = m_inputFrame->AddActionBinding("BindToggleHudMode", group, ActionBinding(SDLK_TAB));
@@ -125,12 +125,12 @@ void WorldView::RegisterInputBindings()
 	m_wviewBindings.decreaseTimeAcceleration = m_inputFrame->AddActionBinding("BindDecreaseTimeAcceleration", group, ActionBinding(SDLK_PAGEDOWN));
 	m_wviewBindings.decreaseTimeAcceleration->StoreOnActionCallback(std::bind(&WorldView::OnRequestTimeAccelDec, this, _1));
 
-	Pi::input.PushInputFrame(m_inputFrame.get());
+	Pi::input->PushInputFrame(m_inputFrame.get());
 }
 
 WorldView::~WorldView()
 {
-	Pi::input.RemoveInputFrame(m_inputFrame.get());
+	Pi::input->RemoveInputFrame(m_inputFrame.get());
 
 	m_onPlayerChangeTargetCon.disconnect();
 }

@@ -75,12 +75,12 @@ static int l_input_find_binding(lua_State *l)
 {
 	const char *binding_id = luaL_checkstring(l, 1);
 
-	KeyBindings::ActionBinding *ab = Pi::input.GetActionBinding(binding_id);
+	KeyBindings::ActionBinding *ab = Pi::input->GetActionBinding(binding_id);
 	if (ab) {
 		set_action(l, binding_id, ab);
 		return 1;
 	}
-	KeyBindings::AxisBinding *ax = Pi::input.GetAxisBinding(binding_id);
+	KeyBindings::AxisBinding *ax = Pi::input->GetAxisBinding(binding_id);
 	if (ax) {
 		set_axis(l, binding_id, ax);
 		return 1;
@@ -156,7 +156,7 @@ static int l_input_get_bindings(lua_State *l)
 	using namespace KeyBindings;
 
 	int page_idx = 1;
-	for (auto &page : Pi::input.GetBindingPages()) {
+	for (auto &page : Pi::input->GetBindingPages()) {
 		if (!page.second.shouldBeTranslated) continue;
 		lua_pushunsigned(l, page_idx++);
 		setup_binding_table(l, page.first.c_str(), "page");
@@ -170,12 +170,12 @@ static int l_input_get_bindings(lua_State *l)
 			for (auto &type : group.second.bindings) {
 				if (type.second == BindingGroup::EntryType::ACTION) {
 					lua_pushunsigned(l, binding_idx++);
-					ActionBinding *ab = Pi::input.GetActionBinding(type.first);
+					ActionBinding *ab = Pi::input->GetActionBinding(type.first);
 					if (!ab) continue; // Should never happen, but include it here for future proofing.
 					set_action(l, type.first.c_str(), ab);
 				} else if (type.second == BindingGroup::EntryType::AXIS) {
 					lua_pushunsigned(l, binding_idx++);
-					AxisBinding *ax = Pi::input.GetAxisBinding(type.first);
+					AxisBinding *ax = Pi::input->GetAxisBinding(type.first);
 					if (!ax) continue; // Should never happen, but include it here for future proofing.
 					set_axis(l, type.first.c_str(), ax);
 				} else {
@@ -216,7 +216,7 @@ static int l_input_set_action_binding(lua_State *l)
 	const char *binding_id = luaL_checkstring(l, 1);
 	const char *binding_config_1 = lua_tostring(l, 2);
 	const char *binding_config_2 = lua_tostring(l, 3);
-	KeyBindings::ActionBinding *action = Pi::input.GetActionBinding(binding_id);
+	KeyBindings::ActionBinding *action = Pi::input->GetActionBinding(binding_id);
 
 	KeyBindings::KeyBinding kb1, kb2;
 	if (binding_config_1) {
@@ -244,7 +244,7 @@ static int l_input_set_axis_binding(lua_State *l)
 	const char *binding_config_wheel = lua_tostring(l, 3);
 	const char *binding_config_positive = lua_tostring(l, 4);
 	const char *binding_config_negative = lua_tostring(l, 5);
-	KeyBindings::AxisBinding *binding = Pi::input.GetAxisBinding(binding_id);
+	KeyBindings::AxisBinding *binding = Pi::input->GetAxisBinding(binding_id);
 
 	KeyBindings::JoyAxisBinding ab;
 	if (binding_config_axis) {
@@ -292,7 +292,7 @@ static int l_input_set_mouse_y_inverted(lua_State *l)
 	const bool inverted = lua_toboolean(l, 1);
 	GameConfSingleton::getInstance().SetInt("InvertMouseY", (inverted ? 1 : 0));
 	GameConfSingleton::getInstance().Save();
-	Pi::input.SetMouseYInvert(inverted);
+	Pi::input->SetMouseYInvert(inverted);
 	return 0;
 }
 
@@ -309,7 +309,7 @@ static int l_input_set_joystick_enabled(lua_State *l)
 	const bool enabled = lua_toboolean(l, 1);
 	GameConfSingleton::getInstance().SetInt("EnableJoystick", (enabled ? 1 : 0));
 	GameConfSingleton::getInstance().Save();
-	Pi::input.SetJoystickEnabled(enabled);
+	Pi::input->SetJoystickEnabled(enabled);
 	return 0;
 }
 

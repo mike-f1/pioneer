@@ -113,6 +113,7 @@ void Missile::ECMAttack(int power_val)
 
 void Missile::StaticUpdate(const float timeStep)
 {
+	PROFILE_SCOPED()
 	// Note: direct call to AI->TimeStepUpdate
 
 	if (!m_curAICmd) {

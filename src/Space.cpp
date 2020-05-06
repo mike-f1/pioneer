@@ -772,6 +772,8 @@ static void hitCallback(CollisionContact *c)
 // temporary one-point version
 static void CollideWithTerrain(Body *body, float timeStep)
 {
+	PROFILE_SCOPED()
+
 	if (!body->IsType(Object::DYNAMICBODY))
 		return;
 	DynamicBody *dynBody = static_cast<DynamicBody *>(body);

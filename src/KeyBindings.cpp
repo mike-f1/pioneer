@@ -4,6 +4,7 @@
 #include "KeyBindings.h"
 #include "GameConfig.h"
 #include "GameConfSingleton.h"
+#include "Input.h"
 #include "Lang.h"
 #include "Pi.h"
 #include "StringF.h"
@@ -95,7 +96,7 @@ namespace KeyBindings {
 
 	bool Modifiers::IsActive() const
 	{
-		return m_mod == Pi::input.KeyModStateUnified();
+		return m_mod == Pi::input->KeyModStateUnified();
 	}
 
 	int WheelDirectionToInt(const WheelDirection wd)
@@ -152,7 +153,7 @@ namespace KeyBindings {
 		type(BindType::JOYSTICK_BUTTON),
 		m_mod(mod)
 	{
-		u.joystickButton.joystick = Pi::input.JoystickFromGUID(joystickGuid);
+		u.joystickButton.joystick = Pi::input->JoystickFromGUID(joystickGuid);
 		u.joystickButton.button = button;
 	}
 
@@ -161,7 +162,7 @@ namespace KeyBindings {
 		type(BindType::JOYSTICK_HAT),
 		m_mod(mod)
 	{
-		u.joystickHat.joystick = Pi::input.JoystickFromGUID(joystickGuid);
+		u.joystickHat.joystick = Pi::input->JoystickFromGUID(joystickGuid);
 		u.joystickHat.hat = hat;
 		u.joystickHat.direction = dir;
 	}
@@ -241,7 +242,7 @@ namespace KeyBindings {
 			// force terminate
 			joyUUIDBuf[JoyUUIDLength - 1] = '\0';
 			// now, locate the internal ID.
-			int joy = Pi::input.JoystickFromGUIDString(joyUUIDBuf);
+			int joy = Pi::input->JoystickFromGUIDString(joyUUIDBuf);
 			if (joy == -1) {
 				return false;
 			}
@@ -319,13 +320,13 @@ namespace KeyBindings {
 		break;
 		case BindType::JOYSTICK_BUTTON: {
 				if (HaveBTrait(BehaviourMod::ALLOW_KEYBOARD_ONLY)) break;
-				oss << "Joy" << Pi::input.JoystickGUIDString(u.joystickButton.joystick);
+				oss << "Joy" << Pi::input->JoystickGUIDString(u.joystickButton.joystick);
 				oss << "/Button" << int(u.joystickButton.button);
 		}
 		break;
 		case BindType::JOYSTICK_HAT: {
 				if (HaveBTrait(BehaviourMod::ALLOW_KEYBOARD_ONLY)) break;
-				oss << "Joy" << Pi::input.JoystickGUIDString(u.joystickButton.joystick);
+				oss << "Joy" << Pi::input->JoystickGUIDString(u.joystickButton.joystick);
 				oss << "/Hat" << int(u.joystickHat.hat);
 				oss << "Dir" << int(u.joystickHat.direction);
 		}
@@ -358,13 +359,13 @@ namespace KeyBindings {
 		break;
 		case BindType::JOYSTICK_BUTTON: {
 			if (HaveBTrait(BehaviourMod::ALLOW_KEYBOARD_ONLY)) break;
-			oss << Pi::input.JoystickName(u.joystickButton.joystick);
+			oss << Pi::input->JoystickName(u.joystickButton.joystick);
 			oss << Lang::BUTTON << int(u.joystickButton.button);
 		};
 		break;
 		case BindType::JOYSTICK_HAT: {
 			if (HaveBTrait(BehaviourMod::ALLOW_KEYBOARD_ONLY)) break;
-			oss << Pi::input.JoystickName(u.joystickHat.joystick);
+			oss << Pi::input->JoystickName(u.joystickHat.joystick);
 			oss << Lang::HAT << int(u.joystickHat.hat);
 			oss << Lang::DIRECTION << int(u.joystickHat.direction);
 		}
@@ -387,21 +388,21 @@ namespace KeyBindings {
 		case BindType::BINDING_DISABLED:
 			return false;
 		case BindType::KEYBOARD_KEY: {
-			if (!Pi::input.KeyState(u.keyboard.key)) {
+			if (!Pi::input->KeyState(u.keyboard.key)) {
 				return false;
 			}
 			return true;
 		}
 		case BindType::JOYSTICK_BUTTON: {
-			return Pi::input.JoystickButtonState(u.joystickButton.joystick, u.joystickButton.button) != 0;
+			return Pi::input->JoystickButtonState(u.joystickButton.joystick, u.joystickButton.button) != 0;
 		}
 		case BindType::JOYSTICK_HAT: {
 			// SDL_HAT generates diagonal directions by ORing two cardinal directions.
-			int hatState = Pi::input.JoystickHatState(u.joystickHat.joystick, u.joystickHat.hat);
+			int hatState = Pi::input->JoystickHatState(u.joystickHat.joystick, u.joystickHat.hat);
 			return (hatState & u.joystickHat.direction) == u.joystickHat.direction;
 		}
 		case BindType::MOUSE_WHEEL: {
-			WheelDirection wheelDir = Pi::input.GetWheelState();
+			WheelDirection wheelDir = Pi::input->GetWheelState();
 			if (wheelDir != u.mouseWheel.dir) return false;
 			return true;
 		}
@@ -570,7 +571,7 @@ namespace KeyBindings {
 		}
 		break;
 		case WheelAxisType::VERTICAL: {
-			WheelDirection actual = Pi::input.GetWheelState();
+			WheelDirection actual = Pi::input->GetWheelState();
 			if (!m_mod.IsActive()) return 0.0;
 			if (actual == m_direction) return 1.0;
 			if (((actual == WheelDirection::UP) && (m_direction == WheelDirection::DOWN)) ||
@@ -580,7 +581,7 @@ namespace KeyBindings {
 		}
 		break;
 		case WheelAxisType::HORIZONTAL: {
-			WheelDirection actual = Pi::input.GetWheelState();
+			WheelDirection actual = Pi::input->GetWheelState();
 			if (!m_mod.IsActive()) return 0.0;
 			if (actual == m_direction) return 1.0;
 			if (((actual == WheelDirection::LEFT) && (m_direction == WheelDirection::RIGHT)) ||
@@ -682,7 +683,7 @@ namespace KeyBindings {
 		case WheelAxisType::HORIZONTAL: {
 			// Active when direction of actual (Pi::input->wheel) state is
 			// equal to stored direction or the opposite:
-			WheelDirection actual = Pi::input.GetWheelState();
+			WheelDirection actual = Pi::input->GetWheelState();
 			if (actual == WheelDirection::NONE) return false;
 			if (!m_mod.IsActive()) return false;
 			return (((m_direction == WheelDirection::UP) || (m_direction == WheelDirection::DOWN)) &&
@@ -696,7 +697,7 @@ namespace KeyBindings {
 	}
 
 	JoyAxisBinding::JoyAxisBinding(const SDL_JoystickGUID &joystickGuid, Uint8 axis_, SDL_Keymod mod_, AxisDirection direction_, float deadzone_, float sensitivity_) :
-		m_joystick(Pi::input.JoystickFromGUID(joystickGuid)),
+		m_joystick(Pi::input->JoystickFromGUID(joystickGuid)),
 		m_axis(axis_),
 		m_direction(direction_),
 		m_mod(mod_),
@@ -709,7 +710,7 @@ namespace KeyBindings {
 		if (!Enabled()) return false;
 		if (!m_mod.IsActive()) return false;
 		// If the stick is within the deadzone, it's not active.
-		return std::abs(Pi::input.JoystickAxisState(m_joystick, m_axis)) > m_deadzone;
+		return std::abs(Pi::input->JoystickAxisState(m_joystick, m_axis)) > m_deadzone;
 	}
 
 	float JoyAxisBinding::GetValue() const
@@ -717,7 +718,7 @@ namespace KeyBindings {
 		if (!Enabled()) return 0.0f;
 		if (!m_mod.IsActive()) return 0.0f;
 
-		const float o_val = Pi::input.JoystickAxisState(m_joystick, m_axis);
+		const float o_val = Pi::input->JoystickAxisState(m_joystick, m_axis);
 
 		// Deadzone with normalisation
 		float value = fabs(o_val);
@@ -758,7 +759,7 @@ namespace KeyBindings {
 			formatarg("sign", m_direction == AxisDirection::NEGATIVE ? "-" : ""), // no + sign if positive
 			formatarg("signp", m_direction == AxisDirection::NEGATIVE ? "-" : "+"), // optional with + sign
 			formatarg("joynum", m_joystick),
-			formatarg("joyname", Pi::input.JoystickName(m_joystick)),
+			formatarg("joyname", Pi::input->JoystickName(m_joystick)),
 			formatarg("axis", m_axis >= 0 && m_axis < 3 ? axis_names[m_axis] : ossaxisnum.str()));
 		return ret;
 	}
@@ -795,7 +796,7 @@ namespace KeyBindings {
 		// force terminate
 		joyUUIDBuf[JoyUUIDLength - 1] = '\0';
 		// now, map the GUID to a joystick number
-		const int joystick = Pi::input.JoystickFromGUIDString(joyUUIDBuf);
+		const int joystick = Pi::input->JoystickFromGUIDString(joyUUIDBuf);
 		if (joystick == -1) {
 			ab.Clear();
 			return false;
@@ -847,7 +848,7 @@ namespace KeyBindings {
 			oss << '-';
 
 		oss << "Joy";
-		oss << Pi::input.JoystickGUIDString(m_joystick);
+		oss << Pi::input->JoystickGUIDString(m_joystick);
 		oss << "/Axis";
 		oss << int(m_axis);
 		oss << "/DZ" << m_deadzone;

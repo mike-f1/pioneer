@@ -9,6 +9,7 @@
 #include "GameLocator.h"
 #include "GameSaveError.h"
 #include "KeyBindings.h"
+#include "Input.h"
 #include "LuaConstants.h"
 #include "LuaObject.h"
 #include "MathUtil.h"
@@ -130,7 +131,7 @@ void SectorView::RegisterInputBindings()
 
 	m_inputFrame.reset(new InputFrame("SectorView"));
 
-	auto &page = Pi::input.GetBindingPage("SectorView");
+	auto &page = Pi::input->GetBindingPage("SectorView");
 
 	auto &groupMisc = page.GetBindingGroup("Miscellaneous");
 
@@ -156,7 +157,7 @@ void SectorView::RegisterInputBindings()
 	m_sectorBindings.mapViewRotateLeftRight = m_inputFrame->AddAxisBinding("BindMapViewRotateLeftRight", groupVMC, AxisBinding(SDLK_RIGHT, SDLK_LEFT));
 	m_sectorBindings.mapViewRotateUpDown = m_inputFrame->AddAxisBinding("BindMapViewRotateUpDown", groupVMC, AxisBinding(SDLK_DOWN, SDLK_UP));
 
-	Pi::input.PushInputFrame(m_inputFrame.get());
+	Pi::input->PushInputFrame(m_inputFrame.get());
 }
 
 void SectorView::InitDefaults()
@@ -214,7 +215,7 @@ void SectorView::InitObject(unsigned int cacheRadius)
 
 SectorView::~SectorView()
 {
-	Pi::input.RemoveInputFrame(m_inputFrame.get());
+	Pi::input->RemoveInputFrame(m_inputFrame.get());
 }
 
 void SectorView::SaveToJson(Json &jsonObj)
@@ -1176,7 +1177,7 @@ void SectorView::UpdateBindings()
 	bool reset_view = false;
 
 	// fast move selection to current player system or hyperspace target
-	const bool shifted = Pi::input.GetMoveSpeedShiftModifier() >= 1.0 ? true : false;
+	const bool shifted = Pi::input->GetMoveSpeedShiftModifier() >= 1.0 ? true : false;
 	if (m_sectorBindings.mapWarpToCurrent->IsActive()) {
 		GotoSystem(m_current);
 		reset_view = shifted;
@@ -1226,7 +1227,7 @@ void SectorView::Update(const float frameTime)
 	if (!Pi::IsConsoleActive()) {
 		UpdateBindings();
 
-		const float moveSpeed = Pi::input.GetMoveSpeedShiftModifier();
+		const float moveSpeed = Pi::input->GetMoveSpeedShiftModifier();
 		float move = moveSpeed * frameTime;
 		vector3f shift(0.0f);
 		if (m_sectorBindings.mapViewShiftLeftRight->IsActive()) {
@@ -1256,7 +1257,7 @@ void SectorView::Update(const float frameTime)
 		}
 	}
 
-	auto motion = Pi::input.GetMouseMotion(MouseMotionBehaviour::Rotate);
+	auto motion = Pi::input->GetMouseMotion(MouseMotionBehaviour::Rotate);
 	m_rotXMovingTo += 0.2f * float(std::get<2>(motion));
 	m_rotZMovingTo += 0.2f * float(std::get<1>(motion));
 
@@ -1380,7 +1381,7 @@ double SectorView::GetZoomLevel() const
 
 void SectorView::ZoomIn()
 {
-	const float moveSpeed = Pi::input.GetMoveSpeedShiftModifier();
+	const float moveSpeed = Pi::input->GetMoveSpeedShiftModifier();
 	float move = moveSpeed * m_lastFrameTime;
 	m_zoomMovingTo -= move;
 	m_zoomMovingTo = Clamp(m_zoomMovingTo, 0.1f, FAR_MAX);
@@ -1388,7 +1389,7 @@ void SectorView::ZoomIn()
 
 void SectorView::ZoomOut()
 {
-	const float moveSpeed = Pi::input.GetMoveSpeedShiftModifier();
+	const float moveSpeed = Pi::input->GetMoveSpeedShiftModifier();
 	float move = moveSpeed * m_lastFrameTime;
 	m_zoomMovingTo += move;
 	m_zoomMovingTo = Clamp(m_zoomMovingTo, 0.1f, FAR_MAX);

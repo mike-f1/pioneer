@@ -8,11 +8,11 @@ InputFrame::~InputFrame()
 {
 	bool success = false;
 	for (TActionPair &ab : m_actions) {
-		success |= Pi::input.DeleteActionBinding(ab.first);
+		success |= Pi::input->DeleteActionBinding(ab.first);
 	}
 
 	for (TAxisPair &ab : m_axes) {
-		success |= Pi::input.DeleteAxisBinding(ab.first);
+		success |= Pi::input->DeleteAxisBinding(ab.first);
 	}
 	assert(success);
 }
@@ -31,7 +31,7 @@ void InputFrame::SetActive(bool is_active)
 
 KeyBindings::ActionBinding *InputFrame::AddActionBinding(std::string id, BindingGroup &group, KeyBindings::ActionBinding binding)
 {
-	KeyBindings::ActionBinding *actionBind = Pi::input.AddActionBinding(id, group, binding);
+	KeyBindings::ActionBinding *actionBind = Pi::input->AddActionBinding(id, group, binding);
 	actionBind->Enable(m_active);
 	m_actions.push_back({id, actionBind});
 	return actionBind;
@@ -39,7 +39,7 @@ KeyBindings::ActionBinding *InputFrame::AddActionBinding(std::string id, Binding
 
 KeyBindings::AxisBinding *InputFrame::AddAxisBinding(std::string id, BindingGroup &group, KeyBindings::AxisBinding binding)
 {
-	KeyBindings::AxisBinding *axisBind = Pi::input.AddAxisBinding(id, group, binding);
+	KeyBindings::AxisBinding *axisBind = Pi::input->AddAxisBinding(id, group, binding);
 	axisBind->Enable(m_active);
 	m_axes.push_back({id, axisBind});
 	return axisBind;

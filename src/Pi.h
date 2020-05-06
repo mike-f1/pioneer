@@ -4,8 +4,12 @@
 #ifndef _PI_H
 #define _PI_H
 
+#include "buildopts.h"
+
 #include "Input.h"
 #include "gameconsts.h"
+
+#include "RefCounted.h"
 
 #include <map>
 #include <memory>
@@ -13,6 +17,7 @@
 #include <vector>
 
 class Cutscene;
+class InputFrame;
 class LuaConsole;
 class LuaNameGen;
 class PiGui;
@@ -25,6 +30,10 @@ class JobQueue;
 #if ENABLE_SERVER_AGENT
 class ServerAgent;
 #endif
+
+namespace KeyBindings {
+	struct ActionBinding;
+}
 
 namespace Graphics {
 	class Texture;
@@ -41,6 +50,11 @@ namespace UI {
 
 class Pi {
 public:
+	static void CreateRenderTarget(const Uint16 width, const Uint16 height);
+	static void DrawRenderTarget();
+	static void BeginRenderTarget();
+	static void EndRenderTarget();
+
 	static void Init(const std::map<std::string, std::string> &options, bool no_gui = false);
 	static void InitGame();
 	static void TerminateGame();
@@ -59,11 +73,6 @@ public:
 
 	static void SetMouseGrab(bool on);
 	static bool DoingMouseGrab() { return doingMouseGrab; }
-
-	static void CreateRenderTarget(const Uint16 width, const Uint16 height);
-	static void DrawRenderTarget();
-	static void BeginRenderTarget();
-	static void EndRenderTarget();
 
 	static std::unique_ptr<LuaNameGen> m_luaNameGen;
 
@@ -108,15 +117,58 @@ private:
 		QUIT_GAME,
 	};
 	static void Quit() __attribute((noreturn));
-	static void HandleKeyDown(const SDL_Keysym &key);
-	static void HandleEvents();
-	static void HandleRequests();
+
 	// Return true if there'a a need of further checks
 	// (basically it should return true if a windows (as settings)
 	// needs to be displayed, thus the event should be passed to
 	// PiGui...
+	// TODO: Right now this can't be "informed" from Lua if there's
+	// a need to perform any operation, so it can't work correctly
 	static bool HandleEscKey();
 
+	static void HandleEvents();
+	static void HandleRequests();
+
+	static void RegisterInputBindings();
+	// Key-press action feedback functions
+	static void QuickSave(bool down);
+	static void ScreenShot(bool down);
+	static void ToggleVideoRecording(bool down);
+	#ifdef WITH_DEVKEYS
+	static void ToggleDebug(bool down);
+	static void ReloadShaders(bool down);
+	#endif // WITH_DEVKEYS
+	#ifdef PIONEER_PROFILER
+	static void ProfilerCommandOne(bool down);
+	static void ProfilerCommandSlow(bool down);
+	#endif // PIONEER_PROFILER
+	#ifdef WITH_OBJECTVIEWER
+	static void ObjectViewer(bool down);
+	#endif // WITH_OBJECTVIEWER
+
+	static struct PiBinding {
+	public:
+		using Action = KeyBindings::ActionBinding;
+
+		Action *quickSave;
+		Action *reqQuit;
+		Action *screenShot;
+		Action *toggleVideoRec;
+		#ifdef WITH_DEVKEYS
+		Action *toggleDebugInfo;
+		Action *reloadShaders;
+		#endif // WITH_DEVKEYS
+		#ifdef PIONEER_PROFILER
+		Action *profilerBindSlow;
+		Action *profilerBindOne;
+		#endif
+		#ifdef WITH_OBJECTVIEWER
+		Action *objectViewer;
+		#endif // WITH_OBJECTVIEWER
+
+	} m_piBindings;
+
+	static std::unique_ptr<InputFrame> m_inputFrame;
 	// private members
 	static std::vector<InternalRequests> internalRequests;
 	static const Uint32 SYNC_JOBS_PER_LOOP = 1;

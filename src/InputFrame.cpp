@@ -45,8 +45,10 @@ KeyBindings::AxisBinding *InputFrame::AddAxisBinding(std::string id, BindingGrou
 	return axisBind;
 }
 
-InputResponse InputFrame::ProcessSDLEvent(const SDL_Event &event)
+KeyBindings::InputResponse InputFrame::ProcessSDLEvent(const SDL_Event &event)
 {
+	using namespace KeyBindings;
+
 	if (!m_active) return InputResponse::NOMATCH;
 
 	// Filter non-(yet-)bindable events

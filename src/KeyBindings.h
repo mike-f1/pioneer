@@ -4,16 +4,28 @@
 #ifndef KEYBINDINGS_H
 #define KEYBINDINGS_H
 
-#include <SDL_stdinc.h>
 #include <string>
 #include <sstream>
 #include <iosfwd>
 #include <functional>
 #include <cassert>
 
-#include "InputFrame.h"
+#include <SDL_stdinc.h>
+#include <SDL_joystick.h>
+#include <SDL_events.h>
+#include <SDL_keyboard.h>
 
 namespace KeyBindings {
+
+	enum class InputResponse {
+		// None of the inputs match the event.
+		NOMATCH,
+		// An input matched, but won't consume the event.
+		PASSTHROUGH,
+		// An input matched and consumed the event.
+		MATCHED
+	};
+
 	enum class BindType {
 		BINDING_DISABLED,
 		KEYBOARD_KEY,
@@ -41,7 +53,7 @@ namespace KeyBindings {
 	BehaviourMod operator &(BehaviourMod lhs, BehaviourMod rhs);
 
 	class BehaviourTrait {
-		friend ActionBinding;
+		friend struct ActionBinding;
 	protected:
 		BehaviourTrait() :
 			m_bmTrait(BehaviourMod::NONE)

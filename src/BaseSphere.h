@@ -30,7 +30,7 @@ public:
 	virtual void Update() = 0;
 	virtual void Render(const matrix4x4d &modelView, vector3d campos, const float radius, const std::vector<Camera::Shadow> &shadows) = 0;
 
-	virtual double GetHeight(const vector3d &p) const { return 0.0; }
+	virtual double GetHeight(const vector3d &) const { return 0.0; }
 
 	static void Init(int detail);
 	static void Uninit();

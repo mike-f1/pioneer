@@ -88,7 +88,7 @@ void ObjectViewerView::RegisterInputBindings()
 	m_objectViewerBindings.resetZoom = m_inputFrame->AddActionBinding("ResetZoom", groupMisce, ActionBinding(SDLK_SPACE));
 
 	auto &groupVMC = page.GetBindingGroup("ViewMovementControls");
-	m_objectViewerBindings.zoom = m_inputFrame->AddAxisBinding("Zoom", groupVMC, AxisBinding(SDLK_PLUS, SDLK_MINUS));
+	m_objectViewerBindings.zoom = m_inputFrame->AddAxisBinding("Zoom", groupVMC, AxisBinding(SDLK_KP_PLUS, SDLK_KP_MINUS));
 	m_objectViewerBindings.rotateLeftRight = m_inputFrame->AddAxisBinding("RotateLeftRight", groupVMC, AxisBinding(SDLK_LEFT, SDLK_RIGHT));
 	m_objectViewerBindings.rotateUpDown = m_inputFrame->AddAxisBinding("RotateUpDown", groupVMC, AxisBinding(SDLK_DOWN, SDLK_UP));
 
@@ -105,6 +105,10 @@ void ObjectViewerView::OnSwitchTo()
 	m_camRot = INITIAL_CAM_ANGLES;
 	m_lightAngle = LIGHT_START_ANGLE;
 
+	if (m_bindingLock) m_bindingLock.reset();
+
+	m_bindingLock = Pi::input->DisableAllInputFrameExcept(m_inputFrame.get());
+
 	m_inputFrame->SetActive(true);
 
 	UIView::OnSwitchTo();
@@ -112,6 +116,8 @@ void ObjectViewerView::OnSwitchTo()
 
 void ObjectViewerView::OnSwitchFrom()
 {
+	m_bindingLock.reset();
+
 	m_inputFrame->SetActive(false);
 
 	UIView::OnSwitchFrom();

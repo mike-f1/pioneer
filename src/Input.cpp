@@ -7,9 +7,24 @@
 #include "GameConfSingleton.h"
 #include "InputFrame.h"
 
+#include "utils.h"
 #include "profiler/Profiler.h"
 
 std::string speedModifier = "SpeedModifier";
+
+InputFrameStatusTicket::InputFrameStatusTicket(const std::vector<InputFrame *> &inputFrames)
+{
+	std::for_each(begin(inputFrames), end(inputFrames), [this](InputFrame *iframe) {
+		m_statuses[iframe] = iframe->IsActive();
+	});
+}
+
+InputFrameStatusTicket::~InputFrameStatusTicket()
+{
+	std::for_each(begin(m_statuses), end(m_statuses), [](std::pair<InputFrame *, bool> old_status) {
+		old_status.first->SetActive(old_status.second);
+	});
+}
 
 void Input::Init()
 {
@@ -109,6 +124,15 @@ bool Input::RemoveInputFrame(InputFrame *frame)
 	return false;
 }
 
+std::unique_ptr<InputFrameStatusTicket> Input::DisableAllInputFrameExcept(InputFrame *current)
+{
+	std::unique_ptr<InputFrameStatusTicket> ifst(new InputFrameStatusTicket(m_inputFrames));
+	std::for_each(begin(m_inputFrames), end(m_inputFrames), [&current](InputFrame *iframe) {
+		if (iframe != current) iframe->SetActive(false);
+	});
+	return ifst;
+}
+
 template <class MapValueType>
 int countPrefix(const std::map<std::string, MapValueType> &map, const std::string &search_for) {
 	typename std::map<std::string, MapValueType>::const_iterator iter = map.lower_bound(search_for);
@@ -196,19 +220,26 @@ std::tuple<bool, int, int> Input::GetMouseMotion(MouseMotionBehaviour mmb)
 	return std::make_tuple(false, 0, 0);
 }
 
+float Input::GetMoveSpeedShiftModifier()
+{
+	float speed = 1.0f;
+	if (m_speedModifier->GetBinding(0).IsActive()) speed *= 5.f;
+	if (m_speedModifier->GetBinding(1).IsActive()) speed *= 50.f;
+	return speed;
+}
+
 void Input::HandleSDLEvent(const SDL_Event &event)
 {
 	PROFILE_SCOPED()
 	switch (event.type) {
 	case SDL_KEYDOWN:
+		m_keyJustPressed++;
 		m_keyState[event.key.keysym.sym] = true;
 		m_keyModStateUnified = KeyBindings::KeymodUnifyLR(SDL_Keymod(event.key.keysym.mod));
-		onKeyPress.emit(event.key.keysym);
 		break;
 	case SDL_KEYUP:
 		m_keyState[event.key.keysym.sym] = false;
 		m_keyModStateUnified = KeyBindings::KeymodUnifyLR(SDL_Keymod(event.key.keysym.mod));
-		onKeyRelease.emit(event.key.keysym);
 		break;
 	case SDL_MOUSEBUTTONDOWN:
 		if (event.button.button < m_mouseButton.size()) {
@@ -265,7 +296,29 @@ void Input::HandleSDLEvent(const SDL_Event &event)
 	for (auto it = m_inputFrames.rbegin(); it != m_inputFrames.rend(); it++) {
 		auto *inputFrame = *it;
 		auto resp = inputFrame->ProcessSDLEvent(event);
-		if (resp == InputResponse::MATCHED) break;
+		if (resp == KeyBindings::InputResponse::MATCHED) break;
+	}
+}
+
+void Input::FindAndEraseEntryInPagesAndGroups(const std::string &id)
+{
+	for (auto &page : m_bindingPages) {
+		BindingPage &bindPage = page.second;
+		for (auto &group : bindPage.groups) {
+			BindingGroup &bindGroup = group.second;
+
+			std::map<std::string, BindingGroup::EntryType>::iterator found = bindGroup.bindings.find(id);
+			if (found != bindGroup.bindings.end()) {
+				bindGroup.bindings.erase(found);
+				if (bindGroup.bindings.empty()) {
+					bindPage.groups.erase(group.first);
+				}
+				if (bindPage.groups.empty()) {
+					m_bindingPages.erase(page.first);
+				}
+				return;
+			}
+		}
 	}
 }
 
@@ -294,28 +347,6 @@ void Input::InitJoysticks()
 
 		SDL_JoystickID joyID = SDL_JoystickInstanceID(state.joystick);
 		m_joysticks[joyID] = state;
-	}
-}
-
-void Input::FindAndEraseEntryInPagesAndGroups(const std::string &id)
-{
-	for (auto &page : m_bindingPages) {
-		BindingPage &bindPage = page.second;
-		for (auto &group : bindPage.groups) {
-			BindingGroup &bindGroup = group.second;
-
-			std::map<std::string, BindingGroup::EntryType>::iterator found = bindGroup.bindings.find(id);
-			if (found != bindGroup.bindings.end()) {
-				bindGroup.bindings.erase(found);
-				if (bindGroup.bindings.empty()) {
-					bindPage.groups.erase(group.first);
-				}
-				if (bindPage.groups.empty()) {
-					m_bindingPages.erase(page.first);
-				}
-				return;
-			}
-		}
 	}
 }
 
@@ -362,14 +393,6 @@ int Input::JoystickFromGUID(SDL_JoystickGUID guid)
 SDL_JoystickGUID Input::JoystickGUID(int joystick)
 {
 	return m_joysticks[joystick].guid;
-}
-
-float Input::GetMoveSpeedShiftModifier()
-{
-	float speed = 1.0f;
-	if (m_speedModifier->GetBinding(0).IsActive()) speed *= 5.f;
-	if (m_speedModifier->GetBinding(1).IsActive()) speed *= 50.f;
-	return speed;
 }
 
 int Input::JoystickButtonState(int joystick, int button)

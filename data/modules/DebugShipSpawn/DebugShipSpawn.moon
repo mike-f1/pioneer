@@ -86,7 +86,7 @@ ship_spawn_debug_window = ->
 
 displayDebugWindow = false
 ui.registerModule 'game', ->
-    if ui.isKeyReleased(ui.keys.f11) and ui.ctrlHeld!
+    if ui.isKeyReleased(ui.keys.f12) and ui.ctrlHeld!
         displayDebugWindow = not displayDebugWindow
 
     if displayDebugWindow and Game.CurrentView() == "world"

@@ -35,7 +35,7 @@ public:
 	vector3d GetPosition() const { return m_pos; }
 	virtual void SetOrient(const matrix3x3d &r) { m_orient = r; }
 	const matrix3x3d &GetOrient() const { return m_orient; }
-	virtual void SetVelocity(const vector3d &v) { assert(0); }
+	virtual void SetVelocity(const vector3d &) { assert(0); }
 	virtual vector3d GetVelocity() const { return vector3d(0.0); }
 
 	void SetPhysRadius(double r) { m_physRadius = r; }

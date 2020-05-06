@@ -5,12 +5,18 @@
 #define INPUT_H
 
 #include "KeyBindings.h"
-#include "utils.h"
 
 #include <algorithm>
+#include <map>
+#include <memory>
 #include <utility>
+#include <vector>
 
 class InputFrame;
+
+namespace KeyBindings {
+	enum class InputResponse;
+};
 
 enum class MouseMotionBehaviour {
 	Select,
@@ -34,6 +40,7 @@ private:
 
 // The Page->Group->Binding system serves as a thin veneer for the UI to make
 // sane reasonings about how to structure the Options dialog.
+// TODO: Do a step more defining an 'hint' for ordering
 struct BindingGroup {
 	BindingGroup() = default;
 	BindingGroup(const BindingGroup &) = delete;
@@ -80,9 +87,11 @@ public:
 	// return true if it was such frame
 	bool RemoveInputFrame(InputFrame *frame);
 
+	std::unique_ptr<InputFrameStatusTicket> DisableAllInputFrameExcept(InputFrame *current);
+
 	// Creates a new action binding, copying the provided binding.
 	// The returned binding pointer points to the actual binding.
-	// PS: 'id' may change if the same string is already in use
+	// NOTE: 'id' may change if the same string is already in use
 	KeyBindings::ActionBinding *AddActionBinding(std::string &id, BindingGroup &group, KeyBindings::ActionBinding binding);
 	KeyBindings::ActionBinding *GetActionBinding(const std::string &id)
 	{
@@ -114,6 +123,7 @@ public:
 		return false;
 	}
 
+	bool IsAnyKeyJustPressed() { return m_keyJustPressed != 0; }
 	bool KeyState(SDL_Keycode k) { return m_keyState[k]; }
 
 	SDL_Keymod KeyModStateUnified() { return m_keyModStateUnified; }
@@ -161,11 +171,9 @@ public:
 
 	KeyBindings::WheelDirection GetWheelState() const { return m_wheelState; }
 
-	sigc::signal<void, const SDL_Keysym &> onKeyPress; // <- Here only for 'ctrl-functions' in Pi.cpp
-	sigc::signal<void, const SDL_Keysym &> onKeyRelease;
-
-	void ResetMouseMotion()
+	void ResetFrameInput()
 	{
+		m_keyJustPressed = 0;
 		m_mouseMotion.fill(0);
 		m_wheelState = KeyBindings::WheelDirection::NONE;
 	}
@@ -174,9 +182,11 @@ public:
 
 #ifdef DEBUG_DUMP_PAGES
 	void DebugDumpPage(const std::string &pageId);
-#endif // 0
+#endif // DEBUG_DUMP_PAGES
 
 private:
+	unsigned m_keyJustPressed;
+
 	void InitJoysticks();
 	void RegisterInputBindings();
 

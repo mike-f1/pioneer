@@ -85,16 +85,16 @@ void LuaConsole::RegisterInputBindings()
 
 	Pi::input.PushInputFrame(m_inputFrame.get());
 
-	// Explicitly activate console as it is always active
+	// Explicitly activate console binding as it is always active
 	m_inputFrame->SetActive(true);
 }
 
 void LuaConsole::OnToggle(bool down)
 {
 	if (down) return;
-	if (m_active)
+	if (m_active) {
 		Pi::ui->DropLayer();
-	else {
+	} else {
 		Pi::ui->NewLayer()->SetInnerWidget(m_container.Get());
 		Pi::ui->SelectWidget(m_entry);
 	}

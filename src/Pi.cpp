@@ -1,8 +1,6 @@
 // Copyright © 2008-2019 Pioneer Developers. See AUTHORS.txt for details
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
-#include "buildopts.h"
-
 #include "Pi.h"
 
 #include "BaseSphere.h"
@@ -116,6 +114,8 @@
 
 float Pi::m_gameTickAlpha;
 std::unique_ptr<LuaNameGen> Pi::m_luaNameGen;
+std::unique_ptr<InputFrame> Pi::m_inputFrame;
+Pi::PiBinding Pi::m_piBindings;
 #ifdef ENABLE_SERVER_AGENT
 ServerAgent *Pi::serverAgent;
 #endif
@@ -456,7 +456,8 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 	RandomSingleton::Init(time(0));
 
 	input.Init();
-	input.onKeyPress.connect(sigc::ptr_fun(&Pi::HandleKeyDown));
+
+	RegisterInputBindings();
 
 	// we can only do bindings once joysticks are initialised.
 	if (!no_gui) // This re-saves the config file. With no GUI we want to allow multiple instances in parallel.
@@ -655,6 +656,8 @@ void Pi::Quit()
 	if (Pi::ffmpegFile != nullptr) {
 		_pclose(Pi::ffmpegFile);
 	}
+	input.RemoveInputFrame(m_inputFrame.get());
+	m_inputFrame.reset();
 	Projectile::FreeModel();
 	Beam::FreeModel();
 	NavLights::Uninit();
@@ -703,176 +706,6 @@ bool Pi::HandleEscKey()
 	return false;
 }
 
-static void DebugSpawnShip(Ship *ship)
-{
-	lua_State *l = Lua::manager->GetLuaState();
-	pi_lua_import(l, "Equipment");
-	LuaTable equip(l, -1);
-	LuaObject<Ship>::CallMethod<>(ship, "AddEquip", equip.Sub("laser").Sub("pulsecannon_dual_1mw"));
-	LuaObject<Ship>::CallMethod<>(ship, "AddEquip", equip.Sub("misc").Sub("laser_cooling_booster"));
-	LuaObject<Ship>::CallMethod<>(ship, "AddEquip", equip.Sub("misc").Sub("atmospheric_shielding"));
-	lua_pop(l, 5);
-	ship->SetFrame(GameLocator::getGame()->GetPlayer()->GetFrame());
-	vector3d dir = -GameLocator::getGame()->GetPlayer()->GetOrient().VectorZ();
-	ship->SetPosition(GameLocator::getGame()->GetPlayer()->GetPosition() + 100.0 * dir);
-	ship->SetVelocity(GameLocator::getGame()->GetPlayer()->GetVelocity());
-	ship->UpdateEquipStats();
-	GameLocator::getGame()->GetSpace()->AddBody(ship);
-}
-
-void Pi::HandleKeyDown(const SDL_Keysym &key)
-{
-	const bool CTRL = input.KeyState(SDLK_LCTRL) || input.KeyState(SDLK_RCTRL);
-
-	if (!CTRL) return;
-	// special keys.
-	switch (key.sym) {
-	case SDLK_q: // Quit
-		Pi::RequestQuit();
-		break;
-	case SDLK_PRINTSCREEN: // print
-	case SDLK_KP_MULTIPLY: // screen
-	{
-		char buf[256];
-		const time_t t = time(0);
-		struct tm *_tm = localtime(&t);
-		strftime(buf, sizeof(buf), "screenshot-%Y%m%d-%H%M%S.png", _tm);
-		Graphics::ScreendumpState sd;
-		RendererLocator::getRenderer()->Screendump(sd);
-		write_screenshot(sd, buf);
-		break;
-	}
-
-	case SDLK_KP_DIVIDE: // toggle video recording
-		Pi::isRecordingVideo = !Pi::isRecordingVideo;
-		if (Pi::isRecordingVideo) {
-			char videoName[256];
-			const time_t t = time(0);
-			struct tm *_tm = localtime(&t);
-			strftime(videoName, sizeof(videoName), "pioneer-%Y%m%d-%H%M%S", _tm);
-			const std::string dir = "videos";
-			FileSystem::userFiles.MakeDirectory(dir);
-			const std::string fname = FileSystem::JoinPathBelow(FileSystem::userFiles.GetRoot() + "/" + dir, videoName);
-			Output("Video Recording started to %s.\n", fname.c_str());
-			// start ffmpeg telling it to expect raw rgba 720p-60hz frames
-			// -i - tells it to read frames from stdin
-			// if given no frame rate (-r 60), it will just use vfr
-			char cmd[256] = { 0 };
-			snprintf(cmd, sizeof(cmd), "ffmpeg -f rawvideo -pix_fmt rgba -s %dx%d -i - -threads 0 -preset fast -y -pix_fmt yuv420p -crf 21 -vf vflip %s.mp4",
-				GameConfSingleton::getInstance().Int("ScrWidth"),
-				GameConfSingleton::getInstance().Int("ScrHeight"),
-				fname.c_str()
-				);
-
-			// open pipe to ffmpeg's stdin in binary write mode
-#if defined(_MSC_VER) || defined(__MINGW32__)
-			Pi::ffmpegFile = _popen(cmd, "wb");
-#else
-			Pi::ffmpegFile = _popen(cmd, "w");
-#endif
-		} else {
-			Output("Video Recording ended.\n");
-			if (Pi::ffmpegFile != nullptr) {
-				_pclose(Pi::ffmpegFile);
-				Pi::ffmpegFile = nullptr;
-			}
-		}
-		break;
-#if WITH_DEVKEYS
-	case SDLK_i: // Toggle Debug info
-		Pi::showDebugInfo = !Pi::showDebugInfo;
-		break;
-
-#endif /* DEVKEYS */
-#ifdef PIONEER_PROFILER
-	case SDLK_p: // alert it that we want to profile
-		if (input.KeyState(SDLK_LSHIFT) || input.KeyState(SDLK_RSHIFT))
-			Pi::doProfileOne = true;
-		else {
-			Pi::doProfileSlow = !Pi::doProfileSlow;
-			Output("slow frame profiling %s\n", Pi::doProfileSlow ? "enabled" : "disabled");
-		}
-		break;
-#endif
-#if WITH_DEVKEYS
-	case SDLK_F12: {
-		if (GameLocator::getGame()) {
-			/* add test object */
-			if (input.KeyState(SDLK_RSHIFT)) {
-				Missile *missile = GameLocator::getGame()->GetPlayer()->SpawnMissile(ShipType::MISSILE_GUIDED, 1000);
-				if (GameLocator::getGame()->GetPlayer()->GetCombatTarget()) {
-					missile->AIKamikaze(GameLocator::getGame()->GetPlayer()->GetCombatTarget());
-				}
-			} else if (input.KeyState(SDLK_LSHIFT)) {
-				SpaceStation *s = static_cast<SpaceStation *>(GameLocator::getGame()->GetPlayer()->GetNavTarget());
-				if (s) {
-					Ship *ship = new Ship(ShipType::POLICE);
-					int port = s->GetFreeDockingPort(ship);
-					if (port != -1) {
-						Output("Putting ship into station\n");
-						// Make police ship intent on killing the player
-						DebugSpawnShip(ship);
-						ship->AIKill(GameLocator::getGame()->GetPlayer());
-						ship->SetDockedWith(s, port);
-					} else {
-						delete ship;
-						Output("No docking ports free dude\n");
-					}
-				} else {
-					Output("Select a space station...\n");
-				}
-			} else {
-				Ship *ship = new Ship(ShipType::POLICE);
-				DebugSpawnShip(ship);
-				if (!input.KeyState(SDLK_LALT)) { //Left ALT = no AI
-					if (!input.KeyState(SDLK_LCTRL))
-						ship->AIFlyTo(GameLocator::getGame()->GetPlayer()); // a less lethal option
-					else
-						ship->AIKill(GameLocator::getGame()->GetPlayer()); // a really lethal option!
-				}
-			}
-		}
-		break;
-	}
-#endif /* DEVKEYS */
-#if WITH_OBJECTVIEWER
-	case SDLK_F10:
-		InGameViewsLocator::getInGameViews()->SetView(ViewType::OBJECT);
-		break;
-#endif /* WITH_OBJECTVIEWER */
-	case SDLK_F11:
-		// XXX only works on X11
-		//SDL_WM_ToggleFullScreen(Pi::scrSurface);
-#if WITH_DEVKEYS
-		RendererLocator::getRenderer()->ReloadShaders();
-#endif /* DEVKEYS */
-		break;
-	case SDLK_F9: // Quicksave
-	{
-		if (GameLocator::getGame()) {
-			if (GameLocator::getGame()->IsHyperspace()) {
-				GameLocator::getGame()->GetGameLog().Add(Lang::CANT_SAVE_IN_HYPERSPACE);
-			} else {
-				const std::string name = "_quicksave";
-				const std::string path = FileSystem::JoinPath(GameConfSingleton::GetSaveDirFull(), name);
-				try {
-					GameState::SaveGame(name);
-					Output("Quick save: %s\n", name.c_str());
-					GameLocator::getGame()->GetGameLog().Add(Lang::GAME_SAVED_TO + path);
-				} catch (CouldNotOpenFileException) {
-					GameLocator::getGame()->GetGameLog().Add(stringf(Lang::COULD_NOT_OPEN_FILENAME, formatarg("path", path)));
-				} catch (CouldNotWriteToFileException) {
-					GameLocator::getGame()->GetGameLog().Add(Lang::GAME_SAVE_CANNOT_WRITE);
-				}
-			}
-		}
-		break;
-	}
-	default:
-		break; // This does nothing but it stops the compiler warnings
-	}
-}
-
 void Pi::HandleEvents()
 {
 	PROFILE_SCOPED()
@@ -888,7 +721,7 @@ void Pi::HandleEvents()
 	// unified input system
 	bool skipTextInput = false;
 
-	Pi::input.ResetMouseMotion();
+	Pi::input.ResetFrameInput();
 	while (SDL_PollEvent(&event)) {
 		if (event.type == SDL_QUIT) {
 			Pi::RequestQuit();
@@ -964,6 +797,167 @@ void Pi::HandleRequests()
 	}
 	internalRequests.clear();
 }
+
+void Pi::RegisterInputBindings()
+{
+	using namespace KeyBindings;
+	using namespace std::placeholders;
+
+	m_inputFrame.reset(new InputFrame("ObjectViewer"));
+
+	auto &page = Pi::input.GetBindingPage("TweakAndSetting");
+	page.shouldBeTranslated = false;
+
+	auto &group = page.GetBindingGroup("None");
+
+	// NOTE: All these bindings must use a modifier! Prefer CTRL over ALT or SHIFT
+	m_piBindings.quickSave = m_inputFrame->AddActionBinding("QuickSave", group, ActionBinding(KeyBinding(SDLK_F9, KMOD_LCTRL)));
+	m_piBindings.quickSave->StoreOnActionCallback(std::bind(&Pi::QuickSave, _1));
+
+	m_piBindings.reqQuit = m_inputFrame->AddActionBinding("RequestQuit", group, ActionBinding(KeyBinding(SDLK_q, KMOD_LCTRL)));
+	m_piBindings.reqQuit->StoreOnActionCallback(std::bind(&Pi::RequestQuit));
+
+	m_piBindings.screenShot = m_inputFrame->AddActionBinding("Screenshot", group, ActionBinding(KeyBinding(SDLK_PRINTSCREEN, KMOD_LCTRL)));
+	m_piBindings.screenShot->StoreOnActionCallback(std::bind(&Pi::ScreenShot, _1));
+
+	m_piBindings.toggleVideoRec = m_inputFrame->AddActionBinding("ToggleVideoRec", group, ActionBinding(KeyBinding(SDLK_ASTERISK, KMOD_LCTRL)));
+	m_piBindings.toggleVideoRec->StoreOnActionCallback(std::bind(&Pi::ToggleVideoRecording, _1));
+
+	#ifdef WITH_DEVKEYS
+	m_piBindings.toggleDebugInfo = m_inputFrame->AddActionBinding("ToggleDebugInfo", group, ActionBinding(KeyBinding(SDLK_i, KMOD_LCTRL)));
+	m_piBindings.toggleDebugInfo->StoreOnActionCallback(std::bind(&Pi::ToggleDebug, _1));
+
+	m_piBindings.reloadShaders = m_inputFrame->AddActionBinding("ReloadShaders", group, ActionBinding(KeyBinding(SDLK_F11, KMOD_LCTRL)));
+	m_piBindings.reloadShaders->StoreOnActionCallback(&Pi::ReloadShaders);
+	#endif // WITH_DEVKEYS
+
+	#ifdef PIONEER_PROFILER
+	m_piBindings.profilerBindOne = m_inputFrame->AddActionBinding("ProfilerOne", group, ActionBinding(KeyBinding(SDLK_p, KMOD_LCTRL)));
+	m_piBindings.profilerBindOne->StoreOnActionCallback(&Pi::ProfilerCommandOne);
+	m_piBindings.profilerBindSlow = m_inputFrame->AddActionBinding("ProfilerSlow", group, ActionBinding(KeyBinding(SDLK_p, SDL_Keymod(KMOD_LCTRL | KMOD_LSHIFT))));
+	m_piBindings.profilerBindSlow->StoreOnActionCallback(&Pi::ProfilerCommandSlow);
+	#endif // PIONEER_PROFILER
+
+	#ifdef WITH_OBJECTVIEWER
+	m_piBindings.objectViewer = m_inputFrame->AddActionBinding("ObjectViewer", group, ActionBinding(KeyBinding(SDLK_F10, KMOD_LCTRL)));
+	m_piBindings.objectViewer->StoreOnActionCallback(&Pi::ObjectViewer);
+	#endif // WITH_OBJECTVIEWER
+
+	m_inputFrame->SetActive(true);
+
+	Pi::input.PushInputFrame(m_inputFrame.get());
+}
+
+void Pi::QuickSave(bool down)
+{
+	if (down) return;
+	if (GameLocator::getGame()) {
+		if (GameLocator::getGame()->IsHyperspace()) {
+			GameLocator::getGame()->GetGameLog().Add(Lang::CANT_SAVE_IN_HYPERSPACE);
+		} else {
+			const std::string name = "_quicksave";
+			const std::string path = FileSystem::JoinPath(GameConfSingleton::GetSaveDirFull(), name);
+			try {
+				GameState::SaveGame(name);
+				Output("Quick save: %s\n", name.c_str());
+				GameLocator::getGame()->GetGameLog().Add(Lang::GAME_SAVED_TO + path);
+			} catch (CouldNotOpenFileException) {
+				GameLocator::getGame()->GetGameLog().Add(stringf(Lang::COULD_NOT_OPEN_FILENAME, formatarg("path", path)));
+			} catch (CouldNotWriteToFileException) {
+				GameLocator::getGame()->GetGameLog().Add(Lang::GAME_SAVE_CANNOT_WRITE);
+			}
+		}
+	}
+}
+
+void Pi::ScreenShot(bool down)
+{
+	if (down) return;
+	char buf[256];
+	const time_t t = time(0);
+	struct tm *_tm = localtime(&t);
+	strftime(buf, sizeof(buf), "screenshot-%Y%m%d-%H%M%S.png", _tm);
+	Graphics::ScreendumpState sd;
+	RendererLocator::getRenderer()->Screendump(sd);
+	write_screenshot(sd, buf);
+}
+
+void Pi::ToggleVideoRecording(bool down)
+{
+	if (down) return;
+	Pi::isRecordingVideo = !Pi::isRecordingVideo;
+	if (Pi::isRecordingVideo) {
+		char videoName[256];
+		const time_t t = time(0);
+		struct tm *_tm = localtime(&t);
+		strftime(videoName, sizeof(videoName), "pioneer-%Y%m%d-%H%M%S", _tm);
+		const std::string dir = "videos";
+		FileSystem::userFiles.MakeDirectory(dir);
+		const std::string fname = FileSystem::JoinPathBelow(FileSystem::userFiles.GetRoot() + "/" + dir, videoName);
+		Output("Video Recording started to %s.\n", fname.c_str());
+		// start ffmpeg telling it to expect raw rgba 720p-60hz frames
+		// -i - tells it to read frames from stdin
+		// if given no frame rate (-r 60), it will just use vfr
+		char cmd[256] = { 0 };
+		snprintf(cmd, sizeof(cmd), "ffmpeg -f rawvideo -pix_fmt rgba -s %dx%d -i - -threads 0 -preset fast -y -pix_fmt yuv420p -crf 21 -vf vflip %s.mp4",
+			GameConfSingleton::getInstance().Int("ScrWidth"),
+			GameConfSingleton::getInstance().Int("ScrHeight"),
+			fname.c_str()
+			);
+
+		// open pipe to ffmpeg's stdin in binary write mode
+#if defined(_MSC_VER) || defined(__MINGW32__)
+		Pi::ffmpegFile = _popen(cmd, "wb");
+#else
+		Pi::ffmpegFile = _popen(cmd, "w");
+#endif
+	} else {
+		Output("Video Recording ended.\n");
+		if (Pi::ffmpegFile != nullptr) {
+			_pclose(Pi::ffmpegFile);
+			Pi::ffmpegFile = nullptr;
+		}
+	}
+}
+
+#if WITH_DEVKEYS
+void Pi::ToggleDebug(bool down)
+{
+	if (down) return;
+	Pi::showDebugInfo = !Pi::showDebugInfo;
+}
+
+void Pi::ReloadShaders(bool down)
+{
+	if (down) return;
+	RendererLocator::getRenderer()->ReloadShaders();
+}
+#endif // WITH_DEVKEYS
+
+#ifdef PIONEER_PROFILER
+void Pi::ProfilerCommandOne(bool down)
+{
+	if (down) return;
+
+	Pi::doProfileOne = true;
+}
+
+void Pi::ProfilerCommandSlow(bool down)
+{
+	if (down) return;
+
+	Pi::doProfileSlow = !Pi::doProfileSlow;
+	Output("slow frame profiling %s\n", Pi::doProfileSlow ? "enabled" : "disabled");
+}
+#endif // PIONEER_PROFILER
+
+#if WITH_OBJECTVIEWER
+void Pi::ObjectViewer(bool down)
+{
+	if (down) return;
+	InGameViewsLocator::getInGameViews()->SetView(ViewType::OBJECT);
+}
+#endif // WITH_OBJECTVIEWER
 
 void Pi::CutSceneLoop(double step, Cutscene *m_cutscene)
 {
@@ -1108,7 +1102,7 @@ void Pi::Start(const SystemPath &startPath)
 		case MainState::TOMBSTONE:
 			time += m_frameTime;
 			CutSceneLoop(m_frameTime, m_cutscene.get());
-			if ((time > 2.0) && ((input.MouseButtonState(SDL_BUTTON_LEFT)) || input.KeyState(SDLK_SPACE))) {
+			if ((time > 2.0) && (input.IsAnyKeyJustPressed())) {
 				m_cutscene.reset();
 				m_mainState = MainState::TO_MAIN_MENU;
 			}

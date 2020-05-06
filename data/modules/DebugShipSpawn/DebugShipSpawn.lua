@@ -61,6 +61,7 @@ draw_ai_info = function()
     end
   end
 end
+
 local spawn_distance = 10
 local ship_spawn_debug_window
 ship_spawn_debug_window = function()
@@ -79,6 +80,16 @@ ship_spawn_debug_window = function()
       ui.sameLine()
       ui.child('ai_info', Vector2(150, -ui.getFrameHeightWithSpacing()), draw_ai_info)
       if ui.button("Spawn", Vector2(0, 0)) then
+		local target
+		if ui.ctrlHeld() then
+			target = Game.player:GetCombatTarget()
+			if not target then
+				target = Game.player:GetNavTarget()
+			end
+		end
+		if not target then
+			target = Game.player
+		end
         local new_ship = Space.SpawnShipNear(ship_name, Game.player, spawn_distance, spawn_distance)
         new_ship:AddEquip(Equipment.laser.pulsecannon_dual_1mw)
         new_ship:AddEquip(Equipment.misc.laser_cooling_booster)
@@ -94,9 +105,11 @@ ship_spawn_debug_window = function()
     end)
   end
 end
+
 local displayDebugWindow = false
+
 return ui.registerModule('game', function()
-  if ui.isKeyReleased(ui.keys.f11) and ui.ctrlHeld() then
+  if ui.isKeyReleased(ui.keys.f12) and ui.ctrlHeld() then
     displayDebugWindow = not displayDebugWindow
   end
   if displayDebugWindow and Game.CurrentView() == "world" then

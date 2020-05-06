@@ -11,15 +11,7 @@ struct BindingGroup;
 namespace KeyBindings {
 	struct ActionBinding;
 	struct AxisBinding;
-};
-
-enum class InputResponse {
-	// None of the inputs match the event.
-	NOMATCH,
-	// An input matched, but won't consume the event.
-	PASSTHROUGH,
-	// An input matched and consumed the event.
-	MATCHED
+	enum class InputResponse;
 };
 
 class InputFrame {
@@ -61,7 +53,7 @@ private:
 	std::vector<TAxisPair> m_axes;
 
 	// Check the event against all the inputs in this frame.
-	InputResponse ProcessSDLEvent(const SDL_Event &event);
+	KeyBindings::InputResponse ProcessSDLEvent(const SDL_Event &event);
 };
 
 #endif // INPUTFRAME_H

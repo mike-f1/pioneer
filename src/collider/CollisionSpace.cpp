@@ -67,9 +67,9 @@ public:
 	}
 
 	// Avoid re-allocation of memory when m_geoms are less than before,
-	void Refresh(const std::list<Geom *> &m_geoms);
+	void Refresh(const GeomList &m_geoms);
 
-	BvhTree(const std::list<Geom *> &geoms);
+	BvhTree(const GeomList &geoms);
 	~BvhTree()
 	{
 		FreeAll();
@@ -77,7 +77,7 @@ public:
 	void CollideGeom(Geom *, const Aabb &, int minMailboxValue, void (*callback)(CollisionContact *));
 
 private:
-	void BuildNode(BvhNode *node, const std::list<Geom *> &a_geoms, int &outGeomPos);
+	void BuildNode(BvhNode *node, const GeomList &a_geoms, int &outGeomPos);
 
 	void FreeAll() {
 		if (m_geoms) delete[] m_geoms;
@@ -87,7 +87,7 @@ private:
 	}
 };
 
-BvhTree::BvhTree(const std::list<Geom *> &geoms)
+BvhTree::BvhTree(const GeomList &geoms)
 {
 	PROFILE_SCOPED()
 	m_geoms = nullptr;
@@ -107,7 +107,7 @@ BvhTree::BvhTree(const std::list<Geom *> &geoms)
 	assert(geomPos == numGeoms);
 }
 
-void BvhTree::Refresh(const std::list<Geom *> &geoms)
+void BvhTree::Refresh(const GeomList &geoms)
 {
 	PROFILE_SCOPED()
 	int numGeoms = geoms.size();
@@ -128,10 +128,6 @@ void BvhTree::CollideGeom(Geom *g, const Aabb &geomAabb, int minMailboxValue, vo
 	PROFILE_SCOPED()
 	if (!m_root) return;
 
-	// our big aabb
-	vector3d pos = g->GetPosition();
-	double radius = g->GetGeomTree()->GetRadius();
-
 	int stackPos = -1;
 	BvhNode *stack[16];
 	BvhNode *node = m_root;
@@ -145,11 +141,18 @@ void BvhTree::CollideGeom(Geom *g, const Aabb &geomAabb, int minMailboxValue, vo
 					if (g2->GetMailboxIndex() < minMailboxValue) continue;
 					if (g2 == g) continue;
 					if (g->GetGroup() && g2->GetGroup() == g->GetGroup()) continue;
+					// NOTE: Checking for CSG geometries is not symmetric
+					// because geom pairs are checked only once (see minMailboxValue)
+					// Thus the below checks of g against g2 and g2 against g
+					if (g->CheckCollisionCylinder(g2, callback)) continue;
+					if (g2->CheckCollisionCylinder(g, callback)) continue;
+					if (g->CheckBoxes(g2, callback)) continue;
+					if (g2->CheckBoxes(g, callback)) continue;
+					float dist_sqr = (g->GetPosition() - g2->GetPosition()).LengthSqr();
+					double radius = g->GetGeomTree()->GetRadius();
 					double radius2 = g2->GetGeomTree()->GetRadius();
-					vector3d pos2 = g2->GetPosition();
-					if ((pos - pos2).Length() <= (radius + radius2)) {
-						g->Collide(g2, callback);
-					}
+					if (dist_sqr >= ((radius + radius2) * (radius + radius2))) continue;
+					g->Collide(g2, callback);
 				}
 			} else if (node->kids[0]) {
 				stack[++stackPos] = node->kids[0];
@@ -163,7 +166,7 @@ void BvhTree::CollideGeom(Geom *g, const Aabb &geomAabb, int minMailboxValue, vo
 	}
 }
 
-void BvhTree::BuildNode(BvhNode *node, const std::list<Geom *> &a_geoms, int &outGeomPos)
+void BvhTree::BuildNode(BvhNode *node, const GeomList &a_geoms, int &outGeomPos)
 {
 	PROFILE_SCOPED()
 	const int numGeoms = a_geoms.size();
@@ -174,7 +177,7 @@ void BvhTree::BuildNode(BvhNode *node, const std::list<Geom *> &a_geoms, int &ou
 	aabb.min = vector3d(FLT_MAX, FLT_MAX, FLT_MAX);
 	aabb.max = vector3d(-FLT_MAX, -FLT_MAX, -FLT_MAX);
 
-	for (std::list<Geom *>::const_iterator i = a_geoms.begin();
+	for (GeomList::const_iterator i = a_geoms.begin();
 		 i != a_geoms.end(); ++i) {
 		vector3d p = (*i)->GetPosition();
 		double rad = (*i)->GetGeomTree()->GetRadius();
@@ -193,9 +196,9 @@ void BvhTree::BuildNode(BvhNode *node, const std::list<Geom *> &a_geoms, int &ou
 		axis = 2;
 	const double pivot = 0.5 * (aabb.max[axis] + aabb.min[axis]);
 
-	std::list<Geom *> side[2];
+	GeomList side[2];
 
-	for (std::list<Geom *>::const_iterator i = a_geoms.begin();
+	for (GeomList::const_iterator i = a_geoms.begin();
 		 i != a_geoms.end(); ++i) {
 		if ((*i)->GetPosition()[axis] < pivot) {
 			side[0].push_back(*i);
@@ -212,7 +215,7 @@ void BvhTree::BuildNode(BvhNode *node, const std::list<Geom *> &a_geoms, int &ou
 		node->geomStart = &m_geoms[outGeomPos];
 
 		// copy geoms to the stinking flat array
-		for (std::list<Geom *>::const_iterator i = a_geoms.begin();
+		for (GeomList::const_iterator i = a_geoms.begin();
 			 i != a_geoms.end(); ++i) {
 			m_geoms[outGeomPos++] = *i;
 		}
@@ -365,7 +368,7 @@ void CollisionSpace::TraceRay(const vector3d &start, const vector3d &dir, double
 		node = vn_stack[stackPos--];
 	}
 
-	for (std::list<Geom *>::iterator i = m_geoms.begin(); i != m_geoms.end(); ++i) {
+	for (GeomList::iterator i = m_geoms.begin(); i != m_geoms.end(); ++i) {
 		if ((*i) == ignore) continue;
 		if ((*i)->IsEnabled()) {
 			const matrix4x4d &invTrans = (*i)->GetInvTransform();
@@ -442,7 +445,7 @@ void CollisionSpace::RebuildObjectTrees()
 		if (m_staticObjectTree) delete m_staticObjectTree;
 		m_staticObjectTree = new BvhTree(m_staticGeoms);
 	}
-	if (unsigned(m_oldGeomsNumber) < m_geoms.size()) {
+	if (m_oldGeomsNumber < m_geoms.size()) {
 		// Have more geoms: rebuild completely (ask more memory)
 		if (m_dynamicObjectTree) delete m_dynamicObjectTree;
 		m_dynamicObjectTree = new BvhTree(m_geoms);
@@ -463,14 +466,14 @@ void CollisionSpace::Collide(void (*callback)(CollisionContact *))
 	RebuildObjectTrees();
 
 	int mailboxMin = 0;
-	for (std::list<Geom *>::iterator i = m_geoms.begin(); i != m_geoms.end(); ++i) {
+	for (GeomList::iterator i = m_geoms.begin(); i != m_geoms.end(); ++i) {
 		(*i)->SetMailboxIndex(mailboxMin++);
 	}
 
 	/* This mailbox nonsense is so: after collision(a,b), we will not
 	 * attempt collision(b,a) */
 	mailboxMin = 1;
-	for (std::list<Geom *>::iterator i = m_geoms.begin(); i != m_geoms.end(); ++i, mailboxMin++) {
+	for (GeomList::iterator i = m_geoms.begin(); i != m_geoms.end(); ++i, mailboxMin++) {
 		CollideGeoms(*i, mailboxMin, callback);
 	}
 }

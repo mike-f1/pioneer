@@ -2,12 +2,11 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "buildopts.h"
-#include "libs.h"
+
 #include "utils.h"
+
 #include <cstdio>
 #include <cstdlib>
-
-#include "scenegraph/SceneGraph.h"
 
 #include "FileSystem.h"
 #include "GameConfig.h"
@@ -28,6 +27,9 @@
 #include "scenegraph/BinaryConverter.h"
 #include "scenegraph/DumpVisitor.h"
 #include "scenegraph/FindNodeVisitor.h"
+#include "scenegraph/Loader.h"
+#include "scenegraph/Model.h"
+
 #include <sstream>
 
 std::unique_ptr<GameConfig> s_config;

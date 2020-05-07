@@ -69,12 +69,17 @@
 
 #include "Mount.h"
 
+struct CSG_CentralCylinder;
+struct CSG_Box;
+
 namespace Graphics {
 	class RenderState;
 	class VertexBuffer;
 	class Material;
 	namespace Drawables {
+		class Box3D;
 		class Line3D;
+		class Disk;
 	} // namespace Drawables
 } // namespace Graphics
 
@@ -95,15 +100,15 @@ namespace SceneGraph {
 	typedef std::vector<MatrixTransform *> TagContainer;
 
 	class Model : public DeleteEmitter {
-	public:
 		friend class BaseLoader;
 		friend class Loader;
 		friend class ModelBinarizer;
 		friend class BinaryConverter;
+	public:
 		Model(const std::string &name);
 		~Model();
 
-		Model *MakeInstance() const;
+		std::unique_ptr<Model> MakeInstance() const;
 
 		const std::string &GetName() const { return m_name; }
 
@@ -174,6 +179,8 @@ namespace SceneGraph {
 		};
 
 		void SetDebugFlags(uint32_t flags);
+		void SetCentralCylinder(std::unique_ptr<CSG_CentralCylinder> centralcylinder);
+		void AddBox(std::unique_ptr<CSG_Box> box);
 
 	private:
 		Model(const Model &); // copy ctor: used in MakeInstance
@@ -200,17 +207,27 @@ namespace SceneGraph {
 		void CreateAabbVB();
 		void DrawAabb();
 		void DrawCollisionMesh();
+		void DrawCentralCylinder();
+		void DrawBoxes();
+
 		void DrawAxisIndicators(std::vector<Graphics::Drawables::Line3D> &lines);
 		void AddAxisIndicators(const std::vector<MatrixTransform *> &mts, std::vector<Graphics::Drawables::Line3D> &lines);
 
 		uint32_t m_debugFlags;
 
+		std::unique_ptr<CSG_CentralCylinder> m_centralCylinder;
+		std::vector<CSG_Box> m_Boxes;
+		std::unique_ptr<Graphics::Drawables::Disk> m_disk;
+		std::unique_ptr<Graphics::Drawables::Line3D> m_CCylConnectingLine;
+		std::unique_ptr<Graphics::Drawables::Box3D> m_aabbBox3D;
+		std::vector<Graphics::Drawables::Box3D> m_csgBoxes;
 		std::vector<Graphics::Drawables::Line3D> m_tagPoints;
 		std::vector<Graphics::Drawables::Line3D> m_dockingPoints;
 		RefCountedPtr<Graphics::VertexBuffer> m_collisionMeshVB;
-		RefCountedPtr<Graphics::VertexBuffer> m_aabbVB;
 		RefCountedPtr<Graphics::Material> m_aabbMat;
+		RefCountedPtr<Graphics::Material> m_boxes3DMat;
 		Graphics::RenderState *m_state;
+		Graphics::RenderState *m_csg;
 
 		// Vector with mounts used by guns
 		GunMounts m_mounts;

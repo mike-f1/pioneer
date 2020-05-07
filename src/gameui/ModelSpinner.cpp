@@ -22,7 +22,7 @@ namespace GameUI {
 		m_rotY(DEG2RAD(180.0)),
 		m_rightMouseButton(false)
 	{
-		m_model.reset(model->MakeInstance());
+		m_model = model->MakeInstance();
 		m_skin.Apply(m_model.get());
 		m_model->SetPattern(pattern);
 		m_shields.reset(new Shields(model));

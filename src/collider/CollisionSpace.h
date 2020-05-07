@@ -19,6 +19,8 @@ struct Sphere {
 
 class BvhTree;
 
+typedef std::list<Geom *> GeomList;
+
 /*
  * Collision spaces have a bunch of geoms and at most one sphere (for a planet).
  */
@@ -54,14 +56,14 @@ public:
 private:
 	void CollideGeoms(Geom *a, int minMailboxValue, void (*callback)(CollisionContact *));
 	void CollideRaySphere(const vector3d &start, const vector3d &dir, isect_t *isect);
-	std::list<Geom *> m_geoms;
-	std::list<Geom *> m_staticGeoms;
+	GeomList m_geoms;
+	GeomList m_staticGeoms;
 	bool m_needStaticGeomRebuild;
 	BvhTree *m_staticObjectTree;
 	BvhTree *m_dynamicObjectTree;
 	Sphere sphere;
 
-	int m_oldGeomsNumber;
+	size_t m_oldGeomsNumber;
 
 	static int s_nextHandle;
 };

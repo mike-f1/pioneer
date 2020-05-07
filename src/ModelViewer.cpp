@@ -22,6 +22,10 @@
 #include "scenegraph/BinaryConverter.h"
 #include "scenegraph/DumpVisitor.h"
 #include "scenegraph/FindNodeVisitor.h"
+#include "scenegraph/Loader.h"
+#include "scenegraph/MatrixTransform.h"
+#include "scenegraph/Model.h"
+#include "scenegraph/ModelNode.h"
 #include "scenegraph/ModelSkin.h"
 #include <sstream>
 

@@ -14,8 +14,10 @@
 #include "graphics/Texture.h"
 #include "graphics/TextureBuilder.h"
 #include "graphics/VertexBuffer.h"
+#include "scenegraph/Billboard.h"
 #include "scenegraph/FindNodeVisitor.h"
-#include "scenegraph/SceneGraph.h"
+#include "scenegraph/MatrixTransform.h"
+#include "scenegraph/Model.h"
 #include "utils.h"
 
 const float BILLBOARD_SIZE = 2.5f;

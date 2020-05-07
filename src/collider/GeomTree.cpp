@@ -32,8 +32,8 @@ GeomTree::GeomTree(const int numVerts, const int numTris, const std::vector<vect
 		m_triFlags.push_back(triflags[i]);
 	}
 
-	m_aabb.min = vector3d(FLT_MAX, FLT_MAX, FLT_MAX);
-	m_aabb.max = vector3d(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+	m_aabb.min = vector3d(std::numeric_limits<double>::max());
+	m_aabb.max = vector3d(std::numeric_limits<double>::lowest());
 
 	// activeTris = tris we are still trying to put into leaves
 	std::vector<int> activeTris;

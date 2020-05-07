@@ -8,8 +8,11 @@
 #include "SmartPtr.h"
 #include "graphics/Light.h"
 #include "scenegraph/ModelSkin.h"
-#include "scenegraph/SceneGraph.h"
 #include "ui/Context.h"
+
+namespace SceneGraph {
+	class Model;
+}
 
 namespace GameUI {
 

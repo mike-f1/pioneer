@@ -8,7 +8,7 @@
 #include "graphics/Material.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
-#include "scenegraph/SceneGraph.h"
+#include "scenegraph/Model.h"
 
 Tombstone::Tombstone(int width, int height) :
 	Cutscene(width, height)

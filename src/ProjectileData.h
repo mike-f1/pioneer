@@ -3,6 +3,7 @@
 
 #include "Color.h"
 #include "Json.h"
+#include "JsonUtils.h"
 #include "GameSaveError.h"
 #include "utils.h"
 
@@ -37,7 +38,7 @@ struct ProjectileData {
 		mining = jsonObj["mining"];
 		beam = jsonObj["is_beam"];
 		} catch (Json::type_error &) {
-			Output("Got error loading '%s'\n", __func__);
+			Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 			throw SavedGameCorruptException();
 		}
 	}

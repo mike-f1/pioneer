@@ -96,6 +96,90 @@ void Geom::Collide(Geom *b, void (*callback)(CollisionContact *)) const
 	//	Output("%d 'rays' in %dms (%f rps)\n", numEdges, t, 1000.0*numEdges / (double)t);
 }
 
+void Geom::SetCentralCylinder(std::unique_ptr<CSG_CentralCylinder> centralCylinder) {
+	if ((centralCylinder == nullptr) ||
+		(centralCylinder->m_diameter < 0.0) ||
+		(centralCylinder->m_minH > centralCylinder->m_maxH)) {
+		m_centralCylinder.reset();
+		assert(0 && "Cylinder data aren't valid");
+		return;
+	}
+	m_centralCylinder = std::move(centralCylinder);
+}
+
+void Geom::AddBox(std::unique_ptr<CSG_Box> box)
+{
+	m_Boxes.push_back(*std::move(box));
+}
+
+bool Geom::CheckCollisionCylinder(Geom* b, void (*callback)(CollisionContact*))
+{
+	PROFILE_SCOPED();
+	// NOTE: below check is inside this function to avoid cluttering of interface,
+	// but it could be made faster having a dedicated inlined function
+	if (!m_centralCylinder) return false;
+
+	float max_dist = (m_centralCylinder->m_diameter / 2.0) - b->GetGeomTree()->GetRadius();
+	// TODO: In order to ease math, pick radius instead of AAbb of the geom,
+	// indeed that AAbb should be rotated and rebuilt
+	const vector3f pos2 = vector3f((b->GetPosition() - GetPosition()) * GetTransform());
+	// cylinder rotation axis is in y direction (see spacestations)
+	const vector2f pos2xy(pos2.x, pos2.z);
+	float dist_sqr = pos2xy.LengthSqr();
+
+	if (dist_sqr < (max_dist * max_dist) &&
+		(pos2.y < m_centralCylinder->m_maxH) &&
+		(pos2.y > m_centralCylinder->m_minH)) {
+			if (m_centralCylinder->m_shouldTriggerDocking) {
+				CollisionContact contact;
+				contact.pos = GetPosition();
+				contact.normal = vector3d(0.0);
+				contact.depth = 0.1;
+				contact.triIdx = 0;
+				contact.userData1 = this->m_data;
+				contact.userData2 = b->m_data;
+				contact.geomFlag = 0x10;
+				callback(&contact);
+			}
+			return true;
+	}
+	return false;
+};
+
+bool Geom::CheckBoxes(Geom* b, void (*callback)(CollisionContact*))
+{
+	PROFILE_SCOPED();
+	// NOTE: below check is inside this function to avoid cluttering of interface,
+	// but it could be made faster having a dedicated inlined function
+	if (m_Boxes.empty()) return false;
+
+	const vector3f p = vector3f((b->GetPosition() - GetPosition()) * GetTransform());
+	// TODO: In order to ease math, pick radius instead of AAbb of the geom,
+	// indeed that AAbb should be rotated and rebuilt
+	const float radius = b->GetGeomTree()->GetRadius();
+	for (auto &box : m_Boxes) {
+		bool collide = ((p.x >= box.m_min.x + radius) && (p.x <= box.m_max.x - radius) &&
+			(p.y >= box.m_min.y + radius) && (p.y <= box.m_max.y - radius) &&
+			(p.z >= box.m_min.z + radius) && (p.z <= box.m_max.z - radius));
+
+		if (collide) {
+			if (box.m_shouldTriggerDocking) {
+				CollisionContact contact;
+				contact.pos = GetPosition();
+				contact.normal = vector3d(0.0);
+				contact.depth = 0.1;
+				contact.triIdx = 0;
+				contact.userData1 = this->m_data;
+				contact.userData2 = b->m_data;
+				contact.geomFlag = 0x10;
+				callback(&contact);
+			}
+			return true;
+		}
+	}
+	return false;
+};
+
 static bool rotatedAabbIsectsNormalOne(Aabb &a, const matrix4x4d &transA, Aabb &b)
 {
 	PROFILE_SCOPED()

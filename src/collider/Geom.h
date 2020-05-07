@@ -4,8 +4,13 @@
 #ifndef _GEOM_H
 #define _GEOM_H
 
+#include <memory>
+#include <vector>
+
 #include "../matrix4x4.h"
 #include "../vector3.h"
+
+#include "CSGDefinitions.h"
 
 struct CollisionContact;
 class GeomTree;
@@ -16,6 +21,7 @@ struct BVHNode;
 class Geom {
 public:
 	Geom(const GeomTree *geomtree, const matrix4x4d &m, const vector3d &pos, void *data);
+
 	void MoveTo(const matrix4x4d &m);
 	void MoveTo(const matrix4x4d &m, const vector3d &pos);
 	inline const matrix4x4d &GetInvTransform() const { return m_invOrient; }
@@ -36,6 +42,11 @@ public:
 
 	matrix4x4d m_animTransform;
 
+	void SetCentralCylinder(std::unique_ptr<CSG_CentralCylinder> centralcylinder);
+	void AddBox(std::unique_ptr<CSG_Box> box);
+	bool CheckCollisionCylinder(Geom* b, void (*callback)(CollisionContact*));
+	bool CheckBoxes(Geom* b, void (*callback)(CollisionContact*));
+
 private:
 	void CollideEdgesWithTrisOf(int &maxContacts, const Geom *b, const matrix4x4d &transTo, void (*callback)(CollisionContact *)) const;
 	void CollideEdgesTris(int &maxContacts, const BVHNode *edgeNode, const matrix4x4d &transToB,
@@ -49,6 +60,9 @@ private:
 	int m_group;
 	int m_mailboxIndex; // used to avoid duplicate collisions
 	bool m_active;
+
+	std::vector<CSG_Box> m_Boxes;
+	std::unique_ptr<CSG_CentralCylinder> m_centralCylinder;
 };
 
 #endif /* _GEOM_H */

@@ -85,6 +85,8 @@ namespace Graphics {
 		VertexBuffer(const VertexBufferDesc &desc) :
 			Mappable(desc.numVertices),
 			m_desc(desc) {}
+
+		VertexBuffer(VertexBuffer &&) = default;
 		virtual ~VertexBuffer();
 		const VertexBufferDesc &GetDesc() const { return m_desc; }
 

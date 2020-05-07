@@ -52,7 +52,7 @@ void ModelSpinner::CreateRenderTarget()
 
 void ModelSpinner::SetModel(SceneGraph::Model *model, SceneGraph::ModelSkin *skin, unsigned int pattern)
 {
-	m_model.reset(model->MakeInstance());
+	m_model = model->MakeInstance();
 	if (skin) {
 		skin->Apply(m_model.get());
 	} else {

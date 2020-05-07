@@ -2,6 +2,7 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "SpaceStationType.h"
+
 #include "FileSystem.h"
 #include "Json.h"
 #include "MathUtil.h"
@@ -19,6 +20,13 @@ struct StationTypeLoadError {};
 
 std::vector<SpaceStationType> SpaceStationType::surfaceTypes;
 std::vector<SpaceStationType> SpaceStationType::orbitalTypes;
+
+void JsonToVectorNoString(vector3f *pVec, const Json &jsonObj)
+{
+	pVec->x = jsonObj[0];
+	pVec->y = jsonObj[1];
+	pVec->z = jsonObj[2];
+}
 
 SpaceStationType::SpaceStationType(const std::string &id_, const std::string &path_) :
 	id(id_),
@@ -57,6 +65,56 @@ SpaceStationType::SpaceStationType(const std::string &id_, const std::string &pa
 	parkingGapSize = data.value("parking_gap_size", 0.0f);
 
 	padOffset = data.value("pad_offset", 150.f);
+
+	for (Json::iterator cc = data["central_cylinder"].begin(); cc != data["central_cylinder"].end(); ++cc) {
+		const std::string parameter = cc.key();
+		m_cylinder.is_valid = true;
+		if (parameter == "diameter") {
+			m_cylinder.diameter = data["central_cylinder"].value("diameter", std::numeric_limits<float>::min());
+		}
+		if (parameter == "min") {
+			m_cylinder.min = data["central_cylinder"].value("min", std::numeric_limits<float>::max());
+		}
+		if (parameter == "max") {
+			m_cylinder.max = data["central_cylinder"].value("max", std::numeric_limits<float>::min());
+		}
+		if (parameter == "dock") {
+			m_cylinder.dock = (data["central_cylinder"].value("dock", -10.0) > 0.0);
+		}
+	}
+	if (m_cylinder.is_valid) {
+		if (m_cylinder.max < m_cylinder.min) {
+			m_cylinder.is_valid = false;
+		}
+		if (m_cylinder.diameter < 0.0) {
+			m_cylinder.is_valid = false;
+		}
+	}
+
+	for (Json::iterator boxes = data["boxes"].begin(); boxes != data["boxes"].end(); ++boxes) {
+		const std::string parameter = boxes.key();
+		bool bmin = false;
+		bool bmax = false;
+		vector3f min, max;
+		bool dock = false;
+		for (Json::iterator box = boxes.value().begin(); box != boxes.value().end(); ++box) {
+			const std::string par_name = box.key();
+			if (par_name == "min") {
+				JsonToVectorNoString(&min, box.value());
+				bmin = true;
+			}
+			if (par_name == "max") {
+				JsonToVectorNoString(&max, box.value());
+				bmax = true;
+			}
+			if (par_name == "dock") {
+				dock = (box.value() > 0.0);
+			}
+		}
+		if (bmin && bmax) {
+			m_boxes.push_back({min, max, dock});
+		}
+	}
 
 	model = ModelCache::FindModel(modelName, /* allowPlaceholder = */ false);
 	if (!model) {
@@ -386,6 +444,16 @@ bool SpaceStationType::GetDockAnimPositionOrient(const unsigned int port, int st
 	}
 
 	return gotOrient;
+}
+
+const SpaceStationType::cylinder_t &SpaceStationType::GetCentralCylinder() const
+{
+	return m_cylinder;
+}
+
+const std::vector<SpaceStationType::box_t> &SpaceStationType::GetBoxes() const
+{
+	return m_boxes;
 }
 
 /*static*/

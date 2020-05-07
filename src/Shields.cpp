@@ -13,7 +13,9 @@
 #include "graphics/TextureBuilder.h"
 #include "scenegraph/CollisionGeometry.h"
 #include "scenegraph/FindNodeVisitor.h"
-#include "scenegraph/SceneGraph.h"
+#include "scenegraph/MatrixTransform.h"
+#include "scenegraph/Model.h"
+#include "scenegraph/StaticGeometry.h"
 #include <sstream>
 
 namespace {

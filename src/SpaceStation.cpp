@@ -19,23 +19,25 @@
 #include "Ship.h"
 #include "Space.h"
 #include "StringF.h"
+#include "collider/CSGDefinitions.h"
 #include "galaxy/SystemBody.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 #include "scenegraph/Animation.h"
 #include "scenegraph/MatrixTransform.h"
+#include "scenegraph/Model.h"
 #include "scenegraph/ModelSkin.h"
+
+#include <memory>
 
 SpaceStation::SpaceStation(const SystemBody *sbody) :
 	ModelBody(),
-	m_type(nullptr)
+	m_type(nullptr),
+	m_sbody(sbody),
+	m_oldAngDisplacement(0.0),
+	m_doorAnimationStep(0.0),
+	m_doorAnimationState(0.0)
 {
-	m_sbody = sbody;
-
-	m_oldAngDisplacement = 0.0;
-
-	m_doorAnimationStep = m_doorAnimationState = 0.0;
-
 	InitStation();
 }
 
@@ -153,7 +155,7 @@ void SpaceStation::PostLoadFixup(Space *space)
 
 void SpaceStation::InitStation()
 {
-	m_adjacentCity = 0;
+	m_adjacentCity = nullptr;
 	for (int i = 0; i < NUM_STATIC_SLOTS; i++)
 		m_staticSlot[i] = false;
 	Random rand(m_sbody->GetSeed());
@@ -162,7 +164,7 @@ void SpaceStation::InitStation()
 	if (space_station_type != "") {
 		m_type = SpaceStationType::FindByName(space_station_type);
 		if (m_type == nullptr)
-			Output("WARNING: SpaceStation::InitStation wants to initialize a custom station of type %s, but no station type with that id has been found.\n", space_station_type.c_str());
+			Output("WARNING: SpaceStation::InitStation wants to initialize a custom station of type '%s', but no station type with that id has been found.\n", space_station_type.c_str());
 	}
 	if (m_type == nullptr)
 		m_type = SpaceStationType::RandomStationType(rand, ground);
@@ -204,8 +206,6 @@ void SpaceStation::InitStation()
 	m_navLights.reset(new NavLights(model, 2.2f));
 	m_navLights->SetEnabled(true);
 
-	if (ground) SetClipRadius(CITY_ON_PLANET_RADIUS); // overrides setmodel
-
 	m_doorAnimation = model->FindAnimation("doors");
 
 	SceneGraph::ModelSkin skin;
@@ -216,6 +216,22 @@ void SpaceStation::InitStation()
 	if (model->SupportsPatterns()) {
 		model->SetPattern(rand.Int32(0, model->GetNumPatterns() - 1));
 	}
+
+	// this model have "an hole" (the central empty cylinder) which
+	// will replace tri-edge collision detection stuffs
+	SpaceStationType::cylinder_t cc = m_type->GetCentralCylinder();
+	if (cc.is_valid) {
+		std::unique_ptr<CSG_CentralCylinder> csg_cylinder(new CSG_CentralCylinder(cc.diameter, cc.min, cc.max, cc.dock));
+		ModelBody::SetCentralCylinder(std::move(csg_cylinder));
+	}
+
+	std::vector<SpaceStationType::box_t> boxes = m_type->GetBoxes();
+	for (auto box : boxes) {
+		std::unique_ptr<CSG_Box> csg_box(new CSG_Box(box.min, box.max, box.dock));
+		ModelBody::AddBox(std::move(csg_box));
+	}
+
+	if (ground) SetClipRadius(CITY_ON_PLANET_RADIUS); // overrides setmodel
 }
 
 SpaceStation::~SpaceStation()

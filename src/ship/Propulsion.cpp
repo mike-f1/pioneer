@@ -6,6 +6,10 @@
 #include "Game.h"
 #include "GameLocator.h"
 #include "GameSaveError.h"
+#include "Json.h"
+#include "JsonUtils.h"
+#include "scenegraph/Model.h"
+
 #include "Object.h" // <- here only for comment in AIFaceDirection (line 320)
 
 void Propulsion::SaveToJson(Json &jsonObj, Space *space)

@@ -9,8 +9,12 @@
 #include "graphics/Drawables.h"
 #include "graphics/Texture.h"
 #include "libs.h"
-#include "scenegraph/SceneGraph.h"
 #include "ui/Context.h"
+
+namespace SceneGraph {
+	class Animation;
+	class Model;
+}
 
 class ModelViewer {
 public:

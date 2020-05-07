@@ -3,25 +3,26 @@
 
 #include "Model.h"
 
+#include "Animation.h"
 #include "CollisionVisitor.h"
 #include "FindNodeVisitor.h"
-#include "GameSaveError.h"
-#include "JsonUtils.h"
+#include "Label3D.h"
+#include "MatrixTransform.h"
 #include "NodeCopyCache.h"
-#include "StringF.h"
 #include "Thruster.h"
-#include "graphics/Drawables.h"
-#include "graphics/Material.h"
-#include "graphics/RenderState.h"
-#include "graphics/Renderer.h"
-#include "graphics/RendererLocator.h"
-#include "graphics/TextureBuilder.h"
-#include "graphics/VertexArray.h"
-#include "graphics/VertexBuffer.h"
-#include "scenegraph/Animation.h"
-#include "scenegraph/Label3D.h"
-#include "scenegraph/MatrixTransform.h"
-#include "utils.h"
+#include "../GameSaveError.h"
+#include "../JsonUtils.h"
+#include "../StringF.h"
+#include "../collider/CSGDefinitions.h"
+#include "../graphics/Drawables.h"
+#include "../graphics/Material.h"
+#include "../graphics/RenderState.h"
+#include "../graphics/Renderer.h"
+#include "../graphics/RendererLocator.h"
+#include "../graphics/TextureBuilder.h"
+#include "../graphics/VertexArray.h"
+#include "../graphics/VertexBuffer.h"
+#include "../utils.h"
 
 namespace SceneGraph {
 
@@ -47,25 +48,26 @@ namespace SceneGraph {
 		ClearDecals();
 	}
 
-	Model::Model(const Model &model) :
-		m_boundingRadius(model.m_boundingRadius),
-		m_materials(model.m_materials),
-		m_patterns(model.m_patterns),
-		m_collMesh(model.m_collMesh) //might have to make this per-instance at some point
+	Model::Model(const Model &other) :
+		m_boundingRadius(other.m_boundingRadius),
+		m_materials(other.m_materials),
+		m_patterns(other.m_patterns),
+		m_collMesh(other.m_collMesh) //might have to make this per-instance at some point
 		,
-		m_name(model.m_name),
-		m_curPatternIndex(model.m_curPatternIndex),
-		m_curPattern(model.m_curPattern),
+		m_Boxes(other.m_Boxes),
+		m_name(other.m_name),
+		m_curPatternIndex(other.m_curPatternIndex),
+		m_curPattern(other.m_curPattern),
 		m_debugFlags(0),
-		m_mounts(model.m_mounts)
+		m_mounts(other.m_mounts)
 	{
 		//selective copying of node structure
 		NodeCopyCache cache;
-		m_root.Reset(dynamic_cast<Group *>(model.m_root->Clone(&cache)));
+		m_root.Reset(dynamic_cast<Group *>(other.m_root->Clone(&cache)));
 
 		//materials are shared by meshes
 		for (unsigned int i = 0; i < MAX_DECAL_MATERIALS; i++)
-			m_decalMaterials[i] = model.m_decalMaterials[i];
+			m_decalMaterials[i] = other.m_decalMaterials[i];
 		ClearDecals();
 
 		//create unique color texture, if used
@@ -79,19 +81,14 @@ namespace SceneGraph {
 		}
 
 		//animations need to be copied and retargeted
-		m_animations.reserve(model.m_animations.size());
-		m_animations = model.m_animations;
+		m_animations.reserve(other.m_animations.size());
+		m_animations = other.m_animations;
 		std::for_each(begin(m_animations), end(m_animations), [this](Animation &anim) {
 			anim.UpdateChannelTargets(m_root.Get());
 		});
-/*		for (AnimationContainer::const_iterator it = model.m_animations.begin(); it != model.m_animations.end(); ++it) {
-			const Animation *anim = *it;
-			m_animations.push_back(new Animation(*anim));
-			m_animations.back()->UpdateChannelTargets(m_root.Get());
-		}
-*/
+
 		//m_tags needs to be updated
-		for (TagContainer::const_iterator it = model.m_tags.begin(); it != model.m_tags.end(); ++it) {
+		for (TagContainer::const_iterator it = other.m_tags.begin(); it != other.m_tags.end(); ++it) {
 			MatrixTransform *t = dynamic_cast<MatrixTransform *>(m_root->FindNode((*it)->GetName()));
 			assert(t != 0);
 			m_tags.push_back(t);
@@ -102,9 +99,9 @@ namespace SceneGraph {
 	{
 	}
 
-	Model *Model::MakeInstance() const
+	std::unique_ptr<Model> Model::MakeInstance() const
 	{
-		Model *m = new Model(*this);
+		std::unique_ptr<Model> m(new Model(*this));
 		return m;
 	}
 
@@ -162,6 +159,8 @@ namespace SceneGraph {
 		if (m_debugFlags & DEBUG_COLLMESH) {
 			RendererLocator::getRenderer()->SetTransform(trans);
 			DrawCollisionMesh();
+			DrawCentralCylinder();
+			DrawBoxes();
 		}
 
 		if (m_debugFlags & DEBUG_TAGS) {
@@ -222,64 +221,22 @@ namespace SceneGraph {
 
 		const Aabb aabb = m_collMesh->GetAabb();
 
-		const vector3f verts[16] = {
-			vector3f(aabb.min.x, aabb.min.y, aabb.min.z),
-			vector3f(aabb.max.x, aabb.min.y, aabb.min.z),
-			vector3f(aabb.max.x, aabb.max.y, aabb.min.z),
-			vector3f(aabb.min.x, aabb.max.y, aabb.min.z),
-			vector3f(aabb.min.x, aabb.min.y, aabb.min.z),
-			vector3f(aabb.min.x, aabb.min.y, aabb.max.z),
-			vector3f(aabb.max.x, aabb.min.y, aabb.max.z),
-			vector3f(aabb.max.x, aabb.min.y, aabb.min.z),
-
-			vector3f(aabb.max.x, aabb.max.y, aabb.max.z),
-			vector3f(aabb.min.x, aabb.max.y, aabb.max.z),
-			vector3f(aabb.min.x, aabb.min.y, aabb.max.z),
-			vector3f(aabb.max.x, aabb.min.y, aabb.max.z),
-			vector3f(aabb.max.x, aabb.max.y, aabb.max.z),
-			vector3f(aabb.max.x, aabb.max.y, aabb.min.z),
-			vector3f(aabb.min.x, aabb.max.y, aabb.min.z),
-			vector3f(aabb.min.x, aabb.max.y, aabb.max.z),
-		};
-
-		if (!m_aabbVB.Valid()) {
-			Graphics::VertexArray va(Graphics::ATTRIB_POSITION, 28);
-			for (unsigned int i = 0; i < 7; i++) {
-				va.Add(verts[i]);
-				va.Add(verts[i + 1]);
-			}
-
-			for (unsigned int i = 8; i < 15; i++) {
-				va.Add(verts[i]);
-				va.Add(verts[i + 1]);
-			}
-
-			Graphics::MaterialDescriptor desc;
-			m_aabbMat.Reset(RendererLocator::getRenderer()->CreateMaterial(desc));
-			m_aabbMat->diffuse = Color::GREEN;
-
-			//create buffer and upload data
-			Graphics::VertexBufferDesc vbd;
-			vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
-			vbd.attrib[0].format = Graphics::ATTRIB_FORMAT_FLOAT3;
-			vbd.numVertices = va.GetNumVerts();
-			vbd.usage = Graphics::BUFFER_USAGE_STATIC;
-			m_aabbVB.Reset(RendererLocator::getRenderer()->CreateVertexBuffer(vbd));
-			m_aabbVB->Populate(va);
-		}
+		Graphics::MaterialDescriptor desc;
+		m_aabbMat.Reset(RendererLocator::getRenderer()->CreateMaterial(desc));
+		m_aabbMat->diffuse = Color::GREEN;
 
 		m_state = RendererLocator::getRenderer()->CreateRenderState(Graphics::RenderStateDesc());
+
+		m_aabbBox3D.reset(new Graphics::Drawables::Box3D(RendererLocator::getRenderer(), m_aabbMat, m_state, vector3f(aabb.min), vector3f(aabb.max)));
 	}
 
 	void Model::DrawAabb()
 	{
 		if (!m_collMesh) return;
 
-		if (!m_aabbVB.Valid()) {
-			CreateAabbVB();
-		}
-
-		RendererLocator::getRenderer()->DrawBuffer(m_aabbVB.Get(), m_state, m_aabbMat.Get(), Graphics::LINE_SINGLE);
+		RendererLocator::getRenderer()->SetWireFrameMode(true);
+		m_aabbBox3D->Draw(RendererLocator::getRenderer());
+		RendererLocator::getRenderer()->SetWireFrameMode(false);
 	}
 
 	// Draw collision mesh as a wireframe overlay
@@ -321,6 +278,43 @@ namespace SceneGraph {
 		Graphics::RenderStateDesc rsd;
 		rsd.cullMode = Graphics::CULL_NONE;
 		RendererLocator::getRenderer()->DrawBuffer(m_collisionMeshVB.Get(), RendererLocator::getRenderer()->CreateRenderState(rsd), Graphics::vtxColorMaterial);
+		RendererLocator::getRenderer()->SetWireFrameMode(false);
+	}
+
+	void Model::DrawCentralCylinder()
+	{
+		if (!m_centralCylinder) return;
+		if (m_disk) {
+			// TODO: Only for a 'CSG_Cylinder' aligned on Y axis
+			Graphics::Renderer *r = RendererLocator::getRenderer();
+			r->SetWireFrameMode(true);
+			{
+				Graphics::Renderer::MatrixTicket ticket(RendererLocator::getRenderer(), Graphics::MatrixMode::MODELVIEW);
+				matrix4x4f mat = r->GetCurrentModelView();
+				mat.Translate(0.0, m_centralCylinder->m_minH, 0.0);
+				mat.RotateX(-M_PI / 2.0);
+				r->SetTransform(mat);
+				m_disk->Draw(r);
+			}
+			{
+				Graphics::Renderer::MatrixTicket ticket(RendererLocator::getRenderer(), Graphics::MatrixMode::MODELVIEW);
+				matrix4x4f mat = r->GetCurrentModelView();
+				mat.Translate(0.0, m_centralCylinder->m_maxH, 0.0);
+				mat.RotateX(-3.0 * M_PI / 2.0);
+				r->SetTransform(mat);
+				m_disk->Draw(r);
+			}
+			r->SetWireFrameMode(false);
+			m_CCylConnectingLine->Draw(RendererLocator::getRenderer(), m_csg);
+		}
+	}
+
+	void Model::DrawBoxes()
+	{
+		RendererLocator::getRenderer()->SetWireFrameMode(true);
+		std::for_each(begin(m_csgBoxes), end(m_csgBoxes), [](const Graphics::Drawables::Box3D &box) {
+				box.Draw(RendererLocator::getRenderer());
+		});
 		RendererLocator::getRenderer()->SetWireFrameMode(false);
 	}
 
@@ -661,12 +655,14 @@ namespace SceneGraph {
 	{
 		m_debugFlags = flags;
 
+		if (m_debugFlags & SceneGraph::Model::DEBUG_BBOX && m_tagPoints.empty()) {
+			CreateAabbVB();
+		}
 		if (m_debugFlags & SceneGraph::Model::DEBUG_TAGS && m_tagPoints.empty()) {
 			std::vector<MatrixTransform *> mts;
 			FindTagsByStartOfName("tag_", mts);
 			AddAxisIndicators(mts, m_tagPoints);
 		}
-
 		if (m_debugFlags & SceneGraph::Model::DEBUG_DOCKING && m_dockingPoints.empty()) {
 			std::vector<MatrixTransform *> mts;
 			FindTagsByStartOfName("entrance_", mts);
@@ -676,7 +672,38 @@ namespace SceneGraph {
 			FindTagsByStartOfName("exit_", mts);
 			AddAxisIndicators(mts, m_dockingPoints);
 		}
+		Graphics::Renderer *renderer = RendererLocator::getRenderer();
+		if (m_debugFlags & SceneGraph::Model::DEBUG_COLLMESH && m_centralCylinder && !m_disk) {
+			Graphics::RenderStateDesc rsd;
+			rsd.cullMode = Graphics::FaceCullMode::CULL_NONE;
+			m_csg = renderer->CreateRenderState(rsd);
+			m_disk.reset(new Graphics::Drawables::Disk(renderer, m_csg, Color::BLUE, m_centralCylinder->m_diameter / 2.0));
+			m_CCylConnectingLine.reset(new Graphics::Drawables::Line3D());
+			m_CCylConnectingLine->SetStart(vector3f(0.f, m_centralCylinder->m_minH, 0.f));
+			m_CCylConnectingLine->SetEnd(vector3f(0.f, m_centralCylinder->m_maxH, 0.f));
+			m_CCylConnectingLine->SetColor(Color::BLUE);
+		}
+
+		if (m_debugFlags & SceneGraph::Model::DEBUG_COLLMESH && !m_Boxes.empty() && m_csgBoxes.empty()) {
+			Graphics::RenderStateDesc rsd;
+			rsd.cullMode = Graphics::FaceCullMode::CULL_NONE;
+			m_csg = renderer->CreateRenderState(rsd);
+
+			Graphics::MaterialDescriptor desc;
+			m_boxes3DMat.Reset(RendererLocator::getRenderer()->CreateMaterial(desc));
+			m_boxes3DMat->diffuse = Color::BLUE;
+
+			std::for_each(begin(m_Boxes), end(m_Boxes), [&](const CSG_Box &box) {
+				m_csgBoxes.push_back(Graphics::Drawables::Box3D(renderer, m_boxes3DMat, m_csg, box.m_min, box.m_max));
+			});
+		}
 	}
 
-} // namespace SceneGraph
+	void Model::SetCentralCylinder(std::unique_ptr<CSG_CentralCylinder> centralcylinder) {
+		m_centralCylinder = std::move(centralcylinder);
+	}
 
+	void Model::AddBox(std::unique_ptr<CSG_Box> box) {
+		m_Boxes.push_back(*box.get());
+	}
+} // namespace SceneGraph

@@ -17,7 +17,7 @@
 #include "graphics/RendererLocator.h"
 #include "scenegraph/Animation.h"
 #include "scenegraph/ModelSkin.h"
-#include "scenegraph/SceneGraph.h"
+#include "scenegraph/Model.h"
 
 static const unsigned int DEFAULT_NUM_BUILDINGS = 1000;
 static const double START_SEG_SIZE = CITY_ON_PLANET_RADIUS;

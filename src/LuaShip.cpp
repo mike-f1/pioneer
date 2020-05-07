@@ -15,6 +15,7 @@
 #include "ShipType.h"
 #include "Space.h"
 #include "SpaceStation.h"
+#include "scenegraph/Model.h"
 #include "ship/PlayerShipController.h"
 #include "galaxy/Galaxy.h"
 #include "galaxy/Sector.h"

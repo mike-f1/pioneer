@@ -10,6 +10,7 @@
 #include "MathUtil.h"
 #include "Ship.h"
 #include "scenegraph/MatrixTransform.h"
+#include "scenegraph/Model.h"
 
 CameraController::CameraController(RefCountedPtr<CameraContext> camera, const Ship *ship) :
 	m_camera(camera),

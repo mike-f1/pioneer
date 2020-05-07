@@ -10,6 +10,7 @@
 #include "GameLocator.h"
 #include "GameSaveError.h"
 #include "Json.h"
+#include "JsonUtils.h"
 #include "LuaEvent.h"
 #include "LuaUtils.h"
 #include "Planet.h"

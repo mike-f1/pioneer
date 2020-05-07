@@ -145,6 +145,31 @@ namespace Graphics {
 		};
 		//------------------------------------------------------------
 
+		// Three dimensional Box without normals or UV, designed to be fast
+		class Box3D {
+		public:
+			// a centered Box:
+			Box3D(Renderer *, RefCountedPtr<Material> material, Graphics::RenderState *, const vector3f &dim);
+			// a box from min and max
+			Box3D(Renderer *, RefCountedPtr<Material> material, Graphics::RenderState *, const vector3f &min, const vector3f &max);
+			~Box3D();
+
+			Box3D(Box3D &&) noexcept;
+
+			void Draw(Renderer *r) const;
+
+			RefCountedPtr<Material> GetMaterial() const;
+
+		private:
+			void Init(Renderer *renderer, RefCountedPtr<Material> material, Graphics::RenderState *state);
+			void PrepareIndexes(Renderer *);
+			std::unique_ptr<VertexBuffer> m_vertexBuffer;
+			static std::unique_ptr<IndexBuffer> s_indexBuffer;
+			RefCountedPtr<Material> m_material;
+			Graphics::RenderState *m_renderState;
+		};
+		//------------------------------------------------------------
+
 		// Three dimensional sphere (subdivided icosahedron) with normals
 		// and spherical texture coordinates.
 		class Sphere3D {

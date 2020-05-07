@@ -527,6 +527,103 @@ namespace Graphics {
 		}
 		//------------------------------------------------------------
 
+		std::unique_ptr<IndexBuffer> Box3D::s_indexBuffer;
+
+		void Box3D::PrepareIndexes(Renderer *renderer)
+		{
+			std::vector<unsigned> pl_short;
+			pl_short.reserve(36);
+			// upper faces:
+			pl_short.insert(end(pl_short), {0, 2, 1, 0, 3, 2});
+			// below faces:
+			pl_short.insert(end(pl_short), {4, 5, 6, 4, 6, 7});
+			// front faces:
+			pl_short.insert(end(pl_short), {0, 1, 5, 0, 5, 4});
+			// left faces:
+			pl_short.insert(end(pl_short), {0, 4, 3, 7, 3, 4});
+			// right faces:
+			pl_short.insert(end(pl_short), {1, 2, 5, 2, 6, 5});
+			// back faces:
+			pl_short.insert(end(pl_short), {2, 3, 6, 3, 7, 6});
+			//create buffer & copy
+			s_indexBuffer.reset(renderer->CreateIndexBuffer(pl_short.size(), Graphics::BUFFER_USAGE_STATIC));
+			uint32_t *idxPtr = s_indexBuffer->Map(Graphics::BUFFER_MAP_WRITE);
+			for (uint32_t j = 0; j < pl_short.size(); j++) {
+				idxPtr[j] = pl_short[j];
+			}
+			s_indexBuffer->Unmap();
+		}
+
+		constexpr unsigned numBoxVertices = 8;
+
+		void Box3D::Init(Renderer *renderer, RefCountedPtr<Material> material, Graphics::RenderState *state)
+		{
+			if (!s_indexBuffer) PrepareIndexes(renderer);
+			m_material = material;
+			m_renderState = state;
+			// Create vertex descriptor
+			Graphics::VertexBufferDesc vbd;
+			unsigned attIdx = 0;
+			vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
+			vbd.attrib[0].format = Graphics::ATTRIB_FORMAT_FLOAT3;
+			vbd.numVertices = numBoxVertices;
+			vbd.usage = Graphics::BUFFER_USAGE_STATIC;
+			m_vertexBuffer.reset(renderer->CreateVertexBuffer(vbd));
+		}
+
+		Box3D::Box3D(Renderer *renderer, RefCountedPtr<Material> material, Graphics::RenderState *state, const vector3f &dim)
+		{
+			Init(renderer, material, state);
+
+			VertexArray vts(Graphics::ATTRIB_POSITION, numBoxVertices);
+
+			vts.Add(vector3f(-dim.x, -dim.y, dim.z) * 0.5);
+			vts.Add(vector3f(-dim.x, dim.y, dim.z) * 0.5);
+			vts.Add(vector3f(dim.x, dim.y, dim.z) * 0.5);
+			vts.Add(vector3f(dim.x, -dim.y, dim.z) * 0.5);
+
+			vts.Add(vector3f(-dim.x, -dim.y, -dim.z) * 0.5);
+			vts.Add(vector3f(-dim.x, dim.y, -dim.z) * 0.5);
+			vts.Add(vector3f(dim.x, dim.y, -dim.z) * 0.5);
+			vts.Add(vector3f(dim.x, -dim.y, -dim.z) * 0.5);
+
+			m_vertexBuffer->Populate(vts);
+		}
+
+		Box3D::Box3D(Renderer *renderer, RefCountedPtr<Material> material, Graphics::RenderState *state, const vector3f &min, const vector3f &max)
+		{
+			Init(renderer, material, state);
+
+			VertexArray vts(Graphics::ATTRIB_POSITION, numBoxVertices);
+
+			vts.Add(vector3f(min.x, min.y, max.z));
+			vts.Add(vector3f(min.x, max.y, max.z));
+			vts.Add(vector3f(max.x, max.y, max.z));
+			vts.Add(vector3f(max.x, min.y, max.z));
+
+			vts.Add(vector3f(min.x, min.y, min.z));
+			vts.Add(vector3f(min.x, max.y, min.z));
+			vts.Add(vector3f(max.x, max.y, min.z));
+			vts.Add(vector3f(max.x, min.y, min.z));
+
+			m_vertexBuffer->Populate(vts);
+		}
+
+		Box3D::Box3D(Box3D &&other) noexcept
+		{
+			m_vertexBuffer = std::move(other.m_vertexBuffer);
+			m_material = other.m_material;
+			m_renderState = other.m_renderState;
+		}
+
+		Box3D::~Box3D()
+		{}
+
+		void Box3D::Draw(Renderer *r) const
+		{
+			r->DrawBufferIndexed(m_vertexBuffer.get(), s_indexBuffer.get(), m_renderState, m_material.Get());
+		}
+
 		static const float ICOSX = 0.525731112119133f;
 		static const float ICOSZ = 0.850650808352039f;
 

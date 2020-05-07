@@ -5,12 +5,15 @@
 #define PROPULSION_H
 
 #include "DynamicBody.h"
-#include "JsonUtils.h"
-#include "scenegraph/Model.h"
+#include "JsonFwd.h"
 #include "vector3.h"
 
 class Camera;
 class Space;
+
+namespace SceneGraph {
+	class Model;
+}
 
 enum Thruster { // <enum scope='Thruster' name=ShipTypeThruster prefix=THRUSTER_ public>
 	THRUSTER_REVERSE,

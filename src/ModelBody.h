@@ -12,6 +12,9 @@ class Shields;
 class Geom;
 class Camera;
 
+class CSG_CentralCylinder;
+class CSG_Box;
+
 namespace Graphics {
 	class Light;
 } // namespace Graphics
@@ -39,7 +42,10 @@ public:
 	const Aabb &GetAabb() const { return m_collMesh->GetAabb(); }
 	SceneGraph::Model *GetModel() const { return m_model.get(); }
 	CollMesh *GetCollMesh() { return m_collMesh.Get(); }
-	Geom *GetGeom() const { return m_geom; }
+	Geom *GetGeom() const { return m_geom.get(); }
+
+	void SetCentralCylinder(std::unique_ptr<CSG_CentralCylinder> centralcylinder);
+	void AddBox(std::unique_ptr<CSG_Box> box);
 
 	void SetModel(const char *modelName);
 
@@ -67,10 +73,10 @@ private:
 	bool m_isStatic;
 	bool m_colliding;
 	RefCountedPtr<CollMesh> m_collMesh;
-	Geom *m_geom; //static geom
+	std::unique_ptr<Geom> m_geom; //static geom
 	std::string m_modelName;
 	std::unique_ptr<SceneGraph::Model> m_model;
-	std::vector<Geom *> m_dynGeoms;
+	std::vector<std::unique_ptr<Geom>> m_dynGeoms;
 	SceneGraph::Animation *m_idleAnimation;
 	std::unique_ptr<Shields> m_shields;
 };

@@ -63,10 +63,16 @@ WorldView::WorldView(const Json &jsonObj, Game *game) :
 	UIView(),
 	shipView(this)
 {
-	if (!jsonObj["world_view"].is_object()) throw SavedGameCorruptException();
+	if (!jsonObj["world_view"].is_object()) {
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
+		throw SavedGameCorruptException();
+	}
 	Json worldViewObj = jsonObj["world_view"];
 
-	if (!worldViewObj["cam_type"].is_number_integer()) throw SavedGameCorruptException();
+	if (!worldViewObj["cam_type"].is_number_integer()) {
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
+		throw SavedGameCorruptException();
+	}
 	shipView.m_camType = worldViewObj["cam_type"];
 
 	InitObject(game);
@@ -312,7 +318,7 @@ void WorldView::DrawUI(const float frameTime)
 		aibuf[255] = 0;
 		ss << aibuf << std::endl;
 
-		Sint32 viewport[4];
+		int32_t viewport[4];
 		RendererLocator::getRenderer()->GetCurrentViewport(&viewport[0]);
 		ImVec2 pos(0.0, 0.5);
 		pos.x = pos.x * viewport[2] + viewport[0];
@@ -345,7 +351,7 @@ void WorldView::DrawUI(const float frameTime)
 	}
 #endif
 	if (!GameLocator::getGame()->IsPaused()) return;
-	Sint32 viewport[4];
+	int32_t viewport[4];
 	RendererLocator::getRenderer()->GetCurrentViewport(&viewport[0]);
 	ImVec2 pos(0.5, 0.85);
 	pos.x = pos.x * viewport[2] + viewport[0];
@@ -405,7 +411,7 @@ void WorldView::OnSwitchFrom()
 /*
 static void PlayerPayFine()
 {
-	Sint64 crime, fine;
+	int64_t crime, fine;
 	Polit::GetCrime(&crime, &fine);
 	if (GameLocator::getGame()->GetPlayer()->GetMoney() == 0) {
 		GameLocator::getGame()->log->Add(Lang::YOU_NO_MONEY);
@@ -472,7 +478,6 @@ void WorldView::UpdateProjectedObjects()
 	Ship *enemy = static_cast<Ship *>(GameLocator::getGame()->GetPlayer()->GetCombatTarget());
 	if (enemy) {
 		const vector3d targpos = enemy->GetInterpPositionRelTo(GameLocator::getGame()->GetPlayer()) * cam_rot;
-		const double dist = targpos.Length();
 		const vector3d targScreenPos = enemy->GetInterpPositionRelTo(cam_frame->GetId());
 
 		UpdateIndicator(m_combatTargetIndicator, targScreenPos);
@@ -488,7 +493,7 @@ void WorldView::UpdateProjectedObjects()
 			}
 		}
 
-		for (int i = 0; i < GameLocator::getGame()->GetPlayer()->GetMountedGunsNum(); i++) {
+		for (unsigned i = 0; i < GameLocator::getGame()->GetPlayer()->GetMountedGunsNum(); i++) {
 			// Pick speed of first gun
 			if (GameLocator::getGame()->GetPlayer()->GetActivationStateOfGun(i) == false) continue;
 			if (laser == 0 && GameLocator::getGame()->GetPlayer()->IsFront(i) == GunDir::GUN_FRONT) {
@@ -503,17 +508,6 @@ void WorldView::UpdateProjectedObjects()
 			const vector3d targvel = enemy->GetVelocityRelTo(GameLocator::getGame()->GetPlayer()) * cam_rot;
 			vector3d leadpos = targpos + targvel * (targpos.Length() / projspeed);
 			leadpos = targpos + targvel * (leadpos.Length() / projspeed); // second order approx
-
-			// now the text speed/distance
-			// want to calculate closing velocity that you couldn't counter with retros
-
-			double vel = targvel.Dot(targpos.NormalizedSafe()); // position should be towards
-			double raccel =
-				GameLocator::getGame()->GetPlayer()->GetShipType()->linThrust[Thruster::THRUSTER_REVERSE] / GameLocator::getGame()->GetPlayer()->GetMass();
-
-			double c = Clamp(vel / sqrt(2.0 * raccel * dist), -1.0, 1.0);
-			float r = float(0.2 + (c + 1.0) * 0.4);
-			float b = float(0.2 + (1.0 - c) * 0.4);
 
 			UpdateIndicator(m_targetLeadIndicator, leadpos);
 
@@ -818,7 +812,7 @@ void NavTunnelWidget::GetSizeRequested(float size[2])
 	size[1] = Gui::Screen::GetHeight();
 }
 
-void NavTunnelWidget::CreateVertexBuffer(const Uint32 size)
+void NavTunnelWidget::CreateVertexBuffer(const uint32_t size)
 {
 	Graphics::Renderer *r = RendererLocator::getRenderer();
 

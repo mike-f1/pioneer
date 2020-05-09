@@ -55,7 +55,7 @@ namespace Gui {
 					}
 				}
 
-				Uint32 chr;
+				uint32_t chr;
 				int n = Text::utf8_decode_char(&chr, &str[i]);
 				assert(n);
 				i += n;

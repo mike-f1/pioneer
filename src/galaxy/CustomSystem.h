@@ -62,7 +62,7 @@ public:
 	fixed ringOuterRadius;
 	Color ringColor;
 
-	Uint32 seed;
+	uint32_t seed;
 	bool want_rand_seed;
 	std::string spaceStationType;
 
@@ -83,7 +83,7 @@ public:
 	unsigned numStars;
 	int sectorX, sectorY, sectorZ;
 	vector3f pos;
-	Uint32 seed;
+	uint32_t seed;
 	bool want_rand_explored;
 	bool explored;
 	const Faction *faction;

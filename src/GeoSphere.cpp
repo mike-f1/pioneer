@@ -495,7 +495,7 @@ void GeoSphere::SetUpMaterials()
 	// Request material for this star or planet, with or without
 	// atmosphere. Separate material for surface and sky.
 	Graphics::MaterialDescriptor surfDesc;
-	const Uint32 effect_flags = m_terrain->GetSurfaceEffects();
+	const uint32_t effect_flags = m_terrain->GetSurfaceEffects();
 	if (effect_flags & Terrain::EFFECT_LAVA)
 		surfDesc.effect = Graphics::EffectType::GEOSPHERE_TERRAIN_WITH_LAVA;
 	else if (effect_flags & Terrain::EFFECT_WATER)

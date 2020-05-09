@@ -14,7 +14,7 @@
 std::vector<Frame> Frame::s_frames;
 std::vector<CollisionSpace> Frame::s_collisionSpaces;
 
-Frame::Frame(const Dummy &d, const FrameId &parent, const char *label, unsigned int flags, double radius) :
+Frame::Frame(const Dummy &d_, const FrameId &parent, const char *label, unsigned int flags, double radius) :
 	m_parent(parent),
 	m_sbody(nullptr),
 	m_astroBody(nullptr),
@@ -26,7 +26,7 @@ Frame::Frame(const Dummy &d, const FrameId &parent, const char *label, unsigned 
 	m_radius(radius),
 	m_flags(flags)
 {
-	if (!d.madeWithFactory)
+	if (!d_.madeWithFactory)
 		Error("Frame ctor called directly!\n");
 
 	m_thisId = s_frames.size();
@@ -42,7 +42,7 @@ Frame::Frame(const Dummy &d, const FrameId &parent, const char *label, unsigned 
 		m_label = label;
 }
 
-Frame::Frame(const Dummy &d, const FrameId &parent) :
+Frame::Frame(const Dummy &d_, const FrameId &parent) :
 	m_parent(parent),
 	m_sbody(nullptr),
 	m_astroBody(nullptr),
@@ -56,7 +56,7 @@ Frame::Frame(const Dummy &d, const FrameId &parent) :
 	m_flags(FLAG_ROTATING),
 	m_collisionSpace(-1)
 {
-	if (!d.madeWithFactory)
+	if (!d_.madeWithFactory)
 		Error("Frame ctor called directly!\n");
 
 	m_thisId = s_frames.size();
@@ -189,7 +189,7 @@ FrameId Frame::FromJson(const Json &frameObj, Space *space, const FrameId &paren
 		f->m_thisId = frameObj["frameId"];
 
 		// Check if frames order in load and save are the same
-		assert((s_frames.size() - 1) == f->m_thisId.id());
+		assert(int(s_frames.size() - 1) == f->m_thisId.id());
 
 		f->m_flags = frameObj["flags"];
 		f->m_radius = frameObj["radius"];
@@ -217,7 +217,7 @@ FrameId Frame::FromJson(const Json &frameObj, Space *space, const FrameId &paren
 			f->m_children.clear();
 		}
 	} catch (Json::type_error &) {
-		Output("Loading error in '%s'\n", typeid(f).name());
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 		f->d.madeWithFactory = true;
 		throw SavedGameCorruptException();
 	}
@@ -263,7 +263,7 @@ void Frame::DeleteCameraFrame(const FrameId &camera)
 
 // Call dtor "popping" element in vector
 #ifndef NDEBUG
-	if (camera.id() < s_frames.size() - 1) {
+	if (camera.id() < int(s_frames.size() - 1)) {
 		Error("DeleteCameraFrame: seems camera frame is not the last frame!\n");
 		abort();
 	};

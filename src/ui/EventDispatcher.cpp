@@ -11,7 +11,7 @@
 
 namespace UI {
 
-	static inline MouseButtonEvent::ButtonType MouseButtonFromSDLButton(Uint8 sdlButton)
+	static inline MouseButtonEvent::ButtonType MouseButtonFromSDLButton(uint8_t sdlButton)
 	{
 		return sdlButton == SDL_BUTTON_LEFT ? MouseButtonEvent::BUTTON_LEFT :
 											  sdlButton == SDL_BUTTON_MIDDLE ? MouseButtonEvent::BUTTON_MIDDLE :
@@ -29,7 +29,7 @@ namespace UI {
 			return Dispatch(KeyboardEvent(KeyboardEvent::KEY_UP, KeySym(event.key.keysym.sym, SDL_Keymod(event.key.keysym.mod)), event.key.repeat));
 
 		case SDL_TEXTINPUT:
-			Uint32 unicode;
+			uint32_t unicode;
 			Text::utf8_decode_char(&unicode, event.text.text);
 			return Dispatch(TextInputEvent(unicode));
 
@@ -92,7 +92,7 @@ namespace UI {
 				// can't just compare though, because the mods won't
 				// match. so we make a new keysym with a new mod that
 				// includes both of the type of key
-				Uint32 mod = Uint32(keyEvent.keysym.mod);
+				uint32_t mod = uint32_t(keyEvent.keysym.mod);
 				if (mod & KMOD_SHIFT) mod |= KMOD_SHIFT;
 				if (mod & KMOD_CTRL) mod |= KMOD_CTRL;
 				if (mod & KMOD_ALT) mod |= KMOD_ALT;

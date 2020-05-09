@@ -12,7 +12,7 @@
 
 namespace SceneGraph {
 
-	CollisionGeometry::CollisionGeometry(const std::vector<vector3f> &vts, const std::vector<Uint32> &idx,
+	CollisionGeometry::CollisionGeometry(const std::vector<vector3f> &vts, const std::vector<uint32_t> &idx,
 		unsigned int geomflag) :
 		Node(),
 		m_triFlag(geomflag),
@@ -74,20 +74,20 @@ namespace SceneGraph {
 	{
 		PROFILE_SCOPED()
 		std::vector<vector3f> pos;
-		std::vector<Uint32> idx;
+		std::vector<uint32_t> idx;
 		Serializer::Reader &rd = *db.rd;
 
-		Uint32 n = rd.Int32();
+		uint32_t n = rd.Int32();
 		pos.reserve(n);
-		for (Uint32 i = 0; i < n; i++)
+		for (uint32_t i = 0; i < n; i++)
 			pos.push_back(rd.Vector3f());
 
 		n = rd.Int32();
 		idx.reserve(n);
-		for (Uint32 i = 0; i < n; i++)
+		for (uint32_t i = 0; i < n; i++)
 			idx.push_back(rd.Int32());
 
-		const Uint32 flag = rd.Int32();
+		const uint32_t flag = rd.Int32();
 		const bool dynamic = rd.Bool();
 
 		CollisionGeometry *cg = new CollisionGeometry(pos, idx, flag);
@@ -96,7 +96,7 @@ namespace SceneGraph {
 		return cg;
 	}
 
-	void CollisionGeometry::CopyData(const std::vector<vector3f> &vts, const std::vector<Uint32> &idx)
+	void CollisionGeometry::CopyData(const std::vector<vector3f> &vts, const std::vector<uint32_t> &idx)
 	{
 		PROFILE_SCOPED()
 		//copy vertices and indices from surface. Add flag for every three indices.
@@ -105,7 +105,7 @@ namespace SceneGraph {
 		for (vector<vector3f>::const_iterator it = vts.begin(); it != vts.end(); ++it)
 			m_vertices.push_back(*it);
 
-		for (vector<Uint32>::const_iterator it = idx.begin(); it != idx.end(); ++it)
+		for (vector<uint32_t>::const_iterator it = idx.begin(); it != idx.end(); ++it)
 			m_indices.push_back(*it);
 	}
 } // namespace SceneGraph

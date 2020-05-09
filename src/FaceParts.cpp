@@ -2,21 +2,21 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "FaceParts.h"
+
 #include "FileSystem.h"
 #include "SDLWrappers.h"
-#include "libs.h"
 #include "utils.h"
 
 namespace {
 	static const int MAX_GENDERS = 6;
 	static const int MAX_RACES = 16;
 	static const int MAX_SPECIES = 10;
-	static const Uint32 GENDER_SHIFT = 0;
-	static const Uint32 GENDER_MASK = ((1u << MAX_GENDERS) - 1u) << GENDER_SHIFT;
-	static const Uint32 RACE_SHIFT = GENDER_SHIFT + MAX_GENDERS;
-	static const Uint32 RACE_MASK = ((1u << MAX_RACES) - 1u) << RACE_SHIFT;
-	static const Uint32 SPECIES_SHIFT = RACE_SHIFT + MAX_RACES;
-	static const Uint32 SPECIES_MASK = ((1u << MAX_SPECIES) - 1u) << SPECIES_SHIFT;
+	static const uint32_t GENDER_SHIFT = 0;
+	static const uint32_t GENDER_MASK = ((1u << MAX_GENDERS) - 1u) << GENDER_SHIFT;
+	static const uint32_t RACE_SHIFT = GENDER_SHIFT + MAX_GENDERS;
+	static const uint32_t RACE_MASK = ((1u << MAX_RACES) - 1u) << RACE_SHIFT;
+	static const uint32_t SPECIES_SHIFT = RACE_SHIFT + MAX_RACES;
+	static const uint32_t SPECIES_MASK = ((1u << MAX_SPECIES) - 1u) << SPECIES_SHIFT;
 
 	// You can never have too many static_asserts, right?
 	static_assert(((MAX_GENDERS + MAX_RACES + MAX_SPECIES) == 32), "unused bits in the face part selector");
@@ -26,12 +26,12 @@ namespace {
 	static_assert(((RACE_MASK & SPECIES_MASK) == 0u), "face part selector: overlap between race and species mask");
 
 	struct Part {
-		Uint32 selector; // a bitmask indicating which species, races and genders can use this part
+		uint32_t selector; // a bitmask indicating which species, races and genders can use this part
 		SDLSurfacePtr part;
 
 		Part() :
 			selector(0u) {}
-		Part(const Uint32 sel, SDLSurfacePtr im) :
+		Part(const uint32_t sel, SDLSurfacePtr im) :
 			selector(sel),
 			part(im) {}
 	};
@@ -69,13 +69,13 @@ namespace {
 		void ScanGenderedParts(std::vector<Part> &output, const int species_idx, const int race_idx, const std::string &path, const char *prefix);
 	};
 
-	static Uint32 _make_selector(int species, int race, int gender)
+	static uint32_t _make_selector(int species, int race, int gender)
 	{
 		assert(species < MAX_SPECIES);
 		assert(race < MAX_RACES);
 		assert(gender < MAX_GENDERS);
 
-		Uint32 mask = 0u;
+		uint32_t mask = 0u;
 		if (species < 0) {
 			mask |= SPECIES_MASK;
 		} else {
@@ -94,16 +94,16 @@ namespace {
 		return mask;
 	}
 
-	static int _count_parts(const std::vector<Part> &parts, const Uint32 selector)
+	static unsigned _count_parts(const std::vector<Part> &parts, const uint32_t selector)
 	{
-		int count = 0;
+		unsigned count = 0;
 		for (const auto &part : parts) {
 			if ((selector & part.selector) == selector) ++count;
 		}
 		return count;
 	}
 
-	static SDL_Surface *_get_part(const std::vector<Part> &parts, const Uint32 selector, int index)
+	static SDL_Surface *_get_part(const std::vector<Part> &parts, const uint32_t selector, int index)
 	{
 		for (const auto &part : parts) {
 			if ((selector & part.selector) == selector) {
@@ -133,7 +133,7 @@ namespace {
 		SDL_BlitSurface(source, 0, target, &destrec);
 	}
 
-	static PartDb *s_partdb;
+	static std::unique_ptr<PartDb> s_partdb;
 } // anonymous namespace
 
 namespace fs = FileSystem;
@@ -214,7 +214,7 @@ void PartDb::ScanSpecies(const std::string &basedir, const int species_idx)
 void PartDb::ScanParts(std::vector<Part> &output, const int species_idx, const int race_idx, const std::string &path, const char *prefix)
 {
 	PROFILE_SCOPED()
-	const Uint32 selector = _make_selector(species_idx, race_idx, -1);
+	const uint32_t selector = _make_selector(species_idx, race_idx, -1);
 	for (fs::FileEnumerator files(fs::gameDataFiles, path); !files.Finished(); files.Next()) {
 		const std::string &name = files.Current().GetName();
 		if (starts_with(name, prefix)) {
@@ -237,7 +237,7 @@ void PartDb::ScanGenderedParts(std::vector<Part> &output, const int species_idx,
 		if (starts_with(name, prefix)) {
 			char *end = nullptr;
 			int gender_idx = strtol(name.c_str() + prefix_len, &end, 10);
-			Uint32 sel;
+			uint32_t sel;
 			// HACK -- attempt to recognise `foo_3.png' style names
 			if (strcmp(end, ".png") == 0) {
 				sel = _make_selector(species_idx, race_idx, -1);
@@ -265,70 +265,68 @@ const int FaceParts::FACE_HEIGHT = 285;
 void FaceParts::Init()
 {
 	PROFILE_SCOPED()
-	s_partdb = new PartDb;
+	s_partdb.reset(new PartDb);
 	s_partdb->Scan();
 	Output("Face Generation source images loaded.\n");
 }
 
 void FaceParts::Uninit()
 {
-	delete s_partdb;
-	s_partdb = nullptr;
 }
 
-int FaceParts::NumSpecies()
+unsigned FaceParts::NumSpecies()
 {
 	return s_partdb->species.size();
 }
 
-int FaceParts::NumGenders(const int speciesIdx)
+unsigned FaceParts::NumGenders(const int speciesIdx)
 {
 	assert(speciesIdx >= 0 && speciesIdx < NumSpecies());
 	return s_partdb->species[speciesIdx].num_genders;
 }
 
-int FaceParts::NumRaces(const int speciesIdx)
+unsigned FaceParts::NumRaces(const int speciesIdx)
 {
 	assert(speciesIdx >= 0 && speciesIdx < NumSpecies());
 	return s_partdb->species[speciesIdx].num_races;
 }
 
-int FaceParts::NumHeads(const int speciesIdx, const int raceIdx, const int genderIdx)
+unsigned FaceParts::NumHeads(const int speciesIdx, const int raceIdx, const int genderIdx)
 {
 	return _count_parts(s_partdb->heads, _make_selector(speciesIdx, raceIdx, genderIdx));
 }
 
-int FaceParts::NumEyes(const int speciesIdx, const int raceIdx, const int genderIdx)
+unsigned FaceParts::NumEyes(const int speciesIdx, const int raceIdx, const int genderIdx)
 {
 	return _count_parts(s_partdb->eyes, _make_selector(speciesIdx, raceIdx, genderIdx));
 }
 
-int FaceParts::NumNoses(const int speciesIdx, const int raceIdx, const int genderIdx)
+unsigned FaceParts::NumNoses(const int speciesIdx, const int raceIdx, const int genderIdx)
 {
 	return _count_parts(s_partdb->noses, _make_selector(speciesIdx, raceIdx, genderIdx));
 }
 
-int FaceParts::NumMouths(const int speciesIdx, const int raceIdx, const int genderIdx)
+unsigned FaceParts::NumMouths(const int speciesIdx, const int raceIdx, const int genderIdx)
 {
 	return _count_parts(s_partdb->mouths, _make_selector(speciesIdx, raceIdx, genderIdx));
 }
 
-int FaceParts::NumHairstyles(const int speciesIdx, const int raceIdx, const int genderIdx)
+unsigned FaceParts::NumHairstyles(const int speciesIdx, const int raceIdx, const int genderIdx)
 {
 	return _count_parts(s_partdb->hairstyles, _make_selector(speciesIdx, raceIdx, genderIdx));
 }
 
-int FaceParts::NumClothes(const int speciesIdx, const int raceIdx, const int genderIdx)
+unsigned FaceParts::NumClothes(const int speciesIdx, const int raceIdx, const int genderIdx)
 {
 	return _count_parts(s_partdb->clothes, _make_selector(speciesIdx, raceIdx, genderIdx));
 }
 
-int FaceParts::NumAccessories(const int speciesIdx, const int raceIdx, const int genderIdx)
+unsigned FaceParts::NumAccessories(const int speciesIdx, const int raceIdx, const int genderIdx)
 {
 	return _count_parts(s_partdb->accessories, _make_selector(speciesIdx, raceIdx, genderIdx));
 }
 
-int FaceParts::NumArmour(const int speciesIdx, const int raceIdx, const int genderIdx)
+unsigned FaceParts::NumArmour(const int speciesIdx, const int raceIdx, const int genderIdx)
 {
 	return _count_parts(s_partdb->armour, _make_selector(speciesIdx, raceIdx, genderIdx));
 }
@@ -339,7 +337,7 @@ static void _pick(Random &rng, int &inout_value, const int limit)
 	// we always run the RNG, even if the result is not needed, because that way
 	// the output (index) for a particular component should be fixed for a given seed,
 	// independent of changes to other components
-	const Uint32 rng_value = (rng.Int32() % limit);
+	const uint32_t rng_value = (rng.Int32() % limit);
 	if (inout_value < 0) {
 		inout_value = rng_value;
 		assert(inout_value >= 0 && inout_value < limit);
@@ -348,7 +346,7 @@ static void _pick(Random &rng, int &inout_value, const int limit)
 	}
 }
 
-void FaceParts::PickFaceParts(FaceDescriptor &inout_face, const Uint32 seed)
+void FaceParts::PickFaceParts(FaceDescriptor &inout_face, const uint32_t seed)
 {
 	PROFILE_SCOPED()
 	Random rand(seed);
@@ -357,7 +355,7 @@ void FaceParts::PickFaceParts(FaceDescriptor &inout_face, const Uint32 seed)
 	_pick(rand, inout_face.race, NumRaces(inout_face.species));
 	_pick(rand, inout_face.gender, NumGenders(inout_face.species));
 
-	const Uint32 selector = _make_selector(inout_face.species, inout_face.race, inout_face.gender);
+	const uint32_t selector = _make_selector(inout_face.species, inout_face.race, inout_face.gender);
 
 	_pick(rand, inout_face.head, _count_parts(s_partdb->heads, selector));
 	_pick(rand, inout_face.eyes, _count_parts(s_partdb->eyes, selector));
@@ -378,7 +376,7 @@ void FaceParts::PickFaceParts(FaceDescriptor &inout_face, const Uint32 seed)
 void FaceParts::BuildFaceImage(SDL_Surface *faceIm, const FaceDescriptor &face)
 {
 	PROFILE_SCOPED()
-	const Uint32 selector = _make_selector(face.species, face.race, face.gender);
+	const uint32_t selector = _make_selector(face.species, face.race, face.gender);
 
 	_blit_image(faceIm, s_partdb->background_general.Get(), 0, 0);
 	_blit_image(faceIm, _get_part(s_partdb->heads, selector, face.head), 0, 0);

@@ -60,6 +60,7 @@ TerrainBody::TerrainBody(const Json &jsonObj, Space *space) :
 		Json terrainBodyObj = jsonObj["terrain_body"];
 
 	} catch (Json::type_error &) {
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 		throw SavedGameCorruptException();
 	}
 

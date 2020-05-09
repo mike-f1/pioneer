@@ -25,18 +25,18 @@
 #include "graphics/VertexBuffer.h"
 #include "perlin.h"
 
-#include <SDL_stdinc.h>
+#include <cstdint>
 #include <iostream>
 #include <sstream>
 
 using namespace Graphics;
 
 namespace {
-	static const Uint32 BG_STAR_MAX = 500000;
-	static const Uint32 BG_STAR_MIN = 50000;
+	static const uint32_t BG_STAR_MAX = 500000;
+	static const uint32_t BG_STAR_MIN = 50000;
 	static RefCountedPtr<Graphics::Texture> s_defaultCubeMap;
 
-	static Uint32 GetNumSkyboxes()
+	static uint32_t GetNumSkyboxes()
 	{
 		char filename[1024];
 		snprintf(filename, sizeof(filename), "textures/skybox");
@@ -45,7 +45,7 @@ namespace {
 
 		const char *itemMask = "ub";
 
-		Uint32 num_matching = 0;
+		uint32_t num_matching = 0;
 		for (std::vector<FileSystem::FileInfo>::const_iterator it = fileList.begin(), itEnd = fileList.end(); it != itEnd; ++it) {
 			if (starts_with((*it).GetName(), itemMask)) {
 				++num_matching;
@@ -166,7 +166,7 @@ namespace Background {
 
 		SkyboxVert *vtxPtr = m_vertexBuffer->Map<SkyboxVert>(Graphics::BUFFER_MAP_WRITE);
 		assert(m_vertexBuffer->GetDesc().stride == sizeof(SkyboxVert));
-		for (Uint32 i = 0; i < box->GetNumVerts(); i++) {
+		for (uint32_t i = 0; i < box->GetNumVerts(); i++) {
 			vtxPtr[i].pos = box->position[i];
 			vtxPtr[i].uv = box->uv0[i];
 		}
@@ -239,7 +239,7 @@ namespace Background {
 
 	void Starfield::Fill(Random &rand, float amountOfBackgroundStars)
 	{
-		const Uint32 NUM_BG_STARS = Clamp(Uint32(amountOfBackgroundStars * BG_STAR_MAX), BG_STAR_MIN, BG_STAR_MAX);
+		const uint32_t NUM_BG_STARS = Clamp(uint32_t(amountOfBackgroundStars * BG_STAR_MAX), BG_STAR_MIN, BG_STAR_MAX);
 		m_hyperVtx.reset(new vector3f[BG_STAR_MAX * 3]);
 		m_hyperCol.reset(new Color[BG_STAR_MAX * 3]);
 
@@ -262,18 +262,18 @@ namespace Background {
 		std::unique_ptr<Color[]> colors(new Color[NUM_BG_STARS]);
 		std::unique_ptr<float[]> sizes(new float[NUM_BG_STARS]);
 		//fill the array
-		Uint32 num = 0;
+		uint32_t num = 0;
 		if (GameLocator::getGame() != nullptr && GameLocator::getGame()->GetSpace() != nullptr && GameLocator::getGame()->GetSpace()->GetStarSystem() != nullptr) {
 			const SystemPath current = GameLocator::getGame()->GetSpace()->GetStarSystem()->GetPath();
 
 			const double size = 1.0;
-			const Sint32 visibleRadius = 100; // lyrs
-			const Sint32 visibleRadiusSqr = (visibleRadius * visibleRadius);
-			const Sint32 sectorMin = -(visibleRadius / Sector::SIZE); // lyrs_radius / sector_size_in_lyrs
-			const Sint32 sectorMax = visibleRadius / Sector::SIZE; // lyrs_radius / sector_size_in_lyrs
-			for (Sint32 x = sectorMin; x < sectorMax; x++) {
-				for (Sint32 y = sectorMin; y < sectorMax; y++) {
-					for (Sint32 z = sectorMin; z < sectorMax; z++) {
+			const int32_t visibleRadius = 100; // lyrs
+			const int32_t visibleRadiusSqr = (visibleRadius * visibleRadius);
+			const int32_t sectorMin = -(visibleRadius / Sector::SIZE); // lyrs_radius / sector_size_in_lyrs
+			const int32_t sectorMax = visibleRadius / Sector::SIZE; // lyrs_radius / sector_size_in_lyrs
+			for (int32_t x = sectorMin; x < sectorMax; x++) {
+				for (int32_t y = sectorMin; y < sectorMax; y++) {
+					for (int32_t z = sectorMin; z < sectorMax; z++) {
 						SystemPath sys(x, y, z);
 						if (SystemPath::SectorDistanceSqr(sys, current) * Sector::SIZE >= visibleRadiusSqr)
 							continue; // early out
@@ -291,9 +291,9 @@ namespace Background {
 
 							// grab the approximate real colour
 							Color col = GalaxyEnums::starRealColors[ss->GetStarType(0)];
-							col.r = Clamp(col.r, (Uint8)(m_rMin * 255), (Uint8)(m_rMax * 255));
-							col.g = Clamp(col.g, (Uint8)(m_gMin * 255), (Uint8)(m_gMax * 255));
-							col.b = Clamp(col.b, (Uint8)(m_bMin * 255), (Uint8)(m_bMax * 255));
+							col.r = Clamp(col.r, uint8_t(m_rMin * 255), uint8_t(m_rMax * 255));
+							col.g = Clamp(col.g, uint8_t(m_gMin * 255), uint8_t(m_gMax * 255));
+							col.b = Clamp(col.b, uint8_t(m_bMin * 255), uint8_t(m_bMax * 255));
 							//const Color col(Color::PINK); // debug pink
 
 							// copy the data
@@ -320,9 +320,9 @@ namespace Background {
 
 		// fill out the remaining target count with generated points
 		if (num < NUM_BG_STARS) {
-			for (Uint32 i = num; i < NUM_BG_STARS; i++) {
+			for (uint32_t i = num; i < NUM_BG_STARS; i++) {
 				const double size = rand.Double(0.2, 0.9);
-				const Uint8 colScale = size * 255;
+				const uint8_t colScale = size * 255;
 
 				const Color col(
 					rand.Double(m_rMin, m_rMax) * colScale,
@@ -374,7 +374,7 @@ namespace Background {
 
 			const double hyperspaceProgress = GameLocator::getGame()->GetHyperspaceProgress();
 
-			const Sint32 NUM_STARS = m_animBuffer->GetDesc().numVertices / 2;
+			const int32_t NUM_STARS = m_animBuffer->GetDesc().numVertices / 2;
 
 			const vector3d pz = GameLocator::getGame()->GetPlayer()->GetOrient().VectorZ(); //back vector
 			for (int i = 0; i < NUM_STARS; i++) {
@@ -453,12 +453,12 @@ namespace Background {
 		m_vertexBuffer.reset(RendererLocator::getRenderer()->CreateVertexBuffer(vbd));
 		assert(m_vertexBuffer->GetDesc().stride == sizeof(MilkyWayVert));
 		auto vtxPtr = m_vertexBuffer->Map<MilkyWayVert>(Graphics::BUFFER_MAP_WRITE);
-		for (Uint32 i = 0; i < top->GetNumVerts(); i++) {
+		for (uint32_t i = 0; i < top->GetNumVerts(); i++) {
 			vtxPtr->pos = top->position[i];
 			vtxPtr->col = top->diffuse[i];
 			vtxPtr++;
 		}
-		for (Uint32 i = 0; i < bottom->GetNumVerts(); i++) {
+		for (uint32_t i = 0; i < bottom->GetNumVerts(); i++) {
 			vtxPtr->pos = bottom->position[i];
 			vtxPtr->col = bottom->diffuse[i];
 			vtxPtr++;
@@ -520,7 +520,7 @@ namespace Background {
 		m_milkyWay.SetIntensity(intensity);
 	}
 
-	void Container::SetDrawFlags(const Uint32 flags)
+	void Container::SetDrawFlags(const uint32_t flags)
 	{
 		m_drawFlags = flags;
 	}

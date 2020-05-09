@@ -31,7 +31,7 @@ static vector2f m_lightColorsUVoffsets[(NavLights::NAVLIGHT_YELLOW + 1)] = {
 	vector2f(0.5f, 0.5f)
 };
 
-static vector2f get_color(Uint8 c)
+static vector2f get_color(uint8_t c)
 {
 	return m_lightColorsUVoffsets[c];
 }
@@ -43,7 +43,7 @@ static inline vector2f LoadLightColorUVoffset(const std::string &spec)
 	return vector2f(v[0], v[1]);
 }
 
-NavLights::LightBulb::LightBulb(Uint8 _group, Uint8 _mask, Uint8 _color, SceneGraph::Billboard *_bb) :
+NavLights::LightBulb::LightBulb(uint8_t _group, uint8_t _mask, uint8_t _color, SceneGraph::Billboard *_bb) :
 	group(_group),
 	mask(_mask),
 	color(_color),
@@ -103,9 +103,9 @@ NavLights::NavLights(SceneGraph::Model *model, float period) :
 		MatrixTransform *mt = dynamic_cast<MatrixTransform *>(results.at(i));
 		assert(mt);
 		Billboard *bblight = new Billboard(m_billboardTris, BILLBOARD_SIZE);
-		Uint32 group = 0;
-		Uint8 mask = 0xff; //always on
-		Uint8 color = NAVLIGHT_BLUE;
+		uint32_t group = 0;
+		uint8_t mask = 0xff; //always on
+		uint8_t color = NAVLIGHT_BLUE;
 
 		if (mt->GetName().substr(9, 3) == "red") {
 			mask = 0x0f;
@@ -116,7 +116,7 @@ NavLights::NavLights(SceneGraph::Model *model, float period) :
 		} else if (mt->GetName().substr(9, 3) == "pad") {
 			//group by pad number
 			// due to this problem: http://stackoverflow.com/questions/15825254/why-is-scanfhhu-char-overwriting-other-variables-when-they-are-local
-			// where MSVC is still using a C89 compiler the format identifer %hhu is not recognised. Therefore I've switched to Uint32 for group.
+			// where MSVC is still using a C89 compiler the format identifer %hhu is not recognised. Therefore I've switched to uint32_t for group.
 			PiVerify(1 == sscanf(mt->GetName().c_str(), "navlight_pad%u", &group));
 			mask = 0xf8;
 		}
@@ -168,7 +168,7 @@ void NavLights::Update(float time)
 	m_time += time;
 
 	const int phase((fmod(m_time, m_period) / m_period) * 8);
-	const Uint8 mask = 1 << phase;
+	const uint8_t mask = 1 << phase;
 
 	for (const auto &pair : m_groupLights) {
 		for (const LightBulb &light : pair.second) {

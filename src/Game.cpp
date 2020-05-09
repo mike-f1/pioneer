@@ -145,7 +145,7 @@ Game::Game(const Json &jsonObj, unsigned int cacheRadius) :
 
 		// hyperspace clouds being brought over from the previous system
 		Json hyperspaceCloudArray = jsonObj["hyperspace_clouds"].get<Json::array_t>();
-		for (Uint32 i = 0; i < hyperspaceCloudArray.size(); i++) {
+		for (uint32_t i = 0; i < hyperspaceCloudArray.size(); i++) {
 			m_hyperspaceClouds.push_back(static_cast<HyperspaceCloud *>(Body::FromJson(hyperspaceCloudArray[i], 0)));
 		}
 	} catch (Json::type_error &) {
@@ -216,7 +216,7 @@ void Game::ToJson(Json &jsonObj)
 	jsonObj["star_system"] = starsystemObj;
 	// game state
 	jsonObj["time"] = m_time;
-	jsonObj["state"] = Uint32(m_state);
+	jsonObj["state"] = uint32_t(m_state);
 
 	jsonObj["want_hyperspace"] = m_wantHyperspace;
 	jsonObj["hyperspace_progress"] = m_hyperspaceProgress;
@@ -770,8 +770,8 @@ void Game::UpdateStarSystemCache(const SystemPath *here, unsigned int sectorRadi
 
 	const int survivorRadius = sectorRadius * 3;
 
-	size_t rem_sec = m_sectorCache->ShrinkCache(*here, survivorRadius, m_hyperspaceSource);
-	size_t rem_ss = m_starSystemCache->ShrinkCache(*here, survivorRadius, m_hyperspaceSource);
+	m_sectorCache->ShrinkCache(*here, survivorRadius, m_hyperspaceSource);
+	m_starSystemCache->ShrinkCache(*here, survivorRadius, m_hyperspaceSource);
 
 	m_galaxy->FillStarSystemCache(m_starSystemCache, *here, sectorRadius, m_sectorCache);
 }

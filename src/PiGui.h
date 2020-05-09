@@ -8,6 +8,9 @@
 #include "RefCounted.h"
 #include "imgui/imgui.h"
 
+#include <SDL_video.h>
+#include <SDL_events.h>
+
 namespace Graphics {
 	class Texture;
 }

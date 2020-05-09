@@ -39,19 +39,19 @@ namespace Graphics {
 			virtual void Release() override final;
 
 		protected:
-			virtual Uint8 *MapInternal(BufferMapMode) override final;
+			virtual uint8_t *MapInternal(BufferMapMode) override final;
 
 		private:
 			GLuint m_vao;
-			Uint8 *m_data;
+			uint8_t *m_data;
 		};
 
 		class IndexBuffer : public Graphics::IndexBuffer, public GLBufferBase {
 		public:
-			IndexBuffer(Uint32 size, BufferUsage);
+			IndexBuffer(uint32_t size, BufferUsage);
 			~IndexBuffer();
 
-			virtual Uint32 *Map(BufferMapMode) override final;
+			virtual uint32_t *Map(BufferMapMode) override final;
 			virtual void Unmap() override final;
 
 			// change the buffer data without mapping
@@ -61,13 +61,13 @@ namespace Graphics {
 			virtual void Release() override final;
 
 		private:
-			Uint32 *m_data;
+			uint32_t *m_data;
 		};
 
 		// Instance buffer
 		class InstanceBuffer : public Graphics::InstanceBuffer, public GLBufferBase {
 		public:
-			InstanceBuffer(Uint32 size, BufferUsage);
+			InstanceBuffer(uint32_t size, BufferUsage);
 			virtual ~InstanceBuffer() override final;
 			virtual matrix4x4f *Map(BufferMapMode) override final;
 			virtual void Unmap() override final;

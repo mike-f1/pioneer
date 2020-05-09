@@ -42,14 +42,14 @@ constexpr const float WHEEL_SENSITIVITY = .03f; // Should be a variable in user 
 
 ObjectViewerView::ObjectViewerView() :
 	UIView(),
-	m_lightAngle(LIGHT_START_ANGLE),
-	m_camTwist(matrix3x3d::Identity()),
-	m_camRot(INITIAL_CAM_ANGLES),
 	m_viewingDist(VIEW_START_DIST),
-	m_zoomChange(Zooming::NONE),
-	m_lightRotate(RotateLight::NONE),
 	m_lastTarget(nullptr),
-	m_newTarget(nullptr)
+	m_newTarget(nullptr),
+	m_camRot(INITIAL_CAM_ANGLES),
+	m_camTwist(matrix3x3d::Identity()),
+	m_lightAngle(LIGHT_START_ANGLE),
+	m_lightRotate(RotateLight::NONE),
+	m_zoomChange(Zooming::NONE)
 {
 	SetTransparency(true);
 
@@ -285,7 +285,6 @@ void ObjectViewerView::DrawUI(const float frameTime)
 		m_screen = screen;
 		vector2f upperLeft(screen.x * 2.0 / 3.0, screen.y);
 		vector2f bottomRight(screen.x, 0);
-		vector2f size = bottomRight - upperLeft;
 		ImGui::SetNextWindowPos(ImVec2(0.0, 0.0), 0, ImVec2(0.0, 0.0));
 	}
 
@@ -303,11 +302,7 @@ void ObjectViewerView::DrawUI(const float frameTime)
 	if (m_lastTarget) {
 		ImGui::Separator();
 		switch (m_lastTarget->GetType()) {
-			case Object::CARGOBODY:
-			{
-				ImGui::TextUnformatted("Type is CargoBody");
-			}
-			break;
+			case Object::CARGOBODY: ImGui::TextUnformatted("Type is CargoBody"); break;
 			case Object::PLAYER:
 			case Object::SHIP:
 			{
@@ -317,26 +312,10 @@ void ObjectViewerView::DrawUI(const float frameTime)
 				}
 			}
 			break;
-			case Object::SPACESTATION:
-			{
-				ImGui::TextUnformatted("Type is SpaceStation");
-			}
-			break;
-			case Object::MISSILE:
-			{
-				ImGui::TextUnformatted("Type is Missile");
-			}
-			break;
-			case Object::CITYONPLANET:
-			{
-				ImGui::TextUnformatted("Type is CityOnPlanet");
-			}
-			break;
-			case Object::HYPERSPACECLOUD:
-			{
-				ImGui::TextUnformatted("Type is HyperspaceCloud");
-			}
-			break;
+			case Object::SPACESTATION: ImGui::TextUnformatted("Type is SpaceStation"); break;
+			case Object::MISSILE: ImGui::TextUnformatted("Type is Missile"); break;
+			case Object::CITYONPLANET: ImGui::TextUnformatted("Type is CityOnPlanet"); break;
+			case Object::HYPERSPACECLOUD: ImGui::TextUnformatted("Type is HyperspaceCloud"); break;
 			case Object::PLANET:
 			case Object::STAR:
 			case Object::TERRAINBODY:
@@ -451,7 +430,7 @@ void ObjectViewerView::OnChangeTerrain()
 
 void ObjectViewerView::OnRandomSeed()
 {
-	m_sbSeed = Uint32(RandomSingleton::getInstance().Int32());
+	m_sbSeed = RandomSingleton::getInstance().Int32();
 }
 
 void ObjectViewerView::OnNextSeed()

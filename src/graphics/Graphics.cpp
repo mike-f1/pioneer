@@ -10,6 +10,8 @@
 #include <iterator>
 #include <sstream>
 
+#include <SDL_video.h>
+
 namespace Graphics {
 
 	const char *RendererNameFromType(const RendererType rType)

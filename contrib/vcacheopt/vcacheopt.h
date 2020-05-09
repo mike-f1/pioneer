@@ -1,17 +1,17 @@
 /*
  * vcacheopt.h - Vertex Cache Optimizer
  * Copyright 2009 Michael Georgoulpoulos <mgeorgoulopoulos at gmail>
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -28,6 +28,7 @@
 #include <cmath>
 #include <cassert>
 #include <climits>
+#include <cstdint>
 
 template <typename T, int ERR_VAL>
 class TVertexCacheData
@@ -41,10 +42,10 @@ public:
 	bool calculated; // was the score calculated during this iteration?
 
 
-	T FindTriangle(const T tri) const 
+	T FindTriangle(const T tri) const
 	{
 		for (size_t i=0; i<tri_indices.size(); ++i)	{
-			if (tri_indices[i] == tri) 
+			if (tri_indices[i] == tri)
 				return i;
 		}
 		return ERR_VAL;
@@ -208,7 +209,7 @@ protected:
 			// No tri needs this vertex!
 			return -1.0f;
 		}
-	 
+
 		float ret = 0.0f;
 		if (v->position_in_cache < 0) {
 			// Vertex is not in FIFO cache - no score.
@@ -227,12 +228,12 @@ protected:
 				ret = powf(ret, CacheDecayPower);
 			}
 		}
-	 
+
 		// Bonus points for having a low number of tris still to
 		// use the vert, so we get rid of lone verts quickly.
 		float valence_boost = powf((float)v->remaining_valence, -ValenceBoostPower);
 		ret += ValenceBoostScale * valence_boost;
-	 
+
 		return ret;
 	}
 
@@ -255,9 +256,9 @@ protected:
 			float sc = verts[tris[i].verts[0]].current_score +
 				verts[tris[i].verts[1]].current_score +
 				verts[tris[i].verts[2]].current_score;
-			
+
 			tris[i].current_score = sc;
-	
+
 			if (first_time || sc > max_score) {
 				first_time = false;
 				max_score = sc;
@@ -277,7 +278,7 @@ protected:
 
 			verts[index].total_valence++;
 			verts[index].remaining_valence++;
-			
+
 			verts[index].tri_indices.push_back(i/3);
 		}
 
@@ -286,7 +287,7 @@ protected:
 		return Success;
 	}
 
-	Result Init(T *inds, const int tri_count, const int vertex_count)
+	Result Init(T *inds_, const int tri_count, const int vertex_count)
 	{
 		// clear the draw list
 		draw_list.clear();
@@ -294,19 +295,19 @@ protected:
 		// allocate and initialize vertices and triangles
 		verts.clear();
 		for (int i=0; i<vertex_count; ++i) verts.push_back( TVertexCacheData<T, ERR_VAL >() );
-		
+
 		tris.clear();
 		for (int i=0; i<tri_count; ++i) {
 			TTriangleCacheData<T, ERR_VAL > dat;
 			for (int j=0; j<3; ++j)	{
-				dat.verts[j] = inds[i * 3 + j];
+				dat.verts[j] = inds_[i * 3 + j];
 			}
 			tris.push_back(dat);
 		}
 
 		// copy the indices
 		this->inds.clear();
-		for (int i=0; i<tri_count * 3; ++i) this->inds.push_back(inds[i]);
+		for (int i=0; i<tri_count * 3; ++i) this->inds.push_back(inds_[i]);
 
 		vertex_cache.Clear();
 		best_tri = -1;
@@ -325,7 +326,7 @@ protected:
 
 		TTriangleCacheData<T, ERR_VAL > *t = &tris[tri];
 		if (t->rendered) return; // triangle is already in the draw list
-	
+
 		for (int i=0; i<3; ++i)	{
 			// add all triangle vertices to the cache
 			vertex_cache.AddVertex(t->verts[i]);
@@ -430,7 +431,7 @@ protected:
 					// calculate triangle score
 					TriangleScoreRecalculation(tri);
 				}
-				
+
 				float sc = t->current_score;
 
 				// we actually found a triangle to process
@@ -476,19 +477,19 @@ public:
 
 		best_tri = 0;
 	}
-	
+
 	// stores new indices in place
-	Result Optimize(T *inds, int tri_count)
+	Result Optimize(T *inds_, int tri_count)
 	{
 		// find vertex count
-		Sint64 max_vert = -1;
+		int64_t max_vert = -1;
 		for (int i=0; i<tri_count * 3; i++)	{
-			if (inds[i] > max_vert) max_vert = inds[i];
+			if (inds_[i] > max_vert) max_vert = inds_[i];
 		}
 
 		if (max_vert == -1) return Fail_NoVerts;
 
-		Result res = Init(inds, tri_count, max_vert + 1);
+		Result res = Init(inds_, tri_count, max_vert + 1);
 		if (res) return res;
 
 		// iterate until Iterate returns false
@@ -496,9 +497,9 @@ public:
 
 		// rewrite optimized index list
 		for (size_t i=0; i<draw_list.size(); i++)	{
-			inds[3 * i + 0] = tris[draw_list[i]].verts[0];
-			inds[3 * i + 1] = tris[draw_list[i]].verts[1];
-			inds[3 * i + 2] = tris[draw_list[i]].verts[2];
+			inds_[3 * i + 0] = tris[draw_list[i]].verts[0];
+			inds_[3 * i + 1] = tris[draw_list[i]].verts[1];
+			inds_[3 * i + 2] = tris[draw_list[i]].verts[2];
 		}
 
 		return Success;

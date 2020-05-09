@@ -26,7 +26,7 @@ struct BVHNode;
 
 class GeomTree {
 public:
-	GeomTree(const int numVerts, const int numTris, const std::vector<vector3f> &vertices, const Uint32 *indices, const Uint32 *triflags);
+	GeomTree(const int numVerts, const int numTris, const std::vector<vector3f> &vertices, const uint32_t *indices, const uint32_t *triflags);
 	GeomTree(Serializer::Reader &rd);
 	void Save(Serializer::Writer &wr) const;
 
@@ -39,7 +39,7 @@ public:
 	void TraceRay(const vector3f &start, const vector3f &dir, isect_t *isect) const;
 	void TraceRay(const BVHNode *startNode, const vector3f &a_origin, const vector3f &a_dir, isect_t *isect) const;
 	vector3f GetTriNormal(int triIdx) const;
-	Uint32 GetTriFlag(int triIdx) const { return m_triFlags[triIdx]; }
+	uint32_t GetTriFlag(int triIdx) const { return m_triFlags[triIdx]; }
 	double GetRadius() const { return m_radius; }
 
 #pragma pack(4)
@@ -63,8 +63,8 @@ public:
 	BVHTree *GetEdgeTree() const { return m_edgeTree.get(); }
 
 	const std::vector<vector3f> &GetVertices() const { return m_vertices; }
-	const Uint32 *GetIndices() const { return &m_indices[0]; }
-	const Uint32 *GetTriFlags() const { return &m_triFlags[0]; }
+	const uint32_t *GetIndices() const { return &m_indices[0]; }
+	const uint32_t *GetTriFlags() const { return &m_triFlags[0]; }
 	int GetNumVertices() const { return m_numVertices; }
 	int GetNumTris() const { return m_numTris; }
 
@@ -85,8 +85,8 @@ private:
 	std::vector<Edge> m_edges;
 
 	std::vector<vector3f> m_vertices;
-	std::vector<Uint32> m_indices;
-	std::vector<Uint32> m_triFlags;
+	std::vector<uint32_t> m_indices;
+	std::vector<uint32_t> m_triFlags;
 };
 
 #endif /* _GEOMTREE_H */

@@ -8,7 +8,7 @@
  * renderer->CreateRenderTarget.
  */
 
-#include <SDL_stdinc.h>
+#include <cstdint>
 
 namespace Graphics {
 	class Texture;
@@ -21,7 +21,7 @@ namespace Graphics {
 	// Specifying a depth format with no allowDepthTexture will create a depth buffer
 	// fixed to this rendertarget
 	struct RenderTargetDesc {
-		RenderTargetDesc(Uint16 _width, Uint16 _height, TextureFormat _colorFormat, TextureFormat _depthFormat, bool _allowDepthTexture) :
+		RenderTargetDesc(uint16_t _width, uint16_t _height, TextureFormat _colorFormat, TextureFormat _depthFormat, bool _allowDepthTexture) :
 			width(_width),
 			height(_height),
 			colorFormat(_colorFormat),
@@ -29,8 +29,8 @@ namespace Graphics {
 			allowDepthTexture(_allowDepthTexture)
 		{}
 
-		const Uint16 width;
-		const Uint16 height;
+		const uint16_t width;
+		const uint16_t height;
 		const TextureFormat colorFormat;
 		const TextureFormat depthFormat;
 		const bool allowDepthTexture;
@@ -47,7 +47,7 @@ namespace Graphics {
 		//any existing texture's count
 		//Setting a depth texture is not allowed if the render target is not
 		//created with allowDepthTexture
-		virtual void SetCubeFaceTexture(const Uint32, Texture *) = 0;
+		virtual void SetCubeFaceTexture(const uint32_t, Texture *) = 0;
 		virtual void SetColorTexture(Texture *) = 0;
 		virtual void SetDepthTexture(Texture *) = 0;
 

@@ -25,7 +25,7 @@ namespace UI {
 
 		// SetHeightLines sets the widget's preferred size to fit the image to a
 		// specified number of text lines in the widget's current font.
-		Image *SetHeightLines(Uint32 lines);
+		Image *SetHeightLines(uint32_t lines);
 
 		// SetNaturalSize sets the widget's preferred size to match the size of
 		// the image data.
@@ -50,7 +50,7 @@ namespace UI {
 
 	protected:
 		friend class Context;
-		Image(Context *context, const std::string &filename, Uint32 sizeControlFlags);
+		Image(Context *context, const std::string &filename, uint32_t sizeControlFlags);
 		virtual ~Image();
 
 	private:

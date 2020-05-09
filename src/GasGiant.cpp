@@ -27,10 +27,10 @@ RefCountedPtr<GasPatchContext> GasGiant::s_patchContext;
 int GasGiant::m_detail = 0;
 
 namespace {
-	static Uint32 s_texture_size_small = 16;
-	static Uint32 s_texture_size_cpu[5];
-	static Uint32 s_texture_size_gpu[5];
-	static Uint32 s_noiseOctaves[5];
+	static uint32_t s_texture_size_small = 16;
+	static uint32_t s_texture_size_cpu[5];
+	static uint32_t s_texture_size_gpu[5];
+	static uint32_t s_noiseOctaves[5];
 	static float s_initialCPUDelayTime = 60.0f; // (perhaps) 60 seconds seems like a reasonable default
 	static float s_initialGPUDelayTime = 5.0f; // (perhaps) 5 seconds seems like a reasonable default
 	static std::vector<GasGiant *> s_allGasGiants;
@@ -42,7 +42,7 @@ namespace {
 	static const std::string GGSaturn2("GGSaturn2");
 	static const std::string GGUranus("GGUranus");
 
-	bool SplitData(const std::string &spec, Uint32 &cpuOut, Uint32 &gpuOut, Uint32 &octavesOut)
+	bool SplitData(const std::string &spec, uint32_t &cpuOut, uint32_t &gpuOut, uint32_t &octavesOut)
 	{
 		static const std::string delim(",");
 
@@ -103,7 +103,7 @@ public:
 
 	double frac;
 
-	std::unique_ptr<Uint32[]> indices;
+	std::unique_ptr<uint32_t[]> indices;
 	RefCountedPtr<Graphics::IndexBuffer> indexBuffer;
 
 	GasPatchContext(const int _edgeLen) :
@@ -128,7 +128,7 @@ public:
 		indices.reset();
 	}
 
-	int GetIndices(std::vector<Uint32> &pl)
+	int GetIndices(std::vector<uint32_t> &pl)
 	{
 		// calculate how many tri's there are
 		const int tri_count = IDX_VBO_COUNT_ALL_IDX() / 3;
@@ -150,8 +150,8 @@ public:
 		frac = 1.0 / double(edgeLen - 1);
 
 		// also want vtx indices for tris not touching edge of patch
-		indices.reset(new Uint32[IDX_VBO_COUNT_ALL_IDX()]);
-		Uint32 *idx = indices.get();
+		indices.reset(new uint32_t[IDX_VBO_COUNT_ALL_IDX()]);
+		uint32_t *idx = indices.get();
 		for (int x = 0; x < edgeLen - 1; x++) {
 			for (int y = 0; y < edgeLen - 1; y++) {
 				idx[0] = x + edgeLen * y;
@@ -167,19 +167,19 @@ public:
 		}
 
 		// these will hold the optimised indices
-		std::vector<Uint32> pl_short;
+		std::vector<uint32_t> pl_short;
 
 		// populate the N indices lists from the arrays built during InitTerrainIndices()
 		// iterate over each index list and optimize it
-		Uint32 tri_count = GetIndices(pl_short);
+		uint32_t tri_count = GetIndices(pl_short);
 		VertexCacheOptimizerUInt vco;
 		VertexCacheOptimizerUInt::Result res = vco.Optimize(&pl_short[0], tri_count);
 		assert(0 == res);
 
 		//create buffer & copy
 		indexBuffer.Reset(RendererLocator::getRenderer()->CreateIndexBuffer(pl_short.size(), Graphics::BUFFER_USAGE_STATIC));
-		Uint32 *idxPtr = indexBuffer->Map(Graphics::BUFFER_MAP_WRITE);
-		for (Uint32 j = 0; j < pl_short.size(); j++) {
+		uint32_t *idxPtr = indexBuffer->Map(Graphics::BUFFER_MAP_WRITE);
+		for (uint32_t j = 0; j < pl_short.size(); j++) {
 			idxPtr[j] = pl_short[j];
 		}
 		indexBuffer->Unmap();
@@ -241,10 +241,10 @@ public:
 		GasPatchContext::VBOVertex *vtxPtr = m_vertexBuffer->Map<GasPatchContext::VBOVertex>(Graphics::BUFFER_MAP_WRITE);
 		assert(m_vertexBuffer->GetDesc().stride == sizeof(GasPatchContext::VBOVertex));
 
-		const Sint32 edgeLen = ctx->edgeLen;
+		const int32_t edgeLen = ctx->edgeLen;
 		const double frac = ctx->frac;
-		for (Sint32 y = 0; y < edgeLen; y++) {
-			for (Sint32 x = 0; x < edgeLen; x++) {
+		for (int32_t y = 0; y < edgeLen; y++) {
+			for (int32_t x = 0; x < edgeLen; x++) {
 				const vector3d p = GetSpherePoint(x * frac, y * frac);
 				const vector3d pSubCentroid = p - clipCentroid;
 				clipRadius = std::max(clipRadius, p.Length());
@@ -410,7 +410,7 @@ void textureDump(const char *destFile, const int width, const int height, const 
 	//const int stride = (3*width + 3) & ~3;
 	const int stride = width * 4;
 
-	write_png(FileSystem::userFiles, fname, &buf[0].r, width, height, stride, 4);
+	PngWriter::write_png(FileSystem::userFiles, fname, &buf[0].r, width, height, stride, 4);
 
 	printf("texture %s saved\n", fname.c_str());
 }
@@ -423,7 +423,7 @@ bool GasGiant::AddTextureFaceResult(GasGiantJobs::STextureFaceResult *res)
 	assert(res->face() >= 0 && res->face() < NUM_PATCHES);
 	m_jobColorBuffers[res->face()].reset(res->data().colors);
 	m_hasJobRequest[res->face()] = false;
-	const Sint32 uvDims = res->data().uvDims;
+	const int32_t uvDims = res->data().uvDims;
 	assert(uvDims > 0 && uvDims <= 4096);
 
 	// tidyup
@@ -483,17 +483,16 @@ bool GasGiant::AddGPUGenResult(GasGiantJobs::SGPUGenResult *res)
 	assert(res);
 	m_hasGpuJobRequest = false;
 	assert(!m_gpuJob.HasJob());
-	const Sint32 uvDims = res->data().uvDims;
+	const int32_t uvDims = res->data().uvDims;
 	assert(uvDims > 0 && uvDims <= 4096);
 
 #if DUMP_TO_TEXTURE
 	for (int iFace = 0; iFace < NUM_PATCHES; iFace++) {
 		std::unique_ptr<Color, FreeDeleter> buffer(static_cast<Color *>(malloc(uvDims * uvDims * 4)));
 		Graphics::Texture *pTex = res->data().texture.Get();
-		Graphics::TextureGL *pGLTex = static_cast<Graphics::TextureGL *>(pTex);
-		pGLTex->Bind();
+		pTex->Bind();
 		glGetTexImage(GL_TEXTURE_CUBE_MAP_POSITIVE_X + iFace, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer.get());
-		pGLTex->Unbind();
+		pTex->Unbind();
 
 		char filename[1024];
 		snprintf(filename, 1024, "%s%d.png", GetSystemBodyName().c_str(), iFace);
@@ -554,8 +553,8 @@ void GasGiant::GenerateTexture()
 		std::unique_ptr<Color> bufs[NUM_PATCHES];
 		for (int i = 0; i < NUM_PATCHES; i++) {
 			Color *colors = new Color[(s_texture_size_small * s_texture_size_small)];
-			for (Uint32 v = 0; v < s_texture_size_small; v++) {
-				for (Uint32 u = 0; u < s_texture_size_small; u++) {
+			for (uint32_t v = 0; v < s_texture_size_small; v++) {
+				for (uint32_t u = 0; u < s_texture_size_small; u++) {
 					// where in this row & colum are we now.
 					const double ustep = double(u) * fracStep;
 					const double vstep = double(v) * fracStep;
@@ -609,7 +608,7 @@ void GasGiant::GenerateTexture()
 		const std::string ColorFracName = GetTerrain()->GetColorFractalName();
 		Output("Color Fractal name: %s\n", ColorFracName.c_str());
 
-		Uint32 GasGiantType = Graphics::OGL::GEN_JUPITER_TEXTURE;
+		uint32_t GasGiantType = Graphics::OGL::GEN_JUPITER_TEXTURE;
 		if (ColorFracName == GGSaturn) {
 			GasGiantType = Graphics::OGL::GEN_SATURN_TEXTURE;
 		} else if (ColorFracName == GGSaturn2) {
@@ -621,7 +620,7 @@ void GasGiant::GenerateTexture()
 		} else if (ColorFracName == GGUranus) {
 			GasGiantType = Graphics::OGL::GEN_URANUS_TEXTURE;
 		}
-		const Uint32 octaves = (GameConfSingleton::getInstance().Int("AMD_MESA_HACKS") == 0) ? s_noiseOctaves[m_detail] : std::min(5U, s_noiseOctaves[m_detail]);
+		const uint32_t octaves = (GameConfSingleton::getInstance().Int("AMD_MESA_HACKS") == 0) ? s_noiseOctaves[m_detail] : std::min(5U, s_noiseOctaves[m_detail]);
 		GasGiantType = (octaves << 16) | GasGiantType;
 
 		assert(!m_hasGpuJobRequest);
@@ -831,7 +830,7 @@ void GasGiant::Uninit()
 }
 
 //static
-void GasGiant::CreateRenderTarget(const Uint16 width, const Uint16 height)
+void GasGiant::CreateRenderTarget(const uint16_t width, const uint16_t height)
 {
 	/*	@fluffyfreak here's a rendertarget implementation you can use for oculusing and other things. It's pretty simple:
 		 - fill out a RenderTargetDesc struct and call Renderer::CreateRenderTarget
@@ -860,7 +859,7 @@ void GasGiant::CreateRenderTarget(const Uint16 width, const Uint16 height)
 }
 
 //static
-void GasGiant::SetRenderTargetCubemap(const Uint32 face, Graphics::Texture *pTexture, const bool unBind /*= true*/)
+void GasGiant::SetRenderTargetCubemap(const uint32_t face, Graphics::Texture *pTexture, const bool unBind /*= true*/)
 {
 	s_renderTarget->SetCubeFaceTexture(face, pTexture);
 }

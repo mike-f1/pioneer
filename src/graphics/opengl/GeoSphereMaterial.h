@@ -52,7 +52,7 @@ namespace Graphics {
 			// They are chosen/created based on what the current parameters passed in by the specialParameter0 are.
 			void SwitchShadowVariant();
 			Program *m_programs[4]; // 0 to 3 shadows
-			Uint32 m_curNumShadows;
+			uint32_t m_curNumShadows;
 		};
 
 		class GeoSphereSkyMaterial : public GeoSphereSurfaceMaterial {

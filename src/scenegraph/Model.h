@@ -122,17 +122,17 @@ namespace SceneGraph {
 		//materials used in the nodes should be accessible from here for convenience
 		RefCountedPtr<Graphics::Material> GetMaterialByName(const std::string &name) const;
 		RefCountedPtr<Graphics::Material> GetMaterialByIndex(const int) const;
-		unsigned int GetNumMaterials() const { return static_cast<Uint32>(m_materials.size()); }
+		unsigned int GetNumMaterials() const { return static_cast<uint32_t>(m_materials.size()); }
 
-		unsigned int GetNumTags() const { return static_cast<Uint32>(m_tags.size()); }
-		MatrixTransform *const GetTagByIndex(unsigned int index) const;
-		MatrixTransform *const FindTagByName(const std::string &name) const;
+		unsigned int GetNumTags() const { return static_cast<uint32_t>(m_tags.size()); }
+		const MatrixTransform *GetTagByIndex(unsigned int index) const;
+		const MatrixTransform *FindTagByName(const std::string &name) const;
 		typedef std::vector<MatrixTransform *> TVecMT;
 		void FindTagsByStartOfName(const std::string &name, TVecMT &outNameMTs) const;
 		void AddTag(const std::string &name, MatrixTransform *node);
 
 		const PatternContainer &GetPatterns() const { return m_patterns; }
-		unsigned int GetNumPatterns() const { return static_cast<Uint32>(m_patterns.size()); }
+		unsigned int GetNumPatterns() const { return static_cast<uint32_t>(m_patterns.size()); }
 		void SetPattern(unsigned int index);
 		unsigned int GetPattern() const { return m_curPatternIndex; }
 		void SetColors(const std::vector<Color> &colors);
@@ -172,7 +172,8 @@ namespace SceneGraph {
 			DEBUG_TAGS = 0x8,
 			DEBUG_DOCKING = 0x10
 		};
-		void SetDebugFlags(Uint32 flags);
+
+		void SetDebugFlags(uint32_t flags);
 
 	private:
 		Model(const Model &); // copy ctor: used in MakeInstance
@@ -202,7 +203,8 @@ namespace SceneGraph {
 		void DrawAxisIndicators(std::vector<Graphics::Drawables::Line3D> &lines);
 		void AddAxisIndicators(const std::vector<MatrixTransform *> &mts, std::vector<Graphics::Drawables::Line3D> &lines);
 
-		Uint32 m_debugFlags;
+		uint32_t m_debugFlags;
+
 		std::vector<Graphics::Drawables::Line3D> m_tagPoints;
 		std::vector<Graphics::Drawables::Line3D> m_dockingPoints;
 		RefCountedPtr<Graphics::VertexBuffer> m_collisionMeshVB;

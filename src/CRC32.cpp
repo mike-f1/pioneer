@@ -3,14 +3,14 @@
 
 #include "CRC32.h"
 
-const Uint32 CRC32::s_polynomial = 0x04c11db7;
+const uint32_t CRC32::s_polynomial = 0x04c11db7;
 
 bool CRC32::s_lookupTableGenerated;
-Uint32 CRC32::s_lookupTable[256];
+uint32_t CRC32::s_lookupTable[256];
 
-static Uint32 crc32_reflect(Uint32 v, const int bits)
+static uint32_t crc32_reflect(uint32_t v, const int bits)
 {
-	Uint32 r = 0;
+	uint32_t r = 0;
 	for (int i = 1; i <= bits; i++) {
 		if (v & 1)
 			r = r | (1 << (bits - i));

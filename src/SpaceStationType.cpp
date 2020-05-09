@@ -241,26 +241,26 @@ void SpaceStationType::OnSetupComplete()
 
 	// insanity
 	for (PortPathMap::const_iterator pIt = m_portPaths.begin(), pItEnd = m_portPaths.end(); pIt != pItEnd; ++pIt) {
-		if (Uint32(numDockingStages - 1) < pIt->second.m_docking.size()) {
+		if (uint32_t(numDockingStages - 1) < pIt->second.m_docking.size()) {
 			Error(
 				"(%s): numDockingStages (%d) vs number of docking stages (" SIZET_FMT ")\n"
 				"Must have at least the same number of entries as the number of docking stages "
 				"PLUS the docking timeout at the start of the array.",
 				modelName.c_str(), (numDockingStages - 1), pIt->second.m_docking.size());
 
-		} else if (Uint32(numDockingStages - 1) != pIt->second.m_docking.size()) {
+		} else if (uint32_t(numDockingStages - 1) != pIt->second.m_docking.size()) {
 			Warning(
 				"(%s): numDockingStages (%d) vs number of docking stages (" SIZET_FMT ")\n",
 				modelName.c_str(), (numDockingStages - 1), pIt->second.m_docking.size());
 		}
 
-		if (0 != pIt->second.m_leaving.size() && Uint32(numUndockStages) < pIt->second.m_leaving.size()) {
+		if (0 != pIt->second.m_leaving.size() && uint32_t(numUndockStages) < pIt->second.m_leaving.size()) {
 			Error(
 				"(%s): numUndockStages (%d) vs number of leaving stages (" SIZET_FMT ")\n"
 				"Must have at least the same number of entries as the number of leaving stages.",
 				modelName.c_str(), (numDockingStages - 1), pIt->second.m_docking.size());
 
-		} else if (0 != pIt->second.m_leaving.size() && Uint32(numUndockStages) != pIt->second.m_leaving.size()) {
+		} else if (0 != pIt->second.m_leaving.size() && uint32_t(numUndockStages) != pIt->second.m_leaving.size()) {
 			Warning(
 				"(%s): numUndockStages (%d) vs number of leaving stages (" SIZET_FMT ")\n",
 				modelName.c_str(), numUndockStages, pIt->second.m_leaving.size());

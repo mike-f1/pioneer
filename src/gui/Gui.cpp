@@ -25,7 +25,7 @@ namespace Gui {
 		sigc::signal<void, SDL_JoyHatEvent *> onJoyHatMotion;
 	} // namespace RawEvents
 
-	static Sint32 lastMouseX, lastMouseY;
+	static int32_t lastMouseX, lastMouseY;
 	void HandleSDLEvent(SDL_Event *event)
 	{
 		PROFILE_SCOPED()
@@ -83,13 +83,13 @@ namespace Gui {
 	}
 
 	struct TimerSignal {
-		Uint32 goTime;
+		uint32_t goTime;
 		sigc::signal<void> sig;
 	};
 
 	static std::list<TimerSignal *> g_timeSignals;
 
-	sigc::connection AddTimer(Uint32 ms, sigc::slot<void> slot)
+	sigc::connection AddTimer(uint32_t ms, sigc::slot<void> slot)
 	{
 		TimerSignal *_s = new TimerSignal;
 		_s->goTime = SDL_GetTicks() + ms;
@@ -101,7 +101,7 @@ namespace Gui {
 	void Draw()
 	{
 		PROFILE_SCOPED()
-		Uint32 t = SDL_GetTicks();
+		uint32_t t = SDL_GetTicks();
 		// also abused like an update() function...
 		for (std::list<TimerSignal *>::iterator i = g_timeSignals.begin(); i != g_timeSignals.end();) {
 			if (t >= (*i)->goTime) {
@@ -155,7 +155,7 @@ namespace Gui {
 				/* 6 */ vector3f(size[0] - BORDER_WIDTH, size[1] - BORDER_WIDTH, 0),
 				/* 7 */ vector3f(size[0] - BORDER_WIDTH, BORDER_WIDTH, 0)
 			};
-			const Uint32 indices[] = {
+			const uint32_t indices[] = {
 				0, 1, 5, 0, 5, 4, 0, 4, 7, 0, 7, 3,
 				3, 7, 6, 3, 6, 2, 1, 2, 6, 1, 6, 5
 			};
@@ -173,7 +173,7 @@ namespace Gui {
 			vb.reset(RendererLocator::getRenderer()->CreateVertexBuffer(vbd));
 			TPos *vtxPtr = vb->Map<TPos>(Graphics::BUFFER_MAP_WRITE);
 			assert(vb->GetDesc().stride == sizeof(TPos));
-			for (Uint32 i = 0; i < 8; i++) {
+			for (uint32_t i = 0; i < 8; i++) {
 				vtxPtr[i].pos = vertices[i];
 			}
 			vb->Unmap();
@@ -181,8 +181,8 @@ namespace Gui {
 			//create index buffer & copy
 			std::unique_ptr<Graphics::IndexBuffer> ib;
 			ib.reset(RendererLocator::getRenderer()->CreateIndexBuffer(24, Graphics::BUFFER_USAGE_STATIC));
-			Uint32 *idxPtr = ib->Map(Graphics::BUFFER_MAP_WRITE);
-			for (Uint32 j = 0; j < 24; j++) {
+			uint32_t *idxPtr = ib->Map(Graphics::BUFFER_MAP_WRITE);
+			for (uint32_t j = 0; j < 24; j++) {
 				idxPtr[j] = indices[j];
 			}
 			ib->Unmap();
@@ -191,11 +191,11 @@ namespace Gui {
 			RendererLocator::getRenderer()->DrawBufferIndexed(vb.get(), ib.get(), state, Screen::flatColorMaterial);
 		}
 
-		Graphics::IndexBuffer *CreateIndexBuffer(const Uint32 indices[], const Uint32 IndexStart, const Uint32 IndexEnd, const Uint32 NumIndices)
+		Graphics::IndexBuffer *CreateIndexBuffer(const uint32_t indices[], const uint32_t IndexStart, const uint32_t IndexEnd, const uint32_t NumIndices)
 		{
 			Graphics::IndexBuffer *ib = RendererLocator::getRenderer()->CreateIndexBuffer(NumIndices, Graphics::BUFFER_USAGE_STATIC);
-			Uint32 *idxPtr = ib->Map(Graphics::BUFFER_MAP_WRITE);
-			for (Uint32 j = 0; j < NumIndices; j++) {
+			uint32_t *idxPtr = ib->Map(Graphics::BUFFER_MAP_WRITE);
+			for (uint32_t j = 0; j < NumIndices; j++) {
 				idxPtr[j] = indices[j + IndexStart];
 			}
 			ib->Unmap();
@@ -238,7 +238,7 @@ namespace Gui {
 					/* 6 */ vector3f(size[0] - BORDER_WIDTH, size[1] - BORDER_WIDTH, 0),
 					/* 7 */ vector3f(size[0] - BORDER_WIDTH, BORDER_WIDTH, 0)
 				};
-				const Uint32 indices[] = {
+				const uint32_t indices[] = {
 					0, 1, 5, 0, 5, 4, 0, 4, 7, 0, 7, 3,
 					3, 7, 6, 3, 6, 2, 1, 2, 6, 1, 6, 5,
 					4, 5, 6, 4, 6, 7
@@ -255,15 +255,15 @@ namespace Gui {
 				vb.Reset(RendererLocator::getRenderer()->CreateVertexBuffer(vbd));
 				TPos *vtxPtr = vb->Map<TPos>(Graphics::BUFFER_MAP_WRITE);
 				assert(vb->GetDesc().stride == sizeof(TPos));
-				for (Uint32 i = 0; i < 8; i++) {
+				for (uint32_t i = 0; i < 8; i++) {
 					vtxPtr[i].pos = vertices[i];
 				}
 				vb->Unmap();
 
 				// indices
-				Uint32 IndexStart = 0;
-				Uint32 IndexEnd = 12;
-				Uint32 NumIndices = 12;
+				uint32_t IndexStart = 0;
+				uint32_t IndexEnd = 12;
+				uint32_t NumIndices = 12;
 
 				ib[0].Reset(CreateIndexBuffer(indices, IndexStart, IndexEnd, NumIndices));
 
@@ -331,7 +331,7 @@ namespace Gui {
 					/* 6 */ vector3f(size[0] - BORDER_WIDTH, size[1] - BORDER_WIDTH, 0),
 					/* 7 */ vector3f(size[0] - BORDER_WIDTH, BORDER_WIDTH, 0)
 				};
-				const Uint32 indices[] = {
+				const uint32_t indices[] = {
 					0, 1, 5, 0, 5, 4, 0, 4, 7, 0, 7, 3,
 					3, 7, 6, 3, 6, 2, 1, 2, 6, 1, 6, 5,
 					4, 5, 6, 4, 6, 7
@@ -348,15 +348,15 @@ namespace Gui {
 				vb.Reset(RendererLocator::getRenderer()->CreateVertexBuffer(vbd));
 				TPos *vtxPtr = vb->Map<TPos>(Graphics::BUFFER_MAP_WRITE);
 				assert(vb->GetDesc().stride == sizeof(TPos));
-				for (Uint32 i = 0; i < 8; i++) {
+				for (uint32_t i = 0; i < 8; i++) {
 					vtxPtr[i].pos = vertices[i];
 				}
 				vb->Unmap();
 
 				// indices
-				Uint32 IndexStart = 0;
-				Uint32 IndexEnd = 12;
-				Uint32 NumIndices = 12;
+				uint32_t IndexStart = 0;
+				uint32_t IndexEnd = 12;
+				uint32_t NumIndices = 12;
 
 				ib[0].Reset(CreateIndexBuffer(indices, IndexStart, IndexEnd, NumIndices));
 

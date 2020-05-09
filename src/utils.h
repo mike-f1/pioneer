@@ -86,19 +86,19 @@ std::string format_latitude(double decimal_degree);
 std::string format_longitude(double decimal_degree);
 std::string format_speed(double speed, int precision = 2);
 
-static inline Sint64 isqrt(Sint64 a)
+static inline int64_t isqrt(int64_t a)
 {
 	// replace with cast from sqrt below which is between x7.3 (win32, Debug) & x15 (x64, Release) times faster
 	return static_cast<int64_t>(sqrt(static_cast<double>(a)));
 }
 
-static inline Sint64 isqrt(fixed v)
+static inline int64_t isqrt(fixed v)
 {
-	Sint64 ret = 0;
-	Sint64 s;
-	Sint64 ret_sq = -v.v - 1;
+	int64_t ret = 0;
+	int64_t s;
+	int64_t ret_sq = -v.v - 1;
 	for (s = 62; s >= 0; s -= 2) {
-		Sint64 b;
+		int64_t b;
 		ret += ret;
 		b = ret_sq + ((2 * ret + 1) << s);
 		if (b < 0) {
@@ -108,12 +108,6 @@ static inline Sint64 isqrt(fixed v)
 	}
 	return ret;
 }
-
-namespace Graphics {
-	struct ScreendumpState;
-}
-
-void write_screenshot(const Graphics::ScreendumpState &sd, const char *destFile);
 
 // find string in bigger string, ignoring case
 const char *pi_strcasestr(const char *haystack, const char *needle);
@@ -223,7 +217,7 @@ static inline size_t SplitSpec(const std::string &spec, std::vector<float> &outp
 		end = spec.find_first_of(delim, start);
 
 		// extract the fragment and remember it
-		output[i++] = atof(spec.substr(start, (end == std::string::npos) ? std::string::npos : end - start).c_str());
+		output[i++] = std::stof(spec.substr(start, (end == std::string::npos) ? std::string::npos : end - start));
 	}
 
 	return i;
@@ -234,8 +228,8 @@ std::vector<std::string> SplitString(const std::string &source, const std::strin
 // 'Numeric type' to string conversions.
 std::string FloatToStr(float val);
 std::string DoubleToStr(double val);
-std::string AutoToStr(Sint32 val);
-std::string AutoToStr(Sint64 val);
+std::string AutoToStr(int32_t val);
+std::string AutoToStr(int64_t val);
 std::string AutoToStr(float val);
 std::string AutoToStr(double val);
 
@@ -247,12 +241,12 @@ void Matrix4x4fToStr(const matrix4x4f &val, char *out, size_t size);
 void Matrix4x4dToStr(const matrix4x4d &val, char *out, size_t size);
 
 // String to 'Numeric type' conversions.
-Sint64 StrToSInt64(const std::string &str);
-Uint64 StrToUInt64(const std::string &str);
+int64_t StrToSInt64(const std::string &str);
+uint64_t StrToUInt64(const std::string &str);
 float StrToFloat(const std::string &str);
 double StrToDouble(const std::string &str);
-void StrToAuto(Sint32 *pVal, const std::string &str);
-void StrToAuto(Sint64 *pVal, const std::string &str);
+void StrToAuto(int32_t *pVal, const std::string &str);
+void StrToAuto(int64_t *pVal, const std::string &str);
 void StrToAuto(float *pVal, const std::string &str);
 void StrToAuto(double *pVal, const std::string &str);
 
@@ -281,7 +275,7 @@ static inline float roundf(float x)
 }
 #endif /* _MSC_VER < 1800 */
 
-static inline Uint32 ceil_pow2(Uint32 v)
+static inline uint32_t ceil_pow2(uint32_t v)
 {
 	v--;
 	v |= v >> 1;

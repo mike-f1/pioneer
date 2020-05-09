@@ -21,17 +21,17 @@ static const int s_saveVersion = 90;
 
 void GameState::MakeNewGame(const SystemPath &path,
 		const double startDateTime,
-		const unsigned int sectorRadius)
+		const unsigned int sectorRadius_)
 {
 	Output("Starting new game at (%i;%i;%i;%i;%i)\n", path.sectorX, path.sectorY, path.sectorZ, path.systemIndex, path.bodyIndex);
-	Game *game = new Game(path, startDateTime, sectorRadius);
+	Game *game = new Game(path, startDateTime, sectorRadius_);
 
 	// TODO: Set locator before InGameViews because it seems there some
 	// calls to GameLocator during initialization... :P
 	GameLocator::provideGame(game);
 
 	// Sub optimal: need a better way to couple inGameViews to game
-	InGameViewsLocator::NewInGameViews(new InGameViews(game, path, sectorRadius));
+	InGameViewsLocator::NewInGameViews(new InGameViews(game, path, sectorRadius_));
 	// Here because 'l_game_attr_player' would have
 	// a player to be pushed on Lua VM through GameLocator,
 	// but that is not yet set in a ctor

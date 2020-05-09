@@ -58,6 +58,7 @@ RadarWidget::RadarWidget(const Json &jsonObj)
 		m_manualRange = radarObj["manual_range"];
 		m_targetRange = radarObj["target_range"];
 	} catch (Json::type_error &) {
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 		throw SavedGameCorruptException();
 	}
 
@@ -322,7 +323,7 @@ void RadarWidget::DrawBlobs(bool below)
 {
 	assert(!m_contacts.empty());
 
-	static const Uint32 MAX_CONTACTS(100);
+	static const uint32_t MAX_CONTACTS(100);
 	std::vector<vector3f> blobs;
 	std::vector<vector3f> vts;
 	std::vector<Color> blobcolors;

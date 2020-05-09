@@ -37,9 +37,9 @@ void CollMesh::Load(Serializer::Reader &rd)
 
 	m_geomTree = new GeomTree(rd);
 
-	const Uint32 numDynGeomTrees = rd.Int32();
+	const uint32_t numDynGeomTrees = rd.Int32();
 	m_dynGeomTrees.reserve(numDynGeomTrees);
-	for (Uint32 it = 0; it < numDynGeomTrees; ++it) {
+	for (uint32_t it = 0; it < numDynGeomTrees; ++it) {
 		m_dynGeomTrees.push_back(new GeomTree(rd));
 	}
 
@@ -58,7 +58,7 @@ const std::vector<vector3f> &CollMesh::GetGeomTreeVertices() const
 	return m_geomTree->GetVertices();
 }
 
-const Uint32 *CollMesh::GetGeomTreeIndices() const
+const uint32_t *CollMesh::GetGeomTreeIndices() const
 {
 	return m_geomTree->GetIndices();
 }

@@ -4,13 +4,12 @@
 #ifndef _GEOSPHERE_H
 #define _GEOSPHERE_H
 
-#include <SDL_stdinc.h>
+#include <cstdint>
+#include <deque>
 
 #include "BaseSphere.h"
 #include "Camera.h"
 #include "vector3.h"
-
-#include <deque>
 
 namespace Graphics {
 	class Texture;
@@ -51,7 +50,7 @@ public:
 
 	virtual void Reset() override;
 
-	inline Sint32 GetMaxDepth() const { return m_maxDepth; }
+	inline int32_t GetMaxDepth() const { return m_maxDepth; }
 
 	void AddQuadSplitRequest(double, SQuadSplitRequest *, GeoPatch *);
 
@@ -96,7 +95,7 @@ private:
 	};
 	EGSInitialisationStage m_initStage;
 
-	Sint32 m_maxDepth;
+	int32_t m_maxDepth;
 };
 
 #endif /* _GEOSPHERE_H */

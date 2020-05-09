@@ -40,7 +40,7 @@ private:
 	static float SPACING;
 	static float MAX_VEL;
 
-	void CreateVertexBuffer(const Uint32 size);
+	void CreateVertexBuffer(const uint32_t size);
 
 	Ship *m_ship;
 

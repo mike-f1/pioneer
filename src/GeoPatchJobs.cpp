@@ -46,7 +46,6 @@ SBaseRequest::~SBaseRequest()
 void SSingleSplitRequest::GenerateMesh() const
 {
 	const int borderedEdgeLen = edgeLen + (BORDER_SIZE * 2);
-	const int numBorderedVerts = borderedEdgeLen * borderedEdgeLen;
 
 	// generate heights plus a 1 unit border
 	double *bhts = borderHeights.get();

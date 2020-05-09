@@ -307,7 +307,7 @@ void SystemInfoView::PutBodies(SystemBody *body, Gui::Fixed *container, int dir,
 				}
 			}
 		}
-		m_bodyIcons.push_back(std::pair<Uint32, BodyIcon *>(body->GetPath().bodyIndex, ib));
+		m_bodyIcons.push_back(std::pair<uint32_t, BodyIcon *>(body->GetPath().bodyIndex, ib));
 		ib->GetSize(size);
 		if (prevSize < 0) prevSize = size[!dir];
 		ib->onSelect.connect(sigc::bind(sigc::mem_fun(this, &SystemInfoView::OnBodySelected), body));

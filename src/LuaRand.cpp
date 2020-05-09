@@ -48,17 +48,17 @@ static int l_rand_new(lua_State *l)
 		const char *str = lua_tolstring(l, 1, &sz);
 
 		// Note, these are inputs as well as outputs! They must be initialised.
-		Uint32 hashes[2] = { 0u, 0u };
+		uint32_t hashes[2] = { 0u, 0u };
 		lookup3_hashlittle2(str, sz, hashes + 0, hashes + 1);
 		rng->seed(hashes, 2);
 		break;
 	}
 	case LUA_TNUMBER:
-		rng->seed(Uint32(lua_tonumber(l, 1)));
+		rng->seed(uint32_t(lua_tonumber(l, 1)));
 		break;
 	case LUA_TNIL: // fallthrough
 	case LUA_TNONE:
-		rng->seed(Uint32(time(0)));
+		rng->seed(uint32_t(time(0)));
 		break;
 	default:
 		return luaL_error(l, "seed must be a number or a string");

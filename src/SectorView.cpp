@@ -118,6 +118,7 @@ SectorView::SectorView(const Json &jsonObj, RefCountedPtr<Galaxy> galaxy, unsign
 		m_showFactionColor = sectorViewObj["show_faction_color"];
 
 	} catch (Json::type_error &) {
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 		throw SavedGameCorruptException();
 	}
 
@@ -510,10 +511,10 @@ void SectorView::CollectSystems(RefCountedPtr<Sector> sec, const vector3f &origi
 	matrix4x4ftod(p, proj_mat);
 	Frustum frustum(model_mat, proj_mat);
 
-	Sint32 viewport[4];
+	int32_t viewport[4];
 	RendererLocator::getRenderer()->GetCurrentViewport(&viewport[0]);
 
-	Uint32 sysIdx = 0;
+	uint32_t sysIdx = 0;
 	for (std::vector<Sector::System>::iterator sys = sec->m_systems.begin(); sys != sec->m_systems.end(); ++sys, ++sysIdx) {
 		// skip the system if it doesn't fall within the sphere we're viewing.
 		if ((m_pos * Sector::SIZE - (*sys).GetFullPosition()).Length() > drawRadius) continue;
@@ -568,7 +569,7 @@ SectorView::t_systemsAndPosVector SectorView::CollectHomeworlds(const vector3f &
 	matrix4x4ftod(p, proj_mat);
 	Frustum frustum(model_mat, proj_mat);
 
-	Sint32 viewport[4];
+	int32_t viewport[4];
 	RendererLocator::getRenderer()->GetCurrentViewport(&viewport[0]);
 
 	for (auto it = m_visibleFactions.begin(); it != m_visibleFactions.end(); ++it) {
@@ -801,17 +802,17 @@ void SectorView::AutoRoute(const SystemPath &start, const SystemPath &target, st
 	std::vector<SystemPath> nodes;
 	nodes.push_back(start);
 
-	const Sint32 minX = std::min(start.sectorX, target.sectorX) - 2, maxX = std::max(start.sectorX, target.sectorX) + 2;
-	const Sint32 minY = std::min(start.sectorY, target.sectorY) - 2, maxY = std::max(start.sectorY, target.sectorY) + 2;
-	const Sint32 minZ = std::min(start.sectorZ, target.sectorZ) - 2, maxZ = std::max(start.sectorZ, target.sectorZ) + 2;
+	const int32_t minX = std::min(start.sectorX, target.sectorX) - 2, maxX = std::max(start.sectorX, target.sectorX) + 2;
+	const int32_t minY = std::min(start.sectorY, target.sectorY) - 2, maxY = std::max(start.sectorY, target.sectorY) + 2;
+	const int32_t minZ = std::min(start.sectorZ, target.sectorZ) - 2, maxZ = std::max(start.sectorZ, target.sectorZ) + 2;
 	const vector3f start_pos = start_sec->m_systems[start.systemIndex].GetFullPosition();
 	const vector3f target_pos = target_sec->m_systems[target.systemIndex].GetFullPosition();
 
 	// go sector by sector for the minimum cube of sectors and add systems
 	// if they are within 110% of dist of both start and target
-	for (Sint32 sx = minX; sx <= maxX; sx++) {
-		for (Sint32 sy = minY; sy <= maxY; sy++) {
-			for (Sint32 sz = minZ; sz < maxZ; sz++) {
+	for (int32_t sx = minX; sx <= maxX; sx++) {
+		for (int32_t sy = minY; sy <= maxY; sy++) {
+			for (int32_t sz = minZ; sz < maxZ; sz++) {
 				const SystemPath sec_path = SystemPath(sx, sy, sz);
 				RefCountedPtr<const Sector> sec = m_galaxy->GetSector(sec_path);
 				for (std::vector<Sector::System>::size_type s = 0; s < sec->m_systems.size(); s++) {
@@ -948,7 +949,7 @@ void SectorView::DrawNearSector(const int sx, const int sy, const int sz, const 
 	RendererLocator::getRenderer()->SetTransform(trans);
 	RefCountedPtr<Sector> ps = m_sectorCache->GetCached(SystemPath(sx, sy, sz));
 
-	Uint32 sysIdx = 0;
+	uint32_t sysIdx = 0;
 	for (std::vector<Sector::System>::iterator i = ps->m_systems.begin(); i != ps->m_systems.end(); ++i, ++sysIdx) {
 		// calculate where the system is in relation the centre of the view...
 		const vector3f sysAbsPos = Sector::SIZE * vector3f(float(sx), float(sy), float(sz)) + i->GetPosition();
@@ -1033,7 +1034,7 @@ void SectorView::DrawNearSector(const int sx, const int sy, const int sz, const 
 		systrans.Scale((GalaxyEnums::starScale[(*i).GetStarType(0)]));
 		RendererLocator::getRenderer()->SetTransform(systrans);
 
-		const Uint8 *col;
+		const uint8_t *col;
 		if (m_showFactionColor) {
 			col = (*i).GetFaction()->colour;
 		} else {

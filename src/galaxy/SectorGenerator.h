@@ -51,7 +51,7 @@ private:
 	// Low 5 bits (bits 0..4) -> Day.
 	// Middle 4 bits (bits 5..8) -> Month.
 	// High bits (bits 9..) -> Year.
-	std::map<SystemPath, Sint32> m_exploredSystems;
+	std::map<SystemPath, int32_t> m_exploredSystems;
 };
 
 #endif

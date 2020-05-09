@@ -16,7 +16,7 @@ struct CollisionContact {
 	int triIdx;
 	void *userData1, *userData2;
 	int geomFlag;
-	
+
 	// default ctor
 	CollisionContact() :
 		depth(0),
@@ -29,9 +29,9 @@ struct CollisionContact {
 	{}
 
 	// ctor for collision with terrain
-	CollisionContact(const vector3d &position, const vector3d &normal, double deep, double dt, void *u1, void *u2) :
-		pos(position),
-		normal(normal),
+	CollisionContact(const vector3d &position_, const vector3d &normal_, double deep, double dt, void *u1, void *u2) :
+		pos(position_),
+		normal(normal_),
 		depth(deep),
 		distance(0),
 		timestep(dt),

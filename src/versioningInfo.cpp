@@ -15,6 +15,8 @@
 #endif
 
 #include <GL/glew.h>
+#include <SDL_version.h>
+#include <SDL_image.h>
 
 void OutputVersioningInfo()
 {

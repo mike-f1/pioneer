@@ -37,6 +37,7 @@ AICommand *AICommand::LoadFromJson(const Json &jsonObj)
 		case CMD_FORMATION: return new AICmdFormation(aiCommandObj);
 		}
 	} catch (Json::type_error &) {
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 		throw SavedGameCorruptException();
 	}
 }
@@ -69,6 +70,7 @@ AICommand::AICommand(const Json &jsonObj, CmdName name) :
 
 		m_child.reset(LoadFromJson(commonAiCommandObj));
 	} catch (Json::type_error &) {
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 		throw SavedGameCorruptException();
 	}
 }
@@ -240,7 +242,10 @@ AICmdKamikaze::AICmdKamikaze(DynamicBody *dBody, Body *target) :
 AICmdKamikaze::AICmdKamikaze(const Json &jsonObj) :
 	AICommand(jsonObj, CMD_KAMIKAZE)
 {
-	if (!jsonObj.count("index_for_target")) throw SavedGameCorruptException();
+	if (!jsonObj.count("index_for_target")) {
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
+		throw SavedGameCorruptException();
+	}
 	m_targetIndex = jsonObj["index_for_target"];
 }
 
@@ -925,6 +930,7 @@ AICmdFlyTo::AICmdFlyTo(const Json &jsonObj) :
 		m_tangent = jsonObj["tangent"];
 		m_state = jsonObj["state"];
 	} catch (Json::type_error &) {
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 		throw SavedGameCorruptException();
 	}
 }
@@ -1193,6 +1199,7 @@ AICmdDock::AICmdDock(const Json &jsonObj) :
 		m_dockupdir = jsonObj["dock_up_dir"];
 		m_state = EDockingStates(jsonObj["state"]);
 	} catch (Json::type_error &) {
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 		throw SavedGameCorruptException();
 	}
 }
@@ -1437,6 +1444,7 @@ AICmdFlyAround::AICmdFlyAround(const Json &jsonObj) :
 		m_alt = jsonObj["alt"];
 		m_targmode = jsonObj["targ_mode"];
 	} catch (Json::type_error &) {
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 		throw SavedGameCorruptException();
 	}
 }
@@ -1589,6 +1597,7 @@ AICmdFormation::AICmdFormation(const Json &jsonObj) :
 		m_targetIndex = jsonObj["index_for_target"];
 		m_posoff = jsonObj["pos_off"];
 	} catch (Json::type_error &) {
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 		throw SavedGameCorruptException();
 	}
 }

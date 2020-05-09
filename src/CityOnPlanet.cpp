@@ -40,7 +40,7 @@ void CityOnPlanet::AddStaticGeomsToCollisionSpace()
 	// reset data structures
 	m_enabledBuildings.clear();
 	m_buildingCounts.resize(s_buildingList.numBuildings);
-	for (Uint32 i = 0; i < s_buildingList.numBuildings; i++) {
+	for (uint32_t i = 0; i < s_buildingList.numBuildings; i++) {
 		m_buildingCounts[i] = 0;
 	}
 
@@ -55,7 +55,7 @@ void CityOnPlanet::AddStaticGeomsToCollisionSpace()
 		skipMask = 0;
 		break;
 	}
-	Uint32 numVisibleBuildings = 0;
+	uint32_t numVisibleBuildings = 0;
 	for (unsigned int i = 0; i < m_buildings.size(); i++) {
 		if (!(i & skipMask)) {
 			++numVisibleBuildings;
@@ -167,7 +167,7 @@ struct ModelNameComparator {
 //static
 void CityOnPlanet::SetCityModelPatterns(const SystemPath &path)
 {
-	Uint32 _init[5] = { path.systemIndex, Uint32(path.sectorX), Uint32(path.sectorY), Uint32(path.sectorZ), UNIVERSE_SEED };
+	uint32_t _init[5] = { path.systemIndex, uint32_t(path.sectorX), uint32_t(path.sectorY), uint32_t(path.sectorZ), UNIVERSE_SEED };
 	Random rand(_init, 5);
 
 	typedef std::set<SceneGraph::Model *, ModelNameComparator> ModelSet;
@@ -201,7 +201,7 @@ CityOnPlanet::~CityOnPlanet()
 	}
 }
 
-CityOnPlanet::CityOnPlanet(Planet *planet, SpaceStation *station, const Uint32 seed)
+CityOnPlanet::CityOnPlanet(Planet *planet, SpaceStation *station, const uint32_t seed)
 {
 	// beware, these are not used in this function, but are used in subroutines!
 	m_planet = planet;
@@ -346,7 +346,7 @@ void CityOnPlanet::Render(const Graphics::Frustum &frustum, const SpaceStation *
 	}
 
 	// update any idle animations
-	for (Uint32 i = 0; i < s_buildingList.numBuildings; i++) {
+	for (uint32_t i = 0; i < s_buildingList.numBuildings; i++) {
 		SceneGraph::Animation *pAnim = s_buildingList.buildings[i].idle;
 		if (pAnim) {
 			pAnim->SetProgress(fmod(pAnim->GetProgress() + (GameLocator::getGame()->GetTimeStep() / pAnim->GetDuration()), 1.0));
@@ -354,13 +354,13 @@ void CityOnPlanet::Render(const Graphics::Frustum &frustum, const SpaceStation *
 		}
 	}
 
-	Uint32 uCount = 0;
-	std::vector<Uint32> instCount;
+	uint32_t uCount = 0;
+	std::vector<uint32_t> instCount;
 	std::vector<std::vector<matrix4x4f>> transform;
 	instCount.resize(s_buildingList.numBuildings);
 	transform.resize(s_buildingList.numBuildings);
-	memset(&instCount[0], 0, sizeof(Uint32) * s_buildingList.numBuildings);
-	for (Uint32 i = 0; i < s_buildingList.numBuildings; i++) {
+	memset(&instCount[0], 0, sizeof(uint32_t) * s_buildingList.numBuildings);
+	for (uint32_t i = 0; i < s_buildingList.numBuildings; i++) {
 		transform[i].reserve(m_buildingCounts[i]);
 	}
 
@@ -381,7 +381,7 @@ void CityOnPlanet::Render(const Graphics::Frustum &frustum, const SpaceStation *
 	}
 
 	// render the building models using instancing
-	for (Uint32 i = 0; i < s_buildingList.numBuildings; i++) {
+	for (uint32_t i = 0; i < s_buildingList.numBuildings; i++) {
 		if (!transform[i].empty())
 			s_buildingList.buildings[i].resolvedModel->Render(transform[i]);
 	}

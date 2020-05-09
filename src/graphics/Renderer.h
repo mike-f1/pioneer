@@ -101,13 +101,13 @@ namespace Graphics {
 
 		virtual bool SetWireFrameMode(bool enabled) = 0;
 
-		virtual bool SetLights(Uint32 numlights, const Light *l) = 0;
-		const Light &GetLight(const Uint32 idx) const
+		virtual bool SetLights(uint32_t numlights, const Light *l) = 0;
+		const Light &GetLight(const uint32_t idx) const
 		{
 			assert(idx < 4);
 			return m_lights[idx];
 		}
-		virtual Uint32 GetNumLights() const { return 0; }
+		virtual uint32_t GetNumLights() const { return 0; }
 		virtual bool SetAmbientColor(const Color &c) = 0;
 		const Color &GetAmbientColor() const { return m_ambient; }
 
@@ -118,8 +118,8 @@ namespace Graphics {
 		//unindexed triangle draw
 		virtual bool DrawTriangles(const VertexArray *vertices, RenderState *state, Material *material, PrimitiveType type = TRIANGLES) = 0;
 		//high amount of textured quads for particles etc
-		virtual bool DrawPointSprites(const Uint32 count, const vector3f *positions, RenderState *rs, Material *material, float size) = 0;
-		virtual bool DrawPointSprites(const Uint32 count, const vector3f *positions, const vector2f *offsets, const float *sizes, RenderState *rs, Material *material) = 0;
+		virtual bool DrawPointSprites(const uint32_t count, const vector3f *positions, RenderState *rs, Material *material, float size) = 0;
+		virtual bool DrawPointSprites(const uint32_t count, const vector3f *positions, const vector2f *offsets, const float *sizes, RenderState *rs, Material *material) = 0;
 		//complex unchanging geometry that is worthwhile to store in VBOs etc.
 		virtual bool DrawBuffer(VertexBuffer *, RenderState *, Material *, PrimitiveType type = TRIANGLES) = 0;
 		virtual bool DrawBufferIndexed(VertexBuffer *, IndexBuffer *, RenderState *, Material *, PrimitiveType = TRIANGLES) = 0;
@@ -134,8 +134,8 @@ namespace Graphics {
 		//returns 0 if unsupported
 		virtual RenderTarget *CreateRenderTarget(const RenderTargetDesc &) = 0;
 		virtual VertexBuffer *CreateVertexBuffer(const VertexBufferDesc &) = 0;
-		virtual IndexBuffer *CreateIndexBuffer(Uint32 size, BufferUsage) = 0;
-		virtual InstanceBuffer *CreateInstanceBuffer(Uint32 size, BufferUsage) = 0;
+		virtual IndexBuffer *CreateIndexBuffer(uint32_t size, BufferUsage) = 0;
+		virtual InstanceBuffer *CreateInstanceBuffer(uint32_t size, BufferUsage) = 0;
 
 		Texture *GetCachedTexture(const std::string &type, const std::string &name);
 		void AddCachedTexture(const std::string &type, const std::string &name, Texture *texture);
@@ -148,7 +148,7 @@ namespace Graphics {
 		// XXX state must die
 		virtual const matrix4x4f &GetCurrentModelView() const = 0;
 		virtual const matrix4x4f &GetCurrentProjection() const = 0;
-		virtual void GetCurrentViewport(Sint32 *vp) const = 0;
+		virtual void GetCurrentViewport(int32_t *vp) const = 0;
 
 		// XXX all quite GL specific. state must die!
 		virtual void SetMatrixMode(MatrixMode mm) = 0;
@@ -200,7 +200,6 @@ namespace Graphics {
 		};
 
 		virtual bool Screendump(ScreendumpState &sd) { return false; }
-		virtual bool FrameGrab(ScreendumpState &sd) { return false; }
 
 		Stats &GetStats() { return m_stats; }
 

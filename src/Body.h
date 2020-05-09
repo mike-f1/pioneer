@@ -49,7 +49,7 @@ public:
 	}
 
 	// return true if to do collision response and apply damage
-	virtual bool OnCollision(Object *o, Uint32 flags, double relVel) { return false; }
+	virtual bool OnCollision(Object *o, uint32_t flags, double relVel) { return false; }
 	// Attacker may be null
 	virtual bool OnDamage(Object *attacker, float kgDamage, const CollisionContact &contactData) { return false; }
 	// Override to clear any pointers you hold to the body

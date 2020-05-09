@@ -37,10 +37,10 @@ using namespace SceneGraph;
 // 5:	normal mapping
 // 6:	32-bit indicies
 // 6.1:	rewrote serialization, use lz4 compression instead of INFLATE/DEFLATE. Still compatible.
-const Uint32 SGM_VERSION = 6;
+const uint32_t SGM_VERSION = 6;
 union SGM_STRING_VALUE {
 	char name[4];
-	Uint32 value;
+	uint32_t value;
 };
 const SGM_STRING_VALUE SGM_STRING_ID = { { 's', 'g', 'm', SGM_VERSION } };
 const std::string SGM_EXTENSION = ".sgm";
@@ -240,13 +240,13 @@ Model *BinaryConverter::CreateModel(const std::string &filename, Serializer::Rea
 {
 	PROFILE_SCOPED()
 	//verify signature
-	const Uint32 sig = rd.Int32();
+	const uint32_t sig = rd.Int32();
 	if (sig != SGM_STRING_ID.value) { //'SGM#'
 		Warning("Error whilst loading %s\nSGM versioning (%u) did not match the supported SGM STRING ID (%u)\nSGM file will be ignored\n", filename.c_str(), sig, SGM_STRING_ID.value);
 		return nullptr;
 	}
 
-	const Uint32 version = rd.Int32();
+	const uint32_t version = rd.Int32();
 	if (version != SGM_VERSION) {
 		Warning("Error whilst loading %s\nSGM versioning (%u) did not match the supported SGM_VERSION (%u)\nSGM file will be ignored\n", filename.c_str(), version, SGM_VERSION);
 		return nullptr;
@@ -308,7 +308,7 @@ void BinaryConverter::SaveMaterials(Serializer::Writer &wr, Model *model)
 void BinaryConverter::LoadMaterials(Serializer::Reader &rd)
 {
 	PROFILE_SCOPED()
-	for (Uint32 numMats = rd.Int32(); numMats > 0; numMats--) {
+	for (uint32_t numMats = rd.Int32(); numMats > 0; numMats--) {
 		MaterialDefinition m("");
 		m.name = rd.String();
 		m.tex_diff = rd.String();
@@ -367,28 +367,28 @@ void BinaryConverter::LoadAnimations(Serializer::Reader &rd)
 {
 	PROFILE_SCOPED()
 	//load channels and PRS keys
-	const Uint32 numAnims = rd.Int32();
-	for (Uint32 i = 0; i < numAnims; i++) {
+	const uint32_t numAnims = rd.Int32();
+	for (uint32_t i = 0; i < numAnims; i++) {
 		const std::string animName = rd.String();
 		const double duration = rd.Double();
 		Animation *anim = new Animation(animName, duration);
-		const Uint32 numChans = rd.Int32();
-		for (Uint32 j = 0; j < numChans; j++) {
+		const uint32_t numChans = rd.Int32();
+		for (uint32_t j = 0; j < numChans; j++) {
 			const std::string tgtName = rd.String();
 			MatrixTransform *tgtNode = dynamic_cast<MatrixTransform *>(m_model->m_root->FindNode(tgtName));
 			anim->m_channels.push_back(AnimationChannel(tgtNode));
 			auto &chan = anim->m_channels.back();
-			for (Uint32 numKeys = rd.Int32(); numKeys > 0; numKeys--) {
+			for (uint32_t numKeys = rd.Int32(); numKeys > 0; numKeys--) {
 				const double ktime = rd.Double();
 				const vector3f kpos = rd.Vector3f();
 				chan.positionKeys.push_back(PositionKey(ktime, kpos));
 			}
-			for (Uint32 numKeys = rd.Int32(); numKeys > 0; numKeys--) {
+			for (uint32_t numKeys = rd.Int32(); numKeys > 0; numKeys--) {
 				const double ktime = rd.Double();
 				const Quaternionf krot = rd.RdQuaternionf();
 				chan.rotationKeys.push_back(RotationKey(ktime, krot));
 			}
-			for (Uint32 numKeys = rd.Int32(); numKeys > 0; numKeys--) {
+			for (uint32_t numKeys = rd.Int32(); numKeys > 0; numKeys--) {
 				const double ktime = rd.Double();
 				const vector3f kscale = rd.Vector3f();
 				chan.scaleKeys.push_back(ScaleKey(ktime, kscale));
@@ -443,8 +443,8 @@ Node *BinaryConverter::LoadNode(Serializer::Reader &rd)
 	const std::string ntype = rd.String();
 	const std::string nname = rd.String();
 	//Output("Loading: %s %s\n", ntype.c_str(), nname.c_str());
-	const Uint32 nmask = rd.Int32();
-	const Uint32 nflags = rd.Int32();
+	const uint32_t nmask = rd.Int32();
+	const uint32_t nflags = rd.Int32();
 	Node *node = nullptr;
 
 	NodeDatabase db;
@@ -476,8 +476,8 @@ Node *BinaryConverter::LoadNode(Serializer::Reader &rd)
 void BinaryConverter::LoadChildren(Serializer::Reader &rd, Group *parent)
 {
 	PROFILE_SCOPED()
-	const Uint32 numChildren = rd.Int32();
-	for (Uint32 i = 0; i < numChildren; i++)
+	const uint32_t numChildren = rd.Int32();
+	for (uint32_t i = 0; i < numChildren; i++)
 		parent->AddChild(LoadNode(rd));
 }
 

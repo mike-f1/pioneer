@@ -181,10 +181,10 @@ namespace Sound {
 		const Sample *sample;
 		OggVorbis_File *oggv; // if sample->buf = 0 then stream this
 		OggFileDataStream ogg_data_stream;
-		Uint32 buf_pos;
+		uint32_t buf_pos;
 		float volume[2]; // left and right channels
 		eventid identifier;
-		Uint32 op;
+		uint32_t op;
 
 		float targetVolume[2];
 		float rateOfChange[2]; // per sample
@@ -242,12 +242,12 @@ namespace Sound {
 	/*
  * Volume should be 0-65535
  */
-	static Uint32 identifier = 1;
+	static uint32_t identifier = 1;
 	eventid PlaySfx(const char *fx, const float volume_left, const float volume_right, const Op op)
 	{
 		SDL_LockAudioDevice(m_audioDevice);
 		unsigned int idx;
-		Uint32 age;
+		uint32_t age;
 		/* find free wavstream (first two reserved for music) */
 		for (idx = 2; idx < MAX_WAVSTREAMS; idx++) {
 			if (!wavstream[idx].sample) break;
@@ -309,7 +309,7 @@ namespace Sound {
 	static void fill_audio_1stream(float *buffer, int len, int stream_num)
 	{
 		// inbuf will be smaller for mono and for 22050hz samples
-		Sint16 *inbuf = static_cast<Sint16 *>(alloca(len * T_channels / T_upsample));
+		int16_t *inbuf = static_cast<int16_t *>(alloca(len * T_channels / T_upsample));
 		// hm pity to put this here ^^ since not used by ev.sample->buf case
 		SoundEvent &ev = wavstream[stream_num];
 		int inbuf_pos = 0;
@@ -317,7 +317,7 @@ namespace Sound {
 		while ((pos < len) && ev.sample) {
 			if (ev.sample->buf) {
 				// already decoded
-				inbuf = reinterpret_cast<Sint16 *>(ev.sample->buf);
+				inbuf = reinterpret_cast<int16_t *>(ev.sample->buf);
 				inbuf_pos = ev.buf_pos;
 			} else {
 				// stream ogg vorbis
@@ -410,7 +410,7 @@ namespace Sound {
 		}
 	}
 
-	static void fill_audio(void *udata, Uint8 *dsp_buf, int len)
+	static void fill_audio(void *udata, uint8_t *dsp_buf, int len)
 	{
 		const int len_in_floats = len >> 1;
 		float *tmpbuf = static_cast<float *>(alloca(sizeof(float) * len_in_floats)); // len is in chars not samples
@@ -453,10 +453,10 @@ namespace Sound {
 			}
 		}
 
-		/* Convert float sample buffer to Sint16 samples the hardware likes */
+		/* Convert float sample buffer to int16_t samples the hardware likes */
 		for (int pos = 0; pos < len_in_floats; pos++) {
 			const float val = m_masterVol * tmpbuf[pos];
-			(reinterpret_cast<Sint16 *>(dsp_buf))[pos] = Sint16(Clamp(val, -32768.0f, 32767.0f));
+			(reinterpret_cast<int16_t *>(dsp_buf))[pos] = int16_t(Clamp(val, -32768.0f, 32767.0f));
 		}
 	}
 
@@ -497,7 +497,7 @@ namespace Sound {
 		}
 
 		int resample_multiplier = ((info->rate == (FREQ >> 1)) ? 2 : 1);
-		const Sint64 num_samples = ov_pcm_total(&oggv, -1);
+		const int64_t num_samples = ov_pcm_total(&oggv, -1);
 		// since samples are 16 bits we have:
 
 		sample.buf = 0;
@@ -511,7 +511,7 @@ namespace Sound {
 
 		// immediately decode and store as raw sample if short enough
 		if (seconds < STREAM_IF_LONGER_THAN) {
-			sample.buf = new Uint16[sample.buf_len];
+			sample.buf = new uint16_t[sample.buf_len];
 
 			int i = 0;
 			for (;;) {

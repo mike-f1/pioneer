@@ -106,7 +106,7 @@ namespace UI {
 	Point Widget::CalcLayoutContribution()
 	{
 		Point preferredSize = PreferredSize();
-		const Uint32 flags = GetSizeControlFlags();
+		const uint32_t flags = GetSizeControlFlags();
 
 		if (flags & NO_WIDTH)
 			preferredSize.x = 0;

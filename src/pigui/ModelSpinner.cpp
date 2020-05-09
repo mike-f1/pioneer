@@ -18,8 +18,8 @@
 using namespace PiGUI;
 
 ModelSpinner::ModelSpinner() :
-	m_rot(vector2f(DEG2RAD(-15.0), DEG2RAD(180.0))),
-	m_pauseTime(0.)
+	m_pauseTime(0.),
+	m_rot(vector2f(DEG2RAD(-15.0), DEG2RAD(180.0)))
 {
 	Color lc(Color::WHITE);
 	m_light.SetDiffuse(lc);

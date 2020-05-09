@@ -5,6 +5,7 @@
 
 struct FrameId {
 	static constexpr int Invalid = -1;
+	static constexpr int RootFrameId = 0;
 	constexpr FrameId() :
 		m_id(Invalid) {}
 	constexpr FrameId(int new_id) :
@@ -23,8 +24,6 @@ struct FrameId {
 private:
 	int m_id;
 };
-
-constexpr FrameId rootFrameId = 0;
 
 static_assert(sizeof(FrameId) == sizeof(int) && alignof(FrameId) == alignof(int),
 	"Error: FrameId sized differently than the underlying type on this platform!");

@@ -82,7 +82,7 @@ namespace Gui {
 		static void OnDeleteFocusedWidget();
 		static matrix4x4f modelMatrix;
 		static matrix4x4f projMatrix;
-		static Sint32 viewport[4];
+		static int32_t viewport[4];
 
 		static FontCache s_fontCache;
 		static std::stack<RefCountedPtr<Text::TextureFont>> s_fontStack;

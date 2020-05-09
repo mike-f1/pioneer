@@ -10,8 +10,6 @@
 #include "graphics/RenderState.h"
 #include "libs.h"
 
-#include <SDL_stdinc.h>
-
 namespace UI {
 
 	class Skin {

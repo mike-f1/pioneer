@@ -107,7 +107,7 @@ public:
 	bool IsDecelerating() const { return m_decelerating; }
 
 	virtual void NotifyRemoved(const Body *const removedBody) override;
-	virtual bool OnCollision(Object *o, Uint32 flags, double relVel) override;
+	virtual bool OnCollision(Object *o, uint32_t flags, double relVel) override;
 	virtual bool OnDamage(Object *attacker, float kgDamage, const CollisionContact &contactData) override;
 
 	enum FlightState { // <enum scope='Ship' name=ShipFlightState public>
@@ -226,8 +226,8 @@ public:
 
 	Sensors *GetSensors() const { return m_sensors.get(); }
 
-	Uint8 GetRelations(Body *other) const; //0=hostile, 50=neutral, 100=ally
-	void SetRelations(Body *other, Uint8 percent);
+	uint8_t GetRelations(Body *other) const; //0=hostile, 50=neutral, 100=ally
+	void SetRelations(Body *other, uint8_t percent);
 
 	double GetLandingPosOffset() const { return m_landingMinOffset; }
 
@@ -308,7 +308,7 @@ private:
 	static HeatGradientParameters_t s_heatGradientParams;
 
 	std::unique_ptr<Sensors> m_sensors;
-	std::unordered_map<Body *, Uint8> m_relationsMap;
+	std::unordered_map<Body *, uint8_t> m_relationsMap;
 
 	std::string m_shipName;
 

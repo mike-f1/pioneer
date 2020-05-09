@@ -153,10 +153,8 @@ RefCountedPtr<T> GalaxyObjectCache<T, CompareT>::Slave::GetCached(const SystemPa
 	if (m_master) {
 		auto inserted = m_cache.insert(std::make_pair(path, m_master->GetCached(path)));
 		return inserted.first->second;
-	} else {
-		return RefCountedPtr<T>();
 	}
-	Output("Something wrong here...\n");
+	return RefCountedPtr<T>();
 }
 
 template <typename T, typename CompareT>

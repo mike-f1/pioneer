@@ -67,7 +67,7 @@ ImTextureID PiGui::RenderSVG(std::string svgFilename, int width, int height)
 	// 	if(strTex.first == svgFilename) {
 	// 		// nasty bit as I invoke the TextureGL
 	// 		Graphics::TextureGL *pGLTex = reinterpret_cast<Graphics::TextureGL*>(strTex.second);
-	// 		Uint32 result = pGLTex->GetTexture();
+	// 		uint32_t result = pGLTex->GetTexture();
 	// 		Output("Re-used existing texture with id: %i\n", result);
 	// 		return reinterpret_cast<void*>(result);
 	// 	}
@@ -368,7 +368,7 @@ void *PiGui::makeTexture(unsigned char *pixels, int width, int height)
 	pTex->Update(pixels, dataSize, Graphics::TextureFormat::RGBA_8888);
 	// nasty bit as I invoke the TextureGL
 	Graphics::OGL::TextureGL *pGLTex = reinterpret_cast<Graphics::OGL::TextureGL *>(pTex);
-	Uint32 result = pGLTex->GetTextureID();
+	uint32_t result = pGLTex->GetTextureID();
 	m_svg_textures.push_back(pTex); // store for cleanup later
 	return reinterpret_cast<void *>(result);
 }

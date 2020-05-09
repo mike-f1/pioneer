@@ -68,6 +68,7 @@ Missile::Missile(const Json &jsonObj, Space *space) :
 		m_power = missileObj["power"];
 		m_armed = missileObj["armed"];
 	} catch (Json::type_error &) {
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 		throw SavedGameCorruptException();
 	}
 
@@ -160,7 +161,7 @@ void Missile::TimeStepUpdate(const float timeStep)
 	}
 }
 
-bool Missile::OnCollision(Object *o, Uint32 flags, double relVel)
+bool Missile::OnCollision(Object *o, uint32_t flags, double relVel)
 {
 	if (!IsDead()) {
 		Explode();

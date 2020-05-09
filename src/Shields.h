@@ -48,10 +48,10 @@ public:
 
 protected:
 	struct Hits {
-		Hits(const vector3d &_pos, const Uint32 _start, const Uint32 _end);
+		Hits(const vector3d &_pos, const uint32_t _start, const uint32_t _end);
 		vector3d pos;
-		Uint32 start;
-		Uint32 end;
+		uint32_t start;
+		uint32_t end;
 	};
 	typedef std::deque<Shields::Hits>::iterator HitIterator;
 	std::deque<Hits> m_hits;

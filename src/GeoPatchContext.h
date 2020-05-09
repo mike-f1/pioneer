@@ -4,13 +4,12 @@
 #ifndef _GEOPATCHCONTEXT_H
 #define _GEOPATCHCONTEXT_H
 
-#include <SDL_stdinc.h>
+#include <cstdint>
+#include <deque>
 
 #include "Color.h"
 #include "RefCounted.h"
 #include "vector3.h"
-
-#include <deque>
 
 // maximumpatch depth
 #define GEOPATCH_MAX_DEPTH 15
@@ -59,8 +58,8 @@ private:
 	static inline int VBO_COUNT_MID_IDX() { return (4 * 3 * (m_edgeLen - 3)) + 2 * (m_edgeLen - 3) * (m_edgeLen - 3) * 3; }
 	//                                            ^^ serrated teeth bit  ^^^ square inner bit
 
-	static inline int IDX_VBO_LO_OFFSET(const int i) { return i * sizeof(Uint32) * 3 * (m_edgeLen / 2); }
-	static inline int IDX_VBO_HI_OFFSET(const int i) { return (i * sizeof(Uint32) * VBO_COUNT_HI_EDGE()) + IDX_VBO_LO_OFFSET(4); }
+	static inline int IDX_VBO_LO_OFFSET(const int i) { return i * sizeof(uint32_t) * 3 * (m_edgeLen / 2); }
+	static inline int IDX_VBO_HI_OFFSET(const int i) { return (i * sizeof(uint32_t) * VBO_COUNT_HI_EDGE()) + IDX_VBO_LO_OFFSET(4); }
 
 	static RefCountedPtr<Graphics::IndexBuffer> m_indices;
 	static int m_prevEdgeLen;

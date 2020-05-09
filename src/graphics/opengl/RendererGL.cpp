@@ -41,7 +41,7 @@ namespace Graphics {
 
 	static bool CreateWindowAndContext(const char *name, const Graphics::Settings &vs, int samples, int depth_bits, SDL_Window **window, SDL_GLContext *context)
 	{
-		Uint32 winFlags = 0;
+		uint32_t winFlags = 0;
 
 		assert(vs.rendererType == Graphics::RendererType::RENDERER_OPENGL_3x);
 
@@ -613,7 +613,7 @@ namespace Graphics {
 		return true;
 	}
 
-	bool RendererOGL::SetLights(Uint32 numlights, const Light *lights)
+	bool RendererOGL::SetLights(uint32_t numlights, const Light *lights)
 	{
 		numlights = std::min(numlights, TOTAL_NUM_LIGHTS);
 		if (numlights < 1) {
@@ -625,7 +625,7 @@ namespace Graphics {
 		m_numLights = numlights;
 		m_numDirLights = 0;
 
-		for (Uint32 i = 0; i < numlights; i++) {
+		for (uint32_t i = 0; i < numlights; i++) {
 			const Light &l = lights[i];
 			m_lights[i].SetPosition(l.GetPosition());
 			m_lights[i].SetDiffuse(l.GetDiffuse());
@@ -676,7 +676,7 @@ namespace Graphics {
 		if (iter == s_AttribBufferMap.end()) {
 			// not found a buffer so create a new one
 			VertexBufferDesc vbd;
-			Uint32 attribIdx = 0;
+			uint32_t attribIdx = 0;
 			assert(v->HasAttrib(ATTRIB_POSITION));
 			vbd.attrib[attribIdx].semantic = ATTRIB_POSITION;
 			vbd.attrib[attribIdx].format = ATTRIB_FORMAT_FLOAT3;
@@ -702,7 +702,7 @@ namespace Graphics {
 				vbd.attrib[attribIdx].format = ATTRIB_FORMAT_FLOAT3;
 				++attribIdx;
 			}
-			vbd.numVertices = static_cast<Uint32>(v->position.size());
+			vbd.numVertices = static_cast<uint32_t>(v->position.size());
 			vbd.usage = BUFFER_USAGE_DYNAMIC; // dynamic since we'll be reusing these buffers if possible
 
 			// VertexBuffer
@@ -727,7 +727,7 @@ namespace Graphics {
 		return res;
 	}
 
-	bool RendererOGL::DrawPointSprites(const Uint32 count, const vector3f *positions, RenderState *rs, Material *material, float size)
+	bool RendererOGL::DrawPointSprites(const uint32_t count, const vector3f *positions, RenderState *rs, Material *material, float size)
 	{
 		PROFILE_SCOPED()
 		if (count == 0 || !material || !material->texture0)
@@ -768,7 +768,7 @@ namespace Graphics {
 		// got a buffer so use it and fill it with newest data
 		PosNormVert *vtxPtr = drawVB->Map<PosNormVert>(Graphics::BUFFER_MAP_WRITE);
 		assert(drawVB->GetDesc().stride == sizeof(PosNormVert));
-		for (Uint32 i = 0; i < count; i++) {
+		for (uint32_t i = 0; i < count; i++) {
 			vtxPtr[i].pos = positions[i];
 			vtxPtr[i].norm = vector3f(0.0f, 0.0f, size);
 		}
@@ -782,7 +782,7 @@ namespace Graphics {
 		return true;
 	}
 
-	bool RendererOGL::DrawPointSprites(const Uint32 count, const vector3f *positions, const vector2f *offsets, const float *sizes, RenderState *rs, Material *material)
+	bool RendererOGL::DrawPointSprites(const uint32_t count, const vector3f *positions, const vector2f *offsets, const float *sizes, RenderState *rs, Material *material)
 	{
 		PROFILE_SCOPED()
 		if (count == 0 || !material || !material->texture0)
@@ -821,7 +821,7 @@ namespace Graphics {
 		// got a buffer so use it and fill it with newest data
 		PosNormVert *vtxPtr = drawVB->Map<PosNormVert>(Graphics::BUFFER_MAP_WRITE);
 		assert(drawVB->GetDesc().stride == sizeof(PosNormVert));
-		for (Uint32 i = 0; i < count; i++) {
+		for (uint32_t i = 0; i < count; i++) {
 			vtxPtr[i].pos = positions[i];
 			vtxPtr[i].norm = vector3f(offsets[i], Clamp(sizes[i], 0.1f, FLT_MAX));
 		}
@@ -1112,13 +1112,13 @@ namespace Graphics {
 		return new OGL::VertexBuffer(desc);
 	}
 
-	IndexBuffer *RendererOGL::CreateIndexBuffer(Uint32 size, BufferUsage usage)
+	IndexBuffer *RendererOGL::CreateIndexBuffer(uint32_t size, BufferUsage usage)
 	{
 		m_stats.AddToStatCount(Stats::STAT_CREATE_BUFFER, 1);
 		return new OGL::IndexBuffer(size, usage);
 	}
 
-	InstanceBuffer *RendererOGL::CreateInstanceBuffer(Uint32 size, BufferUsage usage)
+	InstanceBuffer *RendererOGL::CreateInstanceBuffer(uint32_t size, BufferUsage usage)
 	{
 		m_stats.AddToStatCount(Stats::STAT_CREATE_BUFFER, 1);
 		return new OGL::InstanceBuffer(size, usage);
@@ -1241,28 +1241,7 @@ namespace Graphics {
 		// pad rows to 4 bytes, which is the default row alignment for OpenGL
 		sd.stride = ((sd.bpp * sd.width) + 3) & ~3;
 
-		sd.pixels.reset(new Uint8[sd.stride * sd.height]);
-
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		glPixelStorei(GL_PACK_ALIGNMENT, 4); // never trust defaults
-		glReadBuffer(GL_FRONT);
-		glReadPixels(0, 0, sd.width, sd.height, GL_RGBA, GL_UNSIGNED_BYTE, sd.pixels.get());
-		glFinish();
-
-		return true;
-	}
-
-	bool RendererOGL::FrameGrab(ScreendumpState &sd)
-	{
-		int w, h;
-		SDL_GetWindowSize(m_window, &w, &h);
-		sd.width = w;
-		sd.height = h;
-		sd.bpp = 4; // XXX get from window
-
-		sd.stride = (4 * sd.width);
-
-		sd.pixels.reset(new Uint8[sd.stride * sd.height]);
+		sd.pixels.reset(new uint8_t[sd.stride * sd.height]);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glPixelStorei(GL_PACK_ALIGNMENT, 4); // never trust defaults

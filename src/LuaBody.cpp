@@ -744,7 +744,7 @@ static std::string _body_serializer(LuaWrappable *o)
 
 static bool _body_deserializer(const char *pos, const char **next)
 {
-	Uint32 n = strtoul(pos, const_cast<char **>(next), 0);
+	uint32_t n = strtoul(pos, const_cast<char **>(next), 0);
 	if (pos == *next) return false;
 	(*next)++; // skip newline
 

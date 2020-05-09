@@ -4,7 +4,6 @@
 #include "ColorMap.h"
 #include "graphics/Texture.h"
 #include "graphics/Renderer.h"
-#include <SDL_stdinc.h>
 
 namespace SceneGraph {
 
@@ -19,7 +18,7 @@ namespace SceneGraph {
 		return m_texture.Get();
 	}
 
-	void ColorMap::AddColor(int width, const Color &c, std::vector<Uint8> &out)
+	void ColorMap::AddColor(int width, const Color &c, std::vector<uint8_t> &out)
 	{
 		for (int i = 0; i < width; i++) {
 			out.push_back(c.r);
@@ -30,7 +29,7 @@ namespace SceneGraph {
 
 	void ColorMap::Generate(Graphics::Renderer *r, const Color &a, const Color &b, const Color &c)
 	{
-		std::vector<Uint8> colors;
+		std::vector<uint8_t> colors;
 		const int w = 4;
 		AddColor(w, Color(255, 255, 255), colors);
 		AddColor(w, a, colors);

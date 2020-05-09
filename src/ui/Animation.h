@@ -89,7 +89,7 @@ namespace UI {
 		void Update();
 
 	private:
-		std::list<std::pair<RefCountedPtr<Animation>, Uint32>> m_animations;
+		std::list<std::pair<RefCountedPtr<Animation>, uint32_t>> m_animations;
 	};
 
 } // namespace UI

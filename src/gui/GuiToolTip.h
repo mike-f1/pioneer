@@ -25,7 +25,7 @@ namespace Gui {
 		Widget *m_owner;
 		std::string m_text;
 		std::unique_ptr<TextLayout> m_layout;
-		Uint32 m_createdTime;
+		uint32_t m_createdTime;
 		Graphics::Drawables::Lines m_outlines;
 		std::unique_ptr<Graphics::Drawables::Rect> m_background;
 	};

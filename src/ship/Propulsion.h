@@ -96,7 +96,7 @@ public:
 		 * are used to pass things to/from shipStats;
 		 * may be better if you not expose these fields
 		*/
-	inline float FuelTankMassLeft() { return m_fuelTankMass * m_thrusterFuel; }
+	inline double FuelTankMassLeft() { return m_fuelTankMass * m_thrusterFuel; }
 	inline void SetFuelTankMass(int fTank) { m_fuelTankMass = fTank; }
 	void UpdateFuel(const float timeStep);
 	inline bool IsFuelStateChanged() { return m_fuelStateChange; }

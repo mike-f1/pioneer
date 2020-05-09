@@ -4,9 +4,6 @@
 #ifndef _LIBS_H
 #define _LIBS_H
 
-#include <SDL.h>
-#include <SDL_image.h>
-#include <sigc++/sigc++.h>
 #include <algorithm>
 #include <cassert>
 #include <cerrno>

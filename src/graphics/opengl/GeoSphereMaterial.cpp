@@ -128,7 +128,7 @@ namespace Graphics {
 			}
 
 			//Light uniform parameters
-			for (Uint32 i = 0; i < m_renderer->GetNumLights(); i++) {
+			for (uint32_t i = 0; i < m_renderer->GetNumLights(); i++) {
 				const Light &Light = m_renderer->GetLight(i);
 				p->lights[i].diffuse.Set(Light.GetDiffuse());
 				p->lights[i].specular.Set(Light.GetSpecular());
@@ -169,7 +169,7 @@ namespace Graphics {
 			// std::vector<Camera::Shadow>::const_iterator it = params.shadows.begin(), itEnd = params.shadows.end();
 			//request a new shadow variation
 			if (m_curNumShadows != params.shadows.size()) {
-				m_curNumShadows = std::min(Uint32(params.shadows.size()), 4U);
+				m_curNumShadows = std::min(uint32_t(params.shadows.size()), 4U);
 				if (m_programs[m_curNumShadows] == nullptr) {
 					m_descriptor.numShadows = m_curNumShadows; //hax - so that GetOrCreateProgram will create a NEW shader instead of reusing the existing one
 					m_programs[m_curNumShadows] = m_renderer->GetOrCreateProgram(this);

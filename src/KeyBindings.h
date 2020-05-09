@@ -4,13 +4,13 @@
 #ifndef KEYBINDINGS_H
 #define KEYBINDINGS_H
 
+#include <cassert>
+#include <functional>
+#include <iosfwd>
+#include <limits>
 #include <string>
 #include <sstream>
-#include <iosfwd>
-#include <functional>
-#include <cassert>
 
-#include <SDL_stdinc.h>
 #include <SDL_joystick.h>
 #include <SDL_events.h>
 #include <SDL_keyboard.h>
@@ -105,8 +105,8 @@ namespace KeyBindings {
 			assert(dir != WheelDirection::NONE);
 			u.mouseWheel.dir = dir;
 		}
-		KeyBinding(const SDL_JoystickGUID &joystickGuid, Uint8 button, SDL_Keymod mod = KMOD_NONE);
-		KeyBinding(const SDL_JoystickGUID &joystickGuid, Uint8 hat, Uint8 dir, SDL_Keymod mod = KMOD_NONE);
+		KeyBinding(const SDL_JoystickGUID &joystickGuid, uint8_t button, SDL_Keymod mod = KMOD_NONE);
+		KeyBinding(const SDL_JoystickGUID &joystickGuid, uint8_t hat, uint8_t dir, SDL_Keymod mod = KMOD_NONE);
 
 		// return true if all is ok, otherwise it return false
 		static bool FromString(const char *str, KeyBinding &binding);
@@ -133,14 +133,14 @@ namespace KeyBindings {
 			} keyboard;
 
 			struct {
-				Uint8 joystick;
-				Uint8 button;
+				uint8_t joystick;
+				uint8_t button;
 			} joystickButton;
 
 			struct {
-				Uint8 joystick;
-				Uint8 hat;
-				Uint8 direction;
+				uint8_t joystick;
+				uint8_t hat;
+				uint8_t direction;
 			} joystickHat;
 
 			struct {
@@ -148,9 +148,9 @@ namespace KeyBindings {
 			} mouseWheel;
 			/* TODO: implement binding mouse buttons.
 				struct {
-					Uint8 button;
+					uint8_t button;
 					// TODO: implement binding multiple clicks as their own action.
-					Uint8 clicks;
+					uint8_t clicks;
 				} mouseButton;
 				*/
 		} u;
@@ -261,9 +261,10 @@ namespace KeyBindings {
 			m_axis(0),
 			m_direction(AxisDirection::POSITIVE),
 			m_deadzone(0.0f),
-			m_sensitivity(1.0f)
+			m_sensitivity(1.0f),
+			m_mod(KMOD_NONE)
 		{}
-		JoyAxisBinding(const SDL_JoystickGUID &joystickGuid, Uint8 axis_, SDL_Keymod mod_ = KMOD_NONE, AxisDirection direction_ = AxisDirection::POSITIVE, float deadzone_ = 0.0f, float sensitivity_ = 1.0f);
+		JoyAxisBinding(const SDL_JoystickGUID &joystickGuid, uint8_t axis_, SDL_Keymod mod_ = KMOD_NONE, AxisDirection direction_ = AxisDirection::POSITIVE, float deadzone_ = 0.0f, float sensitivity_ = 1.0f);
 
 		float GetValue() const;
 		std::string Description() const;
@@ -287,9 +288,9 @@ namespace KeyBindings {
 		bool IsActive() const;
 
 	private:
-		enum { JOYSTICK_DISABLED = Uint8(-1) };
-		Uint8 m_joystick;
-		Uint8 m_axis;
+		enum { JOYSTICK_DISABLED = std::numeric_limits<uint8_t>::max() };
+		uint8_t m_joystick;
+		uint8_t m_axis;
 		AxisDirection m_direction;
 		float m_deadzone;
 		float m_sensitivity;

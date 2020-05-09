@@ -89,7 +89,7 @@ namespace UI {
 		UI::Scroller *Scroller() { return new UI::Scroller(this); }
 
 		// visual elements
-		UI::Image *Image(const std::string &filename, Uint32 sizeControlFlags = 0) { return new UI::Image(this, filename, sizeControlFlags); }
+		UI::Image *Image(const std::string &filename, uint32_t sizeControlFlags = 0) { return new UI::Image(this, filename, sizeControlFlags); }
 		UI::Label *Label(const std::string &text) { return new UI::Label(this, text); }
 		UI::NumberLabel *NumberLabel(NumberLabel::Format format = NumberLabel::FORMAT_NUMBER) { return new UI::NumberLabel(this, format); }
 		UI::Icon *Icon(const std::string &iconName) { return new UI::Icon(this, iconName); }

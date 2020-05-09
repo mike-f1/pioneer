@@ -78,7 +78,7 @@ namespace Graphics {
 			void Draw(Renderer *, RenderState *);
 
 		private:
-			void CreateVertexBuffer(Graphics::Renderer *r, const Uint32 size);
+			void CreateVertexBuffer(Graphics::Renderer *r, const uint32_t size);
 			void Dirty();
 
 			bool m_refreshVertexBuffer;
@@ -94,12 +94,12 @@ namespace Graphics {
 		public:
 			Lines();
 			~Lines();
-			void SetData(const Uint32 vertCount, const vector3f *vertices, const Color &color);
-			void SetData(const Uint32 vertCount, const vector3f *vertices, const Color *colors);
+			void SetData(const uint32_t vertCount, const vector3f *vertices, const Color &color);
+			void SetData(const uint32_t vertCount, const vector3f *vertices, const Color *colors);
 			void Draw(Renderer *, RenderState *, const PrimitiveType pt = Graphics::LINE_SINGLE);
 
 		private:
-			void CreateVertexBuffer(Graphics::Renderer *r, const Uint32 size);
+			void CreateVertexBuffer(Graphics::Renderer *r, const uint32_t size);
 
 			bool m_refreshVertexBuffer;
 			RefCountedPtr<Material> m_material;
@@ -117,7 +117,7 @@ namespace Graphics {
 			void Draw(Renderer *, RenderState *);
 
 		private:
-			void CreateVertexBuffer(Graphics::Renderer *r, const Uint32 size);
+			void CreateVertexBuffer(Graphics::Renderer *r, const uint32_t size);
 
 			bool m_refreshVertexBuffer;
 			RefCountedPtr<Graphics::Material> m_material;
@@ -136,7 +136,7 @@ namespace Graphics {
 			void Draw(Renderer *, RenderState *);
 
 		private:
-			void CreateVertexBuffer(Graphics::Renderer *r, const Uint32 size);
+			void CreateVertexBuffer(Graphics::Renderer *r, const uint32_t size);
 
 			bool m_refreshVertexBuffer;
 			RefCountedPtr<Material> m_material;
@@ -150,7 +150,7 @@ namespace Graphics {
 		class Sphere3D {
 		public:
 			//subdivisions must be 0-4
-			Sphere3D(Renderer *, RefCountedPtr<Material> material, Graphics::RenderState *, int subdivisions = 0, float scale = 1.f, const Uint32 attribs = (ATTRIB_POSITION | ATTRIB_NORMAL | ATTRIB_UV0));
+			Sphere3D(Renderer *, RefCountedPtr<Material> material, Graphics::RenderState *, int subdivisions = 0, float scale = 1.f, const uint32_t attribs = (ATTRIB_POSITION | ATTRIB_NORMAL | ATTRIB_UV0));
 			~Sphere3D();
 			void Draw(Renderer *r);
 
@@ -166,8 +166,8 @@ namespace Graphics {
 			//add a new vertex, return the index
 			int AddVertex(VertexArray &, const vector3f &v, const vector3f &n);
 			//add three vertex indices to form a triangle
-			void AddTriangle(std::vector<Uint32> &, int i1, int i2, int i3);
-			void Subdivide(VertexArray &, std::vector<Uint32> &,
+			void AddTriangle(std::vector<uint32_t> &, int i1, int i2, int i3);
+			void Subdivide(VertexArray &, std::vector<uint32_t> &,
 				const matrix4x4f &trans, const vector3f &v1, const vector3f &v2, const vector3f &v3,
 				int i1, int i2, int i3, int depth);
 		};

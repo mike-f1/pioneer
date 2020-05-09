@@ -35,7 +35,7 @@ namespace UI {
 	private:
 		Label *m_label;
 
-		Uint32 m_cursor;
+		uint32_t m_cursor;
 		vector3f m_cursorVertices[2];
 		Graphics::Drawables::Lines m_lines;
 	};

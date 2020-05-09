@@ -67,9 +67,9 @@ void FixedGuns::LoadFromJson(const Json &jsonObj, Space *space)
 			int next_firing = gunArrayEl["next_firing"];
 			std::string mount_name = gunArrayEl["mount_name"];
 			int mount_id = -1;
-			for (unsigned i = 0; i < m_mounts.size(); i++) {
+			for (unsigned j = 0; j < m_mounts.size(); j++) {
 				if (m_mounts[i].name == mount_name.substr(0,14)) {
-					mount_id = i;
+					mount_id = j;
 					break;
 				}
 			}
@@ -102,7 +102,7 @@ void FixedGuns::LoadFromJson(const Json &jsonObj, Space *space)
 			m_guns.push_back(gs);
 		}
 	} catch (Json::type_error &) {
-		Output("Loading error in '%s'\n", __func__);
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 		throw SavedGameCorruptException();
 	}
 };
@@ -121,7 +121,7 @@ bool FixedGuns::MountGun(MountId num, const std::string &name, const std::string
 	//printf("FixedGuns::MountGun '%s' in '%s',num: %i (Mounts %ld, guns %ld)\n", name.c_str(), m_mounts[num].name.c_str(), num, long(m_mounts.size()), long(m_guns.size()));
 	// Check mount (num) is valid
 	if (unsigned(num) >= m_mounts.size()) {
-		Output("Attempt to mount a gun in %i, which is out of bounds\n", num);
+		Output("Attempt to mount a gun in %u, which is out of bounds\n", num);
 		return false;
 	}
 	// Check ... well, there's a needs for explanations?
@@ -132,12 +132,8 @@ bool FixedGuns::MountGun(MountId num, const std::string &name, const std::string
 
 	// Check mount is free:
 	for (unsigned i = 0; i < m_guns.size(); i++) {
-		if (m_guns[i].mount_id < 0) {
-			printf("hard_point is negative!?!?\n");
-			abort();
-		}
 		if (m_mounts[m_guns[i].mount_id].name == m_mounts[num].name.substr(0,14)) {
-			Output("Attempt to mount gun %i on '%s', which is already used\n", num, m_mounts[num].name.c_str());
+			Output("Attempt to mount gun %u on '%s', which is already used\n", num, m_mounts[num].name.c_str());
 			return false;
 		}
 	}
@@ -156,7 +152,7 @@ bool FixedGuns::UnMountGun(MountId num)
 {
 	//printf("FixedGuns::UnMountGun %i\n", num);
 	// Check mount (num) is valid
-	if (m_mounts.empty() || unsigned(num) >= m_mounts.size()) {
+	if (m_mounts.empty() || (num >= m_mounts.size())) {
 		Output("Mount identifier (%i) is out of bounds (max is %lu) in 'UnMountGun'\n", num, m_mounts.size());
 		return false;
 	}
@@ -196,7 +192,7 @@ bool FixedGuns::SwapGuns(MountId mount_a, MountId mount_b)
 	if (it_a == m_guns.end()) {
 		// TODO: There's an implcit limit, which is
 		// that  the first mount must be not empty...
-		Output("No gun in mount %i\n", mount_a);
+		Output("No gun in mount %u\n", mount_a);
 		return false;
 	};
 	std::vector<GunStatus>::iterator it_b = std::find_if(begin(m_guns), end(m_guns), [&mount_b](const GunStatus &gs)
@@ -309,14 +305,14 @@ bool FixedGuns::UpdateGuns(float timeStep, Body *shooter)
 
 MountId FixedGuns::FindFirstEmptyMount() const
 {
-	std::vector<int> free = FindEmptyMounts();
+	std::vector<unsigned> free = FindEmptyMounts();
 	if (free.empty()) return -1;
 	else return free[0];
 }
 
 std::vector<MountId> FixedGuns::FindEmptyMounts() const
 {
-	std::vector<int> occupied;
+	std::vector<unsigned> occupied;
 
 	if (GetFreeMountsSize() == 0) return occupied;
 
@@ -324,12 +320,12 @@ std::vector<MountId> FixedGuns::FindEmptyMounts() const
 
 	std::for_each(begin(m_guns), end(m_guns), [&occupied](const GunStatus &gs) // <- Sure there's a better alghorithm
 	{
-		if (gs.mount_id >= 0) occupied.emplace_back(gs.mount_id);
+		occupied.emplace_back(gs.mount_id);
 	});
 
 	std::sort(begin(occupied), end(occupied));
 
-	std::vector<int> free;
+	std::vector<unsigned> free;
 	free.reserve(m_mounts.size() - occupied.size());
 
 	for (unsigned mount = 0; mount < m_mounts.size(); mount++) {
@@ -346,7 +342,7 @@ bool FixedGuns::GetMountIsFront(MountId num) const
 		if (m_mounts[num].dir == GunDir::GUN_FRONT) return true;
 		else return false;
 	else {
-		Output("Given mount identifier (%i) is out of bounds (max is %lu)\n", num, m_mounts.size());
+		Output("Given mount identifier (%u) is out of bounds (max is %lu)\n", num, m_mounts.size());
 		return true;
 	}
 }
@@ -356,7 +352,7 @@ int FixedGuns::GetMountBarrels(MountId num) const
 	if (unsigned(num) < m_mounts.size())
 		return int(m_mounts[num].locs.size());
 	else {
-		Output("Given mount identifier (%i) is out of bounds (max is %lu)\n", num, m_mounts.size());
+		Output("Given mount identifier (%u) is out of bounds (max is %lu)\n", num, m_mounts.size());
 		return true;
 	}
 }
@@ -401,29 +397,29 @@ GunId FixedGuns::FindGunOnMount(MountId num) const
 
 void FixedGuns::SetActivationStateOfGun(GunId num, bool active)
 {
-	if (unsigned(num) < m_guns.size())
+	if (num < m_guns.size())
 		m_guns[num].is_active = active;
 	else {
-		Output("Given gun identifier (%i) is out of bounds (max is %lu)\n", num, m_guns.size());
+		Output("Given gun identifier (%u) is out of bounds (max is %lu)\n", num, m_guns.size());
 	}
 }
 
 bool FixedGuns::GetActivationStateOfGun(GunId num) const
 {
-	if (unsigned(num) < m_guns.size())
+	if (num < m_guns.size())
 		return m_guns[num].is_active;
 	else {
-		Output("Given gun identifier (%i) is out of bounds (max is %lu)\n", num, m_guns.size());
+		Output("Given gun identifier (%u) is out of bounds (max is %lu)\n", num, m_guns.size());
 		return false;
 	}
 }
 
 int FixedGuns::GetNumAvailableBarrels(GunId num)
 {
-	if (unsigned(num) < m_guns.size())
+	if (num < m_guns.size())
 		return std::min(m_guns[num].gun_data.barrels, unsigned(m_mounts[m_guns[num].mount_id].locs.size()));
 	else {
-		Output("Given gun identifier (%i) is out of bounds (max is %lu)\n", num, m_guns.size());
+		Output("Given gun identifier (%u) is out of bounds (max is %lu)\n", num, m_guns.size());
  		return false;
  	}
 }

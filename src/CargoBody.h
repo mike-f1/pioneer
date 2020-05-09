@@ -18,7 +18,7 @@ public:
 	virtual void SetLabel(const std::string &label) override;
 	virtual void Render(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform) override;
 	virtual void TimeStepUpdate(const float timeStep) override;
-	virtual bool OnCollision(Object *o, Uint32 flags, double relVel) override;
+	virtual bool OnCollision(Object *o, uint32_t flags, double relVel) override;
 	virtual bool OnDamage(Object *attacker, float kgDamage, const CollisionContact &contactData) override;
 
 	~CargoBody(){};

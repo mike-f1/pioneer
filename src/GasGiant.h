@@ -52,8 +52,8 @@ public:
 	static void UpdateAllGasGiants();
 	static void OnChangeDetailLevel(int new_details);
 
-	static void CreateRenderTarget(const Uint16 width, const Uint16 height);
-	static void SetRenderTargetCubemap(const Uint32, Graphics::Texture *, const bool unBind = true);
+	static void CreateRenderTarget(const uint16_t width, const uint16_t height);
+	static void SetRenderTargetCubemap(const uint32_t, Graphics::Texture *, const bool unBind = true);
 	static void BeginRenderTarget();
 	static void EndRenderTarget();
 

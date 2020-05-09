@@ -25,7 +25,7 @@ namespace Graphics {
 				m_program->sceneAmbient.Set(m_renderer->GetAmbientColor());
 
 				//Light uniform parameters
-				for (Uint32 i = 0; i < m_renderer->GetNumLights(); i++) {
+				for (uint32_t i = 0; i < m_renderer->GetNumLights(); i++) {
 					const Light &Light = m_renderer->GetLight(i);
 					m_program->lights[i].diffuse.Set(Light.GetDiffuse());
 					m_program->lights[i].specular.Set(Light.GetSpecular());

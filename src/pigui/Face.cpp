@@ -18,7 +18,7 @@ namespace PiGUI {
 
 	RefCountedPtr<Graphics::Material> Face::s_material;
 
-	Face::Face(FaceParts::FaceDescriptor &face, Uint32 seed)
+	Face::Face(FaceParts::FaceDescriptor &face, uint32_t seed)
 	{
 		PROFILE_SCOPED()
 		if (!seed) seed = time(0);
@@ -42,7 +42,7 @@ namespace PiGUI {
 	Face::~Face()
 	{}
 
-	Uint32 Face::GetTextureId()
+	uint32_t Face::GetTextureId()
 	{
 		return m_texture->GetTextureID();
 	}

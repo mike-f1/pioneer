@@ -2,6 +2,7 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "Image.h"
+
 #include "FileSystem.h"
 
 #include "graphics/TextureBuilder.h"
@@ -14,7 +15,7 @@ namespace PiGUI {
 		m_texture.Reset(Graphics::TextureBuilder::Model(filename).GetOrCreateTexture(RendererLocator::getRenderer(), "model"));
 	}
 
-	Uint32 Image::GetId()
+	uint32_t Image::GetId()
 	{
 		return m_texture->GetTextureID();
 	}

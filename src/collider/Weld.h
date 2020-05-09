@@ -3,7 +3,7 @@
 #ifndef NV_MESH_WELD_H
 #define NV_MESH_WELD_H
 
-#include <SDL_stdinc.h>
+#include <cstdint>
 #include <vector>
 
 // Weld function to remove array duplicates in linear time using hashing.
@@ -19,32 +19,32 @@ namespace nv {
 	};
 
 /// Null index. @@ Move this somewhere else... This could have collisions with other definitions!
-#define NIL Uint32(~0)
+#define NIL uint32_t(~0)
 
 	template <typename Key>
 	struct hash {
-		inline Uint32 sdbm_hash(const void *data_in, Uint32 size, Uint32 h = 5381)
+		inline uint32_t sdbm_hash(const void *data_in, uint32_t size, uint32_t h = 5381)
 		{
-			const Uint8 *data = static_cast<const Uint8 *>(data_in);
-			Uint32 i = 0;
+			const uint8_t *data = static_cast<const uint8_t *>(data_in);
+			uint32_t i = 0;
 			while (i < size) {
-				h = (h << 16) + (h << 6) - h + static_cast<Uint32>(data[i++]);
+				h = (h << 16) + (h << 6) - h + static_cast<uint32_t>(data[i++]);
 			}
 			return h;
 		}
 
-		Uint32 operator()(const Key &k)
+		uint32_t operator()(const Key &k)
 		{
 			return sdbm_hash(&k, sizeof(Key));
 		}
 	};
 	template <>
 	struct hash<int> {
-		Uint32 operator()(int x) const { return x; }
+		uint32_t operator()(int x) const { return x; }
 	};
 	template <>
-	struct hash<Uint32> {
-		Uint32 operator()(Uint32 x) const { return x; }
+	struct hash<uint32_t> {
+		uint32_t operator()(uint32_t x) const { return x; }
 	};
 
 	/** Return the next power of two.
@@ -53,7 +53,7 @@ namespace nv {
 * @note isPowerOfTwo(x) == true -> nextPowerOfTwo(x) == x
 * @note nextPowerOfTwo(x) = 2 << log2(x-1)
 */
-	inline Uint32 nextPowerOfTwo(Uint32 x)
+	inline uint32_t nextPowerOfTwo(uint32_t x)
 	{
 		assert(x != 0);
 #if 1 // On modern CPUs this is supposed to be as fast as using the bsr instruction.
@@ -65,7 +65,7 @@ namespace nv {
 		x |= x >> 16;
 		return x + 1;
 #else
-		Uint32 p = 1;
+		uint32_t p = 1;
 		while (x > p) {
 			p += p;
 		}
@@ -74,7 +74,7 @@ namespace nv {
 	}
 
 	/// Return true if @a n is a power of two.
-	inline bool isPowerOfTwo(Uint32 n)
+	inline bool isPowerOfTwo(uint32_t n)
 	{
 		return (n & (n - 1)) == 0;
 	}
@@ -87,24 +87,24 @@ namespace nv {
 	template <class T, class H = hash<T>, class E = Equal<T>>
 	struct Weld {
 		// xrefs maps old elements to new elements
-		Uint32 operator()(std::vector<T> &p, std::vector<Uint32> &xrefs)
+		uint32_t operator()(std::vector<T> &p, std::vector<uint32_t> &xrefs)
 		{
-			const Uint32 N = p.size(); // # of input vertices.
-			Uint32 outputCount = 0; // # of output vertices
-			Uint32 hashSize = nextPowerOfTwo(N); // size of the hash table
-			Uint32 *hashTable = new Uint32[hashSize + N]; // hash table + linked list
-			Uint32 *next = hashTable + hashSize; // use bottom part as linked list
+			const uint32_t N = p.size(); // # of input vertices.
+			uint32_t outputCount = 0; // # of output vertices
+			uint32_t hashSize = nextPowerOfTwo(N); // size of the hash table
+			uint32_t *hashTable = new uint32_t[hashSize + N]; // hash table + linked list
+			uint32_t *next = hashTable + hashSize; // use bottom part as linked list
 
 			xrefs.resize(N);
-			memset(hashTable, NIL, (hashSize + N) * sizeof(Uint32)); // init hash table (NIL = 0xFFFFFFFF so memset works)
+			memset(hashTable, NIL, (hashSize + N) * sizeof(uint32_t)); // init hash table (NIL = 0xFFFFFFFF so memset works)
 
 			H hash;
 			E equal;
-			for (Uint32 i = 0; i < N; i++) {
+			for (uint32_t i = 0; i < N; i++) {
 				const T &e = p[i];
-				const Uint32 hashValue = hash(e) & (hashSize - 1);
-				//const Uint32 hashValue = CodeSupHash(e) & (hashSize-1);
-				Uint32 offset = hashTable[hashValue];
+				const uint32_t hashValue = hash(e) & (hashSize - 1);
+				//const uint32_t hashValue = CodeSupHash(e) & (hashSize-1);
+				uint32_t offset = hashTable[hashValue];
 
 				// traverse linked list
 				while (offset != NIL && !equal(p[offset], e)) {

@@ -68,15 +68,13 @@ public:
 ModelBody::ModelBody() :
 	m_isStatic(false),
 	m_colliding(true),
-	m_geom(nullptr),
-	m_model(nullptr)
+	m_geom(nullptr)
 {
 }
 
 ModelBody::ModelBody(const Json &jsonObj, Space *space) :
 	Body(jsonObj, space),
-	m_geom(nullptr),
-	m_model(nullptr)
+	m_geom(nullptr)
 {
 	Json modelBodyObj = jsonObj["model_body"];
 
@@ -85,6 +83,7 @@ ModelBody::ModelBody(const Json &jsonObj, Space *space) :
 		m_colliding = modelBodyObj["is_colliding"];
 		SetModel(modelBodyObj["model_name"].get<std::string>().c_str());
 	} catch (Json::type_error &) {
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 		throw SavedGameCorruptException();
 	}
 
@@ -96,9 +95,6 @@ ModelBody::~ModelBody()
 {
 	SetFrame(FrameId::Invalid); // Will remove geom from frame if necessary.
 	DeleteGeoms();
-
-	//delete instanced model
-	delete m_model;
 }
 
 void ModelBody::SaveToJson(Json &jsonObj, Space *space)
@@ -177,18 +173,17 @@ void ModelBody::RebuildCollisionMesh()
 void ModelBody::SetModel(const char *modelName)
 {
 	//remove old instance
-	delete m_model;
-	m_model = 0;
+	m_model.reset();
 
 	m_modelName = modelName;
 
 	//create model instance (some modelbodies, like missiles could avoid this)
-	m_model = ModelCache::FindModel(m_modelName)->MakeInstance();
+	m_model.reset(ModelCache::FindModel(m_modelName)->MakeInstance());
 	m_idleAnimation = m_model->FindAnimation("idle");
 
 	SetClipRadius(m_model->GetDrawClipRadius());
 
-	m_shields.reset(new Shields(m_model));
+	m_shields.reset(new Shields(m_model.get()));
 
 	RebuildCollisionMesh();
 }

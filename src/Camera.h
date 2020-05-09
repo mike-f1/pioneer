@@ -111,7 +111,7 @@ public:
 
 	// lights with properties in camera space
 	const std::vector<LightSource> &GetLightSources() const { return m_lightSources; }
-	const int GetNumLightSources() const { return static_cast<Uint32>(m_lightSources.size()); }
+	int GetNumLightSources() const { return static_cast<uint32_t>(m_lightSources.size()); }
 
 private:
 	RefCountedPtr<CameraContext> m_context;
@@ -130,7 +130,7 @@ private:
 		double camDist;
 
 		// body flags. DRAW_LAST is the interesting one
-		Uint32 bodyFlags;
+		uint32_t bodyFlags;
 
 		// if true, draw object as billboard of billboardSize at billboardPos
 		bool billboard;

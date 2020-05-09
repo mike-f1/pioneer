@@ -8,6 +8,9 @@
 #include "GuiEvents.h"
 #include "libs.h"
 
+#include "SDL_keyboard.h"
+#include <sigc++/sigc++.h>
+
 namespace Gui {
 	class Container;
 	class ToolTip;
@@ -58,7 +61,7 @@ namespace Gui {
 		virtual void OnMouseEnter();
 		virtual void OnMouseLeave();
 		virtual bool OnKeyDown(const SDL_Keysym *sym) { return false; }
-		virtual void OnTextInput(Uint32 unicode) {}
+		virtual void OnTextInput(uint32_t unicode) {}
 		bool IsMouseOver() { return m_mouseOver; }
 		// only to be called by Screen::OnKeyDown
 		void OnPreShortcut(const SDL_Keysym *sym);

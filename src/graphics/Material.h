@@ -66,10 +66,10 @@ namespace Graphics {
 		bool usePatterns; //pattern/color system
 		bool vertexColors;
 		bool instanced;
-		Sint32 textures; //texture count
-		Uint32 dirLights; //set by RendererOGL if lighting == true
-		Uint32 quality; // see: Graphics::MaterialQuality
-		Uint32 numShadows; //use by GeoSphere/GasGiant for eclipse
+		int32_t textures; //texture count
+		uint32_t dirLights; //set by RendererOGL if lighting == true
+		uint32_t quality; // see: Graphics::MaterialQuality
+		uint32_t numShadows; //use by GeoSphere/GasGiant for eclipse
 
 		friend bool operator==(const MaterialDescriptor &a, const MaterialDescriptor &b);
 	};

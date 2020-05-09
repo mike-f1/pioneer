@@ -7,6 +7,8 @@
 #include "GuiWidget.h"
 #include <string>
 
+#include <SDL_events.h>
+
 namespace Gui {
 	class Label;
 

@@ -43,7 +43,7 @@ namespace GameUI {
 
 			FaceParts::FaceDescriptor face = _unpack_face(l);
 
-			Uint32 seed = 0;
+			uint32_t seed = 0;
 
 			if (lua_gettop(l) > 2 && !lua_isnil(l, 3))
 				seed = luaL_checkunsigned(l, 3);
@@ -55,7 +55,7 @@ namespace GameUI {
 		static int l_set_height_lines(lua_State *l)
 		{
 			Face *f = LuaObject<GameUI::Face>::CheckFromLua(1);
-			Uint32 lines = luaL_checkinteger(l, 2);
+			uint32_t lines = luaL_checkinteger(l, 2);
 			f->SetHeightLines(lines);
 			lua_pushvalue(l, 1);
 			return 1;

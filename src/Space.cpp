@@ -86,7 +86,7 @@ Space::Space(double total_time, float time_step, RefCountedPtr<StarSystem> stars
 	m_processingFinalizationQueue(false)
 #endif
 {
-	Uint32 _init[5] = { path.systemIndex, Uint32(path.sectorX), Uint32(path.sectorY), Uint32(path.sectorZ), UNIVERSE_SEED };
+	uint32_t _init[5] = { path.systemIndex, uint32_t(path.sectorX), uint32_t(path.sectorY), uint32_t(path.sectorZ), UNIVERSE_SEED };
 	Random rand(_init, 5);
 	m_background.reset(new Background::Container(rand, GameConfSingleton::GetAmountBackgroundStars()));
 
@@ -112,7 +112,7 @@ Space::Space(RefCountedPtr<StarSystem> starsystem, const Json &jsonObj, double a
 	Json spaceObj = jsonObj["space"];
 
 	const SystemPath &path = m_starSystem->GetPath();
-	Uint32 _init[5] = { path.systemIndex, Uint32(path.sectorX), Uint32(path.sectorY), Uint32(path.sectorZ), UNIVERSE_SEED };
+	uint32_t _init[5] = { path.systemIndex, uint32_t(path.sectorX), uint32_t(path.sectorY), uint32_t(path.sectorZ), UNIVERSE_SEED };
 	Random rand(_init, 5);
 	m_background.reset(new Background::Container(rand, GameConfSingleton::GetAmountBackgroundStars()));
 
@@ -125,7 +125,7 @@ Space::Space(RefCountedPtr<StarSystem> starsystem, const Json &jsonObj, double a
 
 	try {
 		Json bodyArray = spaceObj["bodies"].get<Json::array_t>();
-		for (Uint32 i = 0; i < bodyArray.size(); i++)
+		for (uint32_t i = 0; i < bodyArray.size(); i++)
 			m_bodies.push_back(Body::FromJson(bodyArray[i], this));
 	} catch (Json::type_error &) {
 		throw SavedGameCorruptException();
@@ -176,7 +176,7 @@ void Space::ToJson(Json &jsonObj)
 void Space::RefreshBackground()
 {
 	const SystemPath &path = m_starSystem->GetPath();
-	Uint32 _init[5] = { path.systemIndex, Uint32(path.sectorX), Uint32(path.sectorY), Uint32(path.sectorZ), UNIVERSE_SEED };
+	uint32_t _init[5] = { path.systemIndex, uint32_t(path.sectorX), uint32_t(path.sectorY), uint32_t(path.sectorZ), UNIVERSE_SEED };
 	Random rand(_init, 5);
 	m_background.reset(new Background::Container(rand, GameConfSingleton::GetAmountBackgroundStars()));
 }
@@ -186,43 +186,43 @@ RefCountedPtr<StarSystem> Space::GetStarSystem() const
 	return m_starSystem;
 }
 
-Body *Space::GetBodyByIndex(Uint32 idx) const
+Body *Space::GetBodyByIndex(uint32_t idx) const
 {
 	assert(m_bodyIndexValid);
 	assert(m_bodyIndex.size() > idx);
 	return m_bodyIndex[idx];
 }
 
-SystemBody *Space::GetSystemBodyByIndex(Uint32 idx) const
+SystemBody *Space::GetSystemBodyByIndex(uint32_t idx) const
 {
 	assert(m_sbodyIndexValid);
 	assert(m_sbodyIndex.size() > idx);
 	return m_sbodyIndex[idx];
 }
 
-Uint32 Space::GetIndexForBody(const Body *body) const
+uint32_t Space::GetIndexForBody(const Body *body) const
 {
 	assert(m_bodyIndexValid);
-	for (Uint32 i = 0; i < m_bodyIndex.size(); i++)
+	for (uint32_t i = 0; i < m_bodyIndex.size(); i++)
 		if (m_bodyIndex[i] == body) return i;
 	assert(0);
-	return Uint32(-1);
+	return uint32_t(-1);
 }
 
-Uint32 Space::GetIndexForSystemBody(const SystemBody *sbody) const
+uint32_t Space::GetIndexForSystemBody(const SystemBody *sbody) const
 {
 	assert(m_sbodyIndexValid);
-	for (Uint32 i = 0; i < m_sbodyIndex.size(); i++)
+	for (uint32_t i = 0; i < m_sbodyIndex.size(); i++)
 		if (m_sbodyIndex[i] == sbody) return i;
 	assert(0);
-	return Uint32(-1);
+	return uint32_t(-1);
 }
 
 void Space::AddSystemBodyToIndex(SystemBody *sbody)
 {
 	assert(sbody);
 	m_sbodyIndex.push_back(sbody);
-	for (Uint32 i = 0; i < sbody->GetNumChildren(); i++)
+	for (uint32_t i = 0; i < sbody->GetNumChildren(); i++)
 		AddSystemBodyToIndex(sbody->GetChildren()[i]);
 }
 

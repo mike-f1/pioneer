@@ -143,7 +143,7 @@ namespace Gui {
 		return accepted;
 	}
 
-	void TextEntry::OnTextInput(Uint32 unicode)
+	void TextEntry::OnTextInput(uint32_t unicode)
 	{
 		bool changed = false;
 

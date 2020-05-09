@@ -9,6 +9,7 @@
 #include "Game.h"
 #include "GameLocator.h"
 #include "Input.h"
+#include "InputFrame.h"
 #include "Pi.h"
 #include "Player.h"
 #include "PlayerShipController.h"
@@ -18,6 +19,19 @@ namespace {
 	static const float ZOOM_SPEED = 1.f;
 	static const float WHEEL_SENSITIVITY = .05f; // Should be a variable in user settings.
 } // namespace
+
+ShipViewController::ShipViewController(WorldView *v) :
+	InteractionController(v),
+	m_camType(CAM_INTERNAL),
+	headtracker_input_priority(false)
+{
+	RegisterInputBindings();
+}
+
+ShipViewController::~ShipViewController()
+{
+	Pi::input->RemoveInputFrame(m_inputFrame.get());
+}
 
 void ShipViewController::RegisterInputBindings()
 {
@@ -55,11 +69,6 @@ void ShipViewController::OnCamReset(bool down)
 	if (down) return;
 	auto *cam = static_cast<MoveableCameraController *>(m_activeCameraController);
 	if (cam) cam->Reset();
-}
-
-ShipViewController::~ShipViewController()
-{
-	Pi::input->RemoveInputFrame(m_inputFrame.get());
 }
 
 void ShipViewController::LoadFromJson(const Json &jsonObj)

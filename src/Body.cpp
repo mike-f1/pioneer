@@ -58,6 +58,7 @@ Body::Body(const Json &jsonObj, Space *space) :
 		m_physRadius = bodyObj["phys_radius"];
 		m_clipRadius = bodyObj["clip_radius"];
 	} catch (Json::type_error &) {
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 		throw SavedGameCorruptException();
 	}
 }

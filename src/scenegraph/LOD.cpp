@@ -75,7 +75,7 @@ namespace SceneGraph {
 			// transformation buffers
 			std::vector<std::vector<matrix4x4f>> transform;
 			transform.resize(count);
-			for (Uint32 i = 0; i < count; i++) {
+			for (uint32_t i = 0; i < count; i++) {
 				transform[i].reserve(tsize);
 			}
 
@@ -97,7 +97,7 @@ namespace SceneGraph {
 			}
 
 			// now render each of the buffers for each of the lods
-			for (Uint32 inst = 0; inst < transform.size(); inst++) {
+			for (uint32_t inst = 0; inst < transform.size(); inst++) {
 				if (!transform[inst].empty()) {
 					m_children[inst]->Render(transform[inst], rd);
 				}
@@ -117,8 +117,8 @@ namespace SceneGraph {
 	LOD *LOD::Load(NodeDatabase &db)
 	{
 		LOD *lod = new LOD();
-		const Uint32 numLevels = db.rd->Int32();
-		for (Uint32 i = 0; i < numLevels; i++)
+		const uint32_t numLevels = db.rd->Int32();
+		for (uint32_t i = 0; i < numLevels; i++)
 			lod->m_pixelSizes.push_back(db.rd->Int32());
 		return lod;
 	}

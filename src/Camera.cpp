@@ -252,7 +252,7 @@ void Camera::Draw(const Body *excludeBody, ShipCockpit *cockpit)
 				//go through all lights to calculate something resembling light intensity
 				float intensity = 0.f;
 				const Body *pBody = GameLocator::getGame()->GetPlayer();
-				for (Uint32 i = 0; i < m_lightSources.size(); i++) {
+				for (unsigned i = 0; i < m_lightSources.size(); i++) {
 					// Set up data for eclipses. All bodies are assumed to be spheres.
 					const LightSource &it = m_lightSources[i];
 					const vector3f lightDir(it.GetLight().GetPosition().Normalized());

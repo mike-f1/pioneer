@@ -46,17 +46,17 @@ private:
 
 	float m_lightAngle;
 
-	enum class Zooming {
-		OUT,
-		IN,
-		NONE
-	} m_zoomChange;
-
 	enum class RotateLight {
 		LEFT,
 		RIGHT,
 		NONE
 	} m_lightRotate;
+
+	enum class Zooming {
+		OUT,
+		IN,
+		NONE
+	} m_zoomChange;
 
 	void OnLightRotateLeft();
 	void OnLightRotateRight();
@@ -70,7 +70,7 @@ private:
 	vector2f m_screen;
 	float m_sbMass;
 	float m_sbRadius;
-	Uint32 m_sbSeed;
+	uint32_t m_sbSeed;
 	float m_sbVolatileGas;
 	float m_sbVolatileLiquid;
 	float m_sbVolatileIces;

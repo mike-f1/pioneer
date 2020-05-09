@@ -4,8 +4,6 @@
 #ifndef _GEOPATCHJOBS_H
 #define _GEOPATCHJOBS_H
 
-#include <SDL_stdinc.h>
-
 #include "Color.h"
 #include "GeoPatchID.h"
 #include "JobQueue.h"

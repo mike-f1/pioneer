@@ -11,7 +11,7 @@ GeomTree::~GeomTree()
 {
 }
 
-GeomTree::GeomTree(const int numVerts, const int numTris, const std::vector<vector3f> &vertices, const Uint32 *indices, const Uint32 *triflags) :
+GeomTree::GeomTree(const int numVerts, const int numTris, const std::vector<vector3f> &vertices, const uint32_t *indices, const uint32_t *triflags) :
 	m_numVertices(numVerts),
 	m_numTris(numTris),
 	m_vertices(vertices)
@@ -52,7 +52,7 @@ GeomTree::GeomTree(const int numVerts, const int numTris, const std::vector<vect
 
 	// eliminate duplicate vertices
 	{
-		std::vector<Uint32> xrefs;
+		std::vector<uint32_t> xrefs;
 		nv::Weld<vector3f> weld;
 		weld(m_vertices, xrefs);
 		m_numVertices = m_vertices.size();
@@ -60,9 +60,9 @@ GeomTree::GeomTree(const int numVerts, const int numTris, const std::vector<vect
 		//Output("---   %d vertices welded\n", count - newCount);
 
 		// Remap faces.
-		const Uint32 faceCount = numTris;
-		for (Uint32 f = 0; f < faceCount; f++) {
-			const Uint32 idx = (f * 3);
+		const uint32_t faceCount = numTris;
+		for (uint32_t f = 0; f < faceCount; f++) {
+			const uint32_t idx = (f * 3);
 			m_indices[idx + 0] = xrefs.at(m_indices[idx + 0]);
 			m_indices[idx + 1] = xrefs.at(m_indices[idx + 1]);
 			m_indices[idx + 2] = xrefs.at(m_indices[idx + 2]);
@@ -72,7 +72,7 @@ GeomTree::GeomTree(const int numVerts, const int numTris, const std::vector<vect
 	// Get radius, m_aabb, and merge duplicate edges
 	m_radius = 0;
 	for (int i = 0; i < numTris; i++) {
-		const Uint32 triflag = m_triFlags[i];
+		const uint32_t triflag = m_triFlags[i];
 		const int vi1 = m_indices[3 * i + 0];
 		const int vi2 = m_indices[3 * i + 1];
 		const int vi3 = m_indices[3 * i + 2];
@@ -97,7 +97,7 @@ GeomTree::GeomTree(const int numVerts, const int numTris, const std::vector<vect
 
 	{
 		Aabb *aabbs = new Aabb[activeTris.size()];
-		for (Uint32 i = 0; i < activeTris.size(); i++) {
+		for (uint32_t i = 0; i < activeTris.size(); i++) {
 			const vector3d v1 = vector3d(m_vertices[m_indices[activeTris[i] + 0]]);
 			const vector3d v2 = vector3d(m_vertices[m_indices[activeTris[i] + 1]]);
 			const vector3d v3 = vector3d(m_vertices[m_indices[activeTris[i] + 2]]);
@@ -162,34 +162,34 @@ GeomTree::GeomTree(Serializer::Reader &rd)
 	m_aabb.min = rd.Vector3d();
 	m_aabb.radius = rd.Double();
 
-	const Uint32 numAabbs = rd.Int32();
+	const uint32_t numAabbs = rd.Int32();
 	m_aabbs.resize(numAabbs);
-	for (Uint32 iAabb = 0; iAabb < numAabbs; ++iAabb) {
+	for (uint32_t iAabb = 0; iAabb < numAabbs; ++iAabb) {
 		rd >> m_aabbs[iAabb];
 	}
 
 	{
 		PROFILE_SCOPED_DESC("GeomTree::LoadEdges")
 		m_edges.resize(m_numEdges);
-		for (Sint32 iEdge = 0; iEdge < m_numEdges; ++iEdge) {
+		for (int32_t iEdge = 0; iEdge < m_numEdges; ++iEdge) {
 			auto &ed = m_edges[iEdge];
 			rd >> ed.v1i >> ed.v2i >> ed.len >> ed.dir >> ed.triFlag;
 		}
 	}
 
 	m_vertices.resize(m_numVertices);
-	for (Sint32 iVert = 0; iVert < m_numVertices; ++iVert) {
+	for (int32_t iVert = 0; iVert < m_numVertices; ++iVert) {
 		m_vertices[iVert] = rd.Vector3f();
 	}
 
 	const int numIndicies(m_numTris * 3);
 	m_indices.resize(numIndicies);
-	for (Sint32 iIndi = 0; iIndi < numIndicies; ++iIndi) {
+	for (int32_t iIndi = 0; iIndi < numIndicies; ++iIndi) {
 		m_indices[iIndi] = rd.Int32();
 	}
 
 	m_triFlags.resize(m_numTris);
-	for (Sint32 iTri = 0; iTri < m_numTris; ++iTri) {
+	for (int32_t iTri = 0; iTri < m_numTris; ++iTri) {
 		m_triFlags[iTri] = rd.Int32();
 	}
 
@@ -202,7 +202,7 @@ GeomTree::GeomTree(Serializer::Reader &rd)
 
 	// regenerate the aabb data
 	Aabb *aabbs = new Aabb[activeTris.size()];
-	for (Uint32 i = 0; i < activeTris.size(); i++) {
+	for (uint32_t i = 0; i < activeTris.size(); i++) {
 		const vector3d v1 = vector3d(m_vertices[m_indices[activeTris[i] + 0]]);
 		const vector3d v2 = vector3d(m_vertices[m_indices[activeTris[i] + 1]]);
 		const vector3d v3 = vector3d(m_vertices[m_indices[activeTris[i] + 2]]);
@@ -332,24 +332,24 @@ void GeomTree::Save(Serializer::Writer &wr) const
 	wr.Double(m_aabb.radius);
 
 	wr.Int32(m_numEdges);
-	for (Sint32 iAabb = 0; iAabb < m_numEdges; ++iAabb) {
+	for (int32_t iAabb = 0; iAabb < m_numEdges; ++iAabb) {
 		wr << m_aabbs[iAabb];
 	}
 
-	for (Sint32 iEdge = 0; iEdge < m_numEdges; ++iEdge) {
+	for (int32_t iEdge = 0; iEdge < m_numEdges; ++iEdge) {
 		auto &ed = m_edges[iEdge];
 		wr << ed.v1i << ed.v2i << ed.len << ed.dir << ed.triFlag;
 	}
 
-	for (Sint32 iVert = 0; iVert < m_numVertices; ++iVert) {
+	for (int32_t iVert = 0; iVert < m_numVertices; ++iVert) {
 		wr.Vector3f(m_vertices[iVert]);
 	}
 
-	for (Sint32 iIndi = 0; iIndi < (m_numTris * 3); ++iIndi) {
+	for (int32_t iIndi = 0; iIndi < (m_numTris * 3); ++iIndi) {
 		wr.Int32(m_indices[iIndi]);
 	}
 
-	for (Sint32 iTri = 0; iTri < m_numTris; ++iTri) {
+	for (int32_t iTri = 0; iTri < m_numTris; ++iTri) {
 		wr.Int32(m_triFlags[iTri]);
 	}
 }

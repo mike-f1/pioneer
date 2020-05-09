@@ -5,7 +5,7 @@
 #define _LANG_H
 
 #include "IterationProxy.h"
-#include <SDL_stdinc.h>
+#include <cstdint>
 #include <map>
 #include <string>
 #include <vector>
@@ -24,7 +24,7 @@ namespace Lang {
 
 		bool Load();
 
-		Uint32 GetNumStrings() const { return static_cast<Uint32>(m_strings.size()); }
+		uint32_t GetNumStrings() const { return static_cast<uint32_t>(m_strings.size()); }
 
 		const std::string &Get(const std::string &token) const;
 

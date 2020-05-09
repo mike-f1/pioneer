@@ -59,7 +59,7 @@ public:
 	void WantHyperspace();
 
 	// hyperspace parameters. only meaningful when IsHyperspace() is true
-	float GetHyperspaceProgress() const { return m_hyperspaceProgress; }
+	double GetHyperspaceProgress() const { return m_hyperspaceProgress; }
 	double GetHyperspaceDuration() const { return m_hyperspaceDuration; }
 	double GetHyperspaceEndTime() const { return m_hyperspaceEndTime; }
 	double GetHyperspaceArrivalProbability() const;
@@ -105,7 +105,7 @@ public:
 	float GetTimeAccelRate() const { return s_timeAccelRates[m_timeAccel]; }
 	float GetInvTimeAccelRate() const { return s_timeInvAccelRates[m_timeAccel]; }
 
-	float GetTimeStep() const { return s_timeAccelRates[m_timeAccel] * (1.0f / PHYSICS_HZ); }
+	double GetTimeStep() const { return s_timeAccelRates[m_timeAccel] * (1.0f / PHYSICS_HZ); }
 
 	GameLog &GetGameLog() const { return *m_log.get(); };
 

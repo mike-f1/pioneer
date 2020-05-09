@@ -73,11 +73,11 @@ public:
 
 	static Frame *GetRootFrame() {
 		if (s_frames.empty()) return nullptr;
-		return &s_frames[rootFrameId];
+		return &s_frames[FrameId::RootFrameId];
 	}
 
 	static FrameId GetRootFrameId() {
-		return rootFrameId;
+		return FrameId::RootFrameId;
 	}
 
 	FrameId GetId() const {return m_thisId; }
@@ -115,7 +115,7 @@ public:
 	void AddChild(const FrameId &fId) { m_children.push_back(fId); }
 	void RemoveChild(const FrameId &fId);
 	bool HasChildren() const { return !m_children.empty(); }
-	unsigned GetNumChildren() const { return static_cast<Uint32>(m_children.size()); }
+	unsigned GetNumChildren() const { return static_cast<unsigned>(m_children.size()); }
 	IterationProxy<std::vector<FrameId>> GetChildren() { return MakeIterationProxy(m_children); }
 	const IterationProxy<const std::vector<FrameId>> GetChildren() const { return MakeIterationProxy(m_children); }
 

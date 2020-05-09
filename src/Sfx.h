@@ -9,7 +9,6 @@
 #include "vector3.h"
 #include "vector2.h"
 
-#include <SDL_stdinc.h>
 #include <deque>
 
 class Body;
@@ -86,7 +85,7 @@ private:
 	struct MaterialData {
 		MaterialData();
 		Graphics::EffectType effect;
-		Uint32 num_textures;
+		uint32_t num_textures;
 		int num_imgs_wide;
 		float coord_downscale;
 	};

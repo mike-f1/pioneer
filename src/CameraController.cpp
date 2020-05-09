@@ -156,6 +156,7 @@ void InternalCameraController::LoadFromJson(const Json &jsonObj)
 		m_rotX = internalCameraObj.value("rotX", 0.0f);
 		m_rotY = internalCameraObj.value("rotY", 0.0f);
 	} catch (Json::type_error &) {
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 		throw SavedGameCorruptException();
 	}
 }

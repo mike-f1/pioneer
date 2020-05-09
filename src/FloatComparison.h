@@ -4,7 +4,7 @@
 #ifndef _FLOATCOMPARISON_H
 #define _FLOATCOMPARISON_H
 
-#include <SDL_stdinc.h>
+#include <cstdint>
 #include <limits>
 #ifdef _MSC_VER
 #include <float.h> // for _finite

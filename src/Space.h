@@ -41,10 +41,10 @@ public:
 	// body/sbody indexing for save/load. valid after
 	// construction/ToJson(), invalidated by TimeStep(). they will assert
 	// if called while invalid
-	Body *GetBodyByIndex(Uint32 idx) const;
-	SystemBody *GetSystemBodyByIndex(Uint32 idx) const;
-	Uint32 GetIndexForBody(const Body *body) const;
-	Uint32 GetIndexForSystemBody(const SystemBody *sbody) const;
+	Body *GetBodyByIndex(uint32_t idx) const;
+	SystemBody *GetSystemBodyByIndex(uint32_t idx) const;
+	uint32_t GetIndexForBody(const Body *body) const;
+	uint32_t GetIndexForSystemBody(const SystemBody *sbody) const;
 
 	RefCountedPtr<StarSystem> GetStarSystem() const;
 
@@ -60,7 +60,7 @@ public:
 	Body *FindNearestTo(const Body *b, Object::Type t) const;
 	Body *FindBodyForPath(const SystemPath *path) const;
 
-	Uint32 GetNumBodies() const { return static_cast<Uint32>(m_bodies.size()); }
+	uint32_t GetNumBodies() const { return static_cast<uint32_t>(m_bodies.size()); }
 	IterationProxy<std::list<Body *>> GetBodies() { return MakeIterationProxy(m_bodies); }
 	const IterationProxy<const std::list<Body *>> GetBodies() const { return MakeIterationProxy(m_bodies); }
 

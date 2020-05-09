@@ -17,23 +17,23 @@ class Faction : public DeleteEmitter {
 	friend class FactionsDatabase;
 
 public:
-	static const Uint32 BAD_FACTION_IDX; // used by the no faction object to denote it's not a proper faction
+	static const uint32_t BAD_FACTION_IDX; // used by the no faction object to denote it's not a proper faction
 	static const Color BAD_FACTION_COLOUR; // factionColour to use on failing to find an appropriate faction
 	static const float FACTION_BASE_ALPHA; // Alpha to use on factionColour of systems with unknown population
 
 	Faction();
 
-	Uint32 idx; // faction index
+	uint32_t idx; // faction index
 	std::string name; // Formal name "Federation", "Empire", "Bob's Rib-shack consortium of delicious worlds (tm)", etc.
 	std::string description_short; // short description
 	std::string description; // detailed description describing formation, current status, etc
 
 	// government types with weighting
-	typedef std::pair<Polit::GovType, Sint32> GovWeight;
+	typedef std::pair<Polit::GovType, int32_t> GovWeight;
 	typedef std::vector<GovWeight> GovWeightVec;
 	typedef GovWeightVec::const_iterator GovWeightIterator;
 	GovWeightVec govtype_weights;
-	Sint32 govtype_weights_total;
+	int32_t govtype_weights_total;
 
 	bool hasHomeworld;
 	SystemPath homeworld; // sector(x,y,x) + system index + body index = location in a (custom?) system of homeworld
@@ -52,7 +52,7 @@ public:
 	bool IsClaimed(SystemPath) const;
 
 	// commodity legality
-	typedef std::map<GalacticEconomy::Commodity, Uint32> CommodityProbMap;
+	typedef std::map<GalacticEconomy::Commodity, uint32_t> CommodityProbMap;
 	CommodityProbMap commodity_legality;
 
 	Color colour;
@@ -63,7 +63,7 @@ public:
 	const Polit::GovType PickGovType(Random &rand) const;
 
 	// set the homeworld to one near the supplied co-ordinates
-	void SetBestFitHomeworld(Galaxy *galaxy, Sint32 x, Sint32 y, Sint32 z, Sint32 si, Uint32 bi, Sint32 axisChange);
+	void SetBestFitHomeworld(Galaxy *galaxy, int32_t x, int32_t y, int32_t z, int32_t si, uint32_t bi, int32_t axisChange);
 	RefCountedPtr<const Sector> GetHomeSector(Galaxy *galaxy) const;
 
 private:

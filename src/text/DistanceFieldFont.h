@@ -51,7 +51,7 @@ namespace Text {
 			float xAdvance; //how much the cursor should be moved after a character
 		};
 		Graphics::Texture *m_texture;
-		std::map<Uint32, Glyph> m_glyphs;
+		std::map<uint32_t, Glyph> m_glyphs;
 		vector2f m_sheetSize;
 		float m_lineHeight;
 		float m_fontSize; //32 etc. Glyph size/advance will be scaled to 1/fontSize.

@@ -24,7 +24,7 @@ namespace UI {
 
 	} // namespace
 
-	Image::Image(Context *context, const std::string &filename, Uint32 sizeControlFlags) :
+	Image::Image(Context *context, const std::string &filename, uint32_t sizeControlFlags) :
 		Widget(context),
 		m_centre(0.0f, 0.0f),
 		m_scale(1.0f),
@@ -52,7 +52,7 @@ namespace UI {
 		return m_initialSize;
 	}
 
-	Image *Image::SetHeightLines(Uint32 lines)
+	Image *Image::SetHeightLines(uint32_t lines)
 	{
 		m_needsRefresh = true;
 		const Text::TextureFont *font = GetContext()->GetFont(GetFont()).Get();

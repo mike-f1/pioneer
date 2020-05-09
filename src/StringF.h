@@ -7,7 +7,6 @@
 #include "fixed.h"
 #include "utils.h"
 
-#include <SDL_stdinc.h>
 #include <string>
 
 //   provides (for integer types, floating point types, const char* and std::string):

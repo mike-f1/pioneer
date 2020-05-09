@@ -288,7 +288,7 @@ namespace SceneGraph {
 
 		if (!m_collisionMeshVB.Valid()) {
 			const std::vector<vector3f> &vertices = m_collMesh->GetGeomTreeVertices();
-			const Uint32 *indices = m_collMesh->GetGeomTreeIndices();
+			const uint32_t *indices = m_collMesh->GetGeomTreeIndices();
 			const unsigned int *triFlags = m_collMesh->GetGeomTreeTriFlags();
 			const unsigned int numIndices = m_collMesh->GetGeomTreeNumTris() * 3;
 
@@ -351,13 +351,13 @@ namespace SceneGraph {
 		return m_materials.at(Clamp(i, 0, int(m_materials.size()) - 1)).second;
 	}
 
-	MatrixTransform *const Model::GetTagByIndex(const unsigned int i) const
+	const MatrixTransform *Model::GetTagByIndex(const unsigned int i) const
 	{
 		if (m_tags.empty() || i > m_tags.size() - 1) return 0;
 		return m_tags.at(i);
 	}
 
-	MatrixTransform *const Model::FindTagByName(const std::string &name) const
+	const MatrixTransform *Model::FindTagByName(const std::string &name) const
 	{
 		for (TagContainer::const_iterator it = m_tags.begin();
 			 it != m_tags.end();
@@ -603,6 +603,7 @@ namespace SceneGraph {
 
 			SetPattern(modelObj["cur_pattern_index"]);
 		} catch (Json::type_error &) {
+			Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 			throw SavedGameCorruptException();
 		}
 	}
@@ -615,7 +616,7 @@ namespace SceneGraph {
 		}
 
 		//check decal materials
-		for (Uint32 i = 0; i < MAX_DECAL_MATERIALS; i++) {
+		for (uint32_t i = 0; i < MAX_DECAL_MATERIALS; i++) {
 			if (m_decalMaterials[i].Valid() && m_decalMaterials[i].Get() == mat)
 				return stringf("decal_%0{u}", i + 1);
 		}
@@ -654,7 +655,7 @@ namespace SceneGraph {
 		}
 	}
 
-	void Model::SetDebugFlags(Uint32 flags)
+	void Model::SetDebugFlags(uint32_t flags)
 	{
 		m_debugFlags = flags;
 

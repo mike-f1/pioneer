@@ -24,9 +24,9 @@ public:
 	OBJDEF(TerrainBody, Body, TERRAINBODY);
 
 	virtual void Render(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform) override;
-	virtual void SubRender(const matrix4x4d &modelView, const vector3d &camPos) {}
+	virtual void SubRender(const matrix4x4d &, const vector3d &) {}
 	virtual void SetFrame(FrameId fId) override;
-	virtual bool OnCollision(Object *b, Uint32 flags, double relVel) override { return true; }
+	virtual bool OnCollision(Object *, uint32_t, double) override { return true; }
 	virtual double GetMass() const override { return m_mass; }
 	double GetTerrainHeight(const vector3d &pos) const;
 	virtual const SystemBody *GetSystemBody() const override { return SystemBodyWrapper::GetSystemBody(); }

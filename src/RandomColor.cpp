@@ -335,9 +335,9 @@ namespace RandomColorGenerator {
 			b = q;
 			break;
 		}
-		auto c = Color(static_cast<Uint8>(floor(r * 255.0)),
-			static_cast<Uint8>(floor(g * 255.0)),
-			static_cast<Uint8>(floor(b * 255.0)),
+		auto c = Color(static_cast<uint8_t>(floor(r * 255.0)),
+			static_cast<uint8_t>(floor(g * 255.0)),
+			static_cast<uint8_t>(floor(b * 255.0)),
 			255);
 
 		return c;

@@ -40,7 +40,7 @@ static const float s_rangeTable[eMaxNumAtmosphereSounds][2] = {
 	{ 4.0f, 1.0f / (15.0f - 7.0f) } // 8
 };
 
-static const Uint32 NUM_SURFACE_LIFE_SOUNDS = 12;
+static const uint32_t NUM_SURFACE_LIFE_SOUNDS = 12;
 static const char *s_surfaceLifeSounds[NUM_SURFACE_LIFE_SOUNDS] = {
 	"Wind", "Thunder_1", "Thunder_2", "Thunder_3",
 	"Thunder_4", "Storm", "Rain_Light", "River",
@@ -48,13 +48,13 @@ static const char *s_surfaceLifeSounds[NUM_SURFACE_LIFE_SOUNDS] = {
 	"NormalForestIntroduced", "RainForestIndigeniusNight"
 };
 
-static const Uint32 NUM_SURFACE_DEAD_SOUNDS = 12;
+static const uint32_t NUM_SURFACE_DEAD_SOUNDS = 12;
 static const char *s_surfaceSounds[NUM_SURFACE_DEAD_SOUNDS] = {
 	"Wind", "Thunder_1", "Thunder_2", "Thunder_3",
 	"Thunder_4", "Storm"
 };
 
-static const Uint32 NUM_STATION_SOUNDS = 3;
+static const uint32_t NUM_STATION_SOUNDS = 3;
 static const char *s_stationNoiseSounds[NUM_STATION_SOUNDS] = {
 	"Large_Station_ambient",
 	"Medium_Station_ambient",

@@ -61,7 +61,7 @@ namespace Background {
 		std::unique_ptr<Graphics::VertexBuffer> m_vertexBuffer;
 		RefCountedPtr<Graphics::Texture> m_cubemap;
 
-		Uint32 m_numCubemaps;
+		uint32_t m_numCubemaps;
 	};
 
 	class Starfield : public BackgroundElement {
@@ -108,7 +108,7 @@ namespace Background {
 		void Draw(const matrix4x4d &transform);
 
 		void SetIntensity(float intensity);
-		void SetDrawFlags(const Uint32 flags);
+		void SetDrawFlags(const uint32_t flags);
 
 	private:
 		void Refresh(Random &rand, float amountOfBackgroundStars);
@@ -116,7 +116,7 @@ namespace Background {
 		MilkyWay m_milkyWay;
 		Starfield m_starField;
 		UniverseBox m_universeBox;
-		Uint32 m_drawFlags;
+		uint32_t m_drawFlags;
 		Graphics::RenderState *m_renderState;
 	};
 

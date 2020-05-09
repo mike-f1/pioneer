@@ -69,6 +69,7 @@ DynamicBody::DynamicBody(const Json &jsonObj, Space *space) :
 		m_angInertia = dynamicBodyObj["ang_inertia"];
 		m_isMoving = dynamicBodyObj["is_moving"];
 	} catch (Json::type_error &) {
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 		throw SavedGameCorruptException();
 	}
 
@@ -317,7 +318,7 @@ void DynamicBody::SetAngVelocity(const vector3d &v)
 	m_angVel = v;
 }
 
-bool DynamicBody::OnCollision(Object *o, Uint32 flags, double relVel)
+bool DynamicBody::OnCollision(Object *o, uint32_t flags, double relVel)
 {
 	// don't bother doing collision damage from a missile that will now explode, or may have already
 	// also avoids an occasional race condition where destruction event of this could be queued twice

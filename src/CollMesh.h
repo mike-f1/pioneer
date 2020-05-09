@@ -37,7 +37,7 @@ public:
 	}
 
 	const std::vector<vector3f> &GetGeomTreeVertices() const;
-	const Uint32 *GetGeomTreeIndices() const;
+	const uint32_t *GetGeomTreeIndices() const;
 	const unsigned int *GetGeomTreeTriFlags() const;
 	unsigned int GetGeomTreeNumTris() const;
 

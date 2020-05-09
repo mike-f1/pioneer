@@ -11,7 +11,6 @@
 #include "GameSaveError.h"
 #include "Orbit.h"
 #include "enum_table.h"
-#include <SDL_stdinc.h>
 #include <algorithm>
 #include <map>
 #include <string>
@@ -243,7 +242,7 @@ std::string StarSystem::ExportBodyToLua(FILE *f, SystemBody *body)
 	std::string code_list = code_name;
 	if (body->m_children.size() > 0) {
 		code_list = code_list + ", \n\t{\n";
-		for (Uint32 ii = 0; ii < body->m_children.size(); ii++) {
+		for (uint32_t ii = 0; ii < body->m_children.size(); ii++) {
 			code_list = code_list + "\t" + ExportBodyToLua(f, body->m_children[ii]) + ", \n";
 		}
 		code_list = code_list + "\t}";
@@ -266,7 +265,7 @@ std::string StarSystem::GetStarTypes(SystemBody *body)
 		types = types + "'" + ENUM_BodyType[bodyTypeIdx].name + "', ";
 	}
 
-	for (Uint32 ii = 0; ii < body->m_children.size(); ii++) {
+	for (uint32_t ii = 0; ii < body->m_children.size(); ii++) {
 		types = types + GetStarTypes(body->m_children[ii]);
 	}
 
@@ -335,7 +334,7 @@ void StarSystem::Dump(FILE *file, const char *indent, bool suppressSectorData) c
 		fprintf(file, "%s\t\"%s\"\n", indent, m_name.c_str());
 		fprintf(file, "%s\t%sEXPLORED%s\n", indent, GetUnexplored() ? "UN" : "", m_hasCustomBodies ? ", CUSTOM-ONLY" : m_isCustom ? ", CUSTOM" : "");
 		fprintf(file, "%s\tfaction %s%s%s\n", indent, m_faction ? "\"" : "NONE", m_faction ? m_faction->name.c_str() : "", m_faction ? "\"" : "");
-		fprintf(file, "%s\tseed %u\n", indent, static_cast<Uint32>(m_seed));
+		fprintf(file, "%s\tseed %u\n", indent, static_cast<uint32_t>(m_seed));
 		fprintf(file, "%s\t%u stars%s\n", indent, m_numStars, m_numStars > 0 ? " {" : "");
 		assert(m_numStars == m_stars.size());
 		for (unsigned i = 0; i < m_numStars; ++i)

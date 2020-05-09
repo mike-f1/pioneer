@@ -5,7 +5,7 @@
 #define _GASGIANTJOBS_H
 
 #include "build/buildopts.h"
-#include <SDL_stdinc.h>
+#include <cstdint>
 
 #include "JobQueue.h"
 #include "galaxy/SystemPath.h"
@@ -39,18 +39,18 @@ namespace GasGiantJobs {
 	static const vector3d p7 = (vector3d(-1, -1, -1)).Normalized();
 	static const vector3d p8 = (vector3d(1, -1, -1)).Normalized();
 
-	const vector3d &GetPatchFaces(const Uint32 patch, const Uint32 face);
+	const vector3d &GetPatchFaces(const uint32_t patch, const uint32_t face);
 
 	class STextureFaceRequest {
 	public:
-		STextureFaceRequest(const vector3d *v_, const SystemPath &sysPath_, const Sint32 face_, const Sint32 uvDIMs_, Terrain *pTerrain_);
+		STextureFaceRequest(const vector3d *v_, const SystemPath &sysPath_, const int32_t face_, const int32_t uvDIMs_, Terrain *pTerrain_);
 
 		// RUNS IN ANOTHER THREAD!! MUST BE THREAD SAFE!
 		// Use only data local to this object
 		void OnRun();
 
-		Sint32 Face() const { return face; }
-		inline Sint32 UVDims() const { return uvDIMs; }
+		int32_t Face() const { return face; }
+		inline int32_t UVDims() const { return uvDIMs; }
 		Color *Colors() const { return colors; }
 		const SystemPath &SysPath() const { return sysPath; }
 
@@ -58,7 +58,7 @@ namespace GasGiantJobs {
 		// deliberately prevent copy constructor access
 		STextureFaceRequest(const STextureFaceRequest &r) = delete;
 
-		inline Sint32 NumTexels() const { return uvDIMs * uvDIMs; }
+		inline int32_t NumTexels() const { return uvDIMs * uvDIMs; }
 
 		// in patch surface coords, [0,1]
 		inline vector3d GetSpherePoint(const double x, const double y) const
@@ -71,8 +71,8 @@ namespace GasGiantJobs {
 
 		const vector3d *corners;
 		const SystemPath sysPath;
-		const Sint32 face;
-		const Sint32 uvDIMs;
+		const int32_t face;
+		const int32_t uvDIMs;
 		RefCountedPtr<Terrain> pTerrain;
 	};
 
@@ -80,20 +80,20 @@ namespace GasGiantJobs {
 	public:
 		struct STextureFaceData {
 			STextureFaceData() {}
-			STextureFaceData(Color *c_, Sint32 uvDims_) :
+			STextureFaceData(Color *c_, int32_t uvDims_) :
 				colors(c_),
 				uvDims(uvDims_) {}
 			STextureFaceData(const STextureFaceData &r) :
 				colors(r.colors),
 				uvDims(r.uvDims) {}
 			Color *colors;
-			Sint32 uvDims;
+			int32_t uvDims;
 		};
 
 		STextureFaceResult(const int32_t face_) :
 			mFace(face_) {}
 
-		void addResult(Color *c_, Sint32 uvDims_)
+		void addResult(Color *c_, int32_t uvDims_)
 		{
 			#ifdef PIONEER_PROFILER
 			PROFILE_SCOPED()
@@ -148,7 +148,7 @@ namespace GasGiantJobs {
 	// a quad with reversed winding
 	class GenFaceQuad {
 	public:
-		GenFaceQuad(const vector2f &size, Graphics::RenderState *state, const Uint32 GGQuality);
+		GenFaceQuad(const vector2f &size, Graphics::RenderState *state, const uint32_t GGQuality);
 		virtual void Draw();
 
 		void SetMaterial(Graphics::Material *mat)
@@ -167,9 +167,9 @@ namespace GasGiantJobs {
 	// ********************************************************************************
 	class SGPUGenRequest {
 	public:
-		SGPUGenRequest(const SystemPath &sysPath_, const Sint32 uvDIMs_, Terrain *pTerrain_, const float planetRadius_, const float hueAdjust_, GenFaceQuad *pQuad_, Graphics::Texture *pTex_);
+		SGPUGenRequest(const SystemPath &sysPath_, const int32_t uvDIMs_, Terrain *pTerrain_, const float planetRadius_, const float hueAdjust_, GenFaceQuad *pQuad_, Graphics::Texture *pTex_);
 
-		inline Sint32 UVDims() const { return uvDIMs; }
+		inline int32_t UVDims() const { return uvDIMs; }
 		Graphics::Texture *Texture() const { return m_texture.Get(); }
 		GenFaceQuad *Quad() const { return pQuad; }
 		const SystemPath &SysPath() const { return sysPath; }
@@ -179,13 +179,13 @@ namespace GasGiantJobs {
 		// deliberately prevent copy constructor access
 		SGPUGenRequest(const SGPUGenRequest &r) = delete;
 
-		inline Sint32 NumTexels() const { return uvDIMs * uvDIMs; }
+		inline int32_t NumTexels() const { return uvDIMs * uvDIMs; }
 
 		// this is created with the request and are given to the resulting patches
 		RefCountedPtr<Graphics::Texture> m_texture;
 
 		const SystemPath sysPath;
-		const Sint32 uvDIMs;
+		const int32_t uvDIMs;
 		Terrain *pTerrain;
 		const float planetRadius;
 		const float hueAdjust;
@@ -198,19 +198,19 @@ namespace GasGiantJobs {
 	public:
 		struct SGPUGenData {
 			SGPUGenData() {}
-			SGPUGenData(Graphics::Texture *t_, Sint32 uvDims_) :
+			SGPUGenData(Graphics::Texture *t_, int32_t uvDims_) :
 				texture(t_),
 				uvDims(uvDims_) {}
 			SGPUGenData(const SGPUGenData &r) :
 				texture(r.texture),
 				uvDims(r.uvDims) {}
 			RefCountedPtr<Graphics::Texture> texture;
-			Sint32 uvDims;
+			int32_t uvDims;
 		};
 
 		SGPUGenResult() {}
 
-		void addResult(Graphics::Texture *t_, Sint32 uvDims_);
+		void addResult(Graphics::Texture *t_, int32_t uvDims_);
 
 		inline const SGPUGenData &data() const { return mData; }
 

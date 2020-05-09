@@ -23,6 +23,7 @@ namespace Graphics {
 			Uniform();
 			void Init(const char *name, GLuint program);
 			void Set(int);
+			void Set(unsigned);
 			void Set(float);
 			void Set(const vector3f &);
 			void Set(const vector3d &);

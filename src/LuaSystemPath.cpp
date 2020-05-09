@@ -106,9 +106,9 @@ void LuaObject<SystemPath>::PushToLua(const SystemPath &o)
  */
 static int l_sbodypath_new(lua_State *l)
 {
-	Sint32 sector_x = luaL_checkinteger(l, 1);
-	Sint32 sector_y = luaL_checkinteger(l, 2);
-	Sint32 sector_z = luaL_checkinteger(l, 3);
+	int32_t sector_x = luaL_checkinteger(l, 1);
+	int32_t sector_y = luaL_checkinteger(l, 2);
+	int32_t sector_z = luaL_checkinteger(l, 3);
 
 	SystemPath path(sector_x, sector_y, sector_z);
 
@@ -592,23 +592,23 @@ static bool _systempath_deserializer(const char *pos, const char **next)
 {
 	const char *end;
 
-	Sint32 sectorX = strtol(pos, const_cast<char **>(&end), 0);
+	int32_t sectorX = strtol(pos, const_cast<char **>(&end), 0);
 	if (pos == end) return false;
 	pos = end + 1; // skip newline
 
-	Sint32 sectorY = strtol(pos, const_cast<char **>(&end), 0);
+	int32_t sectorY = strtol(pos, const_cast<char **>(&end), 0);
 	if (pos == end) return false;
 	pos = end + 1; // skip newline
 
-	Sint32 sectorZ = strtol(pos, const_cast<char **>(&end), 0);
+	int32_t sectorZ = strtol(pos, const_cast<char **>(&end), 0);
 	if (pos == end) return false;
 	pos = end + 1; // skip newline
 
-	Uint32 systemNum = strtoul(pos, const_cast<char **>(&end), 0);
+	uint32_t systemNum = strtoul(pos, const_cast<char **>(&end), 0);
 	if (pos == end) return false;
 	pos = end + 1; // skip newline
 
-	Uint32 sbodyId = strtoul(pos, const_cast<char **>(&end), 0);
+	uint32_t sbodyId = strtoul(pos, const_cast<char **>(&end), 0);
 	if (pos == end) return false;
 	pos = end + 1; // skip newline
 

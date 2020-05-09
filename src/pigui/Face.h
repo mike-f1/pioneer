@@ -23,10 +23,10 @@ namespace PiGUI {
 
 	class Face : public RefCounted {
 	public:
-		Face(FaceParts::FaceDescriptor& face, Uint32 seed = 0);
+		Face(FaceParts::FaceDescriptor& face, uint32_t seed = 0);
 		~Face();
 
-		Uint32 GetTextureId();
+		uint32_t GetTextureId();
 		vector2f GetTextureSize();
 
 		enum Flags { // <enum scope='GameUI::Face' name=GameUIFaceFlags public>
@@ -39,7 +39,7 @@ namespace PiGUI {
 		};
 
 	private:
-		Uint32 m_seed;
+		uint32_t m_seed;
 
 		static RefCountedPtr<Graphics::Material> s_material;
 

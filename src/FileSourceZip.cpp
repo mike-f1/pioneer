@@ -27,8 +27,8 @@ namespace FileSystem {
 
 		mz_zip_archive_file_stat zipStat;
 
-		Uint32 numFiles = mz_zip_reader_get_num_files(zip);
-		for (Uint32 i = 0; i < numFiles; i++) {
+		uint32_t numFiles = mz_zip_reader_get_num_files(zip);
+		for (uint32_t i = 0; i < numFiles; i++) {
 			if (mz_zip_reader_file_stat(zip, i, &zipStat)) {
 				bool is_dir = mz_zip_reader_is_file_a_directory(zip, i);
 				if (!mz_zip_reader_is_file_encrypted(zip, i)) {
@@ -170,7 +170,7 @@ namespace FileSystem {
 
 				std::map<std::string, FileStat>::const_iterator it = dir->files.find(fragments[i]);
 				if (it == dir->files.end())
-					dir->files.insert(std::make_pair(fragments[i], FileStat(Uint32(-1), 0, MakeFileInfo(fullPath, FileInfo::FT_DIR))));
+					dir->files.insert(std::make_pair(fragments[i], FileStat(uint32_t(-1), 0, MakeFileInfo(fullPath, FileInfo::FT_DIR))));
 				dir = &(dir->subdirs[fragments[i]]);
 			}
 		}

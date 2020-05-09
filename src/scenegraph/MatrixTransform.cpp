@@ -63,14 +63,14 @@ namespace SceneGraph {
 	void MatrixTransform::Save(NodeDatabase &db)
 	{
 		Group::Save(db);
-		for (Uint32 i = 0; i < 16; i++)
+		for (uint32_t i = 0; i < 16; i++)
 			db.wr->Float(m_transform[i]);
 	}
 
 	MatrixTransform *MatrixTransform::Load(NodeDatabase &db)
 	{
 		matrix4x4f matrix;
-		for (Uint32 i = 0; i < 16; i++)
+		for (uint32_t i = 0; i < 16; i++)
 			matrix[i] = db.rd->Float();
 		MatrixTransform *mt = new MatrixTransform(matrix);
 		return mt;

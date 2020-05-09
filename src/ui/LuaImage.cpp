@@ -11,7 +11,7 @@ namespace UI {
 		static int l_set_height_lines(lua_State *l)
 		{
 			Image *img = LuaObject<UI::Image>::CheckFromLua(1);
-			Uint32 lines = luaL_checkinteger(l, 2);
+			uint32_t lines = luaL_checkinteger(l, 2);
 			img->SetHeightLines(lines);
 			lua_pushvalue(l, 1);
 			return 1;

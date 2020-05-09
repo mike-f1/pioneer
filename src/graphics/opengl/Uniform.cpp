@@ -23,6 +23,12 @@ namespace Graphics {
 				glUniform1i(m_location, i);
 		}
 
+		void Uniform::Set(unsigned i)
+		{
+			if (m_location != -1)
+				glUniform1ui(m_location, i);
+		}
+
 		void Uniform::Set(float f)
 		{
 			if (m_location != -1)

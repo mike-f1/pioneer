@@ -4,13 +4,13 @@
 #ifndef _STATS_H
 #define _STATS_H
 
-#include "SDL_stdinc.h"
+#include <cstdint>
 
 namespace Graphics {
 
 	class Stats {
 	public:
-		static const Uint32 MAX_FRAMES_STORE = 30U;
+		static const uint32_t MAX_FRAMES_STORE = 30U;
 		enum StatType {
 			// renderer entries
 			STAT_DRAWCALL = 0,
@@ -41,13 +41,13 @@ namespace Graphics {
 		};
 
 		struct TFrameData {
-			Uint32 m_stats[MAX_STAT];
+			uint32_t m_stats[MAX_STAT];
 		};
 
 		Stats();
 		~Stats() {}
 
-		void AddToStatCount(const StatType type, const Uint32 count);
+		void AddToStatCount(const StatType type, const uint32_t count);
 		void NextFrame();
 
 		const TFrameData &FrameStats() const { return m_frameStats[m_currentFrame]; }
@@ -55,7 +55,7 @@ namespace Graphics {
 
 	private:
 		TFrameData m_frameStats[MAX_FRAMES_STORE];
-		Uint32 m_currentFrame;
+		uint32_t m_currentFrame;
 	};
 
 } // namespace Graphics

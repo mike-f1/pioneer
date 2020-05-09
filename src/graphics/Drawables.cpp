@@ -221,7 +221,7 @@ namespace Graphics {
 			// glLineWidth(1.f);
 		}
 
-		void Line3D::CreateVertexBuffer(Graphics::Renderer *r, const Uint32 size)
+		void Line3D::CreateVertexBuffer(Graphics::Renderer *r, const uint32_t size)
 		{
 			PROFILE_SCOPED()
 			Graphics::MaterialDescriptor desc;
@@ -256,7 +256,7 @@ namespace Graphics {
 		Lines::~Lines()
 		{}
 
-		void Lines::SetData(const Uint32 vertCount, const vector3f *vertices, const Color &color)
+		void Lines::SetData(const uint32_t vertCount, const vector3f *vertices, const Color &color)
 		{
 			PROFILE_SCOPED()
 			assert(vertices);
@@ -272,12 +272,12 @@ namespace Graphics {
 
 			// populate the VertexArray
 			m_va->Clear();
-			for (Uint32 i = 0; i < vertCount; i++) {
+			for (uint32_t i = 0; i < vertCount; i++) {
 				m_va->Add(vertices[i], color);
 			}
 		}
 
-		void Lines::SetData(const Uint32 vertCount, const vector3f *vertices, const Color *colors)
+		void Lines::SetData(const uint32_t vertCount, const vector3f *vertices, const Color *colors)
 		{
 			PROFILE_SCOPED()
 			assert(vertices);
@@ -293,7 +293,7 @@ namespace Graphics {
 
 			// populate the VertexArray
 			m_va->Clear();
-			for (Uint32 i = 0; i < vertCount; i++) {
+			for (uint32_t i = 0; i < vertCount; i++) {
 				m_va->Add(vertices[i], colors[i]);
 			}
 		}
@@ -318,7 +318,7 @@ namespace Graphics {
 			// glLineWidth(1.f);
 		}
 
-		void Lines::CreateVertexBuffer(Graphics::Renderer *r, const Uint32 size)
+		void Lines::CreateVertexBuffer(Graphics::Renderer *r, const uint32_t size)
 		{
 			PROFILE_SCOPED()
 			Graphics::MaterialDescriptor desc;
@@ -379,7 +379,7 @@ namespace Graphics {
 			r->DrawBuffer(m_vertexBuffer.Get(), rs, m_material.Get(), Graphics::POINTS);
 		}
 
-		void PointSprites::CreateVertexBuffer(Graphics::Renderer *r, const Uint32 size)
+		void PointSprites::CreateVertexBuffer(Graphics::Renderer *r, const uint32_t size)
 		{
 			PROFILE_SCOPED()
 			Graphics::VertexBufferDesc vbd;
@@ -509,7 +509,7 @@ namespace Graphics {
 			r->DrawBuffer(m_vertexBuffer.Get(), rs, m_material.Get(), Graphics::TRIANGLES);
 		}
 
-		void Points::CreateVertexBuffer(Graphics::Renderer *r, const Uint32 size)
+		void Points::CreateVertexBuffer(Graphics::Renderer *r, const uint32_t size)
 		{
 			PROFILE_SCOPED()
 			Graphics::MaterialDescriptor desc;
@@ -543,7 +543,7 @@ namespace Graphics {
 			{ 6, 1, 10 }, { 9, 0, 11 }, { 9, 11, 2 }, { 9, 2, 5 }, { 7, 2, 11 }
 		};
 
-		Sphere3D::Sphere3D(Renderer *renderer, RefCountedPtr<Material> mat, Graphics::RenderState *state, int subdivs, float scale, const Uint32 attribs)
+		Sphere3D::Sphere3D(Renderer *renderer, RefCountedPtr<Material> mat, Graphics::RenderState *state, int subdivs, float scale, const uint32_t attribs)
 		{
 			PROFILE_SCOPED()
 			assert(attribs & ATTRIB_POSITION);
@@ -558,7 +558,7 @@ namespace Graphics {
 
 			//reserve some data - ATTRIB_POSITION | ATTRIB_NORMAL | ATTRIB_UV0
 			VertexArray vts(attribs, (subdivs * subdivs) * 20 * 3);
-			std::vector<Uint32> indices;
+			std::vector<uint32_t> indices;
 
 			//initial vertices
 			int vi[12];
@@ -580,7 +580,7 @@ namespace Graphics {
 
 			//Create vtx & index buffers and copy data
 			VertexBufferDesc vbd;
-			Uint32 attIdx = 0;
+			uint32_t attIdx = 0;
 			vbd.attrib[attIdx].semantic = ATTRIB_POSITION;
 			vbd.attrib[attIdx].format = ATTRIB_FORMAT_FLOAT3;
 			++attIdx;
@@ -600,7 +600,7 @@ namespace Graphics {
 			m_vertexBuffer->Populate(vts);
 
 			m_indexBuffer.reset(renderer->CreateIndexBuffer(indices.size(), BUFFER_USAGE_STATIC));
-			Uint32 *idxPtr = m_indexBuffer->Map(Graphics::BUFFER_MAP_WRITE);
+			uint32_t *idxPtr = m_indexBuffer->Map(Graphics::BUFFER_MAP_WRITE);
 			for (auto it : indices) {
 				*idxPtr = it;
 				idxPtr++;
@@ -633,7 +633,7 @@ namespace Graphics {
 			return vts.GetNumVerts() - 1;
 		}
 
-		void Sphere3D::AddTriangle(std::vector<Uint32> &indices, int i1, int i2, int i3)
+		void Sphere3D::AddTriangle(std::vector<uint32_t> &indices, int i1, int i2, int i3)
 		{
 			PROFILE_SCOPED()
 			indices.push_back(i1);
@@ -641,7 +641,7 @@ namespace Graphics {
 			indices.push_back(i3);
 		}
 
-		void Sphere3D::Subdivide(VertexArray &vts, std::vector<Uint32> &indices,
+		void Sphere3D::Subdivide(VertexArray &vts, std::vector<uint32_t> &indices,
 			const matrix4x4f &trans, const vector3f &v1, const vector3f &v2, const vector3f &v3,
 			const int i1, const int i2, const int i3, int depth)
 		{
@@ -751,7 +751,7 @@ namespace Graphics {
 			//Create vtx & index buffers and copy data
 			VertexBufferDesc vbd;
 
-			Uint32 attribIdx = 0;
+			uint32_t attribIdx = 0;
 			assert(va.HasAttrib(ATTRIB_POSITION));
 			vbd.attrib[attribIdx].semantic = ATTRIB_POSITION;
 			vbd.attrib[attribIdx].format = ATTRIB_FORMAT_FLOAT3;

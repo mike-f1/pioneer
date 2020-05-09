@@ -26,7 +26,7 @@ namespace Gui {
 	Gui::Widget *Screen::focusedWidget;
 	matrix4x4f Screen::modelMatrix;
 	matrix4x4f Screen::projMatrix;
-	Sint32 Screen::viewport[4];
+	int32_t Screen::viewport[4];
 
 	FontCache Screen::s_fontCache;
 	std::stack<RefCountedPtr<Text::TextureFont>> Screen::s_fontStack;
@@ -244,7 +244,7 @@ namespace Gui {
 	void Screen::OnTextInput(const SDL_TextInputEvent *e)
 	{
 		if (!focusedWidget) return;
-		Uint32 unicode;
+		uint32_t unicode;
 		Text::utf8_decode_char(&unicode, e->text);
 		focusedWidget->OnTextInput(unicode);
 	}

@@ -17,7 +17,7 @@ namespace GameUI {
 
 	RefCountedPtr<Graphics::Material> Face::s_material;
 
-	Face::Face(Context *context, FaceParts::FaceDescriptor& face, Uint32 seed) :
+	Face::Face(Context *context, FaceParts::FaceDescriptor& face, uint32_t seed) :
 		Single(context),
 		m_preferredSize(INT_MAX)
 	{
@@ -89,7 +89,7 @@ namespace GameUI {
 		Single::Draw();
 	}
 
-	Face *Face::SetHeightLines(Uint32 lines)
+	Face *Face::SetHeightLines(uint32_t lines)
 	{
 		const Text::TextureFont *font = GetContext()->GetFont(GetFont()).Get();
 		const float height = font->GetHeight() * lines;

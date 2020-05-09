@@ -2,6 +2,7 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "KeyBindings.h"
+
 #include "GameConfig.h"
 #include "GameConfSingleton.h"
 #include "Input.h"
@@ -18,16 +19,16 @@ static bool m_disableBindings = 0;
 
 namespace KeyBindings {
 
-	typedef std::underlying_type<BehaviourMod>::type bm;
+	typedef std::underlying_type<BehaviourMod>::type bm_type;
 
 	BehaviourMod operator |(BehaviourMod lhs, BehaviourMod rhs)
 	{
-		return static_cast<BehaviourMod> (static_cast<bm>(lhs) | static_cast<bm>(rhs));
+		return static_cast<BehaviourMod> (static_cast<bm_type>(lhs) | static_cast<bm_type>(rhs));
 	}
 
 	BehaviourMod operator &(BehaviourMod lhs, BehaviourMod rhs)
 	{
-		return static_cast<BehaviourMod> (static_cast<bm>(lhs) & static_cast<bm>(rhs));
+		return static_cast<BehaviourMod> (static_cast<bm_type>(lhs) & static_cast<bm_type>(rhs));
 	}
 
 	bool BehaviourTrait::HaveBTrait(BehaviourMod masked) const
@@ -106,6 +107,7 @@ namespace KeyBindings {
 		case WheelDirection::DOWN: return 1;
 		case WheelDirection::LEFT: return 2;
 		case WheelDirection::RIGHT: return 3;
+		case WheelDirection::NONE: return -1000; // shut off compiler
 		}
 		return -1000;
 	}
@@ -117,9 +119,10 @@ namespace KeyBindings {
 		case WheelDirection::DOWN: return '1';
 		case WheelDirection::LEFT: return '2';
 		case WheelDirection::RIGHT: return '3';
+		case WheelDirection::NONE: break;
 		}
 		assert(0 && "This should not return a 'WheelDirection::NONE'...");
-		return '0';
+		return '?';
 	}
 
 	WheelDirection WheelDirectionFromChar(const char c)
@@ -148,19 +151,19 @@ namespace KeyBindings {
 		return oss.str();
 	}
 
-	KeyBinding::KeyBinding(const SDL_JoystickGUID &joystickGuid, Uint8 button, SDL_Keymod mod) :
+	KeyBinding::KeyBinding(const SDL_JoystickGUID &joystickGuid, uint8_t button, SDL_Keymod mod) :
 		BehaviourTrait(),
-		type(BindType::JOYSTICK_BUTTON),
-		m_mod(mod)
+		m_mod(mod),
+		type(BindType::JOYSTICK_BUTTON)
 	{
 		u.joystickButton.joystick = Pi::input->JoystickFromGUID(joystickGuid);
 		u.joystickButton.button = button;
 	}
 
-	KeyBinding::KeyBinding(const SDL_JoystickGUID &joystickGuid, Uint8 hat, Uint8 dir, SDL_Keymod mod) :
+	KeyBinding::KeyBinding(const SDL_JoystickGUID &joystickGuid, uint8_t hat, uint8_t dir, SDL_Keymod mod) :
 		BehaviourTrait(),
-		type(BindType::JOYSTICK_HAT),
-		m_mod(mod)
+		m_mod(mod),
+		type(BindType::JOYSTICK_HAT)
 	{
 		u.joystickHat.joystick = Pi::input->JoystickFromGUID(joystickGuid);
 		u.joystickHat.hat = hat;
@@ -461,7 +464,6 @@ namespace KeyBindings {
 	{
 		const size_t BUF_SIZE = 64;
 		const size_t len = str.length();
-		BehaviourMod bm = m_binding[0].m_bmTrait;
 		if (len >= BUF_SIZE) {
 			Output("invalid ActionBinding string\n");
 			if (!KeyBinding::FromString(str.data(), m_binding[0])) m_binding[0].Clear();
@@ -696,13 +698,13 @@ namespace KeyBindings {
 		}
 	}
 
-	JoyAxisBinding::JoyAxisBinding(const SDL_JoystickGUID &joystickGuid, Uint8 axis_, SDL_Keymod mod_, AxisDirection direction_, float deadzone_, float sensitivity_) :
+	JoyAxisBinding::JoyAxisBinding(const SDL_JoystickGUID &joystickGuid, uint8_t axis_, SDL_Keymod mod_, AxisDirection direction_, float deadzone_, float sensitivity_) :
 		m_joystick(Pi::input->JoystickFromGUID(joystickGuid)),
 		m_axis(axis_),
 		m_direction(direction_),
-		m_mod(mod_),
 		m_deadzone(deadzone_),
-		m_sensitivity(sensitivity_)
+		m_sensitivity(sensitivity_),
+		m_mod(mod_)
 	{}
 
 	bool JoyAxisBinding::IsActive() const
@@ -760,7 +762,7 @@ namespace KeyBindings {
 			formatarg("signp", m_direction == AxisDirection::NEGATIVE ? "-" : "+"), // optional with + sign
 			formatarg("joynum", m_joystick),
 			formatarg("joyname", Pi::input->JoystickName(m_joystick)),
-			formatarg("axis", m_axis >= 0 && m_axis < 3 ? axis_names[m_axis] : ossaxisnum.str()));
+			formatarg("axis", m_axis < 3 ? axis_names[m_axis] : ossaxisnum.str()));
 		return ret;
 	}
 
@@ -803,7 +805,7 @@ namespace KeyBindings {
 		}
 		// found a joystick
 		assert(joystick < 256);
-		ab.m_joystick = Uint8(joystick);
+		ab.m_joystick = uint8_t(joystick);
 
 		if (strncmp(p, "Axis", 4) != 0) {
 			ab.Clear();

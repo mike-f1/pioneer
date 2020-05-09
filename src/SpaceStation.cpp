@@ -52,7 +52,7 @@ SpaceStation::SpaceStation(const Json &jsonObj, Space *space) :
 
 		Json shipDockingArray = spaceStationObj["ship_docking"].get<Json::array_t>();
 		m_shipDocking.reserve(shipDockingArray.size());
-		for (Uint32 i = 0; i < shipDockingArray.size(); i++) {
+		for (uint32_t i = 0; i < shipDockingArray.size(); i++) {
 			m_shipDocking.push_back(shipDocking_t());
 			shipDocking_t &sd = m_shipDocking.back();
 
@@ -72,7 +72,7 @@ SpaceStation::SpaceStation(const Json &jsonObj, Space *space) :
 		// retrieve each of the port details and bay IDs
 		Json portArray = spaceStationObj["ports"].get<Json::array_t>();
 		m_ports.reserve(portArray.size());
-		for (Uint32 i = 0; i < portArray.size(); i++) {
+		for (uint32_t i = 0; i < portArray.size(); i++) {
 			m_ports.push_back(SpaceStationType::SPort());
 			SpaceStationType::SPort &port = m_ports.back();
 
@@ -90,6 +90,7 @@ SpaceStation::SpaceStation(const Json &jsonObj, Space *space) :
 
 		m_navLights->LoadFromJson(spaceStationObj);
 	} catch (Json::type_error &) {
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 		throw SavedGameCorruptException();
 	}
 }
@@ -106,9 +107,9 @@ void SpaceStation::SaveToJson(Json &jsonObj, Space *space)
 	Json spaceStationObj({}); // Create JSON object to contain space station data.
 
 	Json shipDockingArray = Json::array(); // Create JSON array to contain ship docking data.
-	for (Uint32 i = 0; i < m_shipDocking.size(); i++) {
+	for (uint32_t i = 0; i < m_shipDocking.size(); i++) {
 		Json shipDockingArrayEl({}); // Create JSON object to contain ship docking.
-		Uint32 bodyIndex = space->GetIndexForBody(m_shipDocking[i].ship);
+		uint32_t bodyIndex = space->GetIndexForBody(m_shipDocking[i].ship);
 		if (bodyIndex != 0) {
 			shipDockingArrayEl["index_for_body"] = bodyIndex;
 			shipDockingArrayEl["stage"] = m_shipDocking[i].stage;
@@ -122,7 +123,7 @@ void SpaceStation::SaveToJson(Json &jsonObj, Space *space)
 
 	// store each of the port details and bay IDs
 	Json portArray = Json::array(); // Create JSON array to contain port data.
-	for (Uint32 i = 0; i < m_ports.size(); i++) {
+	for (uint32_t i = 0; i < m_ports.size(); i++) {
 		Json portArrayEl({}); // Create JSON object to contain port.
 
 		if (m_ports[i].inUse)
@@ -145,7 +146,7 @@ void SpaceStation::SaveToJson(Json &jsonObj, Space *space)
 void SpaceStation::PostLoadFixup(Space *space)
 {
 	ModelBody::PostLoadFixup(space);
-	for (Uint32 i = 0; i < m_shipDocking.size(); i++) {
+	for (uint32_t i = 0; i < m_shipDocking.size(); i++) {
 		m_shipDocking[i].ship = static_cast<Ship *>(space->GetBodyByIndex(m_shipDocking[i].shipIndex));
 	}
 }
@@ -224,7 +225,7 @@ SpaceStation::~SpaceStation()
 
 void SpaceStation::NotifyRemoved(const Body *const removedBody)
 {
-	for (Uint32 i = 0; i < m_shipDocking.size(); i++) {
+	for (uint32_t i = 0; i < m_shipDocking.size(); i++) {
 		if (m_shipDocking[i].ship == removedBody) {
 			m_shipDocking[i].ship = 0;
 		}
@@ -233,7 +234,7 @@ void SpaceStation::NotifyRemoved(const Body *const removedBody)
 
 int SpaceStation::GetMyDockingPort(const Ship *s) const
 {
-	for (Uint32 i = 0; i < m_shipDocking.size(); i++) {
+	for (uint32_t i = 0; i < m_shipDocking.size(); i++) {
 		if (s == m_shipDocking[i].ship) return i;
 	}
 	return -1;
@@ -241,8 +242,8 @@ int SpaceStation::GetMyDockingPort(const Ship *s) const
 
 int SpaceStation::NumShipsDocked() const
 {
-	Sint32 numShipsDocked = 0;
-	for (Uint32 i = 0; i < m_shipDocking.size(); i++) {
+	int32_t numShipsDocked = 0;
+	for (uint32_t i = 0; i < m_shipDocking.size(); i++) {
 		if (NULL != m_shipDocking[i].ship)
 			++numShipsDocked;
 	}
@@ -271,7 +272,7 @@ int SpaceStation::GetFreeDockingPort(const Ship *s) const
 
 void SpaceStation::SetDocked(Ship *ship, const int port)
 {
-	assert(m_shipDocking.size() > Uint32(port));
+	assert(m_shipDocking.size() > uint32_t(port));
 	m_shipDocking[port].ship = ship;
 	m_shipDocking[port].stage = m_type->NumDockingStages() + 3;
 
@@ -322,7 +323,7 @@ bool SpaceStation::LaunchShip(Ship *ship, const int port)
 bool SpaceStation::GetDockingClearance(Ship *s, std::string &outMsg)
 {
 	assert(m_shipDocking.size() == m_type->NumDockingPorts());
-	for (Uint32 i = 0; i < m_shipDocking.size(); i++) {
+	for (uint32_t i = 0; i < m_shipDocking.size(); i++) {
 		if (m_shipDocking[i].ship == s) {
 			outMsg = stringf(Lang::CLEARANCE_ALREADY_GRANTED_BAY_N, formatarg("bay", i + 1));
 			return (m_shipDocking[i].stage > 0); // grant docking only if the ship is not already docked/undocking
@@ -332,7 +333,7 @@ bool SpaceStation::GetDockingClearance(Ship *s, std::string &outMsg)
 	const Aabb &bbox = s->GetAabb();
 	const float bboxRad = vector2f(float(bbox.max.x), float(bbox.max.z)).Length();
 
-	for (Uint32 i = 0; i < m_shipDocking.size(); i++) {
+	for (uint32_t i = 0; i < m_shipDocking.size(); i++) {
 		// initial unoccupied check
 		if (m_shipDocking[i].ship != 0) continue;
 
@@ -364,13 +365,13 @@ bool SpaceStation::GetDockingClearance(Ship *s, std::string &outMsg)
 	return false;
 }
 
-bool SpaceStation::OnCollision(Object *b, Uint32 flags, double relVel)
+bool SpaceStation::OnCollision(Object *b, uint32_t flags, double relVel)
 {
 	if ((flags & 0x10) && (b->IsType(Object::SHIP))) {
 		Ship *s = static_cast<Ship *>(b);
 
 		int port = -1;
-		for (Uint32 i = 0; i < m_shipDocking.size(); i++) {
+		for (uint32_t i = 0; i < m_shipDocking.size(); i++) {
 			if (m_shipDocking[i].ship == s) {
 				port = i;
 				break;
@@ -434,7 +435,7 @@ bool SpaceStation::OnCollision(Object *b, Uint32 flags, double relVel)
 	}
 }
 
-bool SpaceStation::DoShipDamage(Ship *s, Uint32 flags, double relVel)
+bool SpaceStation::DoShipDamage(Ship *s, uint32_t flags, double relVel)
 {
 	if (s == nullptr) return false;
 	s->DynamicBody::OnCollision(this, flags, relVel);
@@ -458,7 +459,7 @@ bool SpaceStation::DoShipDamage(Ship *s, Uint32 flags, double relVel)
 void SpaceStation::DockingUpdate(const double timeStep)
 {
 	vector3d p1, p2, zaxis;
-	for (Uint32 i = 0; i < m_shipDocking.size(); i++) {
+	for (uint32_t i = 0; i < m_shipDocking.size(); i++) {
 		shipDocking_t &dt = m_shipDocking[i];
 		if (!dt.ship) continue;
 		if (dt.stage > m_type->NumDockingStages()) {
@@ -788,7 +789,7 @@ vector3d SpaceStation::GetTargetIndicatorPosition(FrameId relToId) const
 {
 	// return the next waypoint if permission has been granted for player,
 	// and the docking point's position once the docking anim starts
-	for (Uint32 i = 0; i < m_shipDocking.size(); i++) {
+	for (uint32_t i = 0; i < m_shipDocking.size(); i++) {
 		if (i >= m_type->NumDockingPorts()) break;
 		if ((m_shipDocking[i].ship == GameLocator::getGame()->GetPlayer()) && (m_shipDocking[i].stage > 0) && (m_shipDocking[i].stage != m_type->NumDockingStages() + 1)) { // last part is "not currently docked"
 

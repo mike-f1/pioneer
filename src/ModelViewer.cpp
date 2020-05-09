@@ -8,6 +8,7 @@
 #include "GameSaveError.h"
 #include "ModManager.h"
 #include "OS.h"
+#include "PngWriter.h"
 #include "StringF.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
@@ -333,11 +334,11 @@ void ModelViewer::HitImpl()
 			SceneGraph::StaticGeometry::Mesh &mesh = sg->GetMeshAt(0);
 
 			// Please don't do this in game, no speed guarantee
-			const Uint32 posOffs = mesh.vertexBuffer->GetDesc().GetOffset(Graphics::ATTRIB_POSITION);
-			const Uint32 stride = mesh.vertexBuffer->GetDesc().stride;
-			const Uint32 vtxIdx = m_rng.Int32() % mesh.vertexBuffer->GetSize();
+			const uint32_t posOffs = mesh.vertexBuffer->GetDesc().GetOffset(Graphics::ATTRIB_POSITION);
+			const uint32_t stride = mesh.vertexBuffer->GetDesc().stride;
+			const uint32_t vtxIdx = m_rng.Int32() % mesh.vertexBuffer->GetSize();
 
-			const Uint8 *vtxPtr = mesh.vertexBuffer->Map<Uint8>(Graphics::BUFFER_MAP_READ);
+			const uint8_t *vtxPtr = mesh.vertexBuffer->Map<uint8_t>(Graphics::BUFFER_MAP_READ);
 			const vector3f pos = *reinterpret_cast<const vector3f *>(vtxPtr + vtxIdx * stride + posOffs);
 			mesh.vertexBuffer->Unmap();
 			m_shields->AddHit(vector3d(pos));
@@ -902,7 +903,7 @@ void ModelViewer::Screenshot()
 	strftime(buf, sizeof(buf), "modelviewer-%Y%m%d-%H%M%S.png", _tm);
 	Graphics::ScreendumpState sd;
 	RendererLocator::getRenderer()->Screendump(sd);
-	write_screenshot(sd, buf);
+	PngWriter::write_screenshot(sd, buf);
 	AddLog(stringf("Screenshot %0 saved", buf));
 }
 

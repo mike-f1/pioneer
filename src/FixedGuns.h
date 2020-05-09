@@ -17,8 +17,8 @@ namespace SceneGraph {
 	class Model;
 }
 
-typedef int GunId;
-typedef int MountId;
+typedef unsigned GunId;
+typedef unsigned MountId;
 
 /*
 	TODO1:
@@ -68,8 +68,8 @@ public:
 	// Return value is 'true' whenever a new projectile is fired
 	bool UpdateGuns(float timeStep, Body *shooter);
 
-	int GetMountsSize() const { return int(m_mounts.size()); };
-	int GetMountedGunsNum() const { return int(m_guns.size()); }
+	unsigned GetMountsSize() const { return m_mounts.size(); };
+	unsigned GetMountedGunsNum() const { return m_guns.size(); }
 	int GetFreeMountsSize() const { return int(m_mounts.size() - m_guns.size()); };
 	MountId FindFirstEmptyMount() const;
 	std::vector<MountId> FindEmptyMounts() const;

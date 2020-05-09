@@ -4,8 +4,6 @@
 #ifndef _GEOPATCH_H
 #define _GEOPATCH_H
 
-#include <SDL_stdinc.h>
-
 #include "Color.h"
 #include "GeoPatchID.h"
 #include "JobQueue.h"
@@ -102,7 +100,7 @@ private:
 	double m_roughLength;
 	vector3d m_clipCentroid, m_centroid;
 	double m_clipRadius;
-	Sint32 m_depth;
+	int32_t m_depth;
 	bool m_needUpdateVBOs;
 
 	const GeoPatchID m_PatchID;

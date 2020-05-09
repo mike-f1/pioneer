@@ -13,7 +13,7 @@
 
 SystemBody *StarSystemWriter::NewBody() const
 {
-	SystemBody *body = new SystemBody(SystemPath(m_ssys->m_path.sectorX, m_ssys->m_path.sectorY, m_ssys->m_path.sectorZ, m_ssys->m_path.systemIndex, static_cast<Uint32>(m_ssys->m_bodies.size())), m_ssys);
+	SystemBody *body = new SystemBody(SystemPath(m_ssys->m_path.sectorX, m_ssys->m_path.sectorY, m_ssys->m_path.sectorZ, m_ssys->m_path.systemIndex, static_cast<uint32_t>(m_ssys->m_bodies.size())), m_ssys);
 	m_ssys->m_bodies.push_back(RefCountedPtr<SystemBody>(body));
 	return body;
 }

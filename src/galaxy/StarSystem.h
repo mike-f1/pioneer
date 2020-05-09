@@ -14,7 +14,7 @@
 #include "SystemPath.h"
 #include "gameconsts.h"
 
-#include <SDL_stdinc.h>
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -48,12 +48,12 @@ public:
 	RefCountedPtr<const SystemBody> GetRootBody() const { return m_rootBody; }
 	RefCountedPtr<SystemBody> GetRootBody() { return m_rootBody; }
 	bool HasSpaceStations() const { return !m_spaceStations.empty(); }
-	Uint32 GetNumSpaceStations() const { return static_cast<Uint32>(m_spaceStations.size()); }
+	uint32_t GetNumSpaceStations() const { return static_cast<uint32_t>(m_spaceStations.size()); }
 	IterationProxy<std::vector<SystemBody *>> GetSpaceStations() { return MakeIterationProxy(m_spaceStations); }
 	const IterationProxy<const std::vector<SystemBody *>> GetSpaceStations() const { return MakeIterationProxy(m_spaceStations); }
 	IterationProxy<std::vector<SystemBody *>> GetStars() { return MakeIterationProxy(m_stars); }
 	const IterationProxy<const std::vector<SystemBody *>> GetStars() const { return MakeIterationProxy(m_stars); }
-	Uint32 GetNumBodies() const { return static_cast<Uint32>(m_bodies.size()); }
+	uint32_t GetNumBodies() const { return static_cast<uint32_t>(m_bodies.size()); }
 	IterationProxy<std::vector<RefCountedPtr<SystemBody>>> GetBodies() { return MakeIterationProxy(m_bodies); }
 	const IterationProxy<const std::vector<RefCountedPtr<SystemBody>>> GetBodies() const { return MakeIterationProxy(m_bodies); }
 
@@ -109,7 +109,7 @@ private:
 	fixed m_metallicity;
 	fixed m_industrial;
 	GalacticEconomy::EconType m_econType;
-	Uint32 m_seed;
+	uint32_t m_seed;
 
 	// percent price alteration
 	int m_tradeLevel[GalacticEconomy::COMMODITY_COUNT];

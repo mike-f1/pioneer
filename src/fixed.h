@@ -4,46 +4,46 @@
 #ifndef _FIXED_H
 #define _FIXED_H
 
-#include <SDL_stdinc.h>
+#include <cstdint>
 #include <cassert>
 
 template <int FRAC_BITS>
 class fixedf {
 public:
 	static const int FRAC = FRAC_BITS;
-	static const Uint64 MASK = (Uint64(1UL) << FRAC_BITS) - 1;
+	static const uint64_t MASK = (uint64_t(1UL) << FRAC_BITS) - 1;
 
 	fixedf() :
 		v(0) {}
 	//	template <int bits>
 	//	fixedf(fixedf<bits> f) { *this = f; }
-	fixedf(Sint64 raw) :
+	fixedf(int64_t raw) :
 		v(raw) {}
-	fixedf(Sint64 num, Sint64 denom) :
+	fixedf(int64_t num, int64_t denom) :
 		v((num << FRAC) / denom) {}
 	// ^^ this is fucking shit
 
 	fixedf Abs() const { return fixedf(v >= 0 ? v : -v); }
-	friend fixedf operator+(const fixedf &a, const Sint64 b) { return a + fixedf(b << FRAC); }
-	friend fixedf operator-(const fixedf &a, const Sint64 b) { return a - fixedf(b << FRAC); }
-	friend fixedf operator*(const fixedf &a, const Sint64 b) { return a * fixedf(b << FRAC); }
-	friend fixedf operator/(const fixedf &a, const Sint64 b) { return a / fixedf(b << FRAC); }
-	friend fixedf operator+(const Sint64 a, const fixedf &b) { return fixedf(a << FRAC) + b; }
-	friend fixedf operator-(const Sint64 a, const fixedf &b) { return fixedf(a << FRAC) - b; }
-	friend fixedf operator*(const Sint64 a, const fixedf &b) { return fixedf(a << FRAC) * b; }
-	friend fixedf operator/(const Sint64 a, const fixedf &b) { return fixedf(a << FRAC) / b; }
-	friend bool operator==(const fixedf &a, const Sint64 b) { return a == fixedf(b << FRAC); }
-	friend bool operator==(const Sint64 a, const fixedf &b) { return b == fixedf(a << FRAC); }
-	friend bool operator!=(const fixedf &a, const Sint64 b) { return a != fixedf(b << FRAC); }
-	friend bool operator!=(const Sint64 a, const fixedf &b) { return b != fixedf(a << FRAC); }
-	friend bool operator>=(const fixedf &a, const Sint64 b) { return a >= fixedf(b << FRAC); }
-	friend bool operator>=(const Sint64 a, const fixedf &b) { return b >= fixedf(a << FRAC); }
-	friend bool operator<=(const fixedf &a, const Sint64 b) { return a <= fixedf(b << FRAC); }
-	friend bool operator<=(const Sint64 a, const fixedf &b) { return b <= fixedf(a << FRAC); }
-	friend bool operator>(const fixedf &a, const Sint64 b) { return a > fixedf(b << FRAC); }
-	friend bool operator>(const Sint64 a, const fixedf &b) { return b > fixedf(a << FRAC); }
-	friend bool operator<(const fixedf &a, const Sint64 b) { return a < fixedf(b << FRAC); }
-	friend bool operator<(const Sint64 a, const fixedf &b) { return b < fixedf(a << FRAC); }
+	friend fixedf operator+(const fixedf &a, const int64_t b) { return a + fixedf(b << FRAC); }
+	friend fixedf operator-(const fixedf &a, const int64_t b) { return a - fixedf(b << FRAC); }
+	friend fixedf operator*(const fixedf &a, const int64_t b) { return a * fixedf(b << FRAC); }
+	friend fixedf operator/(const fixedf &a, const int64_t b) { return a / fixedf(b << FRAC); }
+	friend fixedf operator+(const int64_t a, const fixedf &b) { return fixedf(a << FRAC) + b; }
+	friend fixedf operator-(const int64_t a, const fixedf &b) { return fixedf(a << FRAC) - b; }
+	friend fixedf operator*(const int64_t a, const fixedf &b) { return fixedf(a << FRAC) * b; }
+	friend fixedf operator/(const int64_t a, const fixedf &b) { return fixedf(a << FRAC) / b; }
+	friend bool operator==(const fixedf &a, const int64_t b) { return a == fixedf(b << FRAC); }
+	friend bool operator==(const int64_t a, const fixedf &b) { return b == fixedf(a << FRAC); }
+	friend bool operator!=(const fixedf &a, const int64_t b) { return a != fixedf(b << FRAC); }
+	friend bool operator!=(const int64_t a, const fixedf &b) { return b != fixedf(a << FRAC); }
+	friend bool operator>=(const fixedf &a, const int64_t b) { return a >= fixedf(b << FRAC); }
+	friend bool operator>=(const int64_t a, const fixedf &b) { return b >= fixedf(a << FRAC); }
+	friend bool operator<=(const fixedf &a, const int64_t b) { return a <= fixedf(b << FRAC); }
+	friend bool operator<=(const int64_t a, const fixedf &b) { return b <= fixedf(a << FRAC); }
+	friend bool operator>(const fixedf &a, const int64_t b) { return a > fixedf(b << FRAC); }
+	friend bool operator>(const int64_t a, const fixedf &b) { return b > fixedf(a << FRAC); }
+	friend bool operator<(const fixedf &a, const int64_t b) { return a < fixedf(b << FRAC); }
+	friend bool operator<(const int64_t a, const fixedf &b) { return b < fixedf(a << FRAC); }
 	friend fixedf operator>>(const fixedf &a, const int b) { return fixedf(a.v >> b); }
 	friend fixedf operator<<(const fixedf &a, const int b) { return fixedf(a.v << b); }
 
@@ -52,7 +52,7 @@ public:
 		(*this) = (*this) * a;
 		return (*this);
 	}
-	fixedf &operator*=(const Sint64 a)
+	fixedf &operator*=(const int64_t a)
 	{
 		(*this) = (*this) * a;
 		return (*this);
@@ -62,7 +62,7 @@ public:
 		(*this) = (*this) / a;
 		return (*this);
 	}
-	fixedf &operator/=(const Sint64 a)
+	fixedf &operator/=(const int64_t a)
 	{
 		(*this) = (*this) / a;
 		return (*this);
@@ -72,7 +72,7 @@ public:
 		(*this) = (*this) + a;
 		return (*this);
 	}
-	fixedf &operator+=(const Sint64 a)
+	fixedf &operator+=(const int64_t a)
 	{
 		(*this) = (*this) + a;
 		return (*this);
@@ -82,7 +82,7 @@ public:
 		(*this) = (*this) - a;
 		return (*this);
 	}
-	fixedf &operator-=(const Sint64 a)
+	fixedf &operator-=(const int64_t a)
 	{
 		(*this) = (*this) - a;
 		return (*this);
@@ -105,10 +105,10 @@ public:
 	{
 		// 64*64 = (128bit>>FRAC) & ((1<<64)-1)
 		//return fixedf(a.v*b.v >> FRAC);
-		Sint64 hi = 0;
-		Uint64 a0, a1, b0, b1;
-		Uint64 lo = 0;
-		Uint64 oldlo;
+		int64_t hi = 0;
+		uint64_t a0, a1, b0, b1;
+		uint64_t lo = 0;
+		uint64_t oldlo;
 		int isneg = 0;
 		if (a.v < 0) {
 			a0 = (-a.v) & 0xffffffff;
@@ -126,7 +126,7 @@ public:
 			b0 = b.v & 0xffffffff;
 			b1 = b.v >> 32;
 		}
-		Uint64 x;
+		uint64_t x;
 		// a0 * b;
 		lo = a0 * b0;
 		oldlo = lo;
@@ -144,17 +144,17 @@ public:
 		hi += x >> 32;
 
 		hi += a1 * b1;
-		Sint64 out = (lo >> FRAC) + ((hi & MASK) << (64 - FRAC));
+		int64_t out = (lo >> FRAC) + ((hi & MASK) << (64 - FRAC));
 		return isneg ? -out : out;
 	}
 	friend fixedf operator/(const fixedf &a, const fixedf &b)
 	{
 		// 128-bit divided by 64-bit, to make sure high bits are not lost
-		Sint64 quotient_hi = a.v >> (64 - FRAC);
-		Uint64 quotient_lo = a.v << FRAC;
-		Sint64 d = b.v;
+		int64_t quotient_hi = a.v >> (64 - FRAC);
+		uint64_t quotient_lo = a.v << FRAC;
+		int64_t d = b.v;
 		int isneg = 0;
-		Sint64 remainder = 0;
+		int64_t remainder = 0;
 
 		if (d < 0) {
 			d = -d;
@@ -162,13 +162,13 @@ public:
 		}
 
 		for (int i = 0; i < 128; i++) {
-			Uint64 sbit = (Uint64(1) << 63) & quotient_hi;
+			uint64_t sbit = (uint64_t(1) << 63) & quotient_hi;
 			remainder <<= 1;
 			if (sbit) remainder |= 1;
 			// shift quotient left 1
 			{
 				quotient_hi <<= 1;
-				if (quotient_lo & (Uint64(1) << 63)) quotient_hi |= 1;
+				if (quotient_lo & (uint64_t(1) << 63)) quotient_hi |= 1;
 				quotient_lo <<= 1;
 			}
 			if (remainder >= d) {
@@ -176,7 +176,7 @@ public:
 				quotient_lo |= 1;
 			}
 		}
-		return (isneg ? -Sint64(quotient_lo) : quotient_lo);
+		return (isneg ? -int64_t(quotient_lo) : quotient_lo);
 	}
 	friend bool operator==(const fixedf &a, const fixedf &b) { return a.v == b.v; }
 	friend bool operator!=(const fixedf &a, const fixedf &b) { return a.v != b.v; }
@@ -187,11 +187,11 @@ public:
 
 	/* implicit operator float() bad */
 	inline int ToInt32() const { return int(v >> FRAC); }
-	inline Sint64 ToInt64() const { return v >> FRAC; }
-	inline float ToFloat() const { return v / float(Sint64(1) << FRAC); }
-	inline double ToDouble() const { return v / double(Sint64(1) << FRAC); }
+	inline int64_t ToInt64() const { return v >> FRAC; }
+	inline float ToFloat() const { return v / float(int64_t(1) << FRAC); }
+	inline double ToDouble() const { return v / double(int64_t(1) << FRAC); }
 
-	static fixedf FromDouble(const double val) { return fixedf(Sint64(((val) * double(Sint64(1) << FRAC)))); }
+	static fixedf FromDouble(const double val) { return fixedf(int64_t(((val) * double(int64_t(1) << FRAC)))); }
 
 	template <int NEW_FRAC_BITS>
 	operator fixedf<NEW_FRAC_BITS>() const
@@ -207,7 +207,7 @@ public:
 	{
 		/* only works on even-numbered fractional bits */
 		assert(!(FRAC & 1));
-		Uint64 root, remHi, remLo, testDiv, count;
+		uint64_t root, remHi, remLo, testDiv, count;
 		root = 0;
 		remHi = 0;
 		remLo = a.v;
@@ -236,7 +236,7 @@ public:
 		return x;
 	}
 
-	Sint64 v;
+	int64_t v;
 };
 
 typedef fixedf<32> fixed;

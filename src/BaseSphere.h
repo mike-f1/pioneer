@@ -46,8 +46,8 @@ public:
 	struct MaterialParameters {
 		AtmosphereParameters atmosphere;
 		std::vector<Camera::Shadow> shadows;
-		Sint32 patchDepth;
-		Sint32 maxPatchDepth;
+		int32_t patchDepth;
+		int32_t maxPatchDepth;
 	};
 
 	virtual void Reset() = 0;

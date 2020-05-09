@@ -8,6 +8,8 @@
 #include "LuaRef.h"
 #include "LuaTable.h"
 
+#include <sigc++/sigc++.h>
+
 class PropertyMap {
 public:
 	PropertyMap(LuaManager *lua);

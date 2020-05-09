@@ -6,7 +6,7 @@
 
 #include "RefCounted.h"
 #include "vector2.h"
-#include <SDL_stdinc.h>
+#include <cstdint>
 #include <string>
 
 namespace Graphics {
@@ -19,7 +19,7 @@ namespace PiGUI {
 	public:
 		explicit Image(const std::string &filename);
 
-		Uint32 GetId();
+		uint32_t GetId();
 		vector2f GetSize();
 		vector2f GetUv();
 

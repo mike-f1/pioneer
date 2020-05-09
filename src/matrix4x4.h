@@ -8,6 +8,7 @@
 #include "vector3.h"
 #include <math.h>
 #include <cassert>
+#include <cstring>
 
 template <typename T>
 class matrix4x4 {

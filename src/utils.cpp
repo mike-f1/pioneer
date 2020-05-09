@@ -2,19 +2,18 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "utils.h"
+
 #include "DateTime.h"
 #include "FileSystem.h"
 #include "Lang.h"
-#include "PngWriter.h"
 #include "StringF.h"
 #include "gameconsts.h"
-#include "gui/Gui.h"
-#include "libs.h"
-#include "graphics/Graphics.h"
 #include <cmath>
 #include <cstdio>
 #include <sstream>
 #include <iomanip>
+
+#include <SDL_messagebox.h>
 
 std::string format_money(double cents, bool showCents)
 {
@@ -276,17 +275,6 @@ std::string format_speed(double speed, int precision)
 	return ss.str();
 }
 
-void write_screenshot(const Graphics::ScreendumpState &sd, const char *destFile)
-{
-	const std::string dir = "screenshots";
-	FileSystem::userFiles.MakeDirectory(dir);
-	const std::string fname = FileSystem::JoinPathBelow(dir, destFile);
-
-	write_png(FileSystem::userFiles, fname, sd.pixels.get(), sd.width, sd.height, sd.stride, sd.bpp);
-
-	Output("Screenshot %s saved\n", fname.c_str());
-}
-
 // strcasestr() adapted from gnulib
 // (c) 2005 FSF. GPL2+
 
@@ -531,14 +519,14 @@ void Matrix4x4dToStr(const matrix4x4d &val, char *out, size_t size)
 #endif
 }
 
-std::string AutoToStr(Sint32 val)
+std::string AutoToStr(int32_t val)
 {
 	char str[64];
 	sprintf(str, "%" PRId32, val);
 	return str;
 }
 
-std::string AutoToStr(Sint64 val)
+std::string AutoToStr(int64_t val)
 {
 	char str[128];
 	sprintf(str, "%" PRId64, val);
@@ -555,16 +543,16 @@ std::string AutoToStr(double val)
 	return DoubleToStr(val);
 }
 
-Sint64 StrToSInt64(const std::string &str)
+int64_t StrToSInt64(const std::string &str)
 {
-	Sint64 val;
+	int64_t val;
 	sscanf(str.c_str(), "%" SCNd64, &val);
 	return val;
 }
 
-Uint64 StrToUInt64(const std::string &str)
+uint64_t StrToUInt64(const std::string &str)
 {
-	Uint64 val;
+	uint64_t val;
 	sscanf(str.c_str(), "%" SCNu64, &val);
 	return val;
 }
@@ -604,12 +592,12 @@ double StrToDouble(const std::string &str)
 #endif
 }
 
-void StrToAuto(Sint32 *pVal, const std::string &str)
+void StrToAuto(int32_t *pVal, const std::string &str)
 {
 	sscanf(str.c_str(), "%" SCNd32, pVal);
 }
 
-void StrToAuto(Sint64 *pVal, const std::string &str)
+void StrToAuto(int64_t *pVal, const std::string &str)
 {
 	sscanf(str.c_str(), "%" SCNd64, pVal);
 }

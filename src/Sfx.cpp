@@ -242,7 +242,7 @@ void SfxManager::Cleanup()
 		if (!numInstances)
 			continue;
 
-		for (Sint64 i = Sint64(numInstances - 1); i >= 0; i--) {
+		for (int64_t i = int64_t(numInstances - 1); i >= 0; i--) {
 			Sfx &inst(GetInstanceByIndex(SFX_TYPE(t), i));
 			if (inst.m_type == TYPE_NONE) {
 				m_instances[t].erase(m_instances[t].begin() + i);
@@ -318,7 +318,7 @@ vector2f SfxManager::CalculateOffset(const enum SFX_TYPE type, const Sfx &inst)
 {
 	if (m_materialData[type].effect == Graphics::EffectType::BILLBOARD_ATLAS) {
 		const int spriteframe = inst.AgeBlend() * (m_materialData[type].num_textures - 1);
-		const Sint32 numImgsWide = m_materialData[type].num_imgs_wide;
+		const int32_t numImgsWide = m_materialData[type].num_imgs_wide;
 		const int u = (spriteframe % numImgsWide); // % is the "modulo operator", the remainder of i / width;
 		const int v = (spriteframe / numImgsWide); // where "/" is an integer division
 		return vector2f(

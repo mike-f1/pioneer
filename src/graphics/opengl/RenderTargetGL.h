@@ -36,7 +36,7 @@ namespace Graphics {
 			~RenderTarget();
 			virtual Texture *GetColorTexture() const;
 			virtual Texture *GetDepthTexture() const;
-			virtual void SetCubeFaceTexture(const Uint32 face, Texture *t) final;
+			virtual void SetCubeFaceTexture(const uint32_t face, Texture *t) final;
 			virtual void SetColorTexture(Texture *) final;
 			virtual void SetDepthTexture(Texture *) final;
 

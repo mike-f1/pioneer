@@ -23,7 +23,7 @@ bool SectorCustomSystemsGenerator::Apply(Random &rng, RefCountedPtr<Galaxy> gala
 	const int sx = sector->sx;
 	const int sy = sector->sy;
 	const int sz = sector->sz;
-	const Sint64 dist = (1 + sx * sx + sy * sy + sz * sz);
+	const int64_t dist = (1 + sx * sx + sy * sy + sz * sz);
 
 	if ((sx >= -m_customOnlyRadius) && (sx <= m_customOnlyRadius - 1) &&
 		(sy >= -m_customOnlyRadius) && (sy <= m_customOnlyRadius - 1) &&
@@ -33,7 +33,7 @@ bool SectorCustomSystemsGenerator::Apply(Random &rng, RefCountedPtr<Galaxy> gala
 	const std::vector<const CustomSystem *> &systems = galaxy->GetCustomSystems()->GetCustomSystemsForSector(sx, sy, sz);
 	if (systems.size() == 0) return true;
 
-	Uint32 sysIdx = 0;
+	uint32_t sysIdx = 0;
 	for (std::vector<const CustomSystem *>::const_iterator it = systems.begin(); it != systems.end(); ++it, ++sysIdx) {
 		const CustomSystem *cs = *it;
 		Sector::System s(sector.Get(), sx, sy, sz, sysIdx);
@@ -107,7 +107,7 @@ const std::string SectorRandomSystemsGenerator::GenName(RefCountedPtr<Galaxy> ga
 	default: chance += 16 * dist; break;
 	}
 
-	Uint32 weight = rng.Int32(chance);
+	uint32_t weight = rng.Int32(chance);
 	if (weight < 500 || galaxy->GetFactions()->IsHomeSystem(SystemPath(sx, sy, sz, si))) {
 		/* well done. you get a real name  */
 		int len = rng.Int32(2, 3);
@@ -140,9 +140,9 @@ bool SectorRandomSystemsGenerator::Apply(Random &rng, RefCountedPtr<Galaxy> gala
 	const int sx = sector->sx;
 	const int sy = sector->sy;
 	const int sz = sector->sz;
-	const int customCount = static_cast<Uint32>(sector->m_systems.size());
-	const Sint64 dist = (1 + sx * sx + sy * sy + sz * sz);
-	const Sint64 freq = (1 + sx * sx + sy * sy);
+	const int customCount = static_cast<uint32_t>(sector->m_systems.size());
+	const int64_t dist = (1 + sx * sx + sy * sy + sz * sz);
+	const int64_t freq = (1 + sx * sx + sy * sy);
 
 	const int numSystems = (rng.Int32(4, 20) * galaxy->GetSectorDensity(sx, sy, sz)) >> 8;
 	sector->m_systems.reserve(numSystems);
@@ -185,7 +185,7 @@ bool SectorRandomSystemsGenerator::Apply(Random &rng, RefCountedPtr<Galaxy> gala
 
 		// Frequencies are low enough that we probably don't need this anymore.
 		if (freq > Square(10)) {
-			const Uint32 weight = rng.Int32(1000000);
+			const uint32_t weight = rng.Int32(1000000);
 			if (weight < 1) {
 				s.m_starType[0] = GalaxyEnums::BodyType::TYPE_STAR_IM_BH; // These frequencies are made up
 			} else if (weight < 3) {
@@ -258,7 +258,7 @@ bool SectorRandomSystemsGenerator::Apply(Random &rng, RefCountedPtr<Galaxy> gala
 				s.m_starType[0] = GalaxyEnums::BodyType::TYPE_BROWN_DWARF;
 			}
 		} else {
-			const Uint32 weight = rng.Int32(1000000);
+			const uint32_t weight = rng.Int32(1000000);
 			if (weight < 100) { // should be 1 but that is boring
 				s.m_starType[0] = GalaxyEnums::BodyType::TYPE_STAR_O;
 			} else if (weight < 1300) {
@@ -292,7 +292,7 @@ bool SectorRandomSystemsGenerator::Apply(Random &rng, RefCountedPtr<Galaxy> gala
 		if ((s.m_starType[0] <= GalaxyEnums::BodyType::TYPE_STAR_A) && (rng.Int32(10) == 0)) {
 			// make primary a giant. never more than one giant in a system
 			if (freq > Square(10)) {
-				const Uint32 weight = rng.Int32(1000);
+				const uint32_t weight = rng.Int32(1000);
 				if (weight >= 999) {
 					s.m_starType[0] = GalaxyEnums::BodyType::TYPE_STAR_B_HYPER_GIANT;
 				} else if (weight >= 998) {
@@ -345,7 +345,7 @@ void SectorPersistenceGenerator::SetExplored(Sector::System *sys, ExplorationSta
 		Time::DateTime dt = Time::DateTime(3200, 1, 1, 0, 0, 0) + Time::TimeDelta(time, Time::Second);
 		int year, month, day;
 		dt.GetDateParts(&year, &month, &day);
-		Sint32 date = day | month << 5 | year << 9;
+		int32_t date = day | month << 5 | year << 9;
 		m_exploredSystems[sys->GetPath()] = date;
 	}
 }
@@ -356,7 +356,7 @@ bool SectorPersistenceGenerator::Apply(Random &rng, RefCountedPtr<Galaxy> galaxy
 		for (Sector::System &secsys : sector->m_systems) {
 			const auto iter = m_exploredSystems.find(SystemPath(secsys.sx, secsys.sy, secsys.sz, secsys.idx));
 			if (iter != m_exploredSystems.end()) {
-				Sint32 date = iter->second;
+				int32_t date = iter->second;
 				if (date == 0) {
 					secsys.m_explored = ExplorationState::eEXPLORED_AT_START;
 					secsys.m_exploredTime = 0.0;

@@ -77,9 +77,9 @@ namespace Text {
 			int offX, offY;
 			float offU, offV; //atlas UV offset
 			FT_Face ftFace;
-			Uint32 ftIndex;
+			uint32_t ftIndex;
 		};
-		const Glyph &GetGlyph(Uint32 ch);
+		const Glyph &GetGlyph(uint32_t ch);
 
 		static int GetGlyphCount() { return s_glyphCount; }
 		static void ClearGlyphCount() { s_glyphCount = 0; }
@@ -92,7 +92,7 @@ namespace Text {
 		TextureFont &operator=(const TextureFont &);
 
 		void AddCachedVertexBuffer(Graphics::VertexBuffer *pVB, const std::string &str);
-		Uint32 CleanVertexBufferCache();
+		uint32_t CleanVertexBufferCache();
 
 		FontConfig m_config;
 		float m_scale;
@@ -103,7 +103,7 @@ namespace Text {
 		FT_Face GetFTFace(const FontConfig::Face &face);
 		std::map<FontConfig::Face, std::pair<FT_Face, RefCountedPtr<FileSystem::FileData>>> m_faces;
 
-		Glyph BakeGlyph(Uint32 chr);
+		Glyph BakeGlyph(uint32_t chr);
 
 		float GetKern(const Glyph &a, const Glyph &b);
 
@@ -115,7 +115,7 @@ namespace Text {
 
 		static int s_glyphCount;
 
-		std::map<Uint32, Glyph> m_glyphs;
+		std::map<uint32_t, Glyph> m_glyphs;
 
 		// UV offsets for glyphs
 		unsigned int m_atlasU;

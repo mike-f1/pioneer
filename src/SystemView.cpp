@@ -36,7 +36,7 @@
 using namespace Graphics;
 
 const double SystemView::PICK_OBJECT_RECT_SIZE = 12.0;
-const Uint16 SystemView::N_VERTICES_MAX = 100;
+const uint16_t SystemView::N_VERTICES_MAX = 100;
 static const float MIN_ZOOM = 1e-30f; // Just to avoid having 0
 static const float MAX_ZOOM = 1e20f;
 static const float ZOOM_IN_SPEED = 2.0f;
@@ -395,7 +395,7 @@ void SystemView::PutOrbit(const Orbit *orbit, const vector3d &offset, const Colo
 	static const float startTrailPercent = 0.85;
 	static const float fadedColorParameter = 0.8;
 
-	Uint16 fadingColors = 0;
+	uint16_t fadingColors = 0;
 	const double tMinust0 = m_time - GameLocator::getGame()->GetTime();
 	for (unsigned short i = 0; i < N_VERTICES_MAX; ++i) {
 		const double t = double(i) / double(N_VERTICES_MAX) * maxT;
@@ -410,9 +410,9 @@ void SystemView::PutOrbit(const Orbit *orbit, const vector3d &offset, const Colo
 
 	const Color fadedColor = color * fadedColorParameter;
 	std::fill_n(m_orbitColors.get(), num_vertices, fadedColor);
-	const Uint16 trailLength = num_vertices - fadingColors;
+	const uint16_t trailLength = num_vertices - fadingColors;
 
-	for (Uint16 currentColor = 0; currentColor < trailLength; ++currentColor) {
+	for (uint16_t currentColor = 0; currentColor < trailLength; ++currentColor) {
 		float scalingParameter = fadedColorParameter + static_cast<float>(currentColor) / trailLength * (1.f - fadedColorParameter);
 		m_orbitColors[currentColor + fadingColors] = color * scalingParameter;
 	}

@@ -1,12 +1,13 @@
 // Copyright © 2008-2019 Pioneer Developers. See AUTHORS.txt for details
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
+#include "OS.h"
+
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include "Win32Setup.h"
 
 #include "FileSystem.h"
-#include "OS.h"
 #include "TextUtils.h"
 #ifdef WITH_BREAKPAD
 #include "breakpad/exception_handler.h"
@@ -15,6 +16,7 @@
 #include <stdio.h>
 #include <wchar.h>
 #include <windows.h>
+#include "../utils.h"
 
 #include <shellapi.h>
 
@@ -115,14 +117,14 @@ namespace OS {
 #endif
 	}
 
-	Uint64 HFTimerFreq()
+	uint64_t HFTimerFreq()
 	{
 		LARGE_INTEGER i;
 		QueryPerformanceFrequency(&i);
 		return i.QuadPart;
 	}
 
-	Uint64 HFTimer()
+	uint64_t HFTimer()
 	{
 		LARGE_INTEGER i;
 		QueryPerformanceCounter(&i);

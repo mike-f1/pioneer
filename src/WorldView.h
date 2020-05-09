@@ -166,7 +166,7 @@ public:
 	void DrawTargetGuideSquare(const vector2f &pos, const float size, const Color &c);
 
 private:
-	void CreateVertexBuffer(const Uint32 size);
+	void CreateVertexBuffer(const uint32_t size);
 
 	WorldView *m_worldView;
 	Graphics::RenderState *m_renderState;

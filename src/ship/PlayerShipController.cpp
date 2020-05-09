@@ -119,7 +119,7 @@ void PlayerShipController::SaveToJson(Json &jsonObj, Space *space)
 	Json gunStatusesSlots = Json::array();
 	for (std::vector<int> statuses : m_gunStatuses) {
 		Json gunStatusesSlot = Json::array();
-		for (int num = 0; num < statuses.size(); num++) {
+		for (unsigned num = 0; num < statuses.size(); num++) {
 			gunStatusesSlot.push_back(statuses[num]);
 		}
 		gunStatusesSlots.push_back(gunStatusesSlot);
@@ -147,11 +147,12 @@ void PlayerShipController::LoadFromJson(const Json &jsonObj)
 		assert(gunStatuses.size() == WEAPON_CONFIG_SLOTS);
 		for (unsigned slot = 0; slot < WEAPON_CONFIG_SLOTS; slot++) {
 			Json gunStatus = gunStatuses[slot];
-			for (int gs = 0; gs < gunStatus.size(); gs++) {
+			for (unsigned gs = 0; gs < gunStatus.size(); gs++) {
 				m_gunStatuses[slot].push_back(gunStatus[gs]);
 			}
 		}
 	} catch (Json::type_error &) {
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 		throw SavedGameCorruptException();
 	}
 }
@@ -232,16 +233,16 @@ void PlayerShipController::StaticUpdate(const float timeStep)
 	[&](KeyBindings::ActionBinding *wCR) {
 		assert(wCR != nullptr);
 		if (wCR->IsActive()) {
-			int numMountedGuns = m_ship->GetMountedGunsNum();
-			int numStoredGuns = m_gunStatuses[i].size();
+			size_t numMountedGuns = m_ship->GetMountedGunsNum();
+			size_t numStoredGuns = m_gunStatuses[i].size();
 			if (numMountedGuns > numStoredGuns) {
 				// Use stored status where present and do nothing on remaining guns
-				for (size_t j = 0; j < numStoredGuns; j++) {
+				for (unsigned j = 0; j < numStoredGuns; j++) {
 					m_ship->SetActivationStateOfGun(j, m_gunStatuses[i][j]);
 				}
 			} else {
 				// Use status and drop unused
-				for (size_t j = 0; j < numMountedGuns; j++) {
+				for (unsigned j = 0; j < numMountedGuns; j++) {
 					m_ship->SetActivationStateOfGun(j, m_gunStatuses[i][j]);
 				}
 				m_gunStatuses[i].resize(numMountedGuns);
@@ -254,9 +255,9 @@ void PlayerShipController::StaticUpdate(const float timeStep)
 	[&](KeyBindings::ActionBinding *wCS) {
 		assert(wCS != nullptr);
 		if (wCS->IsActive()) {
-			int numGuns = m_ship->GetMountedGunsNum();
+			size_t numGuns = m_ship->GetMountedGunsNum();
 			m_gunStatuses[i].resize(numGuns);
-			for (size_t j = 0; j < numGuns; j++) {
+			for (unsigned j = 0; j < numGuns; j++) {
 				m_gunStatuses[i][j] = m_ship->GetActivationStateOfGun(j) ? 1 : 0;
 			}
 		}

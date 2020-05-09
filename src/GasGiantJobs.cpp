@@ -29,9 +29,9 @@ namespace GasGiantJobs {
 		{ p6, p5, p8, p7 }, // +z - NB: these are actually reversed!
 		{ p1, p2, p3, p4 } // -z
 	};
-	const vector3d &GetPatchFaces(const Uint32 patch, const Uint32 face) { return s_patchFaces[patch][face]; }
+	const vector3d &GetPatchFaces(const uint32_t patch, const uint32_t face) { return s_patchFaces[patch][face]; }
 
-	STextureFaceRequest::STextureFaceRequest(const vector3d *v_, const SystemPath &sysPath_, const Sint32 face_, const Sint32 uvDIMs_, Terrain *pTerrain_) :
+	STextureFaceRequest::STextureFaceRequest(const vector3d *v_, const SystemPath &sysPath_, const int32_t face_, const int32_t uvDIMs_, Terrain *pTerrain_) :
 		corners(v_),
 		sysPath(sysPath_),
 		face(face_),
@@ -50,8 +50,8 @@ namespace GasGiantJobs {
 
 		assert(corners != nullptr);
 		double fracStep = 1.0 / double(UVDims() - 1);
-		for (Sint32 v = 0; v < UVDims(); v++) {
-			for (Sint32 u = 0; u < UVDims(); u++) {
+		for (int32_t v = 0; v < UVDims(); v++) {
+			for (int32_t u = 0; u < UVDims(); u++) {
 				// where in this row & colum are we now.
 				const double ustep = double(u) * fracStep;
 				const double vstep = double(v) * fracStep;
@@ -107,7 +107,7 @@ namespace GasGiantJobs {
 	}
 
 	// ********************************************************************************
-	GenFaceQuad::GenFaceQuad(const vector2f &size, Graphics::RenderState *state, const Uint32 GGQuality)
+	GenFaceQuad::GenFaceQuad(const vector2f &size, Graphics::RenderState *state, const uint32_t GGQuality)
 	{
 		PROFILE_SCOPED()
 		assert(state);
@@ -174,7 +174,7 @@ namespace GasGiantJobs {
 	}
 
 	// ********************************************************************************
-	SGPUGenRequest::SGPUGenRequest(const SystemPath &sysPath_, const Sint32 uvDIMs_, Terrain *pTerrain_, const float planetRadius_, const float hueAdjust_, GenFaceQuad *pQuad_, Graphics::Texture *pTex_) :
+	SGPUGenRequest::SGPUGenRequest(const SystemPath &sysPath_, const int32_t uvDIMs_, Terrain *pTerrain_, const float planetRadius_, const float hueAdjust_, GenFaceQuad *pQuad_, Graphics::Texture *pTex_) :
 		m_texture(pTex_),
 		sysPath(sysPath_),
 		uvDIMs(uvDIMs_),
@@ -195,7 +195,7 @@ namespace GasGiantJobs {
 		m_specialParams.planetRadius = planetRadius;
 		m_specialParams.time = 0.0f;
 
-		for (Uint32 i = 0; i < 3; i++) {
+		for (unsigned i = 0; i < 3; i++) {
 			m_specialParams.frequency[i] = float(pTerrain->GetFracDef(i).frequency);
 		}
 
@@ -205,7 +205,7 @@ namespace GasGiantJobs {
 	}
 
 	// ********************************************************************************
-	void SGPUGenResult::addResult(Graphics::Texture *t_, Sint32 uvDims_)
+	void SGPUGenResult::addResult(Graphics::Texture *t_, int32_t uvDims_)
 	{
 		PROFILE_SCOPED()
 		mData = SGPUGenData(t_, uvDims_);
@@ -255,7 +255,7 @@ namespace GasGiantJobs {
 		}
 
 		GasGiant::BeginRenderTarget();
-		for (Uint32 iFace = 0; iFace < NUM_PATCHES; iFace++) {
+		for (unsigned iFace = 0; iFace < NUM_PATCHES; iFace++) {
 			// render the scene
 			GasGiant::SetRenderTargetCubemap(iFace, mData->Texture());
 			RendererLocator::getRenderer()->BeginFrame();

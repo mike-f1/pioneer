@@ -38,6 +38,7 @@ GeoPatch::GeoPatch(const RefCountedPtr<GeoPatchContext> &ctx_, GeoSphere *gs,
 	m_parent(nullptr),
 	m_geosphere(gs),
 	m_depth(depth),
+	m_needUpdateVBOs(false),
 	m_PatchID(ID_),
 	m_HasJobRequest(false)
 {
@@ -93,7 +94,7 @@ void GeoPatch::UpdateVBOs()
 	GeoPatchContext::VBOVertex *VBOVtxPtr = m_vertexBuffer->Map<GeoPatchContext::VBOVertex>(Graphics::BUFFER_MAP_WRITE);
 	assert(m_vertexBuffer->GetDesc().stride == sizeof(GeoPatchContext::VBOVertex));
 
-	const Sint32 edgeLen = m_ctx->GetEdgeLen();
+	const int32_t edgeLen = m_ctx->GetEdgeLen();
 	const double frac = m_ctx->GetFrac();
 	const double *pHts = m_heights.get();
 	const vector3f *pNorm = m_normals.get();
@@ -108,8 +109,8 @@ void GeoPatch::UpdateVBOs()
 	#endif // DEBUG_BOUNDING_SPHERES
 	// ----------------------------------------------------
 	// inner loops
-	for (Sint32 y = 1; y < edgeLen - 1; y++) {
-		for (Sint32 x = 1; x < edgeLen - 1; x++) {
+	for (int32_t y = 1; y < edgeLen - 1; y++) {
+		for (int32_t x = 1; x < edgeLen - 1; x++) {
 			const double height = *pHts;
 			minh = std::min(height, minh);
 			const double xFrac = double(x - 1) * frac;
@@ -148,14 +149,14 @@ void GeoPatch::UpdateVBOs()
 	}
 	const double minhScale = (minh + 1.0) * 0.999995;
 	// ----------------------------------------------------
-	const Sint32 innerLeft = 1;
-	const Sint32 innerRight = edgeLen - 2;
-	const Sint32 outerLeft = 0;
-	const Sint32 outerRight = edgeLen - 1;
+	const int32_t innerLeft = 1;
+	const int32_t innerRight = edgeLen - 2;
+	const int32_t outerLeft = 0;
+	const int32_t outerRight = edgeLen - 1;
 	// vertical edges
 	// left-edge
-	for (Sint32 y = 1; y < edgeLen - 1; y++) {
-		const Sint32 x = innerLeft - 1;
+	for (int32_t y = 1; y < edgeLen - 1; y++) {
+		const int32_t x = innerLeft - 1;
 		const double xFrac = double(x - 1) * frac;
 		const double yFrac = double(y - 1) * frac;
 		const vector3d p((GetSpherePoint(xFrac, yFrac) * minhScale) - m_clipCentroid);
@@ -168,8 +169,8 @@ void GeoPatch::UpdateVBOs()
 		vtxPtr->uv = vtxInr->uv;
 	}
 	// right-edge
-	for (Sint32 y = 1; y < edgeLen - 1; y++) {
-		const Sint32 x = innerRight + 1;
+	for (int32_t y = 1; y < edgeLen - 1; y++) {
+		const int32_t x = innerRight + 1;
 		const double xFrac = double(x - 1) * frac;
 		const double yFrac = double(y - 1) * frac;
 		const vector3d p((GetSpherePoint(xFrac, yFrac) * minhScale) - m_clipCentroid);
@@ -182,14 +183,14 @@ void GeoPatch::UpdateVBOs()
 		vtxPtr->uv = vtxInr->uv;
 	}
 	// ----------------------------------------------------
-	const Sint32 innerTop = 1;
-	const Sint32 innerBottom = edgeLen - 2;
-	const Sint32 outerTop = 0;
-	const Sint32 outerBottom = edgeLen - 1;
+	const int innerTop = 1;
+	const int innerBottom = edgeLen - 2;
+	const int outerTop = 0;
+	const int outerBottom = edgeLen - 1;
 	// horizontal edges
 	// top-edge
-	for (Sint32 x = 1; x < edgeLen - 1; x++) {
-		const Sint32 y = innerTop - 1;
+	for (int x = 1; x < edgeLen - 1; x++) {
+		const int y = innerTop - 1;
 		const double xFrac = double(x - 1) * frac;
 		const double yFrac = double(y - 1) * frac;
 		const vector3d p((GetSpherePoint(xFrac, yFrac) * minhScale) - m_clipCentroid);
@@ -202,8 +203,8 @@ void GeoPatch::UpdateVBOs()
 		vtxPtr->uv = vtxInr->uv;
 	}
 	// bottom-edge
-	for (Sint32 x = 1; x < edgeLen - 1; x++) {
-		const Sint32 y = innerBottom + 1;
+	for (int x = 1; x < edgeLen - 1; x++) {
+		const int y = innerBottom + 1;
 		const double xFrac = double(x - 1) * frac;
 		const double yFrac = double(y - 1) * frac;
 		const vector3d p((GetSpherePoint(xFrac, yFrac) * minhScale) - m_clipCentroid);
@@ -406,7 +407,7 @@ void GeoPatch::ReceiveHeightmaps(SQuadSplitResult *psr)
 	assert(NULL != psr);
 	if (m_depth < psr->depth()) {
 		// this should work because each depth should have a common history
-		const Uint32 kidIdx = psr->data(0).patchID.GetPatchIdx(m_depth + 1);
+		const uint32_t kidIdx = psr->data(0).patchID.GetPatchIdx(m_depth + 1);
 		if (m_kids[kidIdx]) {
 			m_kids[kidIdx]->ReceiveHeightmaps(psr);
 		} else {

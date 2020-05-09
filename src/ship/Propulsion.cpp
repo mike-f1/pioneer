@@ -32,6 +32,7 @@ void Propulsion::LoadFromJson(const Json &jsonObj, Space *space)
 		// !!! This is commented to avoid savegame bumps:
 		//m_fuelTankMass = jsonObj["tank_mass"].asInt();
 	} catch (Json::type_error &) {
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 		throw SavedGameCorruptException();
 	}
 };

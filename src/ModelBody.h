@@ -37,7 +37,7 @@ public:
 	void SetStatic(bool isStatic);
 	bool IsStatic() const { return m_isStatic; }
 	const Aabb &GetAabb() const { return m_collMesh->GetAabb(); }
-	SceneGraph::Model *GetModel() const { return m_model; }
+	SceneGraph::Model *GetModel() const { return m_model.get(); }
 	CollMesh *GetCollMesh() { return m_collMesh.Get(); }
 	Geom *GetGeom() const { return m_geom; }
 
@@ -69,7 +69,7 @@ private:
 	RefCountedPtr<CollMesh> m_collMesh;
 	Geom *m_geom; //static geom
 	std::string m_modelName;
-	SceneGraph::Model *m_model;
+	std::unique_ptr<SceneGraph::Model> m_model;
 	std::vector<Geom *> m_dynGeoms;
 	SceneGraph::Animation *m_idleAnimation;
 	std::unique_ptr<Shields> m_shields;

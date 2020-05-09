@@ -37,7 +37,7 @@ class CityOnPlanet : public Object {
 public:
 	OBJDEF(CityOnPlanet, Object, CITYONPLANET);
 	CityOnPlanet() = delete;
-	CityOnPlanet(Planet *planet, SpaceStation *station, const Uint32 seed);
+	CityOnPlanet(Planet *planet, SpaceStation *station, const uint32_t seed);
 	virtual ~CityOnPlanet();
 	void Render(const Graphics::Frustum &camera, const SpaceStation *station, const vector3d &viewCoords, const matrix4x4d &viewTransform);
 	inline Planet *GetPlanet() const { return m_planet; }
@@ -51,7 +51,7 @@ private:
 	void RemoveStaticGeomsFromCollisionSpace();
 
 	struct BuildingDef {
-		Uint32 instIndex;
+		uint32_t instIndex;
 		float clipRadius;
 		int rotation; // 0-3
 		vector3d pos;
@@ -62,7 +62,7 @@ private:
 	FrameId m_frame;
 	std::vector<BuildingDef> m_buildings;
 	std::vector<BuildingDef> m_enabledBuildings;
-	std::vector<Uint32> m_buildingCounts;
+	std::vector<uint32_t> m_buildingCounts;
 	int m_detailLevel;
 	vector3d m_realCentre;
 	float m_clipRadius;
@@ -77,7 +77,7 @@ private:
 		SceneGraph::Model *resolvedModel;
 		SceneGraph::Animation *idle;
 		RefCountedPtr<CollMesh> collMesh;
-		Uint32 instIndex;
+		uint32_t instIndex;
 	};
 
 	struct citybuildinglist_t {

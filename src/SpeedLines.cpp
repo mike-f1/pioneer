@@ -39,9 +39,9 @@ SpeedLines::SpeedLines(Ship *s) :
 		}
 	}
 
-	const Uint32 doubleNumPoints = static_cast<Uint32>(m_points.size()) * 2;
+	const uint32_t doubleNumPoints = static_cast<uint32_t>(m_points.size()) * 2;
 	m_varray.reset(new Graphics::VertexArray(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE, doubleNumPoints));
-	for (Uint32 i = 0; i < doubleNumPoints; i++)
+	for (uint32_t i = 0; i < doubleNumPoints; i++)
 		m_varray->Add(vector3f(0.0f), Color::BLACK);
 
 	Graphics::RenderStateDesc rsd;
@@ -119,7 +119,7 @@ void SpeedLines::Render()
 
 	const vector3f dir = m_dir * m_lineLength;
 
-	Uint16 vtx = 0;
+	uint16_t vtx = 0;
 	//distance fade
 	Color col(Color::GRAY);
 	for (auto it = m_points.begin(); it != m_points.end(); ++it) {
@@ -137,7 +137,7 @@ void SpeedLines::Render()
 	RendererLocator::getRenderer()->DrawBuffer(m_vbuffer.get(), m_renderState, m_material.Get(), Graphics::LINE_SINGLE);
 }
 
-void SpeedLines::CreateVertexBuffer(const Uint32 size)
+void SpeedLines::CreateVertexBuffer(const uint32_t size)
 {
 	PROFILE_SCOPED();
 	Graphics::MaterialDescriptor desc;

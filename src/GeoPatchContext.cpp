@@ -25,7 +25,7 @@ void GeoPatchContext::GenerateIndices()
 	if (m_prevEdgeLen == m_edgeLen)
 		return;
 
-	std::vector<Uint32> pl_short;
+	std::vector<uint32_t> pl_short;
 
 	int tri_count = 0;
 	// calculate how many tri's there are
@@ -38,7 +38,7 @@ void GeoPatchContext::GenerateIndices()
 	pl_short.assign(tri_count + VBO_COUNT_MID_IDX() + VBO_COUNT_HI_EDGE() * 4, 0);
 
 	// want vtx indices for tris
-	Uint32 *idx = &pl_short[0];
+	uint32_t *idx = &pl_short[0];
 	for (int x = 0; x < m_edgeLen - 1; x++) {
 		for (int y = 0; y < m_edgeLen - 1; y++) {
 			// 1st tri
@@ -62,8 +62,8 @@ void GeoPatchContext::GenerateIndices()
 		assert(0 == res);
 		//create buffer & copy
 		m_indices.Reset(RendererLocator::getRenderer()->CreateIndexBuffer(pl_short.size(), Graphics::BUFFER_USAGE_STATIC));
-		Uint32 *idxPtr = m_indices->Map(Graphics::BUFFER_MAP_WRITE);
-		for (Uint32 j = 0; j < pl_short.size(); j++) {
+		uint32_t *idxPtr = m_indices->Map(Graphics::BUFFER_MAP_WRITE);
+		for (uint32_t j = 0; j < pl_short.size(); j++) {
 			idxPtr[j] = pl_short[j];
 		}
 		m_indices->Unmap();

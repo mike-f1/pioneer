@@ -4,10 +4,12 @@
 #pragma once
 
 #include "CameraController.h"
-#include "InputFrame.h"
 #include "InteractionController.h"
 #include "utils.h"
 
+#include <sigc++/sigc++.h>
+
+class InputFrame;
 class Ship;
 
 namespace KeyBindings {
@@ -18,13 +20,7 @@ namespace KeyBindings {
 class ShipViewController : public InteractionController {
 	friend class WorldView;
 public:
-	ShipViewController(WorldView *v) :
-		InteractionController(v),
-		m_camType(CAM_INTERNAL),
-		headtracker_input_priority(false)
-	{
-		RegisterInputBindings();
-	}
+	ShipViewController(WorldView *v);
 
 	~ShipViewController();
 

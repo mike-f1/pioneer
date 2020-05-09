@@ -8,7 +8,7 @@
 
 #if defined(_WIN32)
 	#define _CRT_SECURE_NO_WARNINGS
-	#define WIN32_LEAN_AND_MEAN 
+	#define WIN32_LEAN_AND_MEAN
 	#define NOMINMAX
 	#define copystring _strdup
 	#include <windows.h>
@@ -59,7 +59,7 @@
 #if !defined(__PROFILER_SMP__)
 	#undef threadlocal
 	#define threadlocal
-#endif 
+#endif
 
 namespace Profiler {
 
@@ -197,7 +197,7 @@ namespace Profiler {
 		void Sort( Compare comp ) {
 			if ( mItems <= 1 )
 				return;
-			
+
 			Buffer scratch( mItems );
 
 			// merge sort with scratch buffer
@@ -237,7 +237,7 @@ namespace Profiler {
 	protected:
 		type *mBuffer;
 		u32 mAlloc, mItems;
-	};	
+	};
 
 
 	/*
@@ -265,7 +265,7 @@ namespace Profiler {
 		void clear() {
 			mColors.Clear();
 		}
-		
+
 		const char *value( f32 pos ) const {
 			ColorF base(0, 0, 0);
 			u32 pre = 0, post = 0;
@@ -310,10 +310,10 @@ namespace Profiler {
 
 
 			// Destructs a Caller
-			struct Deleter { 
-				void operator()( Caller *item ) { 
+			struct Deleter {
+				void operator()( Caller *item ) {
 					delete item;
-				} 
+				}
 			};
 
 			// Merges a Caller with the root
@@ -347,17 +347,17 @@ namespace Profiler {
 				u32 mIndent;
 			};
 
-			struct SoftReset { 
-				void operator()( Caller *item ) { 
+			struct SoftReset {
+				void operator()( Caller *item ) {
 					item->GetTimer().SoftReset();
 					item->ForEach( SoftReset() );
-				} 
+				}
 			};
 
-			// Sums Caller's ticks 
+			// Sums Caller's ticks
 			struct SumTicks {
 				SumTicks() : sum(0) {}
-				void operator()( Caller *item ) { 
+				void operator()( Caller *item ) {
 					sum += ( item->mTimer.ticks );
 				}
 				u64 sum;
@@ -377,22 +377,22 @@ namespace Profiler {
 
 
 		struct compare {
-			struct Ticks { 
-				bool operator()( const Caller *a, const Caller *b ) const { 
-					return ( a->mTimer.ticks > b->mTimer.ticks ); 
-				} 
+			struct Ticks {
+				bool operator()( const Caller *a, const Caller *b ) const {
+					return ( a->mTimer.ticks > b->mTimer.ticks );
+				}
 			};
 
-			struct SelfTicks { 
-				bool operator()( const Caller *a, const Caller *b ) const { 
-					return ( ( a->mTimer.ticks - a->mChildTicks ) > ( b->mTimer.ticks - b->mChildTicks ) ); 
-				} 
+			struct SelfTicks {
+				bool operator()( const Caller *a, const Caller *b ) const {
+					return ( ( a->mTimer.ticks - a->mChildTicks ) > ( b->mTimer.ticks - b->mChildTicks ) );
+				}
 			};
 
-			struct Calls { 
-				bool operator()( const Caller *a, const Caller *b ) const { 
-					return ( a->mTimer.calls > b->mTimer.calls ); 
-				} 
+			struct Calls {
+				bool operator()( const Caller *a, const Caller *b ) const {
+					return ( a->mTimer.calls > b->mTimer.calls );
+				}
 			};
 		}; // sort
 
@@ -441,7 +441,7 @@ namespace Profiler {
 			void operator()( Caller *item, bool islast ) const {
 				u64 ticks = item->mTimer.ticks;
 				f64 ms = Timer::ms( ticks );
-				printf( "%s %.2f mcycles, %d calls, %.0f cycles avg, %.2f%%: %s\n", 
+				printf( "%s %.2f mcycles, %d calls, %.0f cycles avg, %.2f%%: %s\n",
 					mPrefix, ms, item->mTimer.calls, item->mTimer.avg(), average( ticks * 100, mGlobalDuration ), item->mName );
 			}
 			const char *mPrefix;
@@ -457,8 +457,8 @@ namespace Profiler {
 				f64 ms = Timer::ms( ticks ), globalpct = average( ticks * 100, mGlobalDuration );
 				f64 childms = Timer::ms( item->mChildTicks ), selfms = ( ms - childms ), avg = item->mTimer.avgms(), selfavg = average( selfms, item->mTimer.calls );
 				if ( !item->GetParent() )
-					fprintf( mFile, "<td class=\"text\">%s</td></tr></table></td><td class=\"number\">%u</td><td class=\"number\">%0.4f (%3.0f%%)</td><td class=\"number\">%0.4f</td><td class=\"number\">%0.4f</td><td class=\"number\">%0.4f</td></tr>\n", 
-						item->mName, 
+					fprintf( mFile, "<td class=\"text\">%s</td></tr></table></td><td class=\"number\">%u</td><td class=\"number\">%0.4f (%3.0f%%)</td><td class=\"number\">%0.4f</td><td class=\"number\">%0.4f</td><td class=\"number\">%0.4f</td></tr>\n",
+						item->mName,
 						item->mTimer.calls,
 						ms,
 						globalpct,
@@ -467,8 +467,8 @@ namespace Profiler {
 						selfavg
 					);
 				else
-					fprintf( mFile, "<td class=\"text\">%s</td></tr></table></td><td class=\"number\" style=\"background-color:%s\">%u</td><td class=\"number\" style=\"background-color:%s\">%0.4f (%3.0f%%)</td><td class=\"number\" style=\"background-color:%s\">%0.4f</td><td class=\"number\" style=\"background-color:%s\">%0.4f</td><td class=\"number\" style=\"background-color:%s\">%0.4f</td></tr>\n", 
-						item->mName, 
+					fprintf( mFile, "<td class=\"text\">%s</td></tr></table></td><td class=\"number\" style=\"background-color:%s\">%u</td><td class=\"number\" style=\"background-color:%s\">%0.4f (%3.0f%%)</td><td class=\"number\" style=\"background-color:%s\">%0.4f</td><td class=\"number\" style=\"background-color:%s\">%0.4f</td><td class=\"number\" style=\"background-color:%s\">%0.4f</td></tr>\n",
+						item->mName,
 						maxStats.color( Max::Calls, item->mTimer.calls ),  item->mTimer.calls,
 						maxStats.color( Max::Ms, ms ), ms,
 						globalpct,
@@ -489,16 +489,16 @@ namespace Profiler {
 				u64 ticks = item->mTimer.ticks;
 				f64 ms = Timer::ms( ticks ), globalpct = average( ticks * 100, mGlobalDuration ), avg = item->mTimer.avgms();
 				if ( !item->GetParent() ) {
-					fprintf( mFile, "<td class=\"text\">%s</td></tr></table></td><td class=\"number\">%u</td><td class=\"number\">%0.4f (%.0f%%)</td><td class=\"number\">%0.4f</td></tr>\n", 
-						item->mName, 
+					fprintf( mFile, "<td class=\"text\">%s</td></tr></table></td><td class=\"number\">%u</td><td class=\"number\">%0.4f (%.0f%%)</td><td class=\"number\">%0.4f</td></tr>\n",
+						item->mName,
 						item->mTimer.calls,
 						ms,
 						globalpct,
 						avg
 					);
 				} else {
-					fprintf( mFile, "<td class=\"text\">%s</td></tr></table></td><td class=\"number\" style=\"background-color:%s\">%u</td><td class=\"number\" style=\"background-color:%s\">%0.4f (%.0f%%)</td><td class=\"number\" style=\"background-color:%s\">%0.4f</td></tr>\n", 
-						item->mName, 
+					fprintf( mFile, "<td class=\"text\">%s</td></tr></table></td><td class=\"number\" style=\"background-color:%s\">%u</td><td class=\"number\" style=\"background-color:%s\">%0.4f (%.0f%%)</td><td class=\"number\" style=\"background-color:%s\">%0.4f</td></tr>\n",
+						item->mName,
 						maxStats.color( Max::Calls, item->mTimer.calls ),  item->mTimer.calls,
 						maxStats.color( Max::Ms, ms ), ms,
 						globalpct,
@@ -509,18 +509,18 @@ namespace Profiler {
 			FILE *mFile;
 		};
 
-		/* 
+		/*
 			Methods
 		*/
 
 		// we're guaranteed to be null because of calloc. ONLY create Callers with "new"!
-		Caller( const char *name, Caller *parent = NULL ) { 
+		Caller( const char *name, Caller *parent = NULL ) {
 			mName = name;
 			mParent = parent;
 			Resize( 2 ); // mBuckets must always exist and mBucketCount >= 2!
 		}
-		
-		~Caller() { 
+
+		~Caller() {
 			ForEach( foreach::Deleter() );
 			free( mBuckets );
 		}
@@ -538,7 +538,7 @@ namespace Profiler {
 			for ( Caller *caller = mBuckets[index]; caller; caller = mBuckets[index & mask] ) {
 				if ( caller->mName == name )
 					return caller;
-				
+
 				index = ( index + 1 );
 			}
 
@@ -565,21 +565,21 @@ namespace Profiler {
 					mapto( mBuckets[ i ] );
 		}
 
-		template< class Mapto > 
+		template< class Mapto >
 		void ForEach( Mapto mapto ) {
 			ForEachByRef( mapto );
 		}
 
-		template< class Mapto > 
+		template< class Mapto >
 		void ForEachNonEmpty( Mapto mapto ) {
 			ForEachByRefNonEmpty( mapto );
 		}
 
-		inline Caller *GetParent() { 
-			return mParent; 
+		inline Caller *GetParent() {
+			return mParent;
 		}
 
-		Timer &GetTimer() { 
+		Timer &GetTimer() {
 			return mTimer;
 		}
 
@@ -597,7 +597,7 @@ namespace Profiler {
 
 			mFormatter.EnsureCapacity( indent + 3 );
 			char *fmt = ( &mFormatter[indent] );
-			
+
 			if ( indent ) {
 				fmt[-2] = ( islast ) ? ' ' : '|';
 				fmt[-1] = ( islast ) ? '\\' : ' ';
@@ -605,7 +605,7 @@ namespace Profiler {
 			fmt[0] = ( children.Size() ) ? '+' : '-';
 			fmt[1] = ( '-' );
 			fmt[2] = ( 0 );
-			
+
 			Format(mFormatter.Data())( this, islast );
 
 			if ( indent && islast )
@@ -628,17 +628,17 @@ namespace Profiler {
 			} else {
 				mHTMLFormatter.Push( ( islast ) ? "img/last-empty.gif" : "img/empty.gif" );
 			}
-			
+
 			FormatHtml(f, mHTMLFormatter)( this );
 
-			mHTMLFormatter[indent] = ( islast || !indent ) ? "img/blank.gif" : "img/vertical.gif";	
+			mHTMLFormatter[indent] = ( islast || !indent ) ? "img/blank.gif" : "img/vertical.gif";
 
 			if ( children.Size() ) {
 				children.Sort( compare::Ticks() );
 				children.ForEach( foreach::PrinterHtml(f,indent+1) );
 			}
 
-			mHTMLFormatter.Pop();		
+			mHTMLFormatter.Pop();
 		}
 
 		void PrintTopStats( u32 nitems ) {
@@ -664,7 +664,7 @@ namespace Profiler {
 			ForEach( foreach::Deleter() );
 			zeroarray( mBuckets, mBucketCount );
 			mNumChildren = ( 0 );
-			mTimer.Reset();			
+			mTimer.Reset();
 		}
 
 		void SetActive( bool active ) {
@@ -692,7 +692,7 @@ namespace Profiler {
 			return calloc( size, 1 );
 		}
 
-		void operator delete ( void *p ) { 
+		void operator delete ( void *p ) {
 			free( p );
 		}
 
@@ -778,7 +778,7 @@ namespace Profiler {
 			bool requireThreadLock;
 			Caller *activeCaller;
 		};
-		
+
 		static threadlocal ThreadState thisThread;
 	};
 	#pragma pack(pop)
@@ -805,7 +805,7 @@ namespace Profiler {
 		if ( !*finalSlash )
 			finalSlash = path;
 		programName = copystring( finalSlash );
-		
+
 		size_t width = 0;
 		for ( int i = 1; i < argc; i++ ) {
 			size_t len = strlen( argv[i] );
@@ -847,18 +847,18 @@ namespace Profiler {
 	};
 
 	struct GlobalThreadList {
-		~GlobalThreadList() { 
+		~GlobalThreadList() {
 			if ( list ) {
 				Buffer<Root> &threadsref = *list;
 				u32 cnt = threadsref.Size();
 				for ( u32 i = 0; i < cnt; i++ )
 					delete threadsref[i].root;
 			}
-			delete list; 
+			delete list;
 		}
 
-		void AcquireGlobalLock() { 
-			threadsLock.Acquire(); 
+		void AcquireGlobalLock() {
+			threadsLock.Acquire();
 			if ( !list )
 				list = new Buffer<Root>;
 		}
@@ -872,9 +872,9 @@ namespace Profiler {
 	};
 
 	u64 globalStart = Timer::getticks();
-	GlobalThreadList threads = { NULL, {0} };
-	threadlocal Caller *root = NULL;
-	
+	GlobalThreadList threads = { nullptr, {0} };
+	threadlocal Caller *root = nullptr;
+
 
 	/*
 		Thread Dumping
@@ -893,8 +893,8 @@ namespace Profiler {
 				totalCalls, timerOverhead, rdtscOverhead, Timer::ms( timerOverhead * totalCalls ) );
 		}
 
-		void PrintThread( Caller *root ) {
-			root->Print();
+		void PrintThread( Caller *root_ ) {
+			root_->Print();
 			printf( "\n\n" );
 		}
 
@@ -919,7 +919,7 @@ namespace Profiler {
 			tm *now_tm = localtime( &now );
 			strftime( timeFormat, 255, "%Y%m%d_%H%M%S", now_tm );
 			snprintf( fileFormat, 4096, "%s%s%s-profile-%s.html", dir ? dir : "", dir ? "/" : "", programName ? programName : "no-info-given", timeFormat );
-			strftime( timeFormat, 255, "%#c", now_tm );			
+			strftime( timeFormat, 255, "%c", now_tm );
 			f = fopen( fileFormat, "wb+" );
 
 			Caller::mHTMLFormatter.Clear();
@@ -946,7 +946,7 @@ namespace Profiler {
 				"		div.overall td.title { padding-left: 10px; font-weight: bold; }\n"
 				"	</style>\n"
 				"</head>\n"
-				"<body>\n\n",			
+				"<body>\n\n",
 				f
 			);
 		}
@@ -959,7 +959,7 @@ namespace Profiler {
 					fprintf( f, " %s", commandLine );
 				fputs( "</td></tr>", f );
 			}
-			fprintf( f, "<tr><td class=\"title\">Date: </td><td>%s</td></tr><tr><td class=\"title\">Raw run time: </td><td>%.2f mcycles</td></tr>\n", 
+			fprintf( f, "<tr><td class=\"title\">Date: </td><td>%s</td></tr><tr><td class=\"title\">Raw run time: </td><td>%.2f mcycles</td></tr>\n",
 				timeFormat, Timer::ms( rawCycles ) );
 		}
 
@@ -971,10 +971,10 @@ namespace Profiler {
 			fprintf( f, "</table></div>\n" );
 		}
 
-		void PrintThread( Caller *root ) {
+		void PrintThread( Caller *root_ ) {
 			fputs( "<div class=\"thread\"><table>\n", f );
 			fputs( css_title_row, f );
-			root->PrintHtml( f );
+			root_->PrintHtml( f );
 			fputs( "</table></div>\n", f );
 		}
 
@@ -985,7 +985,7 @@ namespace Profiler {
 			Buffer<Caller *> sorted;
 			accumulated->CopyToListNonEmpty( sorted );
 			sorted.ForEach( Caller::foreach::UpdateTopMaxStats() );
-			sorted.Sort( Caller::compare::SelfTicks() );		
+			sorted.Sort( Caller::compare::SelfTicks() );
 			sorted.ForEach( Caller::FormatHtmlTop(f) );
 			fputs( "</table></div>\n", f );
 		}
@@ -1011,7 +1011,7 @@ namespace Profiler {
 		dumper.Init(dir);
 		dumper.GlobalInfo( rawDuration );
 
-		threads.AcquireGlobalLock();	
+		threads.AcquireGlobalLock();
 
 		// crawl the list of theads and store their data in to packer
 		Buffer<Root> &threadsref = *threads.list;
@@ -1054,7 +1054,7 @@ namespace Profiler {
 		}
 
 		// working on local data now, don't need the threads lock any more
-		threads.ReleaseGlobalLock();	
+		threads.ReleaseGlobalLock();
 
 		// do the pre-computations on the gathered threads
 		Caller::ComputeChildTicks preprocessor( *accumulate );
@@ -1066,16 +1066,16 @@ namespace Profiler {
 		// print the gathered threads
 		u64 sumTicks = 0;
 		for ( u32 i = 0; i < packedThreads.Size(); i++ ) {
-			Caller *root = packedThreads[i];
-			u64 threadTicks = root->GetTimer().ticks;
+			Caller *root_ = packedThreads[i];
+			u64 threadTicks = root_->GetTimer().ticks;
 			sumTicks += threadTicks;
 			Caller::mGlobalDuration = threadTicks;
-			dumper.PrintThread( root );
+			dumper.PrintThread( root_ );
 		}
 
 		// print the totals, use the summed total of ticks to adjust percentages
 		Caller::mGlobalDuration = sumTicks;
-		dumper.PrintAccumulated( accumulate );		
+		dumper.PrintAccumulated( accumulate );
 		dumper.Finish();
 
 		delete accumulate;
@@ -1150,7 +1150,7 @@ namespace Profiler {
 		Caller *parent = Caller::thisThread.activeCaller;
 		if ( !parent )
 			return;
-		
+
 		Caller *active = parent->FindOrCreate( name );
 		active->Start();
 		Caller::thisThread.activeCaller = active;
@@ -1160,7 +1160,7 @@ namespace Profiler {
 		Caller *active = Caller::thisThread.activeCaller;
 		if ( !active )
 			return;
-		
+
 		active->Stop();
 		Caller::thisThread.activeCaller = active->GetParent();
 	}
@@ -1184,7 +1184,7 @@ namespace Profiler {
 		MakeRoot() {
 			// get an idea of how long timer calls / rdtsc takes
 			const u32 reps = 1000;
-			Caller::mTimerOverhead = Caller::mRdtscOverhead = 1000000;			
+			Caller::mTimerOverhead = Caller::mRdtscOverhead = 1000000;
 			for ( u32 tries = 0; tries < 20; tries++ ) {
 				Timer t, t2;
 				t.Start();

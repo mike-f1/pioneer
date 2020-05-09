@@ -2,6 +2,7 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "Loader.h"
+
 #include "BinaryConverter.h"
 #include "CollisionGeometry.h"
 #include "FileSystem.h"
@@ -516,7 +517,7 @@ namespace SceneGraph {
 			RefCountedPtr<Graphics::VertexBuffer> vb(RendererLocator::getRenderer()->CreateVertexBuffer(vbd));
 
 			// huge meshes are split by the importer so this should not exceed 65K indices
-			std::vector<Uint32> indices;
+			std::vector<uint32_t> indices;
 			if (mesh->mNumFaces > 0) {
 				indices.reserve(mesh->mNumFaces * 3);
 				for (unsigned int f = 0; f < mesh->mNumFaces; f++) {
@@ -537,8 +538,8 @@ namespace SceneGraph {
 
 			//create buffer & copy
 			RefCountedPtr<Graphics::IndexBuffer> ib(RendererLocator::getRenderer()->CreateIndexBuffer(indices.size(), Graphics::BUFFER_USAGE_STATIC));
-			Uint32 *idxPtr = ib->Map(Graphics::BUFFER_MAP_WRITE);
-			for (Uint32 j = 0; j < indices.size(); j++)
+			uint32_t *idxPtr = ib->Map(Graphics::BUFFER_MAP_WRITE);
+			for (uint32_t j = 0; j < indices.size(); j++)
 				idxPtr[j] = indices[j];
 			ib->Unmap();
 
@@ -804,26 +805,26 @@ namespace SceneGraph {
 		assert(geom->GetNumMeshes() == 1);
 		StaticGeometry::Mesh mesh = geom->GetMeshAt(0);
 
-		const Uint32 posOffs = mesh.vertexBuffer->GetDesc().GetOffset(Graphics::ATTRIB_POSITION);
-		const Uint32 stride = mesh.vertexBuffer->GetDesc().stride;
-		const Uint32 numVtx = mesh.vertexBuffer->GetDesc().numVertices;
-		const Uint32 numIdx = mesh.indexBuffer->GetSize();
+		const uint32_t posOffs = mesh.vertexBuffer->GetDesc().GetOffset(Graphics::ATTRIB_POSITION);
+		const uint32_t stride = mesh.vertexBuffer->GetDesc().stride;
+		const uint32_t numVtx = mesh.vertexBuffer->GetDesc().numVertices;
+		const uint32_t numIdx = mesh.indexBuffer->GetSize();
 
 		//copy vertex positions from buffer
 		std::vector<vector3f> pos;
 		pos.reserve(numVtx);
 
-		Uint8 *vtxPtr = mesh.vertexBuffer->Map<Uint8>(Graphics::BUFFER_MAP_READ);
-		for (Uint32 i = 0; i < numVtx; i++)
+		uint8_t *vtxPtr = mesh.vertexBuffer->Map<uint8_t>(Graphics::BUFFER_MAP_READ);
+		for (uint32_t i = 0; i < numVtx; i++)
 			pos.push_back(*reinterpret_cast<vector3f *>(vtxPtr + (i * stride) + posOffs));
 		mesh.vertexBuffer->Unmap();
 
 		//copy indices from buffer
-		std::vector<Uint32> idx;
+		std::vector<uint32_t> idx;
 		idx.reserve(numIdx);
 
-		Uint32 *idxPtr = mesh.indexBuffer->Map(Graphics::BUFFER_MAP_READ);
-		for (Uint32 i = 0; i < numIdx; i++)
+		uint32_t *idxPtr = mesh.indexBuffer->Map(Graphics::BUFFER_MAP_READ);
+		for (uint32_t i = 0; i < numIdx; i++)
 			idx.push_back(idxPtr[i]);
 		mesh.indexBuffer->Unmap();
 		RefCountedPtr<CollisionGeometry> cgeom(new CollisionGeometry(pos, idx, collFlag));
@@ -940,11 +941,11 @@ namespace SceneGraph {
 		if (scene->mNumMeshes == 0)
 			throw LoadingError("No geometry found");
 
-		std::vector<Uint32> indices;
+		std::vector<uint32_t> indices;
 		std::vector<vector3f> vertices;
-		Uint32 indexOffset = 0;
+		uint32_t indexOffset = 0;
 
-		for (Uint32 i = 0; i < scene->mNumMeshes; i++) {
+		for (uint32_t i = 0; i < scene->mNumMeshes; i++) {
 			aiMesh *mesh = scene->mMeshes[i];
 
 			//copy indices
@@ -996,13 +997,13 @@ namespace SceneGraph {
 		m->FindTagsByStartOfName(test, mounts_founds);
 
 		std::map<std::string, std::vector<MatrixTransform *>> mounts_map;
-		std::for_each(std::begin(mounts_founds), std::end(mounts_founds), [&mounts_map](MatrixTransform *m) {
+		std::for_each(std::begin(mounts_founds), std::end(mounts_founds), [&mounts_map](MatrixTransform *mt) {
 			// pick only 2 digit (...which
-			std::string id = m->GetName().substr(13, 2);
+			std::string id = mt->GetName().substr(13, 2);
 			if (mounts_map.count(id) == 0) {
 				mounts_map[id] = {};
 			};
-			(mounts_map[id]).push_back(m);
+			(mounts_map[id]).push_back(mt);
 		});
 
 		m->m_mounts.clear();

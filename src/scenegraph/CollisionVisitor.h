@@ -10,7 +10,7 @@
 #include "CollMesh.h"
 #include "NodeVisitor.h"
 
-#include <SDL_stdinc.h>
+#include <cstdint>
 #include <vector>
 #include "RefCounted.h"
 #include "matrix4x4.h"
@@ -43,10 +43,10 @@ namespace SceneGraph {
 
 		//temporary arrays for static geometry
 		std::vector<vector3f> m_vertices;
-		std::vector<Uint32> m_indices;
-		std::vector<Uint32> m_flags;
+		std::vector<uint32_t> m_indices;
+		std::vector<uint32_t> m_flags;
 
-		Uint32 m_totalTris;
+		uint32_t m_totalTris;
 	};
 } // namespace SceneGraph
 #endif

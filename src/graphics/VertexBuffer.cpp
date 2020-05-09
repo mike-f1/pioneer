@@ -12,7 +12,7 @@
 
 namespace Graphics {
 
-	Uint32 VertexBufferDesc::GetAttribSize(VertexAttribFormat f)
+	uint32_t VertexBufferDesc::GetAttribSize(VertexAttribFormat f)
 	{
 		switch (f) {
 		case ATTRIB_FORMAT_FLOAT2:
@@ -33,7 +33,7 @@ namespace Graphics {
 		stride(0),
 		usage(BUFFER_USAGE_STATIC)
 	{
-		for (Uint32 i = 0; i < MAX_ATTRIBS; i++) {
+		for (uint32_t i = 0; i < MAX_ATTRIBS; i++) {
 			attrib[i].semantic = ATTRIB_NONE;
 			attrib[i].format = ATTRIB_FORMAT_NONE;
 			attrib[i].offset = 0;
@@ -44,9 +44,9 @@ namespace Graphics {
 		assert(sizeof(Color4ub) == 4);
 	}
 
-	Uint32 VertexBufferDesc::GetOffset(VertexAttrib attr) const
+	uint32_t VertexBufferDesc::GetOffset(VertexAttrib attr) const
 	{
-		for (Uint32 i = 0; i < MAX_ATTRIBS; i++) {
+		for (uint32_t i = 0; i < MAX_ATTRIBS; i++) {
 			if (attrib[i].semantic == attr)
 				return attrib[i].offset;
 		}
@@ -56,10 +56,10 @@ namespace Graphics {
 		return 0;
 	}
 
-	Uint32 VertexBufferDesc::CalculateOffset(const VertexBufferDesc &desc, VertexAttrib attr)
+	uint32_t VertexBufferDesc::CalculateOffset(const VertexBufferDesc &desc, VertexAttrib attr)
 	{
-		Uint32 offs = 0;
-		for (Uint32 i = 0; i < MAX_ATTRIBS; i++) {
+		uint32_t offs = 0;
+		for (uint32_t i = 0; i < MAX_ATTRIBS; i++) {
 			if (desc.attrib[i].semantic == attr)
 				return offs;
 			offs += GetAttribSize(desc.attrib[i].format);
@@ -74,7 +74,7 @@ namespace Graphics {
 	{
 	}
 
-	bool VertexBuffer::SetVertexCount(Uint32 v)
+	bool VertexBuffer::SetVertexCount(uint32_t v)
 	{
 		if (v <= m_desc.numVertices) {
 			m_size = v;
@@ -84,7 +84,7 @@ namespace Graphics {
 	}
 
 	// ------------------------------------------------------------
-	IndexBuffer::IndexBuffer(Uint32 size, BufferUsage usage) :
+	IndexBuffer::IndexBuffer(uint32_t size, BufferUsage usage) :
 		Mappable(size),
 		m_indexCount(size),
 		m_usage(usage)
@@ -95,14 +95,14 @@ namespace Graphics {
 	{
 	}
 
-	void IndexBuffer::SetIndexCount(Uint32 ic)
+	void IndexBuffer::SetIndexCount(uint32_t ic)
 	{
 		assert(ic <= GetSize());
 		m_indexCount = std::min(ic, GetSize());
 	}
 
 	// ------------------------------------------------------------
-	InstanceBuffer::InstanceBuffer(Uint32 size, BufferUsage usage) :
+	InstanceBuffer::InstanceBuffer(uint32_t size, BufferUsage usage) :
 		Mappable(size),
 		m_usage(usage)
 	{
@@ -112,7 +112,7 @@ namespace Graphics {
 	{
 	}
 
-	void InstanceBuffer::SetInstanceCount(const Uint32 ic)
+	void InstanceBuffer::SetInstanceCount(const uint32_t ic)
 	{
 		assert(ic <= GetSize());
 		m_instanceCount = std::min(ic, GetSize());

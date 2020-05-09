@@ -66,7 +66,7 @@ private:
 	void RegisterInputBindings();
 
 	static const double PICK_OBJECT_RECT_SIZE;
-	static const Uint16 N_VERTICES_MAX;
+	static const uint16_t N_VERTICES_MAX;
 	void PutOrbit(const Orbit *orb, const vector3d &offset, const Color &color, const double planetRadius = 0.0, const bool showLagrange = false);
 	void PutBody(const SystemBody *b, const vector3d &offset, const matrix4x4f &trans);
 	void PutLabel(const SystemBody *b, const vector3d &offset);

@@ -4,8 +4,7 @@
 #ifndef RANDOMSINGLETON_H
 #define RANDOMSINGLETON_H
 
-#include "RefCounted.h"
-#include "SDL_stdinc.h"
+#include <cstdint>
 
 class Random;
 
@@ -14,7 +13,7 @@ class RandomSingleton
 public:
 	RandomSingleton() = delete;
 
-	static void Init(const Uint32 seed);
+	static void Init(const uint32_t seed);
 
 	static Random &getInstance() { return m_random; };
 

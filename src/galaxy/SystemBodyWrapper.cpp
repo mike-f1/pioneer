@@ -60,7 +60,7 @@ const SystemPath &SystemBodyWrapper::GetSystemBodyPath() const
 	return m_sbody->GetPath();
 }
 
-Uint32 SystemBodyWrapper::GetSystemBodySeed() const
+uint32_t SystemBodyWrapper::GetSystemBodySeed() const
 {
 	return m_sbody->GetSeed();
 }

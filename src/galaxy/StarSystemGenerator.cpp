@@ -23,8 +23,8 @@ static const fixed AU_EARTH_RADIUS = fixed(3, 65536); // XXX Duplication from St
 static const fixed FIXED_PI = fixed(103993, 33102); // XXX Duplication from StarSystem.cpp
 static const double CELSIUS = 273.15;
 
-static const Uint32 POLIT_SEED = 0x1234abcd;
-static const Uint32 POLIT_SALT = 0x8732abdf;
+static const uint32_t POLIT_SEED = 0x1234abcd;
+static const uint32_t POLIT_SALT = 0x8732abdf;
 
 const fixed StarSystemLegacyGeneratorBase::starMetallicities[] = {
 	fixed(1, 1), // GRAVPOINT - for planets that orbit them
@@ -183,7 +183,7 @@ bool StarSystemFromSectorGenerator::Apply(Random &rng, RefCountedPtr<Galaxy> gal
 {
 	PROFILE_SCOPED()
 	RefCountedPtr<const Sector> sec = galaxy->GetSector(system->GetPath());
-	assert(system->GetPath().systemIndex >= 0 && system->GetPath().systemIndex < sec->m_systems.size());
+	assert(system->GetPath().systemIndex < sec->m_systems.size());
 	const Sector::System &secSys = sec->m_systems[system->GetPath().systemIndex];
 
 	StarSystemWriter syswrt(system);
@@ -467,7 +467,6 @@ void StarSystemCustomGenerator::CustomGetKidsOf(RefCountedPtr<StarSystem> system
 		}
 		if (kid->GetSuperType() == GalaxyEnums::BodySuperType::SUPERTYPE_STARPORT) {
 			(*outHumanInfestedness)++;
-			StarSystemWriter syswrt(system);
 			syswrt.AddSpaceStation(kid);
 		}
 		parent->m_children.push_back(kid);
@@ -982,7 +981,7 @@ void StarSystemRandomGenerator::MakePlanetsAround(RefCountedPtr<StarSystem> syst
 		}
 		if (mass < 0) { // hack around overflow
 			Output("WARNING: planetary mass has overflowed! (child of %s)\n", primary->GetName().c_str());
-			mass = fixed(Sint64(0x7fFFffFFffFFffFFull));
+			mass = fixed(std::numeric_limits<uint64_t>::max());
 		}
 		assert(mass >= 0);
 
@@ -1356,8 +1355,8 @@ void PopulateStarSystemGenerator::PopulateStage1(SystemBody *sbody, StarSystem *
 		return;
 	}
 
-	Uint32 _init[6] = { system->GetPath().systemIndex, Uint32(system->GetPath().sectorX),
-		Uint32(system->GetPath().sectorY), Uint32(system->GetPath().sectorZ), UNIVERSE_SEED, Uint32(sbody->GetSeed()) };
+	uint32_t _init[6] = { system->GetPath().systemIndex, uint32_t(system->GetPath().sectorX),
+		uint32_t(system->GetPath().sectorY), uint32_t(system->GetPath().sectorZ), UNIVERSE_SEED, uint32_t(sbody->GetSeed()) };
 
 	Random rand;
 	rand.seed(_init, 6);
@@ -1504,8 +1503,8 @@ void PopulateStarSystemGenerator::PopulateAddStations(SystemBody *sbody, StarSys
 	for (auto child : sbody->GetChildren())
 		PopulateAddStations(child, system);
 
-	Uint32 _init[6] = { system->GetPath().systemIndex, Uint32(system->GetPath().sectorX),
-		Uint32(system->GetPath().sectorY), Uint32(system->GetPath().sectorZ), sbody->GetSeed(), UNIVERSE_SEED };
+	uint32_t _init[6] = { system->GetPath().systemIndex, uint32_t(system->GetPath().sectorX),
+		uint32_t(system->GetPath().sectorY), uint32_t(system->GetPath().sectorZ), sbody->GetSeed(), UNIVERSE_SEED };
 
 	Random rand;
 	rand.seed(_init, 6);
@@ -1526,7 +1525,7 @@ void PopulateStarSystemGenerator::PopulateAddStations(SystemBody *sbody, StarSys
 	if (orbMinS < orbMaxS) {
 		// How many stations do we need?
 		pop -= rand.Fixed();
-		Uint32 NumToMake = 0;
+		uint32_t NumToMake = 0;
 		while (pop >= 0) {
 			++NumToMake;
 			pop -= rand.Fixed();
@@ -1553,7 +1552,7 @@ void PopulateStarSystemGenerator::PopulateAddStations(SystemBody *sbody, StarSys
 			}
 
 			// I like to think that we'd fill several "shells" of orbits at once rather than fill one and move out further
-			static const Uint32 MAX_ORBIT_SHELLS = 3;
+			static const uint32_t MAX_ORBIT_SHELLS = 3;
 			fixed shells[MAX_ORBIT_SHELLS];
 			if (innerOrbit != orbMaxS) {
 				shells[0] = innerOrbit; // low
@@ -1562,11 +1561,11 @@ void PopulateStarSystemGenerator::PopulateAddStations(SystemBody *sbody, StarSys
 			} else {
 				shells[0] = shells[1] = shells[2] = innerOrbit;
 			}
-			Uint32 orbitIdx = 0;
+			uint32_t orbitIdx = 0;
 			double orbitSlt = 0.0;
 			const double orbitSeparation = (NumToMake > 1) ? ((M_PI * 2.0) / double(NumToMake - 1)) : M_PI;
 
-			for (Uint32 i = 0; i < NumToMake; i++) {
+			for (uint32_t i = 0; i < NumToMake; i++) {
 				// Pick the orbit we've currently placing a station into.
 				const fixed currOrbit = shells[orbitIdx];
 				++orbitIdx;
@@ -1651,7 +1650,7 @@ void PopulateStarSystemGenerator::PopulateAddStations(SystemBody *sbody, StarSys
 void PopulateStarSystemGenerator::SetSysPolit(RefCountedPtr<Galaxy> galaxy, RefCountedPtr<StarSystem> system, const fixed &human_infestedness)
 {
 	SystemPath path = system->GetPath();
-	const Uint32 _init[5] = { Uint32(path.sectorX), Uint32(path.sectorY), Uint32(path.sectorZ), path.systemIndex, POLIT_SEED };
+	const uint32_t _init[5] = { uint32_t(path.sectorX), uint32_t(path.sectorY), uint32_t(path.sectorZ), path.systemIndex, POLIT_SEED };
 	Random rand(_init, 5);
 
 	RefCountedPtr<const Sector> sec = galaxy->GetSector(path);
@@ -1690,7 +1689,7 @@ void PopulateStarSystemGenerator::SetSysPolit(RefCountedPtr<Galaxy> galaxy, RefC
 void PopulateStarSystemGenerator::SetCommodityLegality(RefCountedPtr<StarSystem> system)
 {
 	const SystemPath path = system->GetPath();
-	const Uint32 _init[5] = { Uint32(path.sectorX), Uint32(path.sectorY), Uint32(path.sectorZ), path.systemIndex, POLIT_SALT };
+	const uint32_t _init[5] = { uint32_t(path.sectorX), uint32_t(path.sectorY), uint32_t(path.sectorZ), path.systemIndex, POLIT_SALT };
 	Random rand(_init, 5);
 
 	// All legal flags were set to true on initialization
@@ -1700,7 +1699,7 @@ void PopulateStarSystemGenerator::SetCommodityLegality(RefCountedPtr<StarSystem>
 	StarSystemWriter syswrt(system);
 
 	if (system->GetFaction()->idx != Faction::BAD_FACTION_IDX) {
-		for (const std::pair<const GalacticEconomy::Commodity, Uint32> &legality : system->GetFaction()->commodity_legality)
+		for (const std::pair<const GalacticEconomy::Commodity, uint32_t> &legality : system->GetFaction()->commodity_legality)
 			syswrt.SetCommodityLegal(legality.first, (rand.Int32(100) >= legality.second));
 	} else {
 		// this is a non-faction system - do some hardcoded test
@@ -1733,7 +1732,7 @@ bool PopulateStarSystemGenerator::Apply(Random &rng, RefCountedPtr<Galaxy> galax
 {
 	PROFILE_SCOPED()
 	const bool addSpaceStations = !config->isCustomOnly;
-	Uint32 _init[5] = { system->GetPath().systemIndex, Uint32(system->GetPath().sectorX), Uint32(system->GetPath().sectorY), Uint32(system->GetPath().sectorZ), UNIVERSE_SEED };
+	uint32_t _init[5] = { system->GetPath().systemIndex, uint32_t(system->GetPath().sectorX), uint32_t(system->GetPath().sectorY), uint32_t(system->GetPath().sectorZ), UNIVERSE_SEED };
 	Random rand;
 	rand.seed(_init, 5);
 

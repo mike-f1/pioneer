@@ -22,8 +22,8 @@
 // It is intended only for the efficient (de)serialization of model binary data;
 // where possible, prefer serializing state information via JSON instead.
 namespace Serializer {
-	static_assert((sizeof(Uint32) == 4 && alignof(Uint32) == 4), "Int32 is sized differently on this platform and will not serialize properly.");
-	static_assert((sizeof(Uint64) == 8 && alignof(Uint64) == 8), "Int64 is sized differently on this platform and will not serialize properly.");
+	static_assert((sizeof(uint32_t) == 4 && alignof(uint32_t) == 4), "Int32 is sized differently on this platform and will not serialize properly.");
+	static_assert((sizeof(uint64_t) == 8 && alignof(uint64_t) == 8), "Int64 is sized differently on this platform and will not serialize properly.");
 	static_assert((sizeof(Color) == 4 && alignof(Color) == 1), "Color is padded differently on this platform and will not serialize properly.");
 	static_assert((sizeof(vector2f) == 8 && alignof(vector2f) == 4), "Vector2f is padded differently on this platform and will not serialize properly.");
 	static_assert((sizeof(vector2d) == 16 && alignof(vector2d) == 8), "Vector2d is padded differently on this platform and will not serialize properly.");
@@ -45,7 +45,7 @@ namespace Serializer {
 
 		void writeObject(const std::string &obj)
 		{
-			writeObject<Uint32>(obj.size());
+			writeObject<uint32_t>(obj.size());
 			m_str.append(obj.c_str(), obj.size());
 		}
 
@@ -56,7 +56,7 @@ namespace Serializer {
 				return;
 			}
 
-			Uint32 len = strlen(s);
+			uint32_t len = strlen(s);
 			*this << len;
 			m_str.append(s, len);
 		}
@@ -79,17 +79,17 @@ namespace Serializer {
 
 		void Blob(ByteRange range)
 		{
-			assert(range.Size() < SDL_MAX_UINT32);
+			assert(range.Size() < std::numeric_limits<uint32_t>::max());
 			Int32(range.Size());
 			if (range.Size()) {
 				m_str.append(range.begin, range.Size());
 			}
 		}
-		void Byte(Uint8 x) { *this << x; }
 		void Bool(bool x) { *this << x; }
-		void Int16(Uint16 x) { *this << x; }
-		void Int32(Uint32 x) { *this << x; }
-		void Int64(Uint64 x) { *this << x; }
+		void Byte(uint8_t x) { *this << x; }
+		void Int16(uint16_t x) { *this << x; }
+		void Int32(uint32_t x) { *this << x; }
+		void Int64(uint64_t x) { *this << x; }
 		void Float(float f) { *this << f; }
 		void Double(double f) { *this << f; }
 		void String(const char *s) { *this << s; }
@@ -191,10 +191,10 @@ namespace Serializer {
 
 		// Prefer using Reader::operator>> instead; these functions involve creating an unnessesary temporary variable.
 		bool Bool() { return obj<bool>(); }
-		Uint8 Byte() { return obj<Uint8>(); }
-		Uint16 Int16() { return obj<Uint16>(); }
-		Uint32 Int32() { return obj<Uint32>(); }
-		Uint64 Int64() { return obj<Uint64>(); }
+		uint8_t Byte() { return obj<uint8_t>(); }
+		uint16_t Int16() { return obj<uint16_t>(); }
+		uint32_t Int32() { return obj<uint32_t>(); }
+		uint64_t Int64() { return obj<uint64_t>(); }
 		float Float() { return obj<float>(); }
 		double Double() { return obj<double>(); }
 

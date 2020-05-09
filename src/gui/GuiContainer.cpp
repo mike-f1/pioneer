@@ -9,8 +9,6 @@
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 
-#include <SDL_stdinc.h>
-
 namespace Gui {
 
 	Container::Container()

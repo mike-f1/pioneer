@@ -50,6 +50,7 @@
 #include "ModelCache.h"
 #include "NavLights.h"
 #include "OS.h"
+#include "PngWriter.h"
 #include "sound/AmbientSounds.h"
 #if WITH_OBJECTVIEWER
 #include "ObjectViewerView.h"
@@ -157,7 +158,7 @@ JobQueue *Pi::GetAsyncJobQueue() { return asyncJobQueue.get(); }
 JobQueue *Pi::GetSyncJobQueue() { return syncJobQueue.get(); }
 
 //static
-void Pi::CreateRenderTarget(const Uint16 width, const Uint16 height)
+void Pi::CreateRenderTarget(const uint16_t width, const uint16_t height)
 {
 	/*	@fluffyfreak here's a rendertarget implementation you can use for oculusing and other things. It's pretty simple:
 		 - fill out a RenderTargetDesc struct and call Renderer::CreateRenderTarget
@@ -328,8 +329,8 @@ void TestGPUJobsSupport()
 {
 	bool supportsGPUJobs = (GameConfSingleton::getInstance().Int("EnableGPUJobs") == 1);
 	if (supportsGPUJobs) {
-		Uint32 octaves = 8;
-		for (Uint32 i = 0; i < 6; i++) {
+		uint32_t octaves = 8;
+		for (uint32_t i = 0; i < 6; i++) {
 			std::unique_ptr<Graphics::Material> material;
 			Graphics::MaterialDescriptor desc;
 			desc.effect = Graphics::EffectType::GEN_GASGIANT_TEXTURE;
@@ -346,7 +347,7 @@ void TestGPUJobsSupport()
 
 			// retry the shader compilation
 			octaves = 5; // reduce the number of octaves
-			for (Uint32 i = 0; i < 6; i++) {
+			for (uint32_t i = 0; i < 6; i++) {
 				std::unique_ptr<Graphics::Material> material;
 				Graphics::MaterialDescriptor desc;
 				desc.effect = Graphics::EffectType::GEN_GASGIANT_TEXTURE;
@@ -415,7 +416,7 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 	Lang::MakeCore(res);
 
 	// Initialize SDL
-	Uint32 sdlInitFlags = SDL_INIT_VIDEO | SDL_INIT_JOYSTICK;
+	uint32_t sdlInitFlags = SDL_INIT_VIDEO | SDL_INIT_JOYSTICK;
 #if defined(DEBUG) || defined(_DEBUG)
 	sdlInitFlags |= SDL_INIT_NOPARACHUTE;
 #endif
@@ -430,10 +431,6 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 	// determine what renderer we should use, default to Opengl 3.x
 	const std::string rendererName = GameConfSingleton::getInstance().String("RendererName", Graphics::RendererNameFromType(Graphics::RENDERER_OPENGL_3x));
 	Graphics::RendererType rType = Graphics::RENDERER_OPENGL_3x;
-	//if(rendererName == Graphics::RendererNameFromType(Graphics::RENDERER_OPENGL_3x))
-	//{
-	//	rType = Graphics::RENDERER_OPENGL_3x;
-	//}
 
 	// Do rest of SDL video initialization and create Renderer
 	Graphics::Settings videoSettings = {};
@@ -470,10 +467,10 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 	EnumStrings::Init();
 
 	// get threads up
-	Uint32 numThreads = GameConfSingleton::getInstance().Int("WorkerThreads");
+	uint32_t numThreads = GameConfSingleton::getInstance().Int("WorkerThreads");
 	const int numCores = OS::GetNumCores();
 	assert(numCores > 0);
-	if (numThreads == 0) numThreads = std::max(Uint32(numCores) - 1, 1U);
+	if (numThreads == 0) numThreads = std::max(uint32_t(numCores) - 1, 1U);
 	asyncJobQueue.reset(new AsyncJobQueue(numThreads));
 	Output("started %d worker threads\n", numThreads);
 	syncJobQueue.reset(new SyncJobQueue);
@@ -819,7 +816,7 @@ void Pi::RegisterInputBindings()
 	m_piBindings.reqQuit = m_inputFrame->AddActionBinding("RequestQuit", group, ActionBinding(KeyBinding(SDLK_q, KMOD_LCTRL)));
 	m_piBindings.reqQuit->StoreOnActionCallback(std::bind(&Pi::RequestQuit));
 
-	m_piBindings.screenShot = m_inputFrame->AddActionBinding("Screenshot", group, ActionBinding(KeyBinding(SDLK_PRINTSCREEN, KMOD_LCTRL)));
+	m_piBindings.screenShot = m_inputFrame->AddActionBinding("Screenshot", group, ActionBinding(KeyBinding(SDLK_a, KMOD_LCTRL)));
 	m_piBindings.screenShot->StoreOnActionCallback(std::bind(&Pi::ScreenShot, _1));
 
 	m_piBindings.toggleVideoRec = m_inputFrame->AddActionBinding("ToggleVideoRec", group, ActionBinding(KeyBinding(SDLK_ASTERISK, KMOD_LCTRL)));
@@ -881,7 +878,7 @@ void Pi::ScreenShot(bool down)
 	strftime(buf, sizeof(buf), "screenshot-%Y%m%d-%H%M%S.png", _tm);
 	Graphics::ScreendumpState sd;
 	RendererLocator::getRenderer()->Screendump(sd);
-	write_screenshot(sd, buf);
+	PngWriter::write_screenshot(sd, buf);
 }
 
 void Pi::ToggleVideoRecording(bool down)
@@ -1062,7 +1059,7 @@ void Pi::Start(const SystemPath &startPath)
 	RendererLocator::getRenderer()->SetAmbientColor(Color(51, 51, 51, 255));
 
 	float time = 0.0;
-	Uint32 last_time = SDL_GetTicks();
+	uint32_t last_time = SDL_GetTicks();
 
 	while (1) {
 		m_frameTime = 0.001f * (SDL_GetTicks() - last_time);
@@ -1149,7 +1146,7 @@ void Pi::MainLoop()
 {
 	double time_player_died = 0;
 #if WITH_DEVKEYS
-	Uint32 last_stats = SDL_GetTicks();
+	uint32_t last_stats = SDL_GetTicks();
 	int frame_stat = 0;
 	int phys_stat = 0;
 	char fps_readout[2048];
@@ -1175,7 +1172,7 @@ void Pi::MainLoop()
 		Pi::serverAgent->ProcessResponses();
 #endif
 
-		const Uint32 newTicks = SDL_GetTicks();
+		const uint32_t newTicks = SDL_GetTicks();
 		double newTime = 0.001 * double(newTicks);
 		m_frameTime = newTime - currentTime;
 		if (m_frameTime > 0.25) m_frameTime = 0.25;
@@ -1338,22 +1335,22 @@ void Pi::MainLoop()
 			int lua_memKB = int(lua_mem >> 10) % 1024;
 			int lua_memMB = int(lua_mem >> 20);
 			const Graphics::Stats::TFrameData &stats = RendererLocator::getRenderer()->GetStats().FrameStatsPrevious();
-			const Uint32 numDrawCalls = stats.m_stats[Graphics::Stats::STAT_DRAWCALL];
-			const Uint32 numBuffersCreated = stats.m_stats[Graphics::Stats::STAT_CREATE_BUFFER];
-			const Uint32 numDrawTris = stats.m_stats[Graphics::Stats::STAT_DRAWTRIS];
-			const Uint32 numDrawPointSprites = stats.m_stats[Graphics::Stats::STAT_DRAWPOINTSPRITES];
-			const Uint32 numDrawBuildings = stats.m_stats[Graphics::Stats::STAT_BUILDINGS];
-			const Uint32 numDrawCities = stats.m_stats[Graphics::Stats::STAT_CITIES];
-			const Uint32 numDrawGroundStations = stats.m_stats[Graphics::Stats::STAT_GROUNDSTATIONS];
-			const Uint32 numDrawSpaceStations = stats.m_stats[Graphics::Stats::STAT_SPACESTATIONS];
-			const Uint32 numDrawAtmospheres = stats.m_stats[Graphics::Stats::STAT_ATMOSPHERES];
-			const Uint32 numDrawPatches = stats.m_stats[Graphics::Stats::STAT_PATCHES];
-			const Uint32 numDrawPlanets = stats.m_stats[Graphics::Stats::STAT_PLANETS];
-			const Uint32 numDrawGasGiants = stats.m_stats[Graphics::Stats::STAT_GASGIANTS];
-			const Uint32 numDrawStars = stats.m_stats[Graphics::Stats::STAT_STARS];
-			const Uint32 numDrawShips = stats.m_stats[Graphics::Stats::STAT_SHIPS];
-			const Uint32 numDrawBillBoards = stats.m_stats[Graphics::Stats::STAT_BILLBOARD];
-			const Uint32 numDrawPatchesTris = stats.m_stats[Graphics::Stats::STAT_PATCHES_TRIS];
+			const uint32_t numDrawCalls = stats.m_stats[Graphics::Stats::STAT_DRAWCALL];
+			const uint32_t numBuffersCreated = stats.m_stats[Graphics::Stats::STAT_CREATE_BUFFER];
+			const uint32_t numDrawTris = stats.m_stats[Graphics::Stats::STAT_DRAWTRIS];
+			const uint32_t numDrawPointSprites = stats.m_stats[Graphics::Stats::STAT_DRAWPOINTSPRITES];
+			const uint32_t numDrawBuildings = stats.m_stats[Graphics::Stats::STAT_BUILDINGS];
+			const uint32_t numDrawCities = stats.m_stats[Graphics::Stats::STAT_CITIES];
+			const uint32_t numDrawGroundStations = stats.m_stats[Graphics::Stats::STAT_GROUNDSTATIONS];
+			const uint32_t numDrawSpaceStations = stats.m_stats[Graphics::Stats::STAT_SPACESTATIONS];
+			const uint32_t numDrawAtmospheres = stats.m_stats[Graphics::Stats::STAT_ATMOSPHERES];
+			const uint32_t numDrawPatches = stats.m_stats[Graphics::Stats::STAT_PATCHES];
+			const uint32_t numDrawPlanets = stats.m_stats[Graphics::Stats::STAT_PLANETS];
+			const uint32_t numDrawGasGiants = stats.m_stats[Graphics::Stats::STAT_GASGIANTS];
+			const uint32_t numDrawStars = stats.m_stats[Graphics::Stats::STAT_STARS];
+			const uint32_t numDrawShips = stats.m_stats[Graphics::Stats::STAT_SHIPS];
+			const uint32_t numDrawBillBoards = stats.m_stats[Graphics::Stats::STAT_BILLBOARD];
+			const uint32_t numDrawPatchesTris = stats.m_stats[Graphics::Stats::STAT_PATCHES_TRIS];
 			snprintf(
 				fps_readout, sizeof(fps_readout),
 				"%d fps (%.1f ms/f), %d phys updates, %d triangles, %.3f M tris/sec, %d glyphs/sec, %d patches/frame\n"
@@ -1379,7 +1376,7 @@ void Pi::MainLoop()
 
 #endif // WITH_DEVKEYS
 #ifdef PIONEER_PROFILER
-		const Uint32 profTicks = SDL_GetTicks();
+		const uint32_t profTicks = SDL_GetTicks();
 		if (Pi::doProfileOne || (Pi::doProfileSlow && (profTicks - newTicks) > 100)) { // slow: < ~10fps
 			Output("dumping profile data\n");
 			Profiler::dumphtml(profilerPath.c_str());
@@ -1389,7 +1386,7 @@ void Pi::MainLoop()
 
 		if (isRecordingVideo && (Pi::ffmpegFile != nullptr)) {
 			Graphics::ScreendumpState sd;
-			RendererLocator::getRenderer()->FrameGrab(sd);
+			RendererLocator::getRenderer()->Screendump(sd);
 			fwrite(sd.pixels.get(), sizeof(uint32_t) * RendererLocator::getRenderer()->GetWindowWidth() * RendererLocator::getRenderer()->GetWindowHeight(), 1, Pi::ffmpegFile);
 		}
 

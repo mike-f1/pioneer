@@ -110,7 +110,7 @@ bool CargoBody::OnDamage(Object *attacker, float kgDamage, const CollisionContac
 	return true;
 }
 
-bool CargoBody::OnCollision(Object *b, Uint32 flags, double relVel)
+bool CargoBody::OnCollision(Object *b, uint32_t flags, double relVel)
 {
 	// ignore collision if its about to be scooped
 	if (b->IsType(Object::SHIP)) {

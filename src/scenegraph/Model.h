@@ -91,7 +91,7 @@ namespace SceneGraph {
 	};
 
 	typedef std::vector<std::pair<std::string, RefCountedPtr<Graphics::Material>>> MaterialContainer;
-	typedef std::vector<Animation *> AnimationContainer;
+	typedef std::vector<Animation> AnimationContainer;
 	typedef std::vector<MatrixTransform *> TagContainer;
 
 	class Model : public DeleteEmitter {
@@ -147,8 +147,8 @@ namespace SceneGraph {
 		bool SupportsDecals();
 		bool SupportsPatterns();
 
-		Animation *FindAnimation(const std::string &) const; //0 if not found
-		const std::vector<Animation *> GetAnimations() const { return m_animations; }
+		Animation *FindAnimation(const std::string &); //nullptr if not found
+		AnimationContainer &GetAnimations() { return m_animations; }
 		void UpdateAnimations();
 
 		//special for ship model use
@@ -187,7 +187,7 @@ namespace SceneGraph {
 		RefCountedPtr<Graphics::Material> m_decalMaterials[MAX_DECAL_MATERIALS]; //spaceship insignia, advertising billboards
 		RefCountedPtr<Group> m_root;
 		std::string m_name;
-		std::vector<Animation *> m_animations;
+		std::vector<Animation> m_animations;
 		TagContainer m_tags; //named attachment points
 		RenderData m_renderData;
 

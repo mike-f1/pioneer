@@ -406,10 +406,10 @@ namespace SceneGraph {
 		if (m_doLog) m_logMessages.push_back(msg);
 	}
 
-	void Loader::CheckAnimationConflicts(const Animation *anim, const std::vector<Animation *> &otherAnims)
+	void Loader::CheckAnimationConflicts(const Animation *anim, const std::vector<Animation> &otherAnims)
 	{
 		typedef std::vector<AnimationChannel>::const_iterator ChannelIterator;
-		typedef std::vector<Animation *>::const_iterator AnimIterator;
+		typedef std::vector<Animation>::const_iterator AnimIterator;
 
 		if (anim->m_channels.empty() || otherAnims.empty()) return;
 
@@ -417,7 +417,7 @@ namespace SceneGraph {
 		//that is not supported at this point
 		for (ChannelIterator chan = anim->m_channels.begin(); chan != anim->m_channels.end(); ++chan) {
 			for (AnimIterator other = otherAnims.begin(); other != otherAnims.end(); ++other) {
-				const Animation *otherAnim = (*other);
+				const Animation *otherAnim = &(*other);
 				if (otherAnim == anim)
 					continue;
 				for (ChannelIterator otherChan = otherAnim->m_channels.begin(); otherChan != otherAnim->m_channels.end(); ++otherChan) {
@@ -594,7 +594,7 @@ namespace SceneGraph {
 		if (animDefs.empty() || scene->mNumAnimations == 0) return;
 		if (scene->mNumAnimations > 1) Output("File has %d animations, treating as one animation\n", scene->mNumAnimations);
 
-		std::vector<Animation *> &animations = m_model->m_animations;
+		std::vector<Animation> &animations = m_model->m_animations;
 
 		for (AnimList::const_iterator def = animDefs.begin();
 			 def != animDefs.end();
@@ -714,8 +714,10 @@ namespace SceneGraph {
 			if (newAnim) {
 				if (animation->m_channels.empty())
 					delete animation;
-				else
-					animations.push_back(animation);
+				else {
+					animations.push_back(*animation);
+					delete animation;
+				}
 			}
 		}
 	}

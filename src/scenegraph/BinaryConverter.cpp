@@ -338,10 +338,10 @@ void BinaryConverter::SaveAnimations(Serializer::Writer &wr, Model *m)
 	const auto &anims = m->GetAnimations();
 	wr.Int32(anims.size());
 	for (const auto &anim : anims) {
-		wr.String(anim->GetName());
-		wr.Double(anim->GetDuration());
-		wr.Int32(anim->GetChannels().size());
-		for (const auto &chan : anim->GetChannels()) {
+		wr.String(anim.GetName());
+		wr.Double(anim.GetDuration());
+		wr.Int32(anim.GetChannels().size());
+		for (const auto &chan : anim.GetChannels()) {
 			wr.String(chan.node->GetName());
 			//write pos/rot/scale keys
 			wr.Int32(chan.positionKeys.size());
@@ -371,7 +371,7 @@ void BinaryConverter::LoadAnimations(Serializer::Reader &rd)
 	for (uint32_t i = 0; i < numAnims; i++) {
 		const std::string animName = rd.String();
 		const double duration = rd.Double();
-		Animation *anim = new Animation(animName, duration);
+		std::unique_ptr<Animation> anim(new Animation(animName, duration));
 		const uint32_t numChans = rd.Int32();
 		for (uint32_t j = 0; j < numChans; j++) {
 			const std::string tgtName = rd.String();
@@ -394,7 +394,7 @@ void BinaryConverter::LoadAnimations(Serializer::Reader &rd)
 				chan.scaleKeys.push_back(ScaleKey(ktime, kscale));
 			}
 		}
-		m_model->m_animations.push_back(anim);
+		m_model->m_animations.push_back(*anim);
 	}
 }
 

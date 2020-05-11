@@ -49,7 +49,7 @@ namespace SceneGraph {
 		Model *CreateModel(ModelDefinition &def);
 		RefCountedPtr<Node> LoadMesh(const std::string &filename, const AnimList &animDefs); //load one mesh file so it can be added to the model scenegraph. Materials should be created before this!
 		void AddLog(const std::string &);
-		void CheckAnimationConflicts(const Animation *, const std::vector<Animation *> &); //detect animation overlap
+		void CheckAnimationConflicts(const Animation *, const std::vector<Animation> &); //detect animation overlap
 		void ConvertAiMeshes(std::vector<RefCountedPtr<StaticGeometry>> &, const aiScene *); //model is only for material lookup
 		void ConvertAnimations(const aiScene *, const AnimList &, Node *meshRoot);
 		void ConvertNodes(aiNode *node, Group *parent, std::vector<RefCountedPtr<StaticGeometry>> &meshes, const matrix4x4f &);

@@ -649,14 +649,13 @@ void ModelViewer::MainLoop()
 
 void ModelViewer::OnAnimChanged(unsigned int, const std::string &name)
 {
-	m_currentAnimation = 0;
+	m_currentAnimation = nullptr;
 	// Find the animation matching the name (could also store the anims in a map
 	// when the animationSelector is filled)
 	if (!name.empty()) {
-		const std::vector<SceneGraph::Animation *> &anims = m_model->GetAnimations();
-		for (std::vector<SceneGraph::Animation *>::const_iterator anim = anims.begin(); anim != anims.end(); ++anim) {
-			if ((*anim)->GetName() == name)
-				m_currentAnimation = (*anim);
+		for (SceneGraph::Animation &anim : m_model->GetAnimations()) {
+			if (anim.GetName() == name)
+				m_currentAnimation = &anim;
 		}
 	}
 	if (m_currentAnimation)
@@ -1220,12 +1219,12 @@ void ModelViewer::UpdateAnimList()
 {
 	animSelector->Clear();
 	if (m_model) {
-		const std::vector<SceneGraph::Animation *> &anims = m_model->GetAnimations();
+		const std::vector<SceneGraph::Animation> &anims = m_model->GetAnimations();
 		for (unsigned int i = 0; i < anims.size(); i++) {
-			animSelector->AddOption(anims[i]->GetName());
+			animSelector->AddOption(anims[i].GetName());
 		}
 		if (anims.size())
-			animSelector->SetSelectedOption(anims[0]->GetName());
+			animSelector->SetSelectedOption(anims[0].GetName());
 	}
 	animSelector->Layout();
 	OnAnimChanged(0, animSelector->GetSelectedOption());

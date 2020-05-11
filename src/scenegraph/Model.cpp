@@ -72,20 +72,24 @@ namespace SceneGraph {
 		//patterns are shared
 		if (SupportsPatterns()) {
 			std::vector<Color> colors;
-			colors.push_back(Color::RED);
-			colors.push_back(Color::GREEN);
-			colors.push_back(Color::BLUE);
+			colors.reserve(3);
+			colors.insert(end(colors), {Color::RED, Color::GREEN, Color::BLUE});
 			SetColors(colors);
 			SetPattern(0);
 		}
 
 		//animations need to be copied and retargeted
-		for (AnimationContainer::const_iterator it = model.m_animations.begin(); it != model.m_animations.end(); ++it) {
+		m_animations.reserve(model.m_animations.size());
+		m_animations = model.m_animations;
+		std::for_each(begin(m_animations), end(m_animations), [this](Animation &anim) {
+			anim.UpdateChannelTargets(m_root.Get());
+		});
+/*		for (AnimationContainer::const_iterator it = model.m_animations.begin(); it != model.m_animations.end(); ++it) {
 			const Animation *anim = *it;
 			m_animations.push_back(new Animation(*anim));
 			m_animations.back()->UpdateChannelTargets(m_root.Get());
 		}
-
+*/
 		//m_tags needs to be updated
 		for (TagContainer::const_iterator it = model.m_tags.begin(); it != model.m_tags.end(); ++it) {
 			MatrixTransform *t = dynamic_cast<MatrixTransform *>(m_root->FindNode((*it)->GetName()));
@@ -96,8 +100,6 @@ namespace SceneGraph {
 
 	Model::~Model()
 	{
-		while (!m_animations.empty())
-			delete m_animations.back(), m_animations.pop_back();
 	}
 
 	Model *Model::MakeInstance() const
@@ -421,7 +423,7 @@ namespace SceneGraph {
 
 	std::vector<Mount> Model::GetGunTags() const {
 		std::vector<Mount> mounts = m_mounts;
-		return std::move(mounts);
+		return mounts;
 	}
 
 	void Model::ClearDecals()
@@ -459,19 +461,19 @@ namespace SceneGraph {
 		return false;
 	}
 
-	Animation *Model::FindAnimation(const std::string &name) const
+	Animation *Model::FindAnimation(const std::string &name)
 	{
-		for (AnimationContainer::const_iterator anim = m_animations.begin(); anim != m_animations.end(); ++anim) {
-			if ((*anim)->GetName() == name) return (*anim);
+		for (Animation &anim : m_animations) {
+			if (anim.GetName() == name) return &anim;
 		}
-		return 0;
+		return nullptr;
 	}
 
 	void Model::UpdateAnimations()
 	{
 		// XXX WIP. Assuming animations are controlled manually by SetProgress.
-		for (AnimationContainer::iterator anim = m_animations.begin(); anim != m_animations.end(); ++anim)
-			(*anim)->Interpolate();
+		for (Animation &anim : m_animations)
+			anim.Interpolate();
 	}
 
 	void Model::SetThrust(const vector3f &lin, const vector3f &ang)
@@ -561,7 +563,7 @@ namespace SceneGraph {
 
 		Json animationArray = Json::array(); // Create JSON array to contain animation data.
 		for (auto i : m_animations)
-			animationArray.push_back(i->GetProgress());
+			animationArray.push_back(i.GetProgress());
 		modelObj["animations"] = animationArray; // Add animation array to model object.
 
 		modelObj["cur_pattern_index"] = m_curPatternIndex;
@@ -598,7 +600,7 @@ namespace SceneGraph {
 			assert(m_animations.size() == animationArray.size());
 			unsigned int arrayIndex = 0;
 			for (auto i : m_animations)
-				i->SetProgress(animationArray[arrayIndex++]);
+				i.SetProgress(animationArray[arrayIndex++]);
 			UpdateAnimations();
 
 			SetPattern(modelObj["cur_pattern_index"]);

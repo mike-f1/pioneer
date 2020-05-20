@@ -4,8 +4,8 @@
 #ifndef PIGUI_IMAGE_H
 #define PIGUI_IMAGE_H
 
-#include "RefCounted.h"
-#include "vector2.h"
+#include "libs/RefCounted.h"
+#include "libs/vector2.h"
 #include <cstdint>
 #include <string>
 

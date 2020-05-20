@@ -9,8 +9,8 @@
 #include "Stats.h"
 #include "Types.h"
 
-#include "matrix4x4.h"
-#include "RefCounted.h"
+#include "libs/matrix4x4.h"
+#include "libs/RefCounted.h"
 
 #include <string>
 #include <map>

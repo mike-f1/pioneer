@@ -4,9 +4,9 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <SDL_events.h>
 
 struct BindingGroup;
+union SDL_Event;
 
 namespace KeyBindings {
 	struct ActionBinding;
@@ -23,7 +23,10 @@ public:
 	InputFrame(const std::string &name) :
 		m_name(name),
 		m_active(false)
-	{}
+	{
+		m_actions.reserve(4);
+		m_axes.reserve(4);
+	}
 
 	~InputFrame();
 

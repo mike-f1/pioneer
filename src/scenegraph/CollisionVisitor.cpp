@@ -3,6 +3,7 @@
 
 #include "CollisionVisitor.h"
 
+#include "CollMesh.h"
 #include "CollisionGeometry.h"
 #include "Group.h"
 #include "MatrixTransform.h"

@@ -6,7 +6,7 @@
 #include <SDL_image.h>
 #include "FileSystem.h"
 #include "graphics/Graphics.h"
-#include "utils.h"
+#include "libs/utils.h"
 
 namespace PngWriter {
 	void write_png(FileSystem::FileSourceFS &fs, const std::string &path, const uint8_t *bytes, int width, int height, int stride, int bytes_per_pixel)

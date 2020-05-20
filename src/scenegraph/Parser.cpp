@@ -6,10 +6,10 @@
 #include "LoaderDefinitions.h"
 
 #include "FileSystem.h"
-#include "StringF.h"
-#include "StringRange.h"
+#include "libs/utils.h"
+#include "libs/StringF.h"
+#include "libs/StringRange.h"
 #include <sstream>
-#include "utils.h"
 
 namespace SceneGraph {
 

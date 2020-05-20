@@ -18,7 +18,7 @@
 #include "Player.h"
 #include "Ship.h"
 #include "Space.h"
-#include "StringF.h"
+#include "libs/StringF.h"
 #include "collider/CSGDefinitions.h"
 #include "galaxy/SystemBody.h"
 #include "graphics/Renderer.h"
@@ -329,7 +329,7 @@ bool SpaceStation::LaunchShip(Ship *ship, const int port)
 	const vector3d up = ship->GetOrient().VectorY().Normalized() * ship->GetLandingPosOffset();
 
 	sd.fromPos = (ship->GetPosition() - GetPosition() + up) * GetOrient(); // station space
-	sd.fromRot = Quaterniond::FromMatrix3x3(GetOrient().Transpose() * ship->GetOrient());
+	sd.fromRot = quaterniond::FromMatrix3x3(GetOrient().Transpose() * ship->GetOrient());
 
 	ship->SetFlightState(Ship::UNDOCKING);
 
@@ -432,7 +432,7 @@ bool SpaceStation::OnCollision(Object *b, uint32_t flags, double relVel)
 			sd.stage = 2;
 			sd.stagePos = 0;
 			sd.fromPos = (s->GetPosition() - GetPosition()) * GetOrient(); // station space
-			sd.fromRot = Quaterniond::FromMatrix3x3(GetOrient().Transpose() * s->GetOrient());
+			sd.fromRot = quaterniond::FromMatrix3x3(GetOrient().Transpose() * s->GetOrient());
 			LockPort(port, true);
 
 			s->SetFlightState(Ship::DOCKING);
@@ -488,7 +488,7 @@ void SpaceStation::DockingUpdate(const double timeStep)
 				// at high time steps on an orbital
 				if (!IsGroundStation()) {
 					dt.fromPos = vector3d(0.0); //No offset
-					dt.fromRot = Quaterniond(1.0, 0.0, 0.0, 0.0); //Identity (no rotation)
+					dt.fromRot = quaterniond(1.0, 0.0, 0.0, 0.0); //Identity (no rotation)
 					dt.stage += 2;
 					continue;
 				}
@@ -499,14 +499,14 @@ void SpaceStation::DockingUpdate(const double timeStep)
 					// Reposition needed
 					dt.fromPos = dt.ship->GetPosition();
 					matrix3x3d padOrient = matrix3x3d::FromVectors(dport.xaxis, dport.yaxis, dport.zaxis);
-					dt.fromRot = Quaterniond::FromMatrix3x3((GetOrient() * padOrient).Transpose() * dt.ship->GetOrient());
+					dt.fromRot = quaterniond::FromMatrix3x3((GetOrient() * padOrient).Transpose() * dt.ship->GetOrient());
 					dt.stage++;
 					dt.stagePos = 0.0;
 				} else {
 					// Save ship position
 					dt.fromPos = (dt.ship->GetPosition() - GetPosition() - GetOrient() * dport.pos) * GetOrient();
 					matrix3x3d padOrient = matrix3x3d::FromVectors(dport.xaxis, dport.yaxis, dport.zaxis);
-					dt.fromRot = Quaterniond::FromMatrix3x3((GetOrient() * padOrient).Transpose() * dt.ship->GetOrient());
+					dt.fromRot = quaterniond::FromMatrix3x3((GetOrient() * padOrient).Transpose() * dt.ship->GetOrient());
 					dt.stage += 2;
 				}
 				continue;
@@ -515,7 +515,7 @@ void SpaceStation::DockingUpdate(const double timeStep)
 				if (dt.stagePos >= 1.0) {
 					dt.stage++;
 					dt.fromPos = vector3d(0.0); //No offset
-					dt.fromRot = Quaterniond(1.0, 0.0, 0.0, 0.0); //Identity (no rotation)
+					dt.fromRot = quaterniond(1.0, 0.0, 0.0, 0.0); //Identity (no rotation)
 				}
 				continue;
 			case 3: // Just docked
@@ -556,7 +556,7 @@ void SpaceStation::DockingUpdate(const double timeStep)
 			SpaceStationType::positionOrient_t dport;
 			PiVerify(m_type->GetDockAnimPositionOrient(i, dt.stage, 1.0f, dt.fromPos, dport, dt.ship));
 			matrix3x3d fromRot = matrix3x3d::FromVectors(dport.xaxis, dport.yaxis, dport.zaxis);
-			dt.fromRot = Quaterniond::FromMatrix3x3(fromRot);
+			dt.fromRot = quaterniond::FromMatrix3x3(fromRot);
 			dt.fromPos = dport.pos;
 
 			// transition between docking stages
@@ -648,8 +648,8 @@ void SpaceStation::PositionDockingShip(Ship *ship, int port) const
 	matrix3x3d wantRot = matrix3x3d::FromVectors(dport.xaxis, dport.yaxis, dport.zaxis);
 	// use quaternion spherical linear interpolation to do
 	// rotation smoothly
-	Quaterniond wantQuat = Quaterniond::FromMatrix3x3(wantRot);
-	Quaterniond q = Quaterniond::Nlerp(dt.fromRot, wantQuat, dt.stagePos);
+	quaterniond wantQuat = quaterniond::FromMatrix3x3(wantRot);
+	quaterniond q = quaterniond::Nlerp(dt.fromRot, wantQuat, dt.stagePos);
 	wantRot = q.ToMatrix3x3<double>();
 	ship->SetOrient(GetOrient() * wantRot);
 }
@@ -663,7 +663,7 @@ void SpaceStation::PositionDockedShip(Ship *ship, int port) const
 
 	ship->SetPosition(GetPosition() + GetOrient() * (dport.pos + dt.fromPos));
 	// Note: ship bounding box is used to generate dport.pos
-	Quaterniond dportQ = Quaterniond::FromMatrix3x3(matrix3x3d::FromVectors(dport.xaxis, dport.yaxis, dport.zaxis));
+	quaterniond dportQ = quaterniond::FromMatrix3x3(matrix3x3d::FromVectors(dport.xaxis, dport.yaxis, dport.zaxis));
 	dportQ = dportQ * dt.fromRot;
 	matrix3x3d shipRot = dportQ.ToMatrix3x3<double>();
 	ship->SetOrient(GetOrient() * shipRot);

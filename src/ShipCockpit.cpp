@@ -4,7 +4,6 @@
 #include "ShipCockpit.h"
 
 #include "CameraController.h"
-#include "Easing.h"
 #include "InGameViews.h"
 #include "InGameViewsLocator.h"
 #include "ModelCache.h"
@@ -12,6 +11,7 @@
 #include "WorldView.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
+#include "libs/Easing.h"
 
 static const char *DEFAULT_COCKPIT_NAME = "default_cockpit";
 

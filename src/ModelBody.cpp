@@ -3,7 +3,9 @@
 
 #include "ModelBody.h"
 
+#include "Aabb.h"
 #include "Camera.h"
+#include "CollMesh.h"
 #include "Frame.h"
 #include "GameSaveError.h"
 #include "Json.h"
@@ -19,7 +21,7 @@
 #include "scenegraph/NodeVisitor.h"
 #include "scenegraph/MatrixTransform.h"
 #include "scenegraph/Model.h"
-#include "gameconsts.h"
+#include "libs/gameconsts.h"
 
 class Space;
 
@@ -135,6 +137,16 @@ void ModelBody::SetColliding(bool colliding)
 		m_geom->Enable();
 	else
 		m_geom->Disable();
+}
+
+Aabb &ModelBody::GetAabb() const
+{
+	return m_collMesh->GetAabb();
+}
+
+CollMesh *ModelBody::GetCollMesh()
+{
+	return m_collMesh.Get();
 }
 
 void ModelBody::RebuildCollisionMesh()

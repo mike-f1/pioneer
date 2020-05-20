@@ -9,7 +9,7 @@
 #include "graphics/RenderState.h"
 #include "graphics/VertexArray.h"
 #include "graphics/VertexBuffer.h"
-#include "libs.h"
+#include "libs/libs.h"
 
 namespace Gui {
 

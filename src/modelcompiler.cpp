@@ -3,7 +3,7 @@
 
 #include "buildopts.h"
 
-#include "utils.h"
+#include "libs/utils.h"
 
 #include <cstdio>
 #include <cstdlib>
@@ -14,7 +14,8 @@
 #include "JobQueue.h"
 #include "ModManager.h"
 #include "OS.h"
-#include "StringF.h"
+#include "libs/StringF.h"
+#include "libs/stringUtils.h"
 #include "graphics/Drawables.h"
 #include "graphics/Graphics.h"
 #include "graphics/Light.h"
@@ -231,7 +232,7 @@ start:
 
 					//check it's the expected type
 					if (info.IsFile()) {
-						if (ends_with_ci(fpath, ".model")) { // store the path for ".model" files
+						if (stringUtils::ends_with_ci(fpath, ".model")) { // store the path for ".model" files
 							const std::string shortname(info.GetName().substr(0, info.GetName().size() - 6));
 							if (shortname == modelName) {
 								filePath = fpath;
@@ -270,7 +271,7 @@ start:
 
 			//check it's the expected type
 			if (info.IsFile()) {
-				if (ends_with_ci(fpath, ".model")) { // store the path for ".model" files
+				if (stringUtils::ends_with_ci(fpath, ".model")) { // store the path for ".model" files
 					list_model.push_back(std::make_pair(info.GetName().substr(0, info.GetName().size() - 6), fpath));
 				}
 			}

@@ -38,7 +38,9 @@ class RefCountedPtr : public SmartPtrBase<RefCountedPtr<T>, T> {
 	typedef SmartPtrBase<this_type, T> base_type;
 
 public:
-	RefCountedPtr() {}
+	RefCountedPtr() :
+		base_type()
+	{}
 
 	explicit RefCountedPtr(T *p) :
 		base_type(p)

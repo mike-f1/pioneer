@@ -5,24 +5,23 @@
 
 #include "Animation.h"
 #include "CollisionVisitor.h"
+#include "CollMesh.h"
 #include "FindNodeVisitor.h"
 #include "Label3D.h"
 #include "MatrixTransform.h"
+#include "ModelDebug.h"
 #include "NodeCopyCache.h"
 #include "Thruster.h"
-#include "../GameSaveError.h"
-#include "../JsonUtils.h"
-#include "../StringF.h"
-#include "../collider/CSGDefinitions.h"
-#include "../graphics/Drawables.h"
-#include "../graphics/Material.h"
-#include "../graphics/RenderState.h"
-#include "../graphics/Renderer.h"
-#include "../graphics/RendererLocator.h"
-#include "../graphics/TextureBuilder.h"
-#include "../graphics/VertexArray.h"
-#include "../graphics/VertexBuffer.h"
-#include "../utils.h"
+#include "GameSaveError.h"
+#include "JsonUtils.h"
+#include "collider/CSGDefinitions.h"
+#include "graphics/Material.h"
+#include "graphics/Renderer.h"
+#include "graphics/RendererLocator.h"
+#include "graphics/TextureBuilder.h"
+#include "libs/StringF.h"
+#include "libs/stringUtils.h"
+#include "libs/utils.h"
 
 namespace SceneGraph {
 
@@ -41,7 +40,7 @@ namespace SceneGraph {
 		m_name(name),
 		m_curPatternIndex(0),
 		m_curPattern(0),
-		m_debugFlags(0)
+		m_debugFlags(DebugFlags::NONE)
 	{
 		m_root.Reset(new Group());
 		m_root->SetName(name);
@@ -58,7 +57,7 @@ namespace SceneGraph {
 		m_name(other.m_name),
 		m_curPatternIndex(other.m_curPatternIndex),
 		m_curPattern(other.m_curPattern),
-		m_debugFlags(0),
+		m_debugFlags(DebugFlags::NONE),
 		m_mounts(other.m_mounts)
 	{
 		//selective copying of node structure
@@ -133,7 +132,7 @@ namespace SceneGraph {
 		params.boundingRadius = GetDrawClipRadius();
 
 		//render in two passes, if this is the top-level model
-		if (m_debugFlags & DEBUG_WIREFRAME)
+		if (to_bool(m_debugFlags & DebugFlags::WIREFRAME))
 			RendererLocator::getRenderer()->SetWireFrameMode(true);
 
 		if (params.nodemask & MASK_IGNORE) {
@@ -145,33 +144,13 @@ namespace SceneGraph {
 			m_root->Render(trans, &params);
 		}
 
-		if (!m_debugFlags)
-			return;
-
-		if (m_debugFlags & DEBUG_WIREFRAME)
+		if (to_bool(m_debugFlags & DebugFlags::WIREFRAME))
 			RendererLocator::getRenderer()->SetWireFrameMode(false);
 
-		if (m_debugFlags & DEBUG_BBOX) {
-			RendererLocator::getRenderer()->SetTransform(trans);
-			DrawAabb();
-		}
+		if (!to_bool(m_debugFlags))
+			return;
 
-		if (m_debugFlags & DEBUG_COLLMESH) {
-			RendererLocator::getRenderer()->SetTransform(trans);
-			DrawCollisionMesh();
-			DrawCentralCylinder();
-			DrawBoxes();
-		}
-
-		if (m_debugFlags & DEBUG_TAGS) {
-			RendererLocator::getRenderer()->SetTransform(trans);
-			DrawAxisIndicators(m_tagPoints);
-		}
-
-		if (m_debugFlags & DEBUG_DOCKING) {
-			RendererLocator::getRenderer()->SetTransform(trans);
-			DrawAxisIndicators(m_dockingPoints);
-		}
+		m_modelDebug->Render(trans);
 	}
 
 	void Model::Render(const std::vector<matrix4x4f> &trans, const RenderData *rd)
@@ -201,7 +180,7 @@ namespace SceneGraph {
 		params.boundingRadius = GetDrawClipRadius();
 
 		//render in two passes, if this is the top-level model
-		if (m_debugFlags & DEBUG_WIREFRAME)
+		if (to_bool(m_debugFlags & DebugFlags::WIREFRAME))
 			RendererLocator::getRenderer()->SetWireFrameMode(true);
 
 		if (params.nodemask & MASK_IGNORE) {
@@ -212,116 +191,9 @@ namespace SceneGraph {
 			params.nodemask = NODE_TRANSPARENT;
 			m_root->Render(trans, &params);
 		}
-	}
 
-	void Model::CreateAabbVB()
-	{
-		PROFILE_SCOPED()
-		if (!m_collMesh) return;
-
-		const Aabb aabb = m_collMesh->GetAabb();
-
-		Graphics::MaterialDescriptor desc;
-		m_aabbMat.Reset(RendererLocator::getRenderer()->CreateMaterial(desc));
-		m_aabbMat->diffuse = Color::GREEN;
-
-		m_state = RendererLocator::getRenderer()->CreateRenderState(Graphics::RenderStateDesc());
-
-		m_aabbBox3D.reset(new Graphics::Drawables::Box3D(RendererLocator::getRenderer(), m_aabbMat, m_state, vector3f(aabb.min), vector3f(aabb.max)));
-	}
-
-	void Model::DrawAabb()
-	{
-		if (!m_collMesh) return;
-
-		RendererLocator::getRenderer()->SetWireFrameMode(true);
-		m_aabbBox3D->Draw(RendererLocator::getRenderer());
-		RendererLocator::getRenderer()->SetWireFrameMode(false);
-	}
-
-	// Draw collision mesh as a wireframe overlay
-	void Model::DrawCollisionMesh()
-	{
-		PROFILE_SCOPED()
-		if (!m_collMesh) return;
-
-		if (!m_collisionMeshVB.Valid()) {
-			const std::vector<vector3f> &vertices = m_collMesh->GetGeomTreeVertices();
-			const uint32_t *indices = m_collMesh->GetGeomTreeIndices();
-			const unsigned int *triFlags = m_collMesh->GetGeomTreeTriFlags();
-			const unsigned int numIndices = m_collMesh->GetGeomTreeNumTris() * 3;
-
-			Graphics::VertexArray va(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE, numIndices * 3);
-			int trindex = -1;
-			for (unsigned int i = 0; i < numIndices; i++) {
-				if (i % 3 == 0)
-					trindex++;
-				const unsigned int flag = triFlags[trindex];
-				//show special geomflags in red
-				va.Add(vertices[indices[i]], flag > 0 ? Color::RED : Color::WHITE);
-			}
-
-			//create buffer and upload data
-			Graphics::VertexBufferDesc vbd;
-			vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
-			vbd.attrib[0].format = Graphics::ATTRIB_FORMAT_FLOAT3;
-			vbd.attrib[1].semantic = Graphics::ATTRIB_DIFFUSE;
-			vbd.attrib[1].format = Graphics::ATTRIB_FORMAT_UBYTE4;
-			vbd.numVertices = va.GetNumVerts();
-			vbd.usage = Graphics::BUFFER_USAGE_STATIC;
-			m_collisionMeshVB.Reset(RendererLocator::getRenderer()->CreateVertexBuffer(vbd));
-			m_collisionMeshVB->Populate(va);
-		}
-
-		//might want to add some offset
-		RendererLocator::getRenderer()->SetWireFrameMode(true);
-		Graphics::RenderStateDesc rsd;
-		rsd.cullMode = Graphics::CULL_NONE;
-		RendererLocator::getRenderer()->DrawBuffer(m_collisionMeshVB.Get(), RendererLocator::getRenderer()->CreateRenderState(rsd), Graphics::vtxColorMaterial);
-		RendererLocator::getRenderer()->SetWireFrameMode(false);
-	}
-
-	void Model::DrawCentralCylinder()
-	{
-		if (!m_centralCylinder) return;
-		if (m_disk) {
-			// TODO: Only for a 'CSG_Cylinder' aligned on Y axis
-			Graphics::Renderer *r = RendererLocator::getRenderer();
-			r->SetWireFrameMode(true);
-			{
-				Graphics::Renderer::MatrixTicket ticket(RendererLocator::getRenderer(), Graphics::MatrixMode::MODELVIEW);
-				matrix4x4f mat = r->GetCurrentModelView();
-				mat.Translate(0.0, m_centralCylinder->m_minH, 0.0);
-				mat.RotateX(-M_PI / 2.0);
-				r->SetTransform(mat);
-				m_disk->Draw(r);
-			}
-			{
-				Graphics::Renderer::MatrixTicket ticket(RendererLocator::getRenderer(), Graphics::MatrixMode::MODELVIEW);
-				matrix4x4f mat = r->GetCurrentModelView();
-				mat.Translate(0.0, m_centralCylinder->m_maxH, 0.0);
-				mat.RotateX(-3.0 * M_PI / 2.0);
-				r->SetTransform(mat);
-				m_disk->Draw(r);
-			}
-			r->SetWireFrameMode(false);
-			m_CCylConnectingLine->Draw(RendererLocator::getRenderer(), m_csg);
-		}
-	}
-
-	void Model::DrawBoxes()
-	{
-		RendererLocator::getRenderer()->SetWireFrameMode(true);
-		std::for_each(begin(m_csgBoxes), end(m_csgBoxes), [](const Graphics::Drawables::Box3D &box) {
-				box.Draw(RendererLocator::getRenderer());
-		});
-		RendererLocator::getRenderer()->SetWireFrameMode(false);
-	}
-
-	void Model::DrawAxisIndicators(std::vector<Graphics::Drawables::Line3D> &lines)
-	{
-		for (auto i = lines.begin(); i != lines.end(); ++i)
-			(*i).Draw(RendererLocator::getRenderer(), RendererLocator::getRenderer()->CreateRenderState(Graphics::RenderStateDesc()));
+		if (to_bool(m_debugFlags & DebugFlags::WIREFRAME))
+			RendererLocator::getRenderer()->SetWireFrameMode(false);
 	}
 
 	RefCountedPtr<CollMesh> Model::CreateCollisionMesh()
@@ -331,6 +203,21 @@ namespace SceneGraph {
 		m_collMesh = cv.CreateCollisionMesh();
 		m_boundingRadius = cv.GetBoundingRadius();
 		return m_collMesh;
+	}
+
+	RefCountedPtr<CollMesh> Model::GetCollisionMesh() const
+	{
+		return m_collMesh;
+	}
+
+	void Model::SetCollisionMesh(RefCountedPtr<CollMesh> collMesh)
+	{
+		m_collMesh.Reset(collMesh.Get());
+	}
+
+	RefCountedPtr<Group> Model::GetRoot()
+	{
+		return m_root;
 	}
 
 	RefCountedPtr<Graphics::Material> Model::GetMaterialByName(const std::string &name) const
@@ -370,7 +257,7 @@ namespace SceneGraph {
 			 it != m_tags.end();
 			 ++it) {
 			assert(!(*it)->GetName().empty()); //tags must have a name
-			if (starts_with((*it)->GetName(), name)) {
+			if (stringUtils::starts_with((*it)->GetName(), name)) {
 				outNameMTs.push_back((*it));
 			}
 		}
@@ -620,82 +507,17 @@ namespace SceneGraph {
 		return "unknown";
 	}
 
-	void Model::AddAxisIndicators(const std::vector<MatrixTransform *> &mts, std::vector<Graphics::Drawables::Line3D> &lines)
-	{
-		for (std::vector<MatrixTransform *>::const_iterator i = mts.begin(); i != mts.end(); ++i) {
-			const matrix4x4f &trans = (*i)->GetTransform();
-			const vector3f pos = trans.GetTranslate();
-			const matrix3x3f &orient = trans.GetOrient();
-			const vector3f x = orient.VectorX().Normalized();
-			const vector3f y = orient.VectorY().Normalized();
-			const vector3f z = orient.VectorZ().Normalized();
-
-			Graphics::Drawables::Line3D lineX;
-			lineX.SetStart(pos);
-			lineX.SetEnd(pos + x);
-			lineX.SetColor(Color::RED);
-
-			Graphics::Drawables::Line3D lineY;
-			lineY.SetStart(pos);
-			lineY.SetEnd(pos + y);
-			lineY.SetColor(Color::GREEN);
-
-			Graphics::Drawables::Line3D lineZ;
-			lineZ.SetStart(pos);
-			lineZ.SetEnd(pos + z);
-			lineZ.SetColor(Color::BLUE);
-
-			lines.push_back(lineX);
-			lines.push_back(lineY);
-			lines.push_back(lineZ);
-		}
-	}
-
-	void Model::SetDebugFlags(uint32_t flags)
+	void Model::SetDebugFlags(DebugFlags flags)
 	{
 		m_debugFlags = flags;
-
-		if (m_debugFlags & SceneGraph::Model::DEBUG_BBOX && m_tagPoints.empty()) {
-			CreateAabbVB();
-		}
-		if (m_debugFlags & SceneGraph::Model::DEBUG_TAGS && m_tagPoints.empty()) {
-			std::vector<MatrixTransform *> mts;
-			FindTagsByStartOfName("tag_", mts);
-			AddAxisIndicators(mts, m_tagPoints);
-		}
-		if (m_debugFlags & SceneGraph::Model::DEBUG_DOCKING && m_dockingPoints.empty()) {
-			std::vector<MatrixTransform *> mts;
-			FindTagsByStartOfName("entrance_", mts);
-			AddAxisIndicators(mts, m_dockingPoints);
-			FindTagsByStartOfName("loc_", mts);
-			AddAxisIndicators(mts, m_dockingPoints);
-			FindTagsByStartOfName("exit_", mts);
-			AddAxisIndicators(mts, m_dockingPoints);
-		}
-		Graphics::Renderer *renderer = RendererLocator::getRenderer();
-		if (m_debugFlags & SceneGraph::Model::DEBUG_COLLMESH && m_centralCylinder && !m_disk) {
-			Graphics::RenderStateDesc rsd;
-			rsd.cullMode = Graphics::FaceCullMode::CULL_NONE;
-			m_csg = renderer->CreateRenderState(rsd);
-			m_disk.reset(new Graphics::Drawables::Disk(renderer, m_csg, Color::BLUE, m_centralCylinder->m_diameter / 2.0));
-			m_CCylConnectingLine.reset(new Graphics::Drawables::Line3D());
-			m_CCylConnectingLine->SetStart(vector3f(0.f, m_centralCylinder->m_minH, 0.f));
-			m_CCylConnectingLine->SetEnd(vector3f(0.f, m_centralCylinder->m_maxH, 0.f));
-			m_CCylConnectingLine->SetColor(Color::BLUE);
-		}
-
-		if (m_debugFlags & SceneGraph::Model::DEBUG_COLLMESH && !m_Boxes.empty() && m_csgBoxes.empty()) {
-			Graphics::RenderStateDesc rsd;
-			rsd.cullMode = Graphics::FaceCullMode::CULL_NONE;
-			m_csg = renderer->CreateRenderState(rsd);
-
-			Graphics::MaterialDescriptor desc;
-			m_boxes3DMat.Reset(RendererLocator::getRenderer()->CreateMaterial(desc));
-			m_boxes3DMat->diffuse = Color::BLUE;
-
-			std::for_each(begin(m_Boxes), end(m_Boxes), [&](const CSG_Box &box) {
-				m_csgBoxes.push_back(Graphics::Drawables::Box3D(renderer, m_boxes3DMat, m_csg, box.m_min, box.m_max));
-			});
+		if (to_bool(m_debugFlags & SceneGraph::DebugFlags::NONE)) {
+			m_modelDebug.reset();
+		} else {
+			if (!m_modelDebug) {
+				m_modelDebug.reset(new ModelDebug(this, m_debugFlags));
+			} else {
+				m_modelDebug->UpdateFlags(m_debugFlags);
+			}
 		}
 	}
 

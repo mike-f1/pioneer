@@ -4,22 +4,25 @@
 #include "Loader.h"
 
 #include "BinaryConverter.h"
+#include "CollMesh.h"
 #include "CollisionGeometry.h"
 #include "FileSystem.h"
+#include "Group.h"
 #include "LOD.h"
 #include "Parser.h"
 #include "Animation.h"
 #include "Label3D.h"
 #include "Model.h"
 #include "MatrixTransform.h"
-#include "StringF.h"
+#include "libs/utils.h"
+#include "libs/StringF.h"
+#include "libs/stringUtils.h"
 #include "graphics/Material.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/RenderState.h"
 #include "graphics/TextureBuilder.h"
 #include "graphics/VertexBuffer.h"
-#include "utils.h"
 #include <assimp/material.h>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
@@ -132,6 +135,9 @@ namespace SceneGraph {
 	{
 	}
 
+	Loader::~Loader()
+	{}
+
 	Model *Loader::LoadModel(const std::string &filename)
 	{
 		PROFILE_SCOPED()
@@ -154,9 +160,9 @@ namespace SceneGraph {
 
 			//check it's the expected type
 			if (info.IsFile()) {
-				if (ends_with_ci(fpath, ".model")) { // store the path for ".model" files
+				if (stringUtils::ends_with_ci(fpath, ".model")) { // store the path for ".model" files
 					list_model.push_back(fpath);
-				} else if (m_loadSGMs & ends_with_ci(fpath, ".sgm")) { // store only the shortname for ".sgm" files.
+				} else if (m_loadSGMs & stringUtils::ends_with_ci(fpath, ".sgm")) { // store only the shortname for ".sgm" files.
 					list_sgm.push_back(info.GetName().substr(0, info.GetName().size() - 4));
 				}
 			}
@@ -665,7 +671,7 @@ namespace SceneGraph {
 						const aiQuaternion &airot = aikey.mValue;
 						if (in_range(aikey.mTime, defStart, defEnd)) {
 							const double t = aikey.mTime * secondsPerTick;
-							chan.rotationKeys.push_back(RotationKey(t, Quaternionf(airot.w, airot.x, airot.y, airot.z)));
+							chan.rotationKeys.push_back(RotationKey(t, quaternionf(airot.w, airot.x, airot.y, airot.z)));
 							start = std::min(start, t);
 							end = std::max(end, t);
 						}
@@ -764,7 +770,7 @@ namespace SceneGraph {
 		PROFILE_SCOPED()
 		if (!m_mostDetailedLod) return AddLog("Thruster outside highest LOD, ignored");
 
-		const bool linear = starts_with(name, "thruster_linear");
+		const bool linear = stringUtils::starts_with(name, "thruster_linear");
 
 		matrix4x4f transform = m;
 
@@ -845,19 +851,19 @@ namespace SceneGraph {
 
 		//lights, and possibly other special nodes should be leaf nodes (without meshes)
 		if (node->mNumChildren == 0 && node->mNumMeshes == 0) {
-			if (starts_with(nodename, "navlight_")) {
+			if (stringUtils::starts_with(nodename, "navlight_")) {
 				CreateNavlight(nodename, accum * m);
-			} else if (starts_with(nodename, "thruster_")) {
+			} else if (stringUtils::starts_with(nodename, "thruster_")) {
 				CreateThruster(nodename, accum * m);
-			} else if (starts_with(nodename, "label_")) {
+			} else if (stringUtils::starts_with(nodename, "label_")) {
 				CreateLabel(parent, m);
-			} else if (starts_with(nodename, "tag_")) {
+			} else if (stringUtils::starts_with(nodename, "tag_")) {
 				m_model->AddTag(nodename, new MatrixTransform(accum * m));
-			} else if (starts_with(nodename, "entrance_")) {
+			} else if (stringUtils::starts_with(nodename, "entrance_")) {
 				m_model->AddTag(nodename, new MatrixTransform(m));
-			} else if (starts_with(nodename, "loc_")) {
+			} else if (stringUtils::starts_with(nodename, "loc_")) {
 				m_model->AddTag(nodename, new MatrixTransform(m));
-			} else if (starts_with(nodename, "exit_")) {
+			} else if (stringUtils::starts_with(nodename, "exit_")) {
 				m_model->AddTag(nodename, new MatrixTransform(m));
 			}
 			return;
@@ -870,11 +876,11 @@ namespace SceneGraph {
 		parent->SetName(nodename);
 
 		//nodes named collision_* are not added as renderable geometry
-		if (node->mNumMeshes == 1 && starts_with(nodename, "collision_")) {
+		if (node->mNumMeshes == 1 && stringUtils::starts_with(nodename, "collision_")) {
 			const unsigned int collflag = GetGeomFlagForNodeName(nodename);
 			RefCountedPtr<CollisionGeometry> cgeom = CreateCollisionGeometry(geoms.at(node->mMeshes[0]), collflag);
 			cgeom->SetName(nodename + "_cgeom");
-			cgeom->SetDynamic(starts_with(nodename, "collision_d"));
+			cgeom->SetDynamic(stringUtils::starts_with(nodename, "collision_d"));
 			parent->AddChild(cgeom.Get());
 			return;
 		}
@@ -883,7 +889,7 @@ namespace SceneGraph {
 		if (node->mNumMeshes > 0) {
 			//expecting decal_0X
 			unsigned int numDecal = 0;
-			if (starts_with(nodename, "decal_")) {
+			if (stringUtils::starts_with(nodename, "decal_")) {
 				numDecal = atoi(nodename.substr(7, 1).c_str());
 				if (numDecal > 4)
 					throw LoadingError("More than 4 different decals");

@@ -3,8 +3,8 @@
 
 #pragma once
 
-#include "RefCounted.h"
 #include "graphics/Light.h"
+#include "libs/RefCounted.h"
 #include "scenegraph/ModelSkin.h"
 
 #include <memory>

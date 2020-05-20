@@ -4,7 +4,7 @@
 #include "TextureGL.h"
 #include "RendererGL.h"
 #include "graphics/Renderer.h"
-#include "utils.h"
+#include "libs/utils.h"
 #include <cassert>
 
 static const unsigned int MIN_COMPRESSED_TEXTURE_DIMENSION = 16;

@@ -6,8 +6,8 @@
 
 #include "Color.h"
 #include "FrameId.h"
-#include "matrix4x4.h"
 #include "graphics/Drawables.h"
+#include "libs/matrix4x4.h"
 
 #include <deque>
 // trail drawn after an object to track motion

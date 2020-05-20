@@ -8,7 +8,7 @@
 #include "Input.h"
 #include "Lang.h"
 #include "Pi.h"
-#include "StringF.h"
+#include "libs/StringF.h"
 
 #include <sstream>
 #include <string>
@@ -19,21 +19,9 @@ static bool m_disableBindings = 0;
 
 namespace KeyBindings {
 
-	typedef std::underlying_type<BehaviourMod>::type bm_type;
-
-	BehaviourMod operator |(BehaviourMod lhs, BehaviourMod rhs)
-	{
-		return static_cast<BehaviourMod> (static_cast<bm_type>(lhs) | static_cast<bm_type>(rhs));
-	}
-
-	BehaviourMod operator &(BehaviourMod lhs, BehaviourMod rhs)
-	{
-		return static_cast<BehaviourMod> (static_cast<bm_type>(lhs) & static_cast<bm_type>(rhs));
-	}
-
 	bool BehaviourTrait::HaveBTrait(BehaviourMod masked) const
 	{
-		return (masked & m_bmTrait);
+		return to_bool(masked & m_bmTrait);
 	}
 
 	SDL_Keymod KeymodUnifyLR(SDL_Keymod mod)

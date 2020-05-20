@@ -11,7 +11,7 @@
 #include "Pattern.h"
 
 #include <string>
-#include "RefCounted.h"
+#include "libs/RefCounted.h"
 
 namespace Graphics {
 	class Material;

@@ -6,7 +6,7 @@
 
 #include "Color.h"
 #include "GuiEvents.h"
-#include "libs.h"
+#include "libs/libs.h"
 
 #include "SDL_keyboard.h"
 #include <sigc++/sigc++.h>

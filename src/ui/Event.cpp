@@ -4,6 +4,7 @@
 #include "Event.h"
 #include "EnumStrings.h"
 #include "LuaObject.h"
+#include "libs/utils.h"
 
 namespace UI {
 

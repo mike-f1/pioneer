@@ -8,8 +8,8 @@
  */
 
 #include "Color.h"
-#include "RefCounted.h"
-#include "matrix4x4.h"
+#include "libs/RefCounted.h"
+#include "libs/matrix4x4.h"
 #include <string>
 #include <utility>
 #include <vector>

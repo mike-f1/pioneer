@@ -4,10 +4,10 @@
 #ifndef UI_ANIMATION_H
 #define UI_ANIMATION_H
 
-#include "Easing.h"
-#include "RefCounted.h"
 #include "Widget.h"
-#include "libs.h"
+#include "libs/Easing.h"
+#include "libs/RefCounted.h"
+#include "libs/libs.h"
 
 namespace UI {
 

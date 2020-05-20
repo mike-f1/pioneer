@@ -7,12 +7,15 @@
 #include "GeoPatchJobs.h"
 #include "GeoSphere.h"
 #include "Pi.h"
-#include "Sphere.h"
+#include "graphics/Drawables.h"
 #include "graphics/Frustum.h"
 #include "graphics/Material.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
+#include "graphics/RenderState.h"
+#include "graphics/TextureBuilder.h"
 #include "graphics/VertexBuffer.h"
+#include "libs/Sphere.h"
 #include "perlin.h"
 #include <algorithm>
 #include <deque>
@@ -251,7 +254,6 @@ void GeoPatch::UpdateVBOs()
 	m_normals.reset();
 	m_colors.reset();
 
-#ifdef DEBUG_BOUNDING_SPHERES
 	RefCountedPtr<Graphics::Material> mat(RendererLocator::getRenderer()->CreateMaterial(Graphics::MaterialDescriptor()));
 	switch (m_depth) {
 		case GEOPATCH_MAX_DEPTH - 0: mat->diffuse = Color::WHITE; break;
@@ -264,7 +266,6 @@ void GeoPatch::UpdateVBOs()
 		default: mat->diffuse = Color::BLACK; break;
 	}
 	m_boundsphere.reset(new Graphics::Drawables::Sphere3D(RendererLocator::getRenderer(), mat, RendererLocator::getRenderer()->CreateRenderState(Graphics::RenderStateDesc()), 4, m_clipRadius));
-#endif
 }
 
 // the default sphere we do the horizon culling against

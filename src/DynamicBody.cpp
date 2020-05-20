@@ -3,6 +3,7 @@
 
 #include "DynamicBody.h"
 
+#include "CollMesh.h"
 #include "FixedGuns.h"
 #include "Frame.h"
 #include "GameSaveError.h"
@@ -12,8 +13,8 @@
 #include "Space.h"
 #include "collider/CollisionContact.h"
 #include "galaxy/SystemBody.h"
+#include "libs/gameconsts.h"
 #include "ship/Propulsion.h"
-#include "gameconsts.h"
 
 static const float KINETIC_ENERGY_MULT = 0.00001f;
 const double DynamicBody::DEFAULT_DRAG_COEFF = 0.1; // 'smooth sphere'

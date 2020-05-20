@@ -2,8 +2,9 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "BillboardMaterial.h"
+
 #include "RendererGL.h"
-#include "StringF.h"
+#include "libs/StringF.h"
 #include "TextureGL.h"
 #include "graphics/Graphics.h"
 #include <sstream>

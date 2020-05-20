@@ -4,7 +4,7 @@
 #ifndef _FONTCACHE_H
 #define _FONTCACHE_H
 
-#include "RefCounted.h"
+#include "libs/RefCounted.h"
 #include "text/TextureFont.h"
 #include <map>
 #include <string>

@@ -5,13 +5,13 @@
 #define SYSTEMBODY_H
 
 #include "Color.h"
-#include "IterationProxy.h"
 #include "Orbit.h"
-#include "RefCounted.h"
 #include "galaxy/GalaxyEnums.h"
 #include "galaxy/RingStyle.h"
 #include "galaxy/SystemPath.h"
-#include "gameconsts.h"
+#include "libs/IterationProxy.h"
+#include "libs/RefCounted.h"
+#include "libs/gameconsts.h"
 
 #include <cstdint>
 

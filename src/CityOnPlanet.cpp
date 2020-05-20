@@ -3,6 +3,7 @@
 
 #include "CityOnPlanet.h"
 
+#include "CollMesh.h"
 #include "FileSystem.h"
 #include "Frame.h"
 #include "Game.h"
@@ -18,6 +19,7 @@
 #include "scenegraph/Animation.h"
 #include "scenegraph/ModelSkin.h"
 #include "scenegraph/Model.h"
+#include "libs/stringUtils.h"
 
 static const unsigned int DEFAULT_NUM_BUILDINGS = 1000;
 static const double START_SEG_SIZE = CITY_ON_PLANET_RADIUS;
@@ -96,9 +98,9 @@ void CityOnPlanet::EnumerateNewBuildings(std::set<std::string> &filenames)
 	const std::string fullpath = FileSystem::JoinPathBelow("models", "buildings");
 	for (FileSystem::FileEnumerator files(FileSystem::gameDataFiles, fullpath, FileSystem::FileEnumerator::Recurse); !files.Finished(); files.Next()) {
 		const std::string &name = files.Current().GetName();
-		if (ends_with_ci(name, ".model")) {
+		if (stringUtils::ends_with_ci(name, ".model")) {
 			filenames.insert(name.substr(0, name.length() - 6));
-		} else if (ends_with_ci(name, ".sgm")) {
+		} else if (stringUtils::ends_with_ci(name, ".sgm")) {
 			filenames.insert(name.substr(0, name.length() - 4));
 		}
 	}

@@ -20,9 +20,9 @@
 #include "Player.h"
 #include "ShipCpanel.h"
 #include "Space.h"
-#include "StringF.h"
 #include "WorldView.h"
 #include "galaxy/StarSystem.h"
+#include "libs/StringF.h"
 
 
 /*

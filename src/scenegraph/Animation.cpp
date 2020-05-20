@@ -6,8 +6,7 @@
 #include "Node.h"
 #include "MatrixTransform.h"
 
-#include <iostream>
-#include "utils.h"
+#include "libs/utils.h"
 
 namespace SceneGraph {
 
@@ -66,7 +65,7 @@ namespace SceneGraph {
 					double diffTime = b.time - a.time;
 					assert(diffTime > 0.0);
 					const float factor = Clamp(float((mtime - a.time) / diffTime), 0.f, 1.f);
-					trans = Quaternionf::Slerp(a.rotation, b.rotation, factor).ToMatrix3x3<float>();
+					trans = quaternionf::Slerp(a.rotation, b.rotation, factor).ToMatrix3x3<float>();
 				} else {
 					trans = a.rotation.ToMatrix3x3<float>();
 				}

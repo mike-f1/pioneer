@@ -12,7 +12,7 @@
  * which also includes stack printout
  */
 #include "OpenGLLibs.h"
-#include "utils.h"
+#include "libs/utils.h"
 
 #ifdef _WIN32
 #define STDCALL __stdcall

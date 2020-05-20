@@ -6,6 +6,8 @@
 #include "LuaEvent.h"
 #include <map>
 
+#include "profiler/Profiler.h"
+
 float Sound::MusicPlayer::m_volume = 0.0;
 Sound::MusicEvent Sound::MusicPlayer::m_eventOne;
 Sound::MusicEvent Sound::MusicPlayer::m_eventTwo;
@@ -46,7 +48,7 @@ namespace Sound {
 
 	void MusicPlayer::SetVolume(const float vol)
 	{
-		m_volume = Clamp(vol, 0.f, 1.f);
+		m_volume = std::min(std::max(vol, 0.f), 1.f);
 		//the other song might be fading out so don't set its volume
 		if (m_eventOnePlaying && m_eventOne.IsPlaying())
 			m_eventOne.SetVolume(m_volume);

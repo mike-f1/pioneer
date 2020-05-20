@@ -7,7 +7,7 @@
 #include "GameLocator.h"
 #include "LabelOverlay.h"
 #include "galaxy/Galaxy.h"
-#include "matrix4x4.h"
+#include "libs/matrix4x4.h"
 
 using namespace UI;
 

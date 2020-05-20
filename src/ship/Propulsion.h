@@ -4,11 +4,15 @@
 #ifndef PROPULSION_H
 #define PROPULSION_H
 
-#include "DynamicBody.h"
 #include "JsonFwd.h"
-#include "vector3.h"
+#include "libs/matrix4x4.h"
+#include "libs/vector3.h"
+#include "libs/RefCounted.h"
+#include <array>
 
+class Body;
 class Camera;
+class DynamicBody;
 class Space;
 
 namespace SceneGraph {
@@ -52,11 +56,11 @@ public:
 
 	vector3d GetThrustUncapped(const vector3d &dir) const;
 
-	inline double GetAccel(Thruster thruster) const { return GetThrust(thruster) / m_dBody->GetMass(); }
-	inline double GetAccelFwd() const { return GetAccel(THRUSTER_FORWARD); } //GetThrustFwd() / m_dBody->GetMass(); }
-	inline double GetAccelRev() const { return GetAccel(THRUSTER_REVERSE); } //GetThrustRev() / m_dBody->GetMass(); }
-	inline double GetAccelUp() const { return GetAccel(THRUSTER_UP); } //GetThrustUp() / m_dBody->GetMass(); }
-	inline double GetAccelMin() const { return GetThrustMin() / m_dBody->GetMass(); }
+	double GetAccel(Thruster thruster) const;
+	inline double GetAccelFwd() const { return GetAccel(THRUSTER_FORWARD); }
+	inline double GetAccelRev() const { return GetAccel(THRUSTER_REVERSE); }
+	inline double GetAccelUp() const { return GetAccel(THRUSTER_UP); }
+	double GetAccelMin() const;
 
 	// Clamp thruster levels and scale them down so that a level of 1
 	// corresponds to the thrust from GetThrust().
@@ -67,7 +71,7 @@ public:
 	void SetLinThrusterState(int axis, double level);
 	void SetLinThrusterState(const vector3d &levels);
 
-	inline void SetAngThrusterState(int axis, double level) { m_angThrusters[axis] = Clamp(level, -1.0, 1.0); }
+	inline void SetAngThrusterState(int axis, double level) { m_angThrusters[axis] = std::max(std::min(level, 1.0), -1.0); }
 	void SetAngThrusterState(const vector3d &levels);
 
 	inline vector3d GetLinThrusterState() const { return m_linThrusters; };
@@ -80,18 +84,18 @@ public:
 	inline vector3d GetActualAngThrust() const { return m_angThrusters * m_angThrust; }
 
 	// Fuel
-	enum FuelState { // <enum scope='Propulsion' name=PropulsionFuelStatus prefix=FUEL_ public>
-		FUEL_OK,
-		FUEL_WARNING,
-		FUEL_EMPTY,
+	enum class FuelState { // <enum scope='Propulsion' name=PropulsionFuelStatus prefix=FUEL_ public>
+		OK = 0,
+		WARNING = 1,
+		EMPTY = 2,
 	};
 
-	inline FuelState GetFuelState() const { return (m_thrusterFuel > 0.05f) ? FUEL_OK : (m_thrusterFuel > 0.0f) ? FUEL_WARNING : FUEL_EMPTY; }
+	inline FuelState GetFuelState() const { return (m_thrusterFuel > 0.05f) ? FuelState::OK : (m_thrusterFuel > 0.0f) ? FuelState::WARNING : FuelState::EMPTY; }
 	// fuel left, 0.0-1.0
 	inline double GetFuel() const { return m_thrusterFuel; }
 	inline double GetFuelReserve() const { return m_reserveFuel; }
-	inline void SetFuel(const double f) { m_thrusterFuel = Clamp(f, 0.0, 1.0); }
-	inline void SetFuelReserve(const double f) { m_reserveFuel = Clamp(f, 0.0, 1.0); }
+	inline void SetFuel(const double f) { m_thrusterFuel = std::max(std::min(f, 1.0), 0.0); }
+	inline void SetFuelReserve(const double f) { m_reserveFuel = std::max(std::min(f, 1.0), 0.0); }
 	float GetFuelUseRate();
 	// available delta-V given the ship's current fuel minus reserve according to the Tsiolkovsky equation
 	double GetSpeedReachedWithFuel() const;
@@ -121,12 +125,12 @@ public:
 
 private:
 	// Thrust and thrusters
-	float m_linThrust[THRUSTER_MAX];
+	std::array<float, THRUSTER_MAX> m_linThrust;
 	float m_angThrust;
 	vector3d m_linThrusters; // 0.0-1.0, thruster levels
 	vector3d m_angThrusters; // 0.0-1.0
 	// Used to calculate max linear thrust by limiting the thruster levels
-	float m_linAccelerationCap[THRUSTER_MAX];
+	std::array<float, THRUSTER_MAX> m_linAccelerationCap;
 
 	// Fuel
 	int m_fuelTankMass;

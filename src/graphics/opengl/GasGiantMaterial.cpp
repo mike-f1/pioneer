@@ -3,12 +3,12 @@
 
 #include "GasGiantMaterial.h"
 #include "Camera.h"
-#include "BaseSphere.h"
+#include "sphere/BaseSphere.h"
 #include "RendererGL.h"
-#include "StringF.h"
 #include "graphics/Graphics.h"
-#include <sstream>
 #include "galaxy/AtmosphereParameters.h"
+#include "libs/StringF.h"
+#include <sstream>
 
 namespace Graphics {
 	namespace OGL {

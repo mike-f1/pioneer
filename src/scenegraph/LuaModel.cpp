@@ -49,20 +49,20 @@ namespace SceneGraph {
 			return 1;
 		}
 
-		static inline uint32_t _unpack_flags(lua_State *l, int idx, const char *constants)
+		static inline SceneGraph::DebugFlags _unpack_flags(lua_State *l, int idx, const char *constants)
 		{
 			int table = lua_absindex(l, idx);
 
 			if (!lua_istable(l, table))
-				return 0;
+				return SceneGraph::DebugFlags::NONE;
 
 			LUA_DEBUG_START(l);
 
-			uint32_t flags = 0;
+			SceneGraph::DebugFlags flags = SceneGraph::DebugFlags::NONE;
 
 			lua_pushnil(l);
 			while (lua_next(l, table)) {
-				flags |= static_cast<uint32_t>(LuaConstants::GetConstantFromArg(l, constants, -1));
+				flags |= static_cast<SceneGraph::DebugFlags>(LuaConstants::GetConstantFromArg(l, constants, -1));
 				lua_pop(l, 1);
 			}
 
@@ -74,7 +74,7 @@ namespace SceneGraph {
 		static int l_set_debug_flags(lua_State *l)
 		{
 			SceneGraph::Model *model = LuaObject<SceneGraph::Model>::CheckFromLua(1);
-			uint32_t debugFlags = _unpack_flags(l, 2, "ModelDebugFlags");
+			SceneGraph::DebugFlags debugFlags = _unpack_flags(l, 2, "ModelDebugFlags");
 			model->SetDebugFlags(debugFlags);
 			return 0;
 		}

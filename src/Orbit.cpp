@@ -2,8 +2,9 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "Orbit.h"
-#include "gameconsts.h"
-#include "utils.h"
+
+#include "libs/gameconsts.h"
+#include "libs/utils.h"
 
 #ifdef _MSC_VER
 #include "win32/WinMath.h"

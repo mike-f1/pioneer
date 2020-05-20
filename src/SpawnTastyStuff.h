@@ -5,7 +5,7 @@
 #define SPAWNTASTYSTUFF_H_INCLUDED
 
 #include "FrameId.h"
-#include "vector3.h"
+#include "libs/vector3.h"
 
 class Body;
 class SystemBody;

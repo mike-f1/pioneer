@@ -3,9 +3,9 @@
 
 #include "IniConfig.h"
 #include "FileSystem.h"
-#include "StringRange.h"
-#include "libs.h"
-#include "utils.h"
+#include "libs/utils.h"
+#include "libs/StringRange.h"
+#include "libs/libs.h"
 #include <cstdlib>
 #include <sstream>
 

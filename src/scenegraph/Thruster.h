@@ -8,10 +8,10 @@
  */
 #include "Node.h"
 
-#include "vector3.h"
-#include "matrix4x4.h"
 #include "Color.h"
-#include "RefCounted.h"
+#include "libs/vector3.h"
+#include "libs/matrix4x4.h"
+#include "libs/RefCounted.h"
 
 namespace Graphics {
 	class VertexBuffer;

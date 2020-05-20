@@ -12,7 +12,7 @@
 #include "graphics/Texture.h"
 #include "graphics/VertexArray.h"
 #include "graphics/VertexBuffer.h"
-#include "utils.h"
+#include "libs/utils.h"
 
 #ifdef __clang__
 #pragma clang diagnostic push

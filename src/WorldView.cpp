@@ -21,7 +21,6 @@
 #include "SectorView.h"
 #include "Sensors.h"
 #include "SpeedLines.h"
-#include "StringF.h"
 #include "graphics/Frustum.h"
 #include "graphics/Material.h"
 #include "graphics/Graphics.h"
@@ -29,7 +28,8 @@
 #include "graphics/RendererLocator.h"
 #include "graphics/VertexArray.h"
 #include "graphics/VertexBuffer.h"
-#include "matrix4x4.h"
+#include "libs/StringF.h"
+#include "libs/matrix4x4.h"
 #include "ship/PlayerShipController.h"
 #include "sound/Sound.h"
 #include "ui/Widget.h"
@@ -853,9 +853,9 @@ std::tuple<double, double, double> WorldView::CalculateHeadingPitchRoll(PlaneTyp
 {
 	FrameId frameId = GameLocator::getGame()->GetPlayer()->GetFrame();
 
-	if (pt == ROTATIONAL)
+	if (pt == PlaneType::ROTATIONAL)
 		frameId = Frame::GetFrame(frameId)->GetRotFrame();
-	else if (pt == PARENT)
+	else if (pt == PlaneType::PARENT)
 		frameId = Frame::GetFrame(frameId)->GetNonRotFrame();
 
 	// construct a frame of reference aligned with the ground plane

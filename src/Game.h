@@ -5,11 +5,11 @@
 #define _GAME_H
 
 #include "JsonFwd.h"
-#include "RefCounted.h"
 #include "galaxy/GalaxyCache.h"
 #include "galaxy/SystemPath.h"
-#include "gameconsts.h"
-#include "vector3.h"
+#include "libs/RefCounted.h"
+#include "libs/gameconsts.h"
+#include "libs/vector3.h"
 #include <string>
 #include <list>
 

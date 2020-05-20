@@ -5,8 +5,10 @@
 #include "Lua.h"
 #include "LuaRef.h"
 #include "LuaTable.h"
-#include "RefCounted.h"
+#include "libs/RefCounted.h"
+#include "libs/utils.h"
 #include "imgui/imgui.h"
+
 
 #include <SDL_video.h>
 #include <SDL_events.h>

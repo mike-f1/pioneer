@@ -6,7 +6,8 @@
 #include "Renderer.h"
 #include "Texture.h"
 #include "FileSystem.h"
-#include "utils.h"
+#include "libs/utils.h"
+#include "libs/stringUtils.h"
 #include <SDL_image.h>
 #include <SDL_rwops.h>
 #include <algorithm>
@@ -120,7 +121,7 @@ namespace Graphics {
 		if (!m_surface && !m_filename.empty()) {
 			std::string filename = m_filename;
 			std::transform(filename.begin(), filename.end(), filename.begin(), ::tolower);
-			if (ends_with_ci(filename, ".dds")) {
+			if (stringUtils::ends_with_ci(filename, ".dds")) {
 				LoadDDS();
 			} else {
 				LoadSurface();

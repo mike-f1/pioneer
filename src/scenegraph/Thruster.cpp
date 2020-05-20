@@ -4,7 +4,7 @@
 #include "Thruster.h"
 
 #include "BaseLoader.h"
-#include "Easing.h"
+#include "libs/Easing.h"
 #include "NodeVisitor.h"
 #include "Serializer.h"
 #include "graphics/Material.h"
@@ -15,7 +15,7 @@
 #include "graphics/VertexArray.h"
 #include "graphics/VertexBuffer.h"
 
-#include "utils.h"
+#include "libs/utils.h"
 
 namespace SceneGraph {
 

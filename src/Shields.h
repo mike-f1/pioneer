@@ -6,13 +6,13 @@
 /*
  * Mesh shields for ships and other objects.
  */
+
+#include "Color.h"
 #include "JsonFwd.h"
 #include "graphics/ShieldRenderParameters.h"
-
-#include "RefCounted.h"
-#include "matrix4x4.h"
-#include "vector3.h"
-#include "Color.h"
+#include "libs/RefCounted.h"
+#include "libs/matrix4x4.h"
+#include "libs/vector3.h"
 #include <deque>
 #include <vector>
 

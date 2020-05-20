@@ -8,7 +8,7 @@
 #include "Shields.h"
 #include "graphics/Drawables.h"
 #include "graphics/Texture.h"
-#include "libs.h"
+#include "libs/libs.h"
 #include "ui/Context.h"
 
 namespace SceneGraph {

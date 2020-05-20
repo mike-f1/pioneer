@@ -6,12 +6,12 @@
 
 #include "FrameId.h"
 
-#include "IterationProxy.h"
 #include "JsonFwd.h"
-#include "matrix3x3.h"
-#include "matrix4x4.h"
-#include "utils.h"
-#include "vector3.h"
+#include "libs/utils.h"
+#include "libs/IterationProxy.h"
+#include "libs/matrix3x3.h"
+#include "libs/matrix4x4.h"
+#include "libs/vector3.h"
 #include <list>
 #include <string>
 

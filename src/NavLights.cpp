@@ -7,6 +7,7 @@
 #include "GameSaveError.h"
 #include "IniConfig.h"
 #include "Json.h"
+#include "libs/utils.h"
 #include "graphics/Material.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
@@ -18,7 +19,7 @@
 #include "scenegraph/FindNodeVisitor.h"
 #include "scenegraph/MatrixTransform.h"
 #include "scenegraph/Model.h"
-#include "utils.h"
+#include "libs/stringUtils.h"
 
 const float BILLBOARD_SIZE = 2.5f;
 
@@ -41,7 +42,7 @@ static vector2f get_color(uint8_t c)
 static inline vector2f LoadLightColorUVoffset(const std::string &spec)
 {
 	std::vector<float> v(2);
-	SplitSpec(spec, v);
+	stringUtils::SplitSpec(spec, v);
 	return vector2f(v[0], v[1]);
 }
 

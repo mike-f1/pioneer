@@ -13,8 +13,8 @@
  * For the OGL renderer, a Material is always accompanied by a Program.
  */
 #include "Color.h"
-#include "matrix4x4.h"
-#include "RefCounted.h"
+#include "libs/matrix4x4.h"
+#include "libs/RefCounted.h"
 
 namespace Graphics {
 

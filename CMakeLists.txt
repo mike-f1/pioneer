@@ -103,10 +103,12 @@ list(APPEND SRC_FOLDERS
 	src/graphics/dummy
 	src/graphics/opengl
 	src/gui
+	src/libs
 	src/pigui
 	src/scenegraph
 	src/ship
 	src/sound
+	src/sphere
 	src/terrain
 	src/text
 	src/ui
@@ -248,8 +250,9 @@ add_executable(savegamedump WIN32
 	src/savegamedump.cpp
 	src/JsonUtils.cpp
 	src/FileSystem.cpp
-	src/utils.cpp
-	src/StringF.cpp
+	src/libs/utils.cpp
+	src/libs/StringF.cpp
+	src/libs/stringUtils.cpp
 	src/GZipFormat.cpp
 	src/DateTime.cpp
 	src/Lang.cpp

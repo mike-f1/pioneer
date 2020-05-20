@@ -6,7 +6,7 @@
 #include "Shields.h"
 #include "scenegraph/Loader.h"
 #include "scenegraph/Model.h"
-#include "utils.h"
+#include "libs/utils.h"
 
 ModelCache::ModelMap ModelCache::s_models;
 

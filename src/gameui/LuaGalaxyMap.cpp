@@ -5,9 +5,9 @@
 #include "LuaColor.h"
 #include "LuaConstants.h"
 #include "LuaObject.h"
+#include "libs/vector2.h"
 #include "ui/Lua.h"
 #include "ui/LuaSignal.h"
-#include "vector2.h"
 
 namespace GameUI {
 

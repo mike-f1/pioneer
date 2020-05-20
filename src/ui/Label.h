@@ -4,9 +4,9 @@
 #ifndef UI_LABEL_H
 #define UI_LABEL_H
 
-#include "SmartPtr.h"
 #include "Widget.h"
 #include "graphics/VertexBuffer.h"
+#include "libs/SmartPtr.h"
 #include "text/TextureFont.h"
 
 // single line of text

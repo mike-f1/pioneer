@@ -7,8 +7,8 @@
 #include <memory>
 #include <vector>
 
-#include "../matrix4x4.h"
-#include "../vector3.h"
+#include "libs/matrix4x4.h"
+#include "libs/vector3.h"
 
 #include "CSGDefinitions.h"
 

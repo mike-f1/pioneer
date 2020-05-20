@@ -5,7 +5,7 @@
 
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
-#include "vector2.h"
+#include "libs/vector2.h"
 
 static const float MINIMUM_HEIGHT = 100.0f;
 

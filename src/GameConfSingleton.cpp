@@ -4,7 +4,7 @@
 #include "GameConfSingleton.h"
 
 #include "FileSystem.h"
-#include "utils.h"
+#include "libs/utils.h"
 
 std::unique_ptr<GameConfig> GameConfSingleton::m_gConfig = nullptr;
 DetailLevel GameConfSingleton::m_detail;

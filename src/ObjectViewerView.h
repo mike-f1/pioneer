@@ -5,10 +5,10 @@
 #define _OBJECTVIEWERVIEW_H
 
 #include "InputFrame.h"
-#include "RefCounted.h"
 #include "UIView.h"
-#include "matrix4x4.h"
-#include "vector2.h"
+#include "libs/RefCounted.h"
+#include "libs/matrix4x4.h"
+#include "libs/vector2.h"
 #include <memory>
 
 namespace KeyBindings {
@@ -21,6 +21,11 @@ class Camera;
 class CameraContext;
 class Game;
 class InputFrameStatusTicket;
+
+enum class GSDebugFlags;
+namespace SceneGraph {
+	enum class DebugFlags;
+}
 
 class ObjectViewerView : public UIView {
 public:
@@ -38,6 +43,23 @@ protected:
 
 private:
 	void RegisterInputBindings();
+
+	void DrawAdditionalUIForSysBodies();
+	void DrawAdditionalUIForBodies();
+
+	bool m_showBBox = false;
+	bool m_showCollMesh = false;
+	bool m_showWireFrame = false;
+	bool m_showTags = false;
+	bool m_showDocking = false;
+
+	bool m_showSingleBBox = false;
+	bool m_showNearestBBox = false;
+	bool m_showBoundSphere = false;
+
+	SceneGraph::DebugFlags m_debugFlags;
+
+	GSDebugFlags m_planetDebugFlags;
 
 	float m_viewingDist;
 	Body *m_lastTarget, *m_newTarget;

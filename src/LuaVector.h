@@ -4,7 +4,7 @@
 #ifndef _LUAVECTOR_H
 #define _LUAVECTOR_H
 
-#include "vector3.h"
+#include "libs/vector3.h"
 
 struct lua_State;
 

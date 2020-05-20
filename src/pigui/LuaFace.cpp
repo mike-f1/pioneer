@@ -8,6 +8,8 @@
 #include "LuaTable.h"
 #include "LuaVector2.h"
 
+#include "profiler/Profiler.h"
+
 namespace PiGUI {
 
 	class LuaPiguiFace {

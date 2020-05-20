@@ -2,9 +2,10 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "FontConfig.h"
+
 #include "FileSystem.h"
 #include "JsonUtils.h"
-#include "utils.h"
+#include "libs/utils.h"
 
 namespace Text {
 

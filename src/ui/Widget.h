@@ -7,9 +7,9 @@
 #include "Event.h"
 #include "Point.h"
 #include "PropertiedObject.h"
-#include "RefCounted.h"
 #include "WidgetSet.h"
-#include "libs.h"
+#include "libs/RefCounted.h"
+#include "libs/libs.h"
 #include <climits>
 #include <set>
 

@@ -4,6 +4,7 @@
 #include "Animation.h"
 
 #include <SDL_timer.h>
+#include "libs/utils.h"
 
 namespace UI {
 

@@ -12,11 +12,9 @@
 #include "Input.h"
 #include "LuaConstants.h"
 #include "LuaObject.h"
-#include "MathUtil.h"
 #include "Pi.h"
 #include "Player.h"
 #include "Space.h"
-#include "StringF.h"
 #include "galaxy/Faction.h"
 #include "galaxy/Galaxy.h"
 #include "galaxy/GalaxyCache.h"
@@ -30,6 +28,8 @@
 #include "graphics/RenderState.h"
 #include "graphics/VertexArray.h"
 #include "graphics/VertexBuffer.h"
+#include "libs/MathUtil.h"
+#include "libs/StringF.h"
 #include <algorithm>
 #include <sstream>
 #include <unordered_set>

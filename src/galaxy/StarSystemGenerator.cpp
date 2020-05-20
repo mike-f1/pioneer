@@ -10,7 +10,7 @@
 #include "LuaNameGen.h"
 #include "Sector.h"
 #include "StarSystemWriter.h"
-#include "utils.h"
+#include "libs/utils.h"
 #include "Pi.h"
 
 static const fixed SUN_MASS_TO_EARTH_MASS = fixed(332998, 1); // XXX Duplication from StarSystem.cpp
@@ -1420,12 +1420,12 @@ void PopulateStarSystemGenerator::PopulateStage1(SystemBody *sbody, StarSystem *
 		const GalacticEconomy::CommodityInfo &info = GalacticEconomy::COMMODITY_DATA[i];
 
 		fixed affinity = fixed(1, 1);
-		if (info.econType & GalacticEconomy::ECON_AGRICULTURE) {
+		if (to_bool(info.econType & GalacticEconomy::EconType::AGRICULTURE)) {
 			affinity *= 2 * sbody->GetAgriculturalAsFixed();
 		}
-		if (info.econType & GalacticEconomy::ECON_INDUSTRY) affinity *= system->GetIndustrial();
+		if (to_bool(info.econType & GalacticEconomy::EconType::INDUSTRY)) affinity *= system->GetIndustrial();
 		// make industry after we see if agriculture and mining are viable
-		if (info.econType & GalacticEconomy::ECON_MINING) {
+		if (to_bool(info.econType & GalacticEconomy::EconType::MINING)) {
 			affinity *= sbody->GetMetallicityAsFixed();
 		}
 		affinity *= rand.Fixed();
@@ -1716,11 +1716,11 @@ void PopulateStarSystemGenerator::SetEconType(RefCountedPtr<StarSystem> system)
 	StarSystemWriter syswrt(system);
 
 	if ((system->GetIndustrial() > system->GetMetallicity()) && (system->GetIndustrial() > system->GetAgricultural())) {
-		syswrt.SetEconType(GalacticEconomy::ECON_INDUSTRY);
+		syswrt.SetEconType(GalacticEconomy::EconType::INDUSTRY);
 	} else if (system->GetMetallicity() > system->GetAgricultural()) {
-		syswrt.SetEconType(GalacticEconomy::ECON_MINING);
+		syswrt.SetEconType(GalacticEconomy::EconType::MINING);
 	} else {
-		syswrt.SetEconType(GalacticEconomy::ECON_AGRICULTURE);
+		syswrt.SetEconType(GalacticEconomy::EconType::AGRICULTURE);
 	}
 }
 
@@ -1742,7 +1742,7 @@ bool PopulateStarSystemGenerator::Apply(Random &rng, RefCountedPtr<Galaxy> galax
 	// This is 1 in sector (0,0,0) and approaches 0 farther out
 	// (1,0,0) ~ .688, (1,1,0) ~ .557, (1,1,1) ~ .48
 	syswrt.SetHumanProx(galaxy->GetFactions()->IsHomeSystem(system->GetPath()) ? fixed(2, 3) : fixed(3, 1) / isqrt(9 + 10 * (system->GetPath().sectorX * system->GetPath().sectorX + system->GetPath().sectorY * system->GetPath().sectorY + system->GetPath().sectorZ * system->GetPath().sectorZ)));
-	syswrt.SetEconType(GalacticEconomy::ECON_INDUSTRY);
+	syswrt.SetEconType(GalacticEconomy::EconType::INDUSTRY);
 	syswrt.SetIndustrial(rand.Fixed());
 	syswrt.SetAgricultural(0);
 

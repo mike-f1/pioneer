@@ -7,7 +7,7 @@
 #include "BaseSphere.h"
 #include "GasGiantJobs.h"
 #include "JobQueue.h"
-#include "vector3.h"
+#include "libs/vector3.h"
 
 #include <deque>
 

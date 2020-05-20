@@ -7,8 +7,9 @@
 #include "FrameId.h"
 #include "Object.h"
 #include "PropertiedObject.h"
-#include "matrix3x3.h"
-#include "vector3.h"
+#include "libs/matrix3x3.h"
+#include "libs/matrix4x4.h"
+#include "libs/vector3.h"
 #include <string>
 
 class Space;

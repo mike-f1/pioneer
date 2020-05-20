@@ -2,6 +2,7 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "Node.h"
+
 #include "NodeVisitor.h"
 #include "Serializer.h"
 #include "graphics/Drawables.h"

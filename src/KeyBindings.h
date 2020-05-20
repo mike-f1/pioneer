@@ -15,6 +15,17 @@
 #include <SDL_events.h>
 #include <SDL_keyboard.h>
 
+#include "libs/bitmask_op.h"
+
+namespace KeyBindings {
+	enum class BehaviourMod;
+}
+
+template<>
+struct enable_bitmask_operators<KeyBindings::BehaviourMod> {
+	static constexpr bool enable = true;
+};
+
 namespace KeyBindings {
 
 	enum class InputResponse {
@@ -44,13 +55,11 @@ namespace KeyBindings {
 		NONE
 	};
 
-	enum BehaviourMod {
+	enum class BehaviourMod {
 		NONE = 0,
 		DISALLOW_MODIFIER = 1,
 		ALLOW_KEYBOARD_ONLY = 2,
 	};
-	BehaviourMod operator |(BehaviourMod lhs, BehaviourMod rhs);
-	BehaviourMod operator &(BehaviourMod lhs, BehaviourMod rhs);
 
 	class BehaviourTrait {
 		friend struct ActionBinding;

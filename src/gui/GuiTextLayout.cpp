@@ -8,7 +8,7 @@
 #include "graphics/VertexArray.h"
 #include "graphics/VertexBuffer.h"
 #include "text/TextSupport.h"
-#include "utils.h"
+#include "libs/utils.h"
 
 static const float PARAGRAPH_SPACING = 1.5f;
 

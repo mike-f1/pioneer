@@ -6,7 +6,7 @@
 #include "InputFrame.h"
 #include "ShipController.h"
 
-#include "vector3.h"
+#include "libs/vector3.h"
 #include <array>
 
 namespace KeyBindings {

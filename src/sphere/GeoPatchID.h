@@ -7,9 +7,6 @@
 #include <cstdint>
 
 class GeoPatchID {
-private:
-	uint64_t mPatchID;
-
 public:
 	GeoPatchID(const uint64_t init) :
 		mPatchID(init) {}
@@ -21,6 +18,9 @@ public:
 	uint64_t NextPatchID(const int depth, const int idx) const;
 	int GetPatchIdx(const int depth) const;
 	int GetPatchFaceIdx() const;
+
+private:
+	uint64_t mPatchID;
 };
 
 #endif //__GEOPATCHID_H__

@@ -4,6 +4,8 @@
 #include "KeyBindings.h"
 #include "Pi.h"
 
+#include <SDL_events.h>
+
 InputFrame::~InputFrame()
 {
 	bool success = false;

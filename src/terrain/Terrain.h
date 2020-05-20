@@ -5,10 +5,10 @@
 #define _TERRAIN_H
 
 #include "FracDef.h"
-#include "../Random.h"
-#include "../RefCounted.h"
-#include "../vector3.h"
-#include "../galaxy/SystemPath.h"
+#include "Random.h"
+#include "libs/RefCounted.h"
+#include "libs/vector3.h"
+#include "galaxy/SystemPath.h"
 
 #include <memory>
 #include <string>

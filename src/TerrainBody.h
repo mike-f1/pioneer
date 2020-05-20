@@ -6,7 +6,7 @@
 
 #include "Body.h"
 #include "JsonFwd.h"
-#include "matrix4x4.h"
+#include "libs/matrix4x4.h"
 #include "galaxy/SystemBodyWrapper.h"
 
 class BaseSphere;
@@ -14,6 +14,8 @@ class Camera;
 class Frame;
 class Space;
 class SystemBody;
+
+enum class GSDebugFlags;
 
 namespace Graphics {
 	class Renderer;
@@ -36,6 +38,9 @@ public:
 
 	// implements calls to all relevant terrain management sub-systems
 	static void OnChangeDetailLevel(int new_detail);
+
+	void SetDebugFlags(GSDebugFlags flags);
+	GSDebugFlags GetDebugFlags();
 
 protected:
 	TerrainBody() = delete;

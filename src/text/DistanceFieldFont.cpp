@@ -2,11 +2,12 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "DistanceFieldFont.h"
+
 #include "FileSystem.h"
-#include "StringRange.h"
 #include "graphics/Texture.h"
 #include "graphics/VertexArray.h"
-#include "utils.h"
+#include "libs/StringRange.h"
+#include "libs/stringUtils.h"
 #include <iostream>
 #include <sstream>
 
@@ -30,11 +31,11 @@ namespace Text {
 			if (doingCharacters) {
 				ParseChar(line);
 			} else {
-				if (starts_with(line.begin, "info")) //contains font size
+				if (stringUtils::starts_with(line.begin, "info")) //contains font size
 					ParseInfo(line);
-				else if (starts_with(line.begin, "common ")) //contains UV sheet w/h
+				else if (stringUtils::starts_with(line.begin, "common ")) //contains UV sheet w/h
 					ParseCommon(line);
-				else if (starts_with(line.begin, "chars ")) //after this, file should be all characters
+				else if (stringUtils::starts_with(line.begin, "chars ")) //after this, file should be all characters
 					doingCharacters = true;
 			}
 		}

@@ -5,9 +5,9 @@
 #define UI_ICON_H
 
 #include "IniConfig.h"
-#include "SmartPtr.h"
 #include "Widget.h"
-#include "vector2.h"
+#include "libs/SmartPtr.h"
+#include "libs/vector2.h"
 
 namespace Graphics {
 	namespace Drawables {

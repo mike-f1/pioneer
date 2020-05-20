@@ -23,8 +23,8 @@
 #include "ShipCockpit.h"
 #include "SystemView.h"
 #include "ship/PlayerShipController.h"
-#include "StringF.h"
 #include "TransferPlanner.h"
+#include "libs/StringF.h"
 #include "sound/Sound.h"
 #include "galaxy/SystemBody.h"
 

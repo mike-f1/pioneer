@@ -5,6 +5,7 @@
 #define _SHIPTYPE_H
 
 #include "ship/Propulsion.h"
+#include "Color.h"
 #include <map>
 #include <string>
 #include <vector>

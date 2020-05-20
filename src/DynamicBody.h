@@ -5,8 +5,8 @@
 #define _DYNAMICBODY_H
 
 #include "ModelBody.h"
-#include "matrix4x4.h"
-#include "vector3.h"
+#include "libs/matrix4x4.h"
+#include "libs/vector3.h"
 
 class Propulsion;
 class FixedGuns;

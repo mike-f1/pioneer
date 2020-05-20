@@ -7,20 +7,21 @@
 #include "Color.h"
 #include "GeoPatchID.h"
 #include "JobQueue.h"
-#include "RefCounted.h"
-#include "matrix4x4.h"
-#include "vector3.h"
+#include "libs/RefCounted.h"
+#include "libs/matrix4x4.h"
+#include "libs/vector3.h"
+#include <array>
 #include <deque>
 #include <memory>
 
 //#define DEBUG_BOUNDING_SPHERES
 
-#ifdef DEBUG_BOUNDING_SPHERES
-#include "graphics/Drawables.h"
 namespace Graphics {
 	class RenderState;
+	namespace Drawables {
+		class Sphere3D;
+	}
 }
-#endif
 
 namespace Graphics {
 	class Frustum;
@@ -107,9 +108,7 @@ private:
 	Job::Handle m_job;
 	bool m_HasJobRequest;
 
-#ifdef DEBUG_BOUNDING_SPHERES
 	std::unique_ptr<Graphics::Drawables::Sphere3D> m_boundsphere;
-#endif
 };
 
 #endif /* _GEOPATCH_H */

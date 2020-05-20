@@ -5,10 +5,11 @@
 #define _BASESPHERE_H
 
 #include "Camera.h"
-#include "vector3.h"
+#include "BaseSphereDebugFlags.h"
 #include "galaxy/AtmosphereParameters.h"
 #include "galaxy/SystemBodyWrapper.h"
 #include "graphics/Material.h" // <- For some inlined function...
+#include "libs/vector3.h"
 
 #include <vector>
 #include <memory>
@@ -58,6 +59,9 @@ public:
 	Graphics::RenderState *GetSurfRenderState() const { return m_surfRenderState; }
 	RefCountedPtr<Graphics::Material> GetSurfaceMaterial() const { return m_surfaceMaterial; }
 	MaterialParameters &GetMaterialParameters() { return m_materialParameters; }
+
+	virtual void SetDebugFlags(GSDebugFlags flags) {}
+	virtual GSDebugFlags GetDebugFlags() { return GSDebugFlags::NONE; }
 
 protected:
 	// all variables for GetHeight(), GetColor()

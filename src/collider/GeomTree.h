@@ -4,9 +4,8 @@
 #ifndef _GEOMTREE_H
 #define _GEOMTREE_H
 
-#include "../Aabb.h"
-
-#include "vector3.h"
+#include "Aabb.h"
+#include "libs/vector3.h"
 #include <vector>
 #include <memory>
 
@@ -63,9 +62,8 @@ public:
 	BVHTree *GetEdgeTree() const { return m_edgeTree.get(); }
 
 	const std::vector<vector3f> &GetVertices() const { return m_vertices; }
-	const uint32_t *GetIndices() const { return &m_indices[0]; }
-	const uint32_t *GetTriFlags() const { return &m_triFlags[0]; }
-	int GetNumVertices() const { return m_numVertices; }
+	const std::vector<uint32_t> &GetIndices() const { return m_indices; }
+	const std::vector<uint32_t> &GetTriFlags() const { return m_triFlags; }
 	int GetNumTris() const { return m_numTris; }
 
 private:

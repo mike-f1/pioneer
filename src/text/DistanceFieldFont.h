@@ -22,11 +22,11 @@
  * char id=32 x=253.875 y=0 width=2 height=2.125 xoffset=-1 yoffset=30.875 xadvance=16 page=0 chnl=15
  * (etc)
  */
-#include "StringRange.h"
-#include "RefCounted.h"
+#include "libs/StringRange.h"
+#include "libs/RefCounted.h"
+#include "libs/vector2.h"
 #include <string>
 #include <map>
-#include "vector2.h"
 
 namespace Graphics {
 	class Texture;

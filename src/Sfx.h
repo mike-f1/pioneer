@@ -6,8 +6,8 @@
 
 #include "FrameId.h"
 #include "JsonFwd.h"
-#include "vector3.h"
-#include "vector2.h"
+#include "libs/vector3.h"
+#include "libs/vector2.h"
 
 #include <deque>
 

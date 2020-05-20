@@ -29,9 +29,9 @@ StarSystem::StarSystem(const SystemPath &path, RefCountedPtr<Galaxy> galaxy, Sta
 	m_numStars(0),
 	m_isCustom(false),
 	m_faction(nullptr),
-	m_explored(eEXPLORED_AT_START),
+	m_explored(ExplorationState::eEXPLORED_AT_START),
 	m_exploredTime(0.0),
-	m_econType(GalacticEconomy::ECON_MINING),
+	m_econType(GalacticEconomy::EconType::MINING),
 	m_seed(0),
 	m_commodityLegal(unsigned(GalacticEconomy::Commodity::COMMODITY_COUNT), true),
 	m_cache(cache)
@@ -345,8 +345,8 @@ void StarSystem::Dump(FILE *file, const char *indent, bool suppressSectorData) c
 	fprintf(file, "%s\tpopulation %.0f\n", indent, m_totalPop.ToDouble() * 1e9);
 	fprintf(file, "%s\tgovernment %s/%s, lawlessness %.2f\n", indent, m_polit.GetGovernmentDesc(), m_polit.GetEconomicDesc(),
 		m_polit.lawlessness.ToDouble() * 100.0);
-	fprintf(file, "%s\teconomy type%s%s%s\n", indent, m_econType == 0 ? " NONE" : m_econType & GalacticEconomy::ECON_AGRICULTURE ? " AGRICULTURE" : "",
-		m_econType & GalacticEconomy::ECON_INDUSTRY ? " INDUSTRY" : "", m_econType & GalacticEconomy::ECON_MINING ? " MINING" : "");
+	fprintf(file, "%s\teconomy type%s%s%s\n", indent, to_bool(m_econType & GalacticEconomy::EconType::NONE) ? " NONE" : to_bool(m_econType & GalacticEconomy::EconType::AGRICULTURE) ? " AGRICULTURE" : "",
+		to_bool(m_econType & GalacticEconomy::EconType::INDUSTRY) ? " INDUSTRY" : "", to_bool(m_econType & GalacticEconomy::EconType::MINING) ? " MINING" : "");
 	fprintf(file, "%s\thumanProx %.2f\n", indent, m_humanProx.ToDouble() * 100.0);
 	fprintf(file, "%s\tmetallicity %.2f, industrial %.2f, agricultural %.2f\n", indent, m_metallicity.ToDouble() * 100.0,
 		m_industrial.ToDouble() * 100.0, m_agricultural.ToDouble() * 100.0);

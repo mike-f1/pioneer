@@ -9,7 +9,7 @@
 #include "Economy.h"
 #include "Polit.h"
 #include "Sector.h"
-#include "fixed.h"
+#include "libs/fixed.h"
 
 class Galaxy;
 

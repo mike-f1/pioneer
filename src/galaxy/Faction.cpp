@@ -3,7 +3,7 @@
 
 #include "Faction.h"
 
-#include "limits.h"
+#include <limits.h>
 #include "Lang.h"
 #include "Galaxy.h"
 #include "StarSystem.h"

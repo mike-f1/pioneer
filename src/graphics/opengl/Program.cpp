@@ -2,11 +2,12 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "Program.h"
+
 #include "FileSystem.h"
 #include "OS.h"
-#include "StringF.h"
-#include "StringRange.h"
 #include "graphics/Graphics.h"
+#include "libs/StringF.h"
+#include "libs/StringRange.h"
 
 #include <set>
 

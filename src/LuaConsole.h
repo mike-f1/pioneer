@@ -6,7 +6,7 @@
 
 #include "InputFrame.h"
 #include "LuaManager.h"
-#include "RefCounted.h"
+#include "libs/RefCounted.h"
 #include <deque>
 #include <memory>
 #include <string>

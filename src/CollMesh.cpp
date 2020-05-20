@@ -58,12 +58,12 @@ const std::vector<vector3f> &CollMesh::GetGeomTreeVertices() const
 	return m_geomTree->GetVertices();
 }
 
-const uint32_t *CollMesh::GetGeomTreeIndices() const
+const std::vector<uint32_t> &CollMesh::GetGeomTreeIndices() const
 {
 	return m_geomTree->GetIndices();
 }
 
-const unsigned int *CollMesh::GetGeomTreeTriFlags() const
+const std::vector<unsigned> &CollMesh::GetGeomTreeTriFlags() const
 {
 	return m_geomTree->GetTriFlags();
 }

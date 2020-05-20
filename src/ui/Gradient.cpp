@@ -2,6 +2,7 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "Gradient.h"
+
 #include "Context.h"
 #include "graphics/Material.h"
 #include "graphics/Renderer.h"

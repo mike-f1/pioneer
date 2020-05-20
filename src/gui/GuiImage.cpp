@@ -7,7 +7,7 @@
 #include "graphics/Material.h"
 #include "graphics/TextureBuilder.h"
 #include "graphics/RendererLocator.h"
-#include "libs.h"
+#include "libs/libs.h"
 
 namespace Gui {
 

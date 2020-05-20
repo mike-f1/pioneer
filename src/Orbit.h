@@ -6,8 +6,8 @@
 
 #include <cassert>
 
-#include "matrix3x3.h"
-#include "vector3.h"
+#include "libs/matrix3x3.h"
+#include "libs/vector3.h"
 
 class Orbit {
 public:

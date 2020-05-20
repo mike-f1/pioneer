@@ -3,13 +3,13 @@
 
 #include "ModelViewer.h"
 
+#include "CollMesh.h"
 #include "FileSystem.h"
 #include "GameConfig.h"
 #include "GameSaveError.h"
 #include "ModManager.h"
 #include "OS.h"
 #include "PngWriter.h"
-#include "StringF.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/Drawables.h"
@@ -18,6 +18,8 @@
 #include "graphics/TextureBuilder.h"
 #include "graphics/VertexArray.h"
 #include "graphics/opengl/RendererGL.h"
+#include "libs/stringUtils.h"
+#include "libs/StringF.h"
 #include "scenegraph/Animation.h"
 #include "scenegraph/BinaryConverter.h"
 #include "scenegraph/DumpVisitor.h"
@@ -87,7 +89,7 @@ namespace {
 			const std::string &fpath = info.GetPath();
 
 			//check it's the expected type
-			if (info.IsFile() && ends_with_ci(fpath, ".dds")) {
+			if (info.IsFile() && stringUtils::ends_with_ci(fpath, ".dds")) {
 				list.push_back(info.GetName().substr(0, info.GetName().size() - 4));
 			}
 		}
@@ -539,11 +541,11 @@ void ModelViewer::DrawModel(const matrix4x4f &mv)
 	m_model->UpdateAnimations();
 
 	m_model->SetDebugFlags(
-		(m_options.showAabb ? SceneGraph::Model::DEBUG_BBOX : 0x0) |
-		(m_options.showCollMesh ? SceneGraph::Model::DEBUG_COLLMESH : 0x0) |
-		(m_options.showTags ? SceneGraph::Model::DEBUG_TAGS : 0x0) |
-		(m_options.showDockingLocators ? SceneGraph::Model::DEBUG_DOCKING : 0x0) |
-		(m_options.wireframe ? SceneGraph::Model::DEBUG_WIREFRAME : 0x0));
+		(m_options.showAabb ? SceneGraph::DebugFlags::BBOX : SceneGraph::DebugFlags::NONE) |
+		(m_options.showCollMesh ? SceneGraph::DebugFlags::COLLMESH : SceneGraph::DebugFlags::NONE) |
+		(m_options.showTags ? SceneGraph::DebugFlags::TAGS : SceneGraph::DebugFlags::NONE) |
+		(m_options.showDockingLocators ? SceneGraph::DebugFlags::DOCKING : SceneGraph::DebugFlags::NONE) |
+		(m_options.wireframe ? SceneGraph::DebugFlags::WIREFRAME : SceneGraph::DebugFlags::NONE));
 
 	m_model->Render(mv);
 	m_navLights->Render();
@@ -863,9 +865,9 @@ static void collect_models(std::vector<std::string> &list)
 
 		//check it's the expected type
 		if (info.IsFile()) {
-			if (ends_with_ci(fpath, ".model"))
+			if (stringUtils::ends_with_ci(fpath, ".model"))
 				list.push_back(info.GetName().substr(0, info.GetName().size() - 6));
-			else if (ends_with_ci(fpath, ".sgm"))
+			else if (stringUtils::ends_with_ci(fpath, ".sgm"))
 				list.push_back(info.GetName());
 		}
 	}
@@ -949,7 +951,7 @@ void ModelViewer::SetModel(const std::string &filename)
 	ClearModel();
 
 	try {
-		if (ends_with_ci(filename, ".sgm")) {
+		if (stringUtils::ends_with_ci(filename, ".sgm")) {
 			//binary loader expects extension-less name. Might want to change this.
 			m_modelName = filename.substr(0, filename.size() - 4);
 			SceneGraph::BinaryConverter bc;

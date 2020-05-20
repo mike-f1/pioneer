@@ -6,7 +6,7 @@
 #include "GameSaveError.h"
 #include "Json.h"
 #include <cstdlib>
-#include "utils.h"
+#include "libs/utils.h"
 
 // https://stackoverflow.com/questions/14265581/parse-split-a-string-in-c-using-string-delimiter-standard-c
 static std::vector<std::string> split(const std::string &str, const std::string &delim)

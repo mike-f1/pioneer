@@ -7,7 +7,7 @@
 #include "ModelCache.h"
 #include "LuaPushPull.h"
 
-#include "../scenegraph/Model.h"
+#include "scenegraph/Model.h"
 
 namespace GameUI {
 

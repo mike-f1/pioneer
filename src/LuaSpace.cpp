@@ -11,13 +11,13 @@
 #include "LuaObject.h"
 #include "LuaUtils.h"
 #include "LuaVector.h"
-#include "MathUtil.h"
 #include "Planet.h"
 #include "Ship.h"
 #include "Space.h"
 #include "SpaceStation.h"
 #include "galaxy/StarSystem.h"
 #include "galaxy/SystemBody.h"
+#include "libs/MathUtil.h"
 
 /*
  * Interface: Space

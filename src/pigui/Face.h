@@ -5,9 +5,8 @@
 #define PIGUI_FACE_H
 
 #include "FaceParts.h"
-#include "RefCounted.h"
-
-#include "vector2.h"
+#include "libs/RefCounted.h"
+#include "libs/vector2.h"
 
 #include <memory>
 

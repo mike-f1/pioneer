@@ -2,19 +2,20 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 #include "BinaryConverter.h"
 
+#include "CollMesh.h"
 #include "FileSystem.h"
 #include "GameSaveError.h"
 #include "LZ4Format.h"
 #include "NodeVisitor.h"
 #include "Parser.h"
-#include "StringF.h"
+#include "libs/StringF.h"
+#include "libs/stringUtils.h"
 #include "scenegraph/Animation.h"
 #include "scenegraph/Label3D.h"
 #include "scenegraph/LoaderDefinitions.h"
 #include "scenegraph/MatrixTransform.h"
 #include "scenegraph/Model.h"
 #include "scenegraph/Serializer.h"
-#include "utils.h"
 
 #ifdef __GNUC__
 #pragma GCC diagnostic push
@@ -214,7 +215,7 @@ Model *BinaryConverter::Load(const std::string &shortname, const std::string &ba
 		const std::string &fpath = info.GetPath();
 
 		//check it's the expected type
-		if (info.IsFile() && ends_with_ci(fpath, SGM_EXTENSION)) {
+		if (info.IsFile() && stringUtils::ends_with_ci(fpath, SGM_EXTENSION)) {
 			//check it's the wanted name & load it
 			const std::string name = info.GetName();
 
@@ -385,7 +386,7 @@ void BinaryConverter::LoadAnimations(Serializer::Reader &rd)
 			}
 			for (uint32_t numKeys = rd.Int32(); numKeys > 0; numKeys--) {
 				const double ktime = rd.Double();
-				const Quaternionf krot = rd.RdQuaternionf();
+				const quaternionf krot = rd.RdQuaternionf();
 				chan.rotationKeys.push_back(RotationKey(ktime, krot));
 			}
 			for (uint32_t numKeys = rd.Int32(); numKeys > 0; numKeys--) {
@@ -409,7 +410,7 @@ ModelDefinition BinaryConverter::FindModelDefinition(const std::string &shortnam
 		const std::string &fpath = info.GetPath();
 
 		//check it's the expected type
-		if (info.IsFile() && ends_with_ci(fpath, ".model")) {
+		if (info.IsFile() && stringUtils::ends_with_ci(fpath, ".model")) {
 			//check it's the wanted name & load it
 			const std::string name = info.GetName();
 

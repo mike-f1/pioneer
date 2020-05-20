@@ -8,8 +8,8 @@
 
 #include "GalaxyEnums.h"
 #include "Polit.h"
-#include "fixed.h"
-#include "vector3.h"
+#include "libs/fixed.h"
+#include "libs/vector3.h"
 #include <string>
 #include <vector>
 

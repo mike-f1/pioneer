@@ -7,9 +7,9 @@
 #include "JsonUtils.h"
 #include "Model.h"
 #include "Serializer.h"
-#include "StringF.h"
 #include "graphics/TextureBuilder.h"
 #include "graphics/RendererLocator.h"
+#include "libs/StringF.h"
 
 #include "RandomColor.h"
 

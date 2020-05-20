@@ -8,7 +8,7 @@
 #include "Factions.h"
 #include "GalaxyCache.h"
 #include "JsonFwd.h"
-#include "RefCounted.h"
+#include "libs/RefCounted.h"
 #include <cstdio>
 
 struct SDL_Surface;

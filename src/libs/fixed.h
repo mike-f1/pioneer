@@ -241,4 +241,24 @@ public:
 
 typedef fixedf<32> fixed;
 
+/* Left here for reference: it was in "libs/utils.h" but seems unused.
+Could be made part of fixedf class but it works for fixed so I don't
+know if it's generic enought to be part of this library.
+static inline int64_t isqrt(fixed v)
+{
+	int64_t ret = 0;
+	int64_t s;
+	int64_t ret_sq = -v.v - 1;
+	for (s = 62; s >= 0; s -= 2) {
+		int64_t b;
+		ret += ret;
+		b = ret_sq + ((2 * ret + 1) << s);
+		if (b < 0) {
+			ret_sq = b;
+			ret++;
+		}
+	}
+	return ret;
+}
+*/
 #endif /* _FIXED_H */

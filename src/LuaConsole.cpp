@@ -9,6 +9,7 @@
 #include "LuaManager.h"
 #include "LuaUtils.h"
 #include "Pi.h"
+#include "libs/utils.h"
 #include "text/TextSupport.h"
 #include "text/TextureFont.h"
 #include "ui/Context.h"

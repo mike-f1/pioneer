@@ -16,11 +16,11 @@
 
 namespace SceneGraph {
 
-	class Loader;
-	class BinaryConverter;
 	class Node;
 
 	class Animation {
+		friend class Loader;
+		friend class BinaryConverter;
 	public:
 		Animation(const std::string &name, double duration);
 		Animation(const Animation &);
@@ -33,8 +33,6 @@ namespace SceneGraph {
 		const std::vector<AnimationChannel> &GetChannels() const { return m_channels; }
 
 	private:
-		friend class Loader;
-		friend class BinaryConverter;
 		double m_duration;
 		double m_time;
 		std::string m_name;

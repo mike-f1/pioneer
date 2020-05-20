@@ -8,9 +8,9 @@
 #include "FrameId.h"
 #include "graphics/Frustum.h"
 #include "graphics/Light.h"
-#include "RefCounted.h"
-#include "matrix4x4.h"
-#include "vector3.h"
+#include "libs/RefCounted.h"
+#include "libs/matrix4x4.h"
+#include "libs/vector3.h"
 
 #include <memory>
 #include <list>

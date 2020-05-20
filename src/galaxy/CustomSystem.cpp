@@ -4,8 +4,8 @@
 #include "CustomSystem.h"
 
 #include "GalaxyEnums.h"
-#include "gameconsts.h"
-#include "utils.h"
+#include "libs/utils.h"
+#include "libs/gameconsts.h"
 
 CustomSystem::CustomSystem() :
 	sBody(nullptr),

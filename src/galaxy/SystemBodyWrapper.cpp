@@ -2,7 +2,7 @@
 
 #include "AtmosphereParameters.h"
 #include "SystemBody.h"
-#include "utils.h"
+#include "libs/utils.h"
 
 SystemBodyWrapper::SystemBodyWrapper(const SystemBody *sb) :
 	m_sbody(sb)

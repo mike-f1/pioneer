@@ -3,18 +3,12 @@
 
 #include "Billboard.h"
 
-#include "Model.h"
 #include "NodeVisitor.h"
 #include "graphics/Graphics.h"
-#include "graphics/Material.h"
-#include "graphics/RenderState.h"
-#include "graphics/Renderer.h"
-#include "graphics/RendererLocator.h"
-#include "graphics/Stats.h"
 #include "graphics/VertexArray.h"
 #include "graphics/VertexBuffer.h"
 
-#include "utils.h"
+#include "libs/utils.h"
 
 namespace SceneGraph {
 

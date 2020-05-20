@@ -12,8 +12,9 @@
 #include "Game.h"
 #include "GameLocator.h"
 #include "Player.h"
-#include "SDL_audio.h"
-#include "SDL_events.h"
+#include "libs/stringUtils.h"
+#include <SDL_audio.h>
+#include <SDL_events.h>
 #include <SDL.h>
 #include <vorbis/vorbisfile.h>
 #include <cassert>
@@ -24,10 +25,10 @@
 
 namespace Sound {
 
-	static const unsigned int FREQ = 44100;
-	static const unsigned int BUF_SIZE = 4096;
-	static const unsigned int MAX_WAVSTREAMS = 10; //first two are for music
-	static const double STREAM_IF_LONGER_THAN = 10.0;
+	static constexpr unsigned FREQ = 44100;
+	static constexpr unsigned BUF_SIZE = 4096;
+	static constexpr unsigned MAX_WAVSTREAMS = 10; //first two are for music
+	static constexpr double STREAM_IF_LONGER_THAN = 10.0;
 
 	static SDL_AudioDeviceID m_audioDevice = 0;
 
@@ -472,7 +473,7 @@ namespace Sound {
 
 	static void load_sound(const std::string &basename, const std::string &path, bool is_music)
 	{
-		if (!ends_with_ci(basename, ".ogg")) return;
+		if (!stringUtils::ends_with_ci(basename, ".ogg")) return;
 
 		Sample sample;
 		OggVorbis_File oggv;

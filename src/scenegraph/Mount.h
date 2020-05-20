@@ -6,7 +6,7 @@
 
 #include <string>
 #include <vector>
-#include "vector3.h"
+#include "libs/vector3.h"
 
 enum GunDir {
 	GUN_FRONT,

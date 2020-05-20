@@ -5,7 +5,7 @@
 #define _LIGHT_H
 
 #include "Color.h"
-#include "vector3.h"
+#include "libs/vector3.h"
 
 namespace Graphics {
 

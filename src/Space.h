@@ -5,11 +5,11 @@
 #define _SPACE_H
 
 #include "FrameId.h"
-#include "IterationProxy.h"
 #include "JsonFwd.h"
 #include "Object.h"
-#include "RefCounted.h"
-#include "vector3.h"
+#include "libs/IterationProxy.h"
+#include "libs/RefCounted.h"
+#include "libs/vector3.h"
 #include <list>
 #include <memory>
 

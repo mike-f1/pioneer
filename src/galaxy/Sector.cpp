@@ -10,7 +10,7 @@
 
 #include "EnumStrings.h"
 #include "Factions.h"
-#include "utils.h"
+#include "libs/utils.h"
 
 const float Sector::SIZE = 8.f;
 

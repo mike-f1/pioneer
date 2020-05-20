@@ -4,11 +4,11 @@
 #include "RingMaterial.h"
 
 #include "RendererGL.h"
-#include "StringF.h"
 #include "TextureGL.h"
 #include "graphics/Graphics.h"
+#include "libs/StringF.h"
 
-#include "utils.h"
+#include "libs/utils.h"
 
 namespace Graphics {
 	namespace OGL {

@@ -11,8 +11,8 @@
 
 #include "Node.h"
 
+#include "libs/vector3.h"
 #include <vector>
-#include "vector3.h"
 #include <cstdint>
 
 class GeomTree;

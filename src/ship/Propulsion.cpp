@@ -3,12 +3,15 @@
 
 #include "Propulsion.h"
 
+#include "DynamicBody.h"
 #include "Game.h"
 #include "GameLocator.h"
 #include "GameSaveError.h"
 #include "Json.h"
 #include "JsonUtils.h"
+#include "libs/utils.h"
 #include "scenegraph/Model.h"
+#include <limits>
 
 #include "Object.h" // <- here only for comment in AIFaceDirection (line 320)
 
@@ -41,22 +44,20 @@ void Propulsion::LoadFromJson(const Json &jsonObj, Space *space)
 	}
 };
 
-Propulsion::Propulsion()
+Propulsion::Propulsion() :
+	m_angThrust(0.0),
+	m_linThrusters(0.0),
+	m_angThrusters(0.0),
+	m_fuelTankMass(1),
+	m_thrusterFuel(0.0),
+	m_reserveFuel(0.0),
+	m_effectiveExhaustVelocity(100000.0),
+	m_fuelStateChange(false),
+	m_dBody(nullptr),
+	m_smodel(nullptr)
 {
-	m_fuelTankMass = 1;
-	for (int i = 0; i < Thruster::THRUSTER_MAX; i++)
-		m_linThrust[i] = 0.0;
-	for (int i = 0; i < Thruster::THRUSTER_MAX; i++)
-		m_linAccelerationCap[i] = INFINITY;
-	m_angThrust = 0.0;
-	m_effectiveExhaustVelocity = 100000.0;
-	m_thrusterFuel = 0.0; //0.0-1.0, remaining fuel
-	m_reserveFuel = 0.0;
-	m_fuelStateChange = false;
-	m_linThrusters = vector3d(0, 0, 0);
-	m_angThrusters = vector3d(0, 0, 0);
-	m_smodel = nullptr;
-	m_dBody = nullptr;
+	m_linThrust.fill(0.0);
+	m_linAccelerationCap.fill(std::numeric_limits<float>::max());
 }
 
 void Propulsion::Init(DynamicBody *b, SceneGraph::Model *m, const int tank_mass, const double effExVel, const float lin_Thrust[], const float ang_Thrust)
@@ -65,8 +66,7 @@ void Propulsion::Init(DynamicBody *b, SceneGraph::Model *m, const int tank_mass,
 	m_effectiveExhaustVelocity = effExVel;
 	for (int i = 0; i < Thruster::THRUSTER_MAX; i++)
 		m_linThrust[i] = lin_Thrust[i];
-	for (int i = 0; i < Thruster::THRUSTER_MAX; i++)
-		m_linAccelerationCap[i] = INFINITY;
+	m_linAccelerationCap.fill(std::numeric_limits<float>::max());
 	m_angThrust = ang_Thrust;
 	m_smodel = m;
 	m_dBody = b;
@@ -194,6 +194,16 @@ vector3d Propulsion::GetThrustUncapped(const vector3d &dir) const
 	maxThrust.z = (dir.z > 0) ? m_linThrust[THRUSTER_REVERSE] : m_linThrust[THRUSTER_FORWARD];
 
 	return maxThrust;
+}
+
+double Propulsion::GetAccel(Thruster thruster) const
+{
+	return GetThrust(thruster) / m_dBody->GetMass();
+}
+
+double Propulsion::GetAccelMin() const
+{
+	return GetThrustMin() / m_dBody->GetMass();
 }
 
 float Propulsion::GetFuelUseRate()

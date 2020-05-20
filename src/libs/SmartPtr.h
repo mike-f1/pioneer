@@ -22,7 +22,7 @@ class SmartPtrBase {
 public:
 	// copy & swap idiom
 	// see http://stackoverflow.com/questions/3279543/what-is-the-copy-and-swap-idiom
-	void Reset(T *p = 0) { Derived(p).Swap(*static_cast<Derived *>(this)); }
+	void Reset(T *p = nullptr) { Derived(p).Swap(*static_cast<Derived *>(this)); }
 
 	T &operator*() const
 	{
@@ -35,11 +35,11 @@ public:
 		return m_ptr;
 	}
 	T *Get() const { return m_ptr; }
-	bool Valid() const { return (m_ptr != 0); }
+	bool Valid() const { return (m_ptr != nullptr); }
 
 	// safe bool idiom; see http://www.artima.com/cppsource/safebool.html
-	operator safe_bool() const { return (m_ptr == 0) ? 0 : &this_type::m_ptr; }
-	bool operator!() const { return (m_ptr == 0); }
+	operator safe_bool() const { return (m_ptr == nullptr) ? nullptr : &this_type::m_ptr; }
+	bool operator!() const { return (m_ptr == nullptr); }
 
 	friend void swap(this_type &a, this_type &b) { a.Swap(b); }
 
@@ -50,17 +50,6 @@ public:
 		b.m_ptr = p;
 	}
 
-	// comparisons directly with T* have to be defined here, because
-	// if comparing with literal 0 (null pointer), the compiler can't
-	// deduce the second pointer type for the more general templated
-	// comparisons that are written to work on any <T1,T2> pair
-	friend bool operator==(const this_type &a, const T *b) { return (a.Get() == b); }
-	friend bool operator!=(const this_type &a, const T *b) { return (a.Get() != b); }
-	friend bool operator<(const this_type &a, const T *b) { return (a.Get() < b); }
-	friend bool operator<=(const this_type &a, const T *b) { return (a.Get() <= b); }
-	friend bool operator>(const this_type &a, const T *b) { return (a.Get() > b); }
-	friend bool operator>=(const this_type &a, const T *b) { return (a.Get() >= b); }
-
 	friend bool operator==(const T *a, const this_type &b) { return (a == b.Get()); }
 	friend bool operator!=(const T *a, const this_type &b) { return (a != b.Get()); }
 	friend bool operator<(const T *a, const this_type &b) { return (a < b.Get()); }
@@ -70,7 +59,7 @@ public:
 
 protected:
 	SmartPtrBase() :
-		m_ptr(0) {}
+		m_ptr(nullptr) {}
 	explicit SmartPtrBase(T *p) :
 		m_ptr(p) {}
 
@@ -79,11 +68,11 @@ protected:
 	WARN_UNUSED_RESULT(T *, Release())
 	{
 		T *p = m_ptr;
-		m_ptr = 0;
+		m_ptr = nullptr;
 		return p;
 	}
 
-	T *m_ptr;
+	T *m_ptr = nullptr;
 };
 
 #define DEF_SMARTPTR_COMPARISON(op)                                                       \

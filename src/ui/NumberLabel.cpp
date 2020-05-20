@@ -3,8 +3,8 @@
 
 #include "NumberLabel.h"
 #include "Lang.h"
-#include "StringF.h"
-#include "utils.h"
+#include "libs/StringF.h"
+#include "libs/stringUtils.h"
 
 namespace UI {
 
@@ -43,11 +43,11 @@ namespace UI {
 			break;
 
 		case FORMAT_MONEY:
-			SetText(format_money(int64_t(v * 100)));
+			SetText(stringUtils::format_money(int64_t(v * 100)));
 			break;
 
 		case FORMAT_DISTANCE_M:
-			SetText(format_distance(v, 3));
+			SetText(stringUtils::format_distance(v, 3));
 			break;
 
 		case FORMAT_DISTANCE_LY:

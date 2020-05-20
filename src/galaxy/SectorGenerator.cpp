@@ -9,7 +9,7 @@
 #include "Galaxy.h"
 #include "GameSaveError.h"
 #include "Json.h"
-#include "utils.h"
+#include "libs/stringUtils.h"
 
 #define Square(x) ((x) * (x))
 
@@ -390,7 +390,7 @@ void SectorPersistenceGenerator::FromJson(const Json &jsonObj, RefCountedPtr<Gal
 		for (unsigned int arrayIndex = 0; arrayIndex < dictArray.size(); ++arrayIndex) {
 			const Json &dictArrayEl = dictArray[arrayIndex];
 			SystemPath path = SystemPath::FromJson(dictArrayEl);
-			StrToAuto(&m_exploredSystems[path], dictArrayEl["value"]);
+			stringUtils::StrToAuto(&m_exploredSystems[path], dictArrayEl["value"]);
 		}
 	} catch (Json::type_error &) {
 		throw SavedGameCorruptException();
@@ -406,7 +406,7 @@ void SectorPersistenceGenerator::ToJson(Json &jsonObj, RefCountedPtr<Galaxy> gal
 	for (const auto &element : m_exploredSystems) {
 		Json dictArrayEl({}); // Create JSON object to contain dict element.
 		element.first.ToJson(dictArrayEl);
-		dictArrayEl["value"] = AutoToStr(element.second);
+		dictArrayEl["value"] = stringUtils::AutoToStr(element.second);
 		dictArray.push_back(dictArrayEl); // Append dict object to array.
 	}
 	jsonObj["dict"] = dictArray; // Add dict array to supplied object.

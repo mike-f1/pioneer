@@ -8,8 +8,8 @@
 #include <deque>
 
 #include "Color.h"
-#include "RefCounted.h"
-#include "vector3.h"
+#include "libs/RefCounted.h"
+#include "libs/vector3.h"
 
 // maximumpatch depth
 #define GEOPATCH_MAX_DEPTH 15

@@ -4,8 +4,8 @@
 #ifndef UI_CONTAINER_H
 #define UI_CONTAINER_H
 
-#include "IterationProxy.h"
 #include "Widget.h"
+#include "libs/IterationProxy.h"
 #include <vector>
 
 // Container is the base class for all UI containers. Containers must

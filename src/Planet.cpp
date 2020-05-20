@@ -4,7 +4,7 @@
 #include "Planet.h"
 
 #include "Color.h"
-#include "gameconsts.h"
+#include "Random.h"
 #include "galaxy/AtmosphereParameters.h"
 #include "galaxy/RingStyle.h"
 #include "graphics/Material.h"
@@ -13,7 +13,11 @@
 #include "graphics/RendererLocator.h"
 #include "graphics/Texture.h"
 #include "graphics/VertexArray.h"
+#include "libs/gameconsts.h"
+
 #include "perlin.h"
+
+#include "profiler/Profiler.h"
 
 #ifdef _MSC_VER
 #include "win32/WinMath.h"

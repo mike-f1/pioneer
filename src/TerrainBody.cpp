@@ -5,8 +5,8 @@
 
 #include "Frame.h"
 #include "GameSaveError.h"
-#include "GasGiant.h"
-#include "GeoSphere.h"
+#include "sphere/GasGiant.h"
+#include "sphere/GeoSphere.h"
 #include "Json.h"
 #include "Space.h"
 #include "graphics/Renderer.h"
@@ -156,4 +156,15 @@ void TerrainBody::OnChangeDetailLevel(int new_detail)
 {
 	GeoSphere::OnChangeDetailLevel(new_detail);
 	GasGiant::OnChangeDetailLevel(new_detail);
+}
+
+void TerrainBody::SetDebugFlags(GSDebugFlags flags)
+{
+	if (m_baseSphere) m_baseSphere->SetDebugFlags(flags);
+}
+
+GSDebugFlags TerrainBody::GetDebugFlags()
+{
+	if (m_baseSphere) return m_baseSphere->GetDebugFlags();
+	else return GSDebugFlags::NONE;
 }

@@ -6,6 +6,7 @@
 #include "LuaUtils.h"
 
 #include <algorithm>
+#include <cassert>
 
 inline Color4ub ColorClamp(float r, float g, float b, float a)
 {

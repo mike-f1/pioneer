@@ -9,7 +9,7 @@
 #include "graphics/RendererLocator.h"
 #include "graphics/TextureBuilder.h"
 #include "graphics/VertexArray.h"
-#include "utils.h"
+#include "libs/stringUtils.h"
 
 namespace UI {
 
@@ -226,28 +226,28 @@ namespace UI {
 	Skin::RectElement Skin::LoadRectElement(const std::string &spec)
 	{
 		std::vector<int> v(4);
-		SplitSpec(spec, v);
+		stringUtils::SplitSpec(spec, v);
 		return RectElement(v[0], v[1], v[2], v[3]);
 	}
 
 	Skin::BorderedRectElement Skin::LoadBorderedRectElement(const std::string &spec)
 	{
 		std::vector<int> v(8);
-		SplitSpec(spec, v);
+		stringUtils::SplitSpec(spec, v);
 		return BorderedRectElement(v[0], v[1], v[2], v[3], v[4] * m_scale, v[5] * m_scale, v[6] * m_scale, v[7] * m_scale);
 	}
 
 	Skin::EdgedRectElement Skin::LoadEdgedRectElement(const std::string &spec)
 	{
 		std::vector<int> v(5);
-		SplitSpec(spec, v);
+		stringUtils::SplitSpec(spec, v);
 		return EdgedRectElement(v[0], v[1], v[2], v[3], v[4]);
 	}
 
 	Color Skin::LoadSkinColor(const std::string &spec)
 	{
 		std::vector<int> v(4);
-		SplitSpec(spec, v);
+		stringUtils::SplitSpec(spec, v);
 		return Color(v[0], v[1], v[2], v[3]);
 	}
 

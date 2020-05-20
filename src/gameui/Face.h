@@ -5,7 +5,7 @@
 #define GAMEUI_FACE_H
 
 #include "FaceParts.h"
-#include "SmartPtr.h"
+#include "libs/SmartPtr.h"
 #include "ui/Context.h"
 
 namespace Graphics {

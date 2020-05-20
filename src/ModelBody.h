@@ -5,12 +5,15 @@
 #define _MODELBODY_H
 
 #include "Body.h"
-#include "CollMesh.h"
+#include "Color.h"
 #include "FrameId.h"
+#include "libs/RefCounted.h"
 
+class Aabb;
 class Shields;
 class Geom;
 class Camera;
+class CollMesh;
 
 class CSG_CentralCylinder;
 class CSG_Box;
@@ -39,9 +42,9 @@ public:
 	// Static: geoms are static relative to frame
 	void SetStatic(bool isStatic);
 	bool IsStatic() const { return m_isStatic; }
-	const Aabb &GetAabb() const { return m_collMesh->GetAabb(); }
+	Aabb &GetAabb() const;
 	SceneGraph::Model *GetModel() const { return m_model.get(); }
-	CollMesh *GetCollMesh() { return m_collMesh.Get(); }
+	CollMesh *GetCollMesh();
 	Geom *GetGeom() const { return m_geom.get(); }
 
 	void SetCentralCylinder(std::unique_ptr<CSG_CentralCylinder> centralcylinder);

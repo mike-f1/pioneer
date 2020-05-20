@@ -11,7 +11,7 @@
 #include "VertexArray.h"
 #include "VertexBuffer.h"
 
-#include "utils.h"
+#include "libs/utils.h"
 
 namespace Graphics {
 

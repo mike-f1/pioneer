@@ -2,7 +2,7 @@
 #define SHIELDRENDERPARAMETERS_H_INCLUDED
 
 #include <cstdint>
-#include "vector3.h"
+#include "libs/vector3.h"
 
 static const uint32_t MAX_SHIELD_HITS = 5;
 

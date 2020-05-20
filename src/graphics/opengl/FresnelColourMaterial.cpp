@@ -3,7 +3,7 @@
 
 #include "FresnelColourMaterial.h"
 #include "RendererGL.h"
-#include "StringF.h"
+#include "libs/StringF.h"
 #include "TextureGL.h"
 #include "graphics/Graphics.h"
 #include "graphics/Material.h"

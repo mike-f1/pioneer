@@ -4,11 +4,23 @@
 #ifndef GALAXY_ECONOMY_H
 #define GALAXY_ECONOMY_H
 
+#include "libs/bitmask_op.h"
+
 namespace GalacticEconomy {
-	enum EconType { // <enum scope=GalacticEconomy name=EconType prefix=ECON_ public>
-		ECON_MINING = 1 << 0,
-		ECON_AGRICULTURE = 1 << 1,
-		ECON_INDUSTRY = 1 << 2
+	enum class EconType;
+}
+
+template<>
+struct enable_bitmask_operators<GalacticEconomy::EconType> {
+	static constexpr bool enable = true;
+};
+
+namespace GalacticEconomy {
+	enum class EconType { // <enum scope=GalacticEconomy name=EconType prefix=ECON_ public>
+		NONE = 0,
+		MINING = 1 << 0,
+		AGRICULTURE = 1 << 1,
+		INDUSTRY = 1 << 2
 	};
 
 	enum class Commodity { // <enum scope='GalacticEconomy::Commodity' name=CommodityType public>
@@ -58,7 +70,7 @@ namespace GalacticEconomy {
 		// production requirement. eg metal alloys input would be metal ore
 		// (used in trade balance calculations)
 		Commodity inputs[MAX_ECON_INPUTS];
-		int econType;
+		EconType econType;
 	};
 
 	extern const CommodityInfo COMMODITY_DATA[];

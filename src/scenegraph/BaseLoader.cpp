@@ -7,11 +7,12 @@
 #include "LoaderDefinitions.h"
 
 #include "FileSystem.h"
+#include "libs/utils.h"
 #include "graphics/Material.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/TextureBuilder.h"
-#include "utils.h"
+#include "libs/stringUtils.h"
 
 using namespace SceneGraph;
 
@@ -100,8 +101,8 @@ void BaseLoader::FindPatterns(PatternContainer &output)
 		const FileSystem::FileInfo &info = files.Current();
 		if (info.IsFile()) {
 			const std::string &name = info.GetName();
-			if (starts_with(name, "pattern")) {
-				if (ends_with_ci(name, ".png") || ends_with_ci(name, ".dds"))
+			if (stringUtils::starts_with(name, "pattern")) {
+				if (stringUtils::ends_with_ci(name, ".png") || stringUtils::ends_with_ci(name, ".dds"))
 					output.push_back(Pattern(name, m_curPath, RendererLocator::getRenderer()));
 			}
 		}

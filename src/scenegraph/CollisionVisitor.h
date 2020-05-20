@@ -7,14 +7,16 @@
  * Creates a new collision mesh from CollisionGeometry nodes
  * or the nodes' AABB, when no CGeoms found.
  */
-#include "CollMesh.h"
 #include "NodeVisitor.h"
 
+#include "libs/RefCounted.h"
+#include "libs/matrix4x4.h"
+#include "libs/vector3.h"
 #include <cstdint>
 #include <vector>
-#include "RefCounted.h"
-#include "matrix4x4.h"
-#include "vector3.h"
+
+class Aabb;
+class CollMesh;
 
 namespace SceneGraph {
 	class Group;

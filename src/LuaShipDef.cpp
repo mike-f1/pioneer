@@ -2,8 +2,10 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "LuaShipDef.h"
+
 #include "EnumStrings.h"
 #include "Lua.h"
+#include "LuaManager.h"
 #include "LuaUtils.h"
 #include "ShipType.h"
 

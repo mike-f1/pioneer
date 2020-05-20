@@ -19,15 +19,16 @@
 #include "Player.h"
 #include "Random.h"
 #include "RandomSingleton.h"
-#include "StringF.h"
+#include "libs/StringF.h"
+#include "libs/stringUtils.h"
 #include "TerrainBody.h"
 #include "galaxy/SystemBody.h"
 #include "graphics/Drawables.h"
 #include "graphics/Light.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
-
-#include "terrain/Terrain.h"
+#include "scenegraph/Model.h"
+#include "sphere/BaseSphereDebugFlags.h"
 
 #include <imgui/imgui.h>
 
@@ -42,6 +43,8 @@ constexpr const float WHEEL_SENSITIVITY = .03f; // Should be a variable in user 
 
 ObjectViewerView::ObjectViewerView() :
 	UIView(),
+	m_debugFlags(SceneGraph::DebugFlags::NONE),
+	m_planetDebugFlags(GSDebugFlags::NONE),
 	m_viewingDist(VIEW_START_DIST),
 	m_lastTarget(nullptr),
 	m_newTarget(nullptr),
@@ -138,6 +141,21 @@ void ObjectViewerView::Update(const float frameTime)
 		m_newTarget = getATarget();
 	}
 	if (m_newTarget != m_lastTarget) {
+		// Re-set debug flags before changing target
+		ModelBody *lastT = dynamic_cast<ModelBody *>(m_lastTarget);
+		if (lastT) lastT->GetModel()->SetDebugFlags(m_debugFlags);
+
+		ModelBody *newT = dynamic_cast<ModelBody *>(m_newTarget);
+		if (newT) m_debugFlags = newT->GetModel()->GetDebugFlags();
+		else m_debugFlags = SceneGraph::DebugFlags::NONE;
+
+		TerrainBody *lastTb = dynamic_cast<TerrainBody *>(m_lastTarget);
+		if (lastTb) lastTb->SetDebugFlags(m_planetDebugFlags);
+
+		TerrainBody *newTb = dynamic_cast<TerrainBody *>(m_newTarget);
+		if (newTb) m_planetDebugFlags = newTb->GetDebugFlags();
+		else m_planetDebugFlags = GSDebugFlags::NONE;
+
 		m_lastTarget = m_newTarget;
 		// Reset view parameter for new target.
 		OnResetViewParams();
@@ -277,7 +295,7 @@ void ObjectViewerView::DrawUI(const float frameTime)
 
 	char buf[128];
 	snprintf(buf, sizeof(buf), "View dist: %s     Object: %s\nSystemPath: %s",
-		format_distance(m_viewingDist).c_str(), (m_lastTarget ? m_lastTarget->GetLabel().c_str() : "<none>"),
+		stringUtils::format_distance(m_viewingDist).c_str(), (m_lastTarget ? m_lastTarget->GetLabel().c_str() : "<none>"),
 		pathStr.str().c_str());
 
 	vector2f screen(Graphics::GetScreenWidth(), Graphics::GetScreenHeight());
@@ -302,55 +320,19 @@ void ObjectViewerView::DrawUI(const float frameTime)
 	if (m_lastTarget) {
 		ImGui::Separator();
 		switch (m_lastTarget->GetType()) {
-			case Object::CARGOBODY: ImGui::TextUnformatted("Type is CargoBody"); break;
+			case Object::CARGOBODY:
 			case Object::PLAYER:
 			case Object::SHIP:
-			{
-				const ShipType *st = static_cast<Ship *>(m_lastTarget)->GetShipType();
-				if (st != nullptr) {
-					ImGui::Text("Ship model %s", st->id.c_str());
-				}
-			}
+			case Object::SPACESTATION:
+			case Object::MISSILE:
+			case Object::CITYONPLANET:
+				DrawAdditionalUIForBodies();
 			break;
-			case Object::SPACESTATION: ImGui::TextUnformatted("Type is SpaceStation"); break;
-			case Object::MISSILE: ImGui::TextUnformatted("Type is Missile"); break;
-			case Object::CITYONPLANET: ImGui::TextUnformatted("Type is CityOnPlanet"); break;
 			case Object::HYPERSPACECLOUD: ImGui::TextUnformatted("Type is HyperspaceCloud"); break;
 			case Object::PLANET:
 			case Object::STAR:
 			case Object::TERRAINBODY:
-			{
-				ImGui::InputFloat("Mass (earths)", &m_sbMass, 0.01f, 1.0f, "%.4f");
-				ImGui::InputFloat("Radius (earths)", &m_sbRadius, 0.01f, 1.0f, "%.4f");
-				const int step = 1, step_fast = 10;
-				ImGui::InputScalar("Integer seed", ImGuiDataType_U32, &m_sbSeed, &step, &step_fast, "%u");
-				ImGui::InputFloat("Volatile gases (>= 0)", &m_sbVolatileGas, 0.01f, 0.1f, "%.4f");
-				m_sbVolatileGas = Clamp(m_sbVolatileGas, 0.0f, 10.0f);
-				ImGui::InputFloat("Volatile liquid (0-1)", &m_sbVolatileLiquid, 0.01f, 0.1f, "%.4f");
-				m_sbVolatileLiquid = Clamp(m_sbVolatileLiquid, 0.0f, 1.0f);
-				ImGui::InputFloat("Volatile ices (0-1)", &m_sbVolatileIces, 0.01f, 0.1f, "%.4f");
-				m_sbVolatileIces = Clamp(m_sbVolatileIces, 0.0f, 1.0f);
-				ImGui::InputFloat("Life (0-1)", &m_sbLife, 0.01f, 0.1f, "%.4f");
-				m_sbLife = Clamp(m_sbLife, 0.0f, 1.0f);
-				ImGui::InputFloat("Volcanicity (0-1)", &m_sbVolcanicity, 0.01f, 1.0f, "%.4f");
-				m_sbVolcanicity = Clamp(m_sbVolcanicity, 0.0f, 1.0f);
-				ImGui::InputFloat("Crust metallicity (0-1)", &m_sbMetallicity, 0.01f, 1.0f, "%.4f");
-				m_sbMetallicity = Clamp(m_sbMetallicity, 0.0f, 1.0f);
-
-				ImGui::Button("Prev Seed");
-				if (ImGui::IsItemClicked(0)) OnPrevSeed();
-				ImGui::SameLine();
-				ImGui::Button("Random Seed");
-				if (ImGui::IsItemClicked(0)) OnRandomSeed();
-				ImGui::SameLine();
-				ImGui::Button("Next Seed");
-				if (ImGui::IsItemClicked(0)) OnNextSeed();
-				ImGui::Button("Reset Changes");
-				if (ImGui::IsItemClicked(0)) OnReloadSBData();
-				ImGui::SameLine();
-				ImGui::Button("Apply Changes");
-				if (ImGui::IsItemClicked(0)) OnChangeTerrain();
-			}
+				DrawAdditionalUIForSysBodies();
 			break;
 			case Object::PROJECTILE:
 			default: break;
@@ -365,6 +347,89 @@ void ObjectViewerView::DrawUI(const float frameTime)
 	ImGui::Button("Reset Twist\nParameters");
 	if (ImGui::IsItemClicked(0)) OnResetTwistMatrix();
 	ImGui::End();
+}
+
+void ObjectViewerView::DrawAdditionalUIForSysBodies()
+{
+	ImGui::InputFloat("Mass (earths)", &m_sbMass, 0.01f, 1.0f, "%.4f");
+	ImGui::InputFloat("Radius (earths)", &m_sbRadius, 0.01f, 1.0f, "%.4f");
+	const int step = 1, step_fast = 10;
+	ImGui::InputScalar("Integer seed", ImGuiDataType_U32, &m_sbSeed, &step, &step_fast, "%u");
+	ImGui::InputFloat("Volatile gases (>= 0)", &m_sbVolatileGas, 0.01f, 0.1f, "%.4f");
+	m_sbVolatileGas = Clamp(m_sbVolatileGas, 0.0f, 10.0f);
+	ImGui::InputFloat("Volatile liquid (0-1)", &m_sbVolatileLiquid, 0.01f, 0.1f, "%.4f");
+	m_sbVolatileLiquid = Clamp(m_sbVolatileLiquid, 0.0f, 1.0f);
+	ImGui::InputFloat("Volatile ices (0-1)", &m_sbVolatileIces, 0.01f, 0.1f, "%.4f");
+	m_sbVolatileIces = Clamp(m_sbVolatileIces, 0.0f, 1.0f);
+	ImGui::InputFloat("Life (0-1)", &m_sbLife, 0.01f, 0.1f, "%.4f");
+	m_sbLife = Clamp(m_sbLife, 0.0f, 1.0f);
+	ImGui::InputFloat("Volcanicity (0-1)", &m_sbVolcanicity, 0.01f, 1.0f, "%.4f");
+	m_sbVolcanicity = Clamp(m_sbVolcanicity, 0.0f, 1.0f);
+	ImGui::InputFloat("Crust metallicity (0-1)", &m_sbMetallicity, 0.01f, 1.0f, "%.4f");
+	m_sbMetallicity = Clamp(m_sbMetallicity, 0.0f, 1.0f);
+
+	ImGui::Button("Prev Seed");
+	if (ImGui::IsItemClicked(0)) OnPrevSeed();
+	ImGui::SameLine();
+	ImGui::Button("Random Seed");
+	if (ImGui::IsItemClicked(0)) OnRandomSeed();
+	ImGui::SameLine();
+	ImGui::Button("Next Seed");
+	if (ImGui::IsItemClicked(0)) OnNextSeed();
+	ImGui::Button("Reset Changes");
+	if (ImGui::IsItemClicked(0)) OnReloadSBData();
+	ImGui::SameLine();
+	ImGui::Button("Apply Changes");
+	if (ImGui::IsItemClicked(0)) OnChangeTerrain();
+
+	ImGui::Checkbox("Display Single Patch BBOX", &m_showSingleBBox);
+	ImGui::Checkbox("Display Nearest Patches BBOX", &m_showNearestBBox);
+	ImGui::Checkbox("Display Bounding Sphere", &m_showBoundSphere);
+
+	m_planetDebugFlags = (m_showSingleBBox ? GSDebugFlags::SINGLE_PATCH_BBOX : GSDebugFlags::NONE) |
+		(m_showNearestBBox ? GSDebugFlags::NEAR_PATCHES_BBOX : GSDebugFlags::NONE) |
+		(m_showBoundSphere ? GSDebugFlags::BOUNDING_SPHERE : GSDebugFlags::NONE);
+
+	TerrainBody *tb = dynamic_cast<TerrainBody *>(m_lastTarget);
+	if (tb) tb->SetDebugFlags(m_planetDebugFlags);
+}
+
+void ObjectViewerView::DrawAdditionalUIForBodies()
+{
+	switch (m_lastTarget->GetType()) {
+		case Object::CARGOBODY: ImGui::TextUnformatted("Type is CargoBody"); break;
+		case Object::PLAYER:
+		case Object::SHIP:
+		{
+			const ShipType *st = static_cast<Ship *>(m_lastTarget)->GetShipType();
+			if (st != nullptr) {
+				ImGui::Text("Ship model %s", st->id.c_str());
+			}
+		}
+		break;
+		case Object::SPACESTATION: ImGui::TextUnformatted("Type is SpaceStation"); break;
+		case Object::MISSILE: ImGui::TextUnformatted("Type is Missile"); break;
+		case Object::CITYONPLANET: ImGui::TextUnformatted("Type is CityOnPlanet"); break;
+		default: break;
+	};
+
+	ImGui::Checkbox("Display BBOX", &m_showBBox);
+	ImGui::SameLine();
+	ImGui::Checkbox("Display Collision Mesh", &m_showCollMesh);
+	ImGui::Checkbox("Display WireFrame", &m_showWireFrame);
+	ImGui::SameLine();
+	ImGui::Checkbox("Display Tags", &m_showTags);
+	ImGui::SameLine();
+	ImGui::Checkbox("Display Docking", &m_showDocking);
+
+	SceneGraph::DebugFlags debug = (m_showBBox ? SceneGraph::DebugFlags::BBOX : SceneGraph::DebugFlags::NONE) |
+		(m_showCollMesh ? SceneGraph::DebugFlags::COLLMESH : SceneGraph::DebugFlags::NONE) |
+		(m_showWireFrame ? SceneGraph::DebugFlags::WIREFRAME : SceneGraph::DebugFlags::NONE) |
+		(m_showTags ? SceneGraph::DebugFlags::TAGS : SceneGraph::DebugFlags::NONE) |
+		(m_showDocking ? SceneGraph::DebugFlags::DOCKING : SceneGraph::DebugFlags::NONE);
+
+	ModelBody *mb = dynamic_cast<ModelBody *>(m_lastTarget);
+	if (mb) mb->GetModel()->SetDebugFlags(debug);
 }
 
 void ObjectViewerView::OnResetViewParams()

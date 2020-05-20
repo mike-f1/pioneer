@@ -11,7 +11,7 @@
 #include "LuaRef.h"
 #include "LuaUtils.h"
 #include "LuaWrappable.h"
-#include "RefCounted.h"
+#include "libs/RefCounted.h"
 #include <tuple>
 #include <typeinfo>
 

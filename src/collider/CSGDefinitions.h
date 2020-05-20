@@ -1,7 +1,7 @@
 #ifndef _CSG_DEFINITIONS_H
 #define _CSG_DEFINITIONS_H
 
-#include "vector3.h"
+#include "libs/vector3.h"
 
 /* Use CSG* to skip edge-tri test if a Geom inside
  * bbox of another is inside a defined volume placed

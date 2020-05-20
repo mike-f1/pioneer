@@ -4,7 +4,7 @@
 #ifndef _LUANAMEGEN_H
 #define _LUANAMEGEN_H
 
-#include "RefCounted.h"
+#include "libs/RefCounted.h"
 #include <string>
 
 class LuaManager;

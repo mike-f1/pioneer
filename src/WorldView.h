@@ -15,22 +15,11 @@ class SpeedLines;
 class NavTunnelWidget;
 class Game;
 
-enum VelIconType {
-	V_PROGRADE,
-	V_RETROGRADE,
-	V_BURN
-};
-
-enum PlaneType {
+enum class PlaneType {
 	NONE,
 	ROTATIONAL,
 	PARENT
 };
-
-namespace Gui {
-	class TexturedQuad;
-	class VBox;
-}
 
 namespace KeyBindings {
 	struct ActionBinding;

@@ -1,8 +1,8 @@
 #ifndef HEATGRADIENTPAR_H_INCLUDED
 #define HEATGRADIENTPAR_H_INCLUDED
 
-#include "matrix3x3.h"
-#include "vector3.h"
+#include "libs/matrix3x3.h"
+#include "libs/vector3.h"
 
 struct HeatGradientParameters_t {
 	matrix3x3f heatingMatrix;

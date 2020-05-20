@@ -14,7 +14,9 @@
 #include "graphics/RendererLocator.h"
 #include "graphics/VertexArray.h"
 #include "graphics/VertexBuffer.h"
-#include "utils.h"
+#include "libs/stringUtils.h"
+
+#include "profiler/Profiler.h"
 
 namespace SceneGraph {
 
@@ -207,7 +209,7 @@ namespace SceneGraph {
 			//material
 			RefCountedPtr<Graphics::Material> material;
 			const std::string matName = rd.String();
-			if (starts_with(matName, "decal_")) {
+			if (stringUtils::starts_with(matName, "decal_")) {
 				const unsigned int di = atoi(matName.substr(6).c_str());
 				material = db.loader->GetDecalMaterial(di);
 			} else

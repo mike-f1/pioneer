@@ -5,10 +5,10 @@
 #define _SERIALIZE_H
 
 #include "Aabb.h"
-#include "ByteRange.h"
 #include "Color.h"
-#include "Quaternion.h"
-#include "vector3.h"
+#include "libs/ByteRange.h"
+#include "libs/quaternion.h"
+#include "libs/vector3.h"
 #include <stdexcept>
 #include <string>
 
@@ -29,7 +29,7 @@ namespace Serializer {
 	static_assert((sizeof(vector2d) == 16 && alignof(vector2d) == 8), "Vector2d is padded differently on this platform and will not serialize properly.");
 	static_assert((sizeof(vector3f) == 12 && alignof(vector3f) == 4), "Vector3f is padded differently on this platform and will not serialize properly.");
 	static_assert((sizeof(vector3d) == 24 && alignof(vector3d) == 8), "Vector3d is padded differently on this platform and will not serialize properly.");
-	static_assert((sizeof(Quaternionf) == 16 && alignof(Quaternionf) == 4), "Quaternionf is padded differently on this platform and will not serialize properly.");
+	static_assert((sizeof(quaternionf) == 16 && alignof(quaternionf) == 4), "quaternionf is padded differently on this platform and will not serialize properly.");
 	static_assert((sizeof(Aabb) == 56 && alignof(Aabb) == 8), "Aabb is padded differently on this platform and will not serialize properly.");
 
 	class Writer {
@@ -66,8 +66,8 @@ namespace Serializer {
 		void writeObject(const vector3f &vec) { *this << vec.x << vec.y << vec.z; }
 		void writeObject(const vector3d &vec) { *this << vec.x << vec.y << vec.z; }
 		void writeObject(const Color &col) { *this << col.r << col.g << col.b << col.a; }
-		void writeObject(const Quaternionf &quat) { *this << quat.w << quat.x << quat.y << quat.z; }
-		void writeObject(const Quaterniond &quat) { *this << quat.w << quat.x << quat.y << quat.z; }
+		void writeObject(const quaternionf &quat) { *this << quat.w << quat.x << quat.y << quat.z; }
+		void writeObject(const quaterniond &quat) { *this << quat.w << quat.x << quat.y << quat.z; }
 		void writeObject(const Aabb &aabb) { *this << aabb.min << aabb.max << aabb.radius; }
 
 		template <typename T>
@@ -99,7 +99,7 @@ namespace Serializer {
 		void Vector2d(vector2d vec) { *this << vec; }
 		void Vector3f(vector3f vec) { *this << vec; }
 		void Vector3d(vector3d vec) { *this << vec; }
-		void WrQuaternionf(const Quaternionf &q) { *this << q; }
+		void WrQuaternionf(const quaternionf &q) { *this << q; }
 		void Color4UB(const Color &c) { *this << c; }
 		void WrSection(const std::string &section_label, const std::string &section_data) { *this << section_label << section_data; }
 
@@ -166,8 +166,8 @@ namespace Serializer {
 		void readObject(vector3f &vec) { *this >> vec.x >> vec.y >> vec.z; }
 		void readObject(vector3d &vec) { *this >> vec.x >> vec.y >> vec.z; }
 		void readObject(Color &col) { *this >> col.r >> col.g >> col.b >> col.a; }
-		void readObject(Quaternionf &quat) { *this >> quat.w >> quat.x >> quat.y >> quat.z; }
-		void readObject(Quaterniond &quat) { *this >> quat.w >> quat.x >> quat.y >> quat.z; }
+		void readObject(quaternionf &quat) { *this >> quat.w >> quat.x >> quat.y >> quat.z; }
+		void readObject(quaterniond	 &quat) { *this >> quat.w >> quat.x >> quat.y >> quat.z; }
 		void readObject(Aabb &aabb) { *this >> aabb.min >> aabb.max >> aabb.radius; }
 
 		template <typename T>
@@ -206,7 +206,7 @@ namespace Serializer {
 		vector3f Vector3f() { return obj<vector3f>(); }
 		vector3d Vector3d() { return obj<vector3d>(); }
 
-		Quaternionf RdQuaternionf() { return obj<Quaternionf>(); }
+		quaternionf RdQuaternionf() { return obj<quaternionf>(); }
 
 		Reader RdSection(const std::string &section_label_expected);
 

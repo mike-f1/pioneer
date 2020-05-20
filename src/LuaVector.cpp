@@ -2,9 +2,10 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "LuaVector.h"
+
 #include "LuaUtils.h"
 #include "LuaVector2.h"
-#include "libs.h"
+#include "libs/libs.h"
 
 static int l_vector_new(lua_State *L)
 {

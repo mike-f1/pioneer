@@ -59,12 +59,12 @@
  *  - model cache
  *  - removing unnecessary nodes from the scene graph: pre-translate unanimated meshes etc.
  */
-#include "CollMesh.h"
 #include "ColorMap.h"
 #include "DeleteEmitter.h"
-#include "Group.h"
 #include "JsonFwd.h"
+#include "Node.h"
 #include "Pattern.h"
+#include "libs/bitmask_op.h"
 #include <stdexcept>
 
 #include "Mount.h"
@@ -72,23 +72,35 @@
 struct CSG_CentralCylinder;
 struct CSG_Box;
 
-namespace Graphics {
-	class RenderState;
-	class VertexBuffer;
-	class Material;
-	namespace Drawables {
-		class Box3D;
-		class Line3D;
-		class Disk;
-	} // namespace Drawables
-} // namespace Graphics
+class CollMesh;
 
 namespace SceneGraph {
+	enum class DebugFlags;
+	class Group;
+}
+
+template<>
+struct enable_bitmask_operators<SceneGraph::DebugFlags> {
+	static constexpr bool enable = true;
+};
+
+namespace SceneGraph {
+
+	enum class DebugFlags { // <enum scope='SceneGraph::Model' name=ModelDebugFlags prefix=DEBUG_ public>
+		NONE = 0x0,
+		BBOX = 0x1,
+		COLLMESH = 0x2,
+		WIREFRAME = 0x4,
+		TAGS = 0x8,
+		DOCKING = 0x10
+	};
+
 	class Animation;
 	class BaseLoader;
 	class BinaryConverter;
 	class MatrixTransform;
 	class ModelBinarizer;
+	class ModelDebug;
 
 	struct LoadingError : public std::runtime_error {
 		LoadingError(const std::string &str) :
@@ -119,10 +131,10 @@ namespace SceneGraph {
 		void Render(const std::vector<matrix4x4f> &trans, const RenderData *rd = 0); //ModelNode can override RD
 
 		RefCountedPtr<CollMesh> CreateCollisionMesh();
-		RefCountedPtr<CollMesh> GetCollisionMesh() const { return m_collMesh; }
-		void SetCollisionMesh(RefCountedPtr<CollMesh> collMesh) { m_collMesh.Reset(collMesh.Get()); }
+		RefCountedPtr<CollMesh> GetCollisionMesh() const;
+		void SetCollisionMesh(RefCountedPtr<CollMesh> collMesh);
 
-		RefCountedPtr<Group> GetRoot() { return m_root; }
+		RefCountedPtr<Group> GetRoot();
 
 		//materials used in the nodes should be accessible from here for convenience
 		RefCountedPtr<Graphics::Material> GetMaterialByName(const std::string &name) const;
@@ -169,18 +181,14 @@ namespace SceneGraph {
 		//serialization aid
 		std::string GetNameForMaterial(Graphics::Material *) const;
 
-		enum DebugFlags { // <enum scope='SceneGraph::Model' name=ModelDebugFlags prefix=DEBUG_ public>
-			DEBUG_NONE = 0x0,
-			DEBUG_BBOX = 0x1,
-			DEBUG_COLLMESH = 0x2,
-			DEBUG_WIREFRAME = 0x4,
-			DEBUG_TAGS = 0x8,
-			DEBUG_DOCKING = 0x10
-		};
+		void SetDebugFlags(DebugFlags flags);
+		DebugFlags GetDebugFlags() const { return m_debugFlags; }
 
-		void SetDebugFlags(uint32_t flags);
 		void SetCentralCylinder(std::unique_ptr<CSG_CentralCylinder> centralcylinder);
 		void AddBox(std::unique_ptr<CSG_Box> box);
+
+		const CSG_CentralCylinder *GetCentralCylinder() { return m_centralCylinder.get(); }
+		const std::vector<CSG_Box> &GetBoxes() { return m_Boxes; }
 
 	private:
 		Model(const Model &); // copy ctor: used in MakeInstance
@@ -204,34 +212,14 @@ namespace SceneGraph {
 		Graphics::Texture *m_curDecals[MAX_DECAL_MATERIALS];
 
 		// debug support
-		void CreateAabbVB();
-		void DrawAabb();
-		void DrawCollisionMesh();
-		void DrawCentralCylinder();
-		void DrawBoxes();
-
-		void DrawAxisIndicators(std::vector<Graphics::Drawables::Line3D> &lines);
-		void AddAxisIndicators(const std::vector<MatrixTransform *> &mts, std::vector<Graphics::Drawables::Line3D> &lines);
-
-		uint32_t m_debugFlags;
+		DebugFlags m_debugFlags;
+		std::unique_ptr<ModelDebug> m_modelDebug;
 
 		std::unique_ptr<CSG_CentralCylinder> m_centralCylinder;
 		std::vector<CSG_Box> m_Boxes;
-		std::unique_ptr<Graphics::Drawables::Disk> m_disk;
-		std::unique_ptr<Graphics::Drawables::Line3D> m_CCylConnectingLine;
-		std::unique_ptr<Graphics::Drawables::Box3D> m_aabbBox3D;
-		std::vector<Graphics::Drawables::Box3D> m_csgBoxes;
-		std::vector<Graphics::Drawables::Line3D> m_tagPoints;
-		std::vector<Graphics::Drawables::Line3D> m_dockingPoints;
-		RefCountedPtr<Graphics::VertexBuffer> m_collisionMeshVB;
-		RefCountedPtr<Graphics::Material> m_aabbMat;
-		RefCountedPtr<Graphics::Material> m_boxes3DMat;
-		Graphics::RenderState *m_state;
-		Graphics::RenderState *m_csg;
 
 		// Vector with mounts used by guns
 		GunMounts m_mounts;
-
 	};
 
 } // namespace SceneGraph

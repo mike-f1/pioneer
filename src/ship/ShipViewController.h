@@ -5,7 +5,7 @@
 
 #include "CameraController.h"
 #include "InteractionController.h"
-#include "utils.h"
+#include "libs/utils.h"
 
 #include <sigc++/sigc++.h>
 

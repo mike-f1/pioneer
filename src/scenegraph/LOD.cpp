@@ -7,10 +7,10 @@
 #include "NodeCopyCache.h"
 #include "NodeVisitor.h"
 #include "Serializer.h"
-#include "StringF.h"
 #include "graphics/Graphics.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/VertexBuffer.h"
+#include "libs/StringF.h"
 
 namespace SceneGraph {
 

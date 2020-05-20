@@ -21,8 +21,8 @@
 #include "Types.h"
 
 #include <cstdint>
-#include "matrix4x4.h"
-#include "RefCounted.h"
+#include "libs/matrix4x4.h"
+#include "libs/RefCounted.h"
 
 namespace Graphics {
 

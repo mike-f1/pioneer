@@ -3,12 +3,12 @@
 
 #include "CameraController.h"
 
-#include "AnimationCurves.h"
 #include "Frame.h"
 #include "Game.h"
 #include "GameSaveError.h"
-#include "MathUtil.h"
 #include "Ship.h"
+#include "libs/AnimationCurves.h"
+#include "libs/MathUtil.h"
 #include "scenegraph/MatrixTransform.h"
 #include "scenegraph/Model.h"
 

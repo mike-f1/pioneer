@@ -2,8 +2,10 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "EventDispatcher.h"
+
 #include "Container.h"
 #include "Widget.h"
+#include "libs/utils.h"
 #include "text/TextSupport.h"
 #include <climits>
 

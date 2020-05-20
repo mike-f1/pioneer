@@ -8,9 +8,9 @@
 #include "GalaxyCache.h"
 #include "GalaxyEnums.h"
 #include "Random.h"
-#include "RefCounted.h"
 #include "galaxy/SystemPath.h"
-#include "vector3.h"
+#include "libs/RefCounted.h"
+#include "libs/vector3.h"
 
 #include <string>
 #include <vector>

@@ -4,11 +4,11 @@
 #ifndef SECTORGENERATOR_H
 #define SECTORGENERATOR_H
 
+#include "ExplorationState.h"
 #include "GalaxyGenerator.h"
 #include "Random.h"
-#include "RefCounted.h"
 #include "Sector.h"
-#include "ExplorationState.h"
+#include "libs/RefCounted.h"
 
 class SectorCustomSystemsGenerator : public SectorGeneratorStage {
 public:

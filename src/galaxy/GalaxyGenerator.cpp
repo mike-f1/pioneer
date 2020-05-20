@@ -9,7 +9,7 @@
 #include "Json.h"
 #include "SectorGenerator.h"
 #include "StarSystemGenerator.h"
-#include "utils.h"
+#include "libs/utils.h"
 
 static const GalaxyGenerator::Version LAST_VERSION_LEGACY = 1;
 

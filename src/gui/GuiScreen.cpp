@@ -9,7 +9,7 @@
 #include "graphics/VertexArray.h"
 #include "graphics/VertexBuffer.h"
 #include "text/TextSupport.h"
-#include "vector3.h" // for projection
+#include "libs/vector3.h" // for projection
 
 namespace Gui {
 

@@ -12,6 +12,7 @@
  *  - allow "pinned" radar contacts (visible at all ranges, for missions)
  */
 #include "Body.h"
+#include "Color.h"
 
 #include <list>
 

@@ -4,7 +4,6 @@
 #ifndef _DRAWABLES_H
 #define _DRAWABLES_H
 
-#include "RefCounted.h"
 #include "Types.h"
 
 #include <memory>
@@ -12,9 +11,10 @@
 #include <string>
 
 #include "Color.h"
-#include "vector2.h"
-#include "vector3.h"
-#include "matrix4x4.h"
+#include "libs/RefCounted.h"
+#include "libs/vector2.h"
+#include "libs/vector3.h"
+#include "libs/matrix4x4.h"
 
 namespace Graphics {
 	class IndexBuffer;

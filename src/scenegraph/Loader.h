@@ -27,6 +27,7 @@ namespace SceneGraph {
 	class Loader : public BaseLoader {
 	public:
 		Loader(bool logWarnings = false, bool loadSGMfiles = true);
+		~Loader();
 
 		//find & attempt to load a model, based on filename (without path or .model suffix)
 		Model *LoadModel(const std::string &name);

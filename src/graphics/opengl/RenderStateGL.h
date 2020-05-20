@@ -3,6 +3,7 @@
 
 #ifndef _OGL_RENDERSTATE_H
 #define _OGL_RENDERSTATE_H
+
 #include "graphics/RenderState.h"
 
 namespace Graphics {

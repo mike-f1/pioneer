@@ -7,7 +7,7 @@
 #include "GeoPatchContext.h"
 #include "GeoPatchJobs.h"
 #include "Pi.h"
-#include "RefCounted.h"
+#include "libs/RefCounted.h"
 #include "galaxy/AtmosphereParameters.h"
 #include "graphics/Frustum.h"
 #include "graphics/Material.h"

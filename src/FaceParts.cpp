@@ -5,7 +5,10 @@
 
 #include "FileSystem.h"
 #include "SDLWrappers.h"
-#include "utils.h"
+#include "libs/stringUtils.h"
+#include "libs/utils.h"
+
+#include "profiler/Profiler.h"
 
 namespace {
 	static const int MAX_GENDERS = 6;
@@ -166,7 +169,7 @@ void PartDb::Scan()
 	int species_count = 0;
 	const auto flags = fs::FileEnumerator::IncludeDirs | fs::FileEnumerator::ExcludeFiles;
 	for (fs::FileEnumerator dirs(fs::gameDataFiles, "facegen", flags); !dirs.Finished(); dirs.Next()) {
-		if (!starts_with(dirs.Current().GetName(), "species_"))
+		if (!stringUtils::starts_with(dirs.Current().GetName(), "species_"))
 			continue;
 		if (species_count >= MAX_SPECIES) {
 			Output("FaceParts: reached the limit on the number of species\n");
@@ -191,7 +194,7 @@ void PartDb::ScanSpecies(const std::string &basedir, const int species_idx)
 		} else if (name == "clothes") {
 			ScanGenderedParts(this->clothes, species_idx, -1, path, "cloth_");
 			ScanParts(this->armour, species_idx, -1, path, "armour_");
-		} else if (starts_with(name, "race_")) {
+		} else if (stringUtils::starts_with(name, "race_")) {
 			if (race_count >= MAX_RACES) {
 				Output("FaceParts: reached the limit on the number of races\n");
 				continue; // continue to ensure 'accessories' and 'clothes' dirs can still be scanned
@@ -217,7 +220,7 @@ void PartDb::ScanParts(std::vector<Part> &output, const int species_idx, const i
 	const uint32_t selector = _make_selector(species_idx, race_idx, -1);
 	for (fs::FileEnumerator files(fs::gameDataFiles, path); !files.Finished(); files.Next()) {
 		const std::string &name = files.Current().GetName();
-		if (starts_with(name, prefix)) {
+		if (stringUtils::starts_with(name, prefix)) {
 			SDLSurfacePtr im = LoadSurfaceFromFile(files.Current().GetPath());
 			if (im) {
 				output.push_back(Part(selector, im));
@@ -234,7 +237,7 @@ void PartDb::ScanGenderedParts(std::vector<Part> &output, const int species_idx,
 	const int prefix_len = strlen(prefix);
 	for (fs::FileEnumerator files(fs::gameDataFiles, path); !files.Finished(); files.Next()) {
 		const std::string &name = files.Current().GetName();
-		if (starts_with(name, prefix)) {
+		if (stringUtils::starts_with(name, prefix)) {
 			char *end = nullptr;
 			int gender_idx = strtol(name.c_str() + prefix_len, &end, 10);
 			uint32_t sel;

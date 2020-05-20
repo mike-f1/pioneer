@@ -9,8 +9,8 @@
  * 2013-May-05 left out stencil buffer because we don't need it now
  */
 #include "OpenGLLibs.h"
-#include "RefCounted.h"
 #include "graphics/RenderTarget.h"
+#include "libs/RefCounted.h"
 
 namespace Graphics {
 

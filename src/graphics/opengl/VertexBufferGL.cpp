@@ -3,7 +3,7 @@
 
 #include "graphics/opengl/VertexBufferGL.h"
 #include "graphics/VertexArray.h"
-#include "utils.h"
+#include "libs/utils.h"
 
 namespace Graphics {
 	namespace OGL {

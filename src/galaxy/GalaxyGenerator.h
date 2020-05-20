@@ -5,10 +5,10 @@
 #define GALAXYGENERATOR_H
 
 #include "Galaxy.h"
-#include "RefCounted.h"
 #include "Sector.h"
 #include "StarSystem.h"
 #include "SystemPath.h"
+#include "libs/RefCounted.h"
 #include <list>
 #include <string>
 

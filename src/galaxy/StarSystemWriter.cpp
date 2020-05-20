@@ -8,8 +8,9 @@
 #include "Lang.h"
 #include "LuaEvent.h"
 #include "Sector.h"
-#include "StringF.h"
-#include "utils.h"
+#include "libs/utils.h"
+#include "libs/StringF.h"
+#include "libs/stringUtils.h"
 
 SystemBody *StarSystemWriter::NewBody() const
 {
@@ -22,7 +23,7 @@ void StarSystemWriter::ExploreSystem(double time)
 {
 	if (m_ssys->m_explored != ExplorationState::eUNEXPLORED)
 		return;
-	m_ssys->m_explored = eEXPLORED_BY_PLAYER;
+	m_ssys->m_explored = ExplorationState::eEXPLORED_BY_PLAYER;
 	m_ssys->m_exploredTime = time;
 	RefCountedPtr<Sector> sec = m_ssys->m_galaxy->GetMutableSector(m_ssys->m_path);
 	Sector::System &secsys = sec->m_systems[m_ssys->m_path.systemIndex];
@@ -38,34 +39,34 @@ void StarSystemWriter::MakeShortDescription()
 		SetShortDesc(Lang::UNEXPLORED_SYSTEM_NO_DATA);
 
 	else if (m_ssys->GetExplored() == ExplorationState::eEXPLORED_BY_PLAYER)
-		SetShortDesc(stringf(Lang::RECENTLY_EXPLORED_SYSTEM, formatarg("date", format_date_only(m_ssys->GetExploredTime()))));
+		SetShortDesc(stringf(Lang::RECENTLY_EXPLORED_SYSTEM, formatarg("date", stringUtils::format_date_only(m_ssys->GetExploredTime()))));
 
 	/* Total population is in billions */
 	else if (m_ssys->GetTotalPop() == 0) {
 		SetShortDesc(Lang::SMALL_SCALE_PROSPECTING_NO_SETTLEMENTS);
 	} else if (m_ssys->GetTotalPop() < fixed(1, 10)) {
 		switch (m_ssys->GetEconType()) {
-		case GalacticEconomy::ECON_INDUSTRY: SetShortDesc(Lang::SMALL_INDUSTRIAL_OUTPOST); break;
-		case GalacticEconomy::ECON_MINING: SetShortDesc(Lang::SOME_ESTABLISHED_MINING); break;
-		case GalacticEconomy::ECON_AGRICULTURE: SetShortDesc(Lang::YOUNG_FARMING_COLONY); break;
+		case GalacticEconomy::EconType::INDUSTRY: SetShortDesc(Lang::SMALL_INDUSTRIAL_OUTPOST); break;
+		case GalacticEconomy::EconType::MINING: SetShortDesc(Lang::SOME_ESTABLISHED_MINING); break;
+		case GalacticEconomy::EconType::AGRICULTURE: SetShortDesc(Lang::YOUNG_FARMING_COLONY); break;
 		}
 	} else if (m_ssys->GetTotalPop() < fixed(1, 2)) {
 		switch (m_ssys->GetEconType()) {
-		case GalacticEconomy::ECON_INDUSTRY: SetShortDesc(Lang::INDUSTRIAL_COLONY); break;
-		case GalacticEconomy::ECON_MINING: SetShortDesc(Lang::MINING_COLONY); break;
-		case GalacticEconomy::ECON_AGRICULTURE: SetShortDesc(Lang::OUTDOOR_AGRICULTURAL_WORLD); break;
+		case GalacticEconomy::EconType::INDUSTRY: SetShortDesc(Lang::INDUSTRIAL_COLONY); break;
+		case GalacticEconomy::EconType::MINING: SetShortDesc(Lang::MINING_COLONY); break;
+		case GalacticEconomy::EconType::AGRICULTURE: SetShortDesc(Lang::OUTDOOR_AGRICULTURAL_WORLD); break;
 		}
 	} else if (m_ssys->GetTotalPop() < fixed(5, 1)) {
 		switch (m_ssys->GetEconType()) {
-		case GalacticEconomy::ECON_INDUSTRY: SetShortDesc(Lang::HEAVY_INDUSTRY); break;
-		case GalacticEconomy::ECON_MINING: SetShortDesc(Lang::EXTENSIVE_MINING); break;
-		case GalacticEconomy::ECON_AGRICULTURE: SetShortDesc(Lang::THRIVING_OUTDOOR_WORLD); break;
+		case GalacticEconomy::EconType::INDUSTRY: SetShortDesc(Lang::HEAVY_INDUSTRY); break;
+		case GalacticEconomy::EconType::MINING: SetShortDesc(Lang::EXTENSIVE_MINING); break;
+		case GalacticEconomy::EconType::AGRICULTURE: SetShortDesc(Lang::THRIVING_OUTDOOR_WORLD); break;
 		}
 	} else {
 		switch (m_ssys->GetEconType()) {
-		case GalacticEconomy::ECON_INDUSTRY: SetShortDesc(Lang::INDUSTRIAL_HUB_SYSTEM); break;
-		case GalacticEconomy::ECON_MINING: SetShortDesc(Lang::VAST_STRIP_MINE); break;
-		case GalacticEconomy::ECON_AGRICULTURE: SetShortDesc(Lang::HIGH_POPULATION_OUTDOOR_WORLD); break;
+		case GalacticEconomy::EconType::INDUSTRY: SetShortDesc(Lang::INDUSTRIAL_HUB_SYSTEM); break;
+		case GalacticEconomy::EconType::MINING: SetShortDesc(Lang::VAST_STRIP_MINE); break;
+		case GalacticEconomy::EconType::AGRICULTURE: SetShortDesc(Lang::HIGH_POPULATION_OUTDOOR_WORLD); break;
 		}
 	}
 }

@@ -4,7 +4,7 @@
 #ifndef _COLLISION_CONTACT_H
 #define _COLLISION_CONTACT_H
 
-#include "vector3.h"
+#include "libs/vector3.h"
 
 struct CollisionContact {
 	// position and normal are in world (or rather, CollisionSpace) coordinates

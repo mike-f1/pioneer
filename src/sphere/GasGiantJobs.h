@@ -12,7 +12,7 @@
 #include "graphics/opengl/GenGasGiantColourMaterial.h"
 #include "graphics/Texture.h"
 #include "terrain/Terrain.h"
-#include "vector3.h"
+#include "libs/vector3.h"
 
 #include <deque>
 

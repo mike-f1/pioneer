@@ -4,7 +4,6 @@
 #ifndef _STARSYSTEM_H
 #define _STARSYSTEM_H
 
-#include "RefCounted.h"
 #include "Polit.h"
 #include "Economy.h"
 #include "ExplorationState.h"
@@ -12,7 +11,9 @@
 #include "Polit.h"
 #include "SystemBody.h"
 #include "SystemPath.h"
-#include "gameconsts.h"
+#include "libs/fixed.h"
+#include "libs/gameconsts.h"
+#include "libs/RefCounted.h"
 
 #include <cstdint>
 #include <string>
@@ -68,7 +69,7 @@ public:
 	}
 
 	const Faction *GetFaction() const { return m_faction; }
-	bool GetUnexplored() const { return m_explored == eUNEXPLORED; }
+	bool GetUnexplored() const { return m_explored == ExplorationState::eUNEXPLORED; }
 	ExplorationState GetExplored() const { return m_explored; }
 	double GetExploredTime() const { return m_exploredTime; }
 

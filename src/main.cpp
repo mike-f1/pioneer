@@ -6,20 +6,20 @@
 #include "buildopts.h"
 #include "galaxy/Galaxy.h"
 #include "galaxy/GalaxyGenerator.h"
-#include "libs.h"
-#include "utils.h"
+#include "libs/stringUtils.h"
+#include "libs/utils.h"
 #include "versioningInfo.h"
 #include <cstdio>
 #include <cstdlib>
 
-enum RunMode {
-	MODE_GAME,
-	MODE_MODELVIEWER,
-	MODE_GALAXYDUMP,
-	MODE_START_AT,
-	MODE_VERSION,
-	MODE_USAGE,
-	MODE_USAGE_ERROR
+enum class RunMode {
+	GAME,
+	MODELVIEWER,
+	GALAXYDUMP,
+	START_AT,
+	VERSION,
+	USAGE,
+	USAGE_ERROR
 };
 
 extern "C" int main(int argc, char **argv)
@@ -28,50 +28,50 @@ extern "C" int main(int argc, char **argv)
 	Profiler::detect(argc, argv);
 #endif
 
-	RunMode mode = MODE_GAME;
+	RunMode mode = RunMode::GAME;
 	std::string modeopt;
 
 	if (argc > 1) {
 		const char switchchar = argv[1][0];
 		if (!(switchchar == '-' || switchchar == '/')) {
-			mode = MODE_USAGE_ERROR;
+			mode = RunMode::USAGE_ERROR;
 			goto start;
 		}
 
 		modeopt = std::string(argv[1]).substr(1);
 
 		if (modeopt == "game" || modeopt == "g") {
-			mode = MODE_GAME;
+			mode = RunMode::GAME;
 			goto start;
 		}
 
 		if (modeopt == "modelviewer" || modeopt == "mv") {
-			mode = MODE_MODELVIEWER;
+			mode = RunMode::MODELVIEWER;
 			goto start;
 		}
 
 		if (modeopt == "galaxydump" || modeopt == "gd") {
-			mode = MODE_GALAXYDUMP;
+			mode = RunMode::GALAXYDUMP;
 			goto start;
 		}
 
 		if (modeopt.find("startat", 0, 7) != std::string::npos ||
 			modeopt.find("sa", 0, 2) != std::string::npos) {
-			mode = MODE_START_AT;
+			mode = RunMode::START_AT;
 			goto start;
 		}
 
 		if (modeopt == "version" || modeopt == "v") {
-			mode = MODE_VERSION;
+			mode = RunMode::VERSION;
 			goto start;
 		}
 
 		if (modeopt == "help" || modeopt == "h" || modeopt == "?") {
-			mode = MODE_USAGE;
+			mode = RunMode::USAGE;
 			goto start;
 		}
 
-		mode = MODE_USAGE_ERROR;
+		mode = RunMode::USAGE_ERROR;
 	}
 
 start:
@@ -83,7 +83,7 @@ start:
 	SystemPath startPath(0, 0, 0, 0, 0);
 
 	switch (mode) {
-	case MODE_GALAXYDUMP: {
+	case RunMode::GALAXYDUMP: {
 		if (argc < 3) {
 			Output("pioneer: galaxy dump requires a filename\n");
 			break;
@@ -120,11 +120,11 @@ start:
 		}
 		// fallthrough
 	}
-	case MODE_START_AT: {
+	case RunMode::START_AT: {
 		// fallthrough protect
-		if (mode == MODE_START_AT) {
+		if (mode == RunMode::START_AT) {
 			// try to get start planet number
-			std::vector<std::string> keyValue = SplitString(modeopt, "=");
+			std::vector<std::string> keyValue = stringUtils::SplitString(modeopt, "=");
 
 			// if found value
 			if (keyValue.size() == 2) {
@@ -146,11 +146,11 @@ start:
 			else
 				startPath = SystemPath(0, 0, 0, 0, 18);
 			// set usual mode
-			mode = MODE_GAME;
+			mode = RunMode::GAME;
 		}
 		// fallthrough
 	}
-	case MODE_GAME: {
+	case RunMode::GAME: {
 		std::map<std::string, std::string> options;
 
 		// if arguments more than parsed already
@@ -160,7 +160,7 @@ start:
 			// for each argument
 			for (; pos < argc; pos++) {
 				const std::string arg(argv[pos]);
-				std::vector<std::string> keyValue = SplitString(arg, "=");
+				std::vector<std::string> keyValue = stringUtils::SplitString(arg, "=");
 
 				// if there no key and value || key is empty || value is empty
 				if (keyValue.size() != 2 || keyValue[0].empty() || keyValue[1].empty()) {
@@ -173,14 +173,14 @@ start:
 			}
 		}
 
-		Pi::Init(options, mode == MODE_GALAXYDUMP);
+		Pi::Init(options, mode == RunMode::GALAXYDUMP);
 
-		if (mode == MODE_GAME)
+		if (mode == RunMode::GAME)
 			for (;;) {
 				Pi::Start(startPath);
 				startPath = SystemPath(0, 0, 0, 0, 0); // Reset the start planet when coming back to the menu
 			}
-		else if (mode == MODE_GALAXYDUMP) {
+		else if (mode == RunMode::GALAXYDUMP) {
 			FILE *file = filename == "-" ? stdout : fopen(filename.c_str(), "w");
 			if (file == nullptr) {
 				Output("pioneer: could not open \"%s\" for writing: %s\n", filename.c_str(), strerror(errno));
@@ -195,7 +195,7 @@ start:
 		break;
 	}
 
-	case MODE_MODELVIEWER: {
+	case RunMode::MODELVIEWER: {
 		std::string modelName;
 		if (argc > 2)
 			modelName = argv[2];
@@ -203,7 +203,7 @@ start:
 		break;
 	}
 
-	case MODE_VERSION: {
+	case RunMode::VERSION: {
 		std::string version(PIONEER_VERSION);
 		if (strlen(PIONEER_EXTRAVERSION)) version += " (" PIONEER_EXTRAVERSION ")";
 		Output("pioneer %s\n", version.c_str());
@@ -211,11 +211,11 @@ start:
 		break;
 	}
 
-	case MODE_USAGE_ERROR:
+	case RunMode::USAGE_ERROR:
 		Output("pioneer: unknown mode %s\n", argv[1]);
 		// fall through
 
-	case MODE_USAGE:
+	case RunMode::USAGE:
 		Output(
 			"usage: pioneer [mode] [options...]\n"
 			"available modes:\n"

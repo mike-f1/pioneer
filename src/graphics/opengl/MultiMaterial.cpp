@@ -5,13 +5,13 @@
 
 #include "RendererGL.h"
 #include "HeatGradientPar.h"
-#include "StringF.h"
 #include "TextureGL.h"
 #include "graphics/Graphics.h"
 #include "graphics/Material.h"
+#include "libs/StringF.h"
 #include <sstream>
 
-#include "utils.h"
+#include "libs/utils.h"
 
 namespace Graphics {
 	namespace OGL {

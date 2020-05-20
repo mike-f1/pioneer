@@ -4,7 +4,7 @@
 #ifndef _RINGSTYLE_H
 #define _RINGSTYLE_H
 
-#include "fixed.h"
+#include "libs/fixed.h"
 #include "Color.h"
 
 struct RingStyle {

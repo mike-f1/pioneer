@@ -4,7 +4,7 @@
 #ifndef _TERRAINFEATURE_H
 #define _TERRAINFEATURE_H
 
-#include "../vector3.h"
+#include "libs/vector3.h"
 
 struct fracdef_t;
 

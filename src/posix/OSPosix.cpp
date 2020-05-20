@@ -17,7 +17,7 @@
 #endif
 #include <sys/utsname.h>
 
-#include "../utils.h"
+#include "libs/utils.h"
 
 namespace OS {
 

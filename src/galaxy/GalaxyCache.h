@@ -5,7 +5,7 @@
 #define SECTORCACHE_H
 
 #include "JobQueue.h"
-#include "RefCounted.h"
+#include "libs/RefCounted.h"
 #include "galaxy/SystemPath.h"
 #include <functional>
 #include <map>

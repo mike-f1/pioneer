@@ -4,11 +4,11 @@
 #include "Terrain.h"
 
 #include "FileSystem.h"
-#include "FloatComparison.h"
 #include "GameConfig.h"
 #include "perlin.h"
-#include "../utils.h"
-#include "../galaxy/SystemBody.h"
+#include "libs/utils.h"
+#include "galaxy/SystemBody.h"
+#include "libs/FloatComparison.h"
 
 // static instancer. selects the best height and color classes for the body
 Terrain *Terrain::InstanceTerrain(const SystemBody *body)

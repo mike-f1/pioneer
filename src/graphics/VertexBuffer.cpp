@@ -3,8 +3,8 @@
 
 #include "graphics/VertexBuffer.h"
 
-#include "vector2.h"
-#include "vector3.h"
+#include "libs/vector2.h"
+#include "libs/vector3.h"
 #include "Color.h"
 
 #include <cassert>

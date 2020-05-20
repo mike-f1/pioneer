@@ -6,7 +6,7 @@
 
 #include "JsonFwd.h"
 #include "ProjectileData.h"
-#include "vector3.h"
+#include "libs/vector3.h"
 #include "sound/Sound.h"
 #include "scenegraph/Mount.h"
 

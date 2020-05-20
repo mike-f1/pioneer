@@ -4,7 +4,7 @@
 #ifndef _LUAFIXED_H
 #define _LUAFIXED_H
 
-#include "fixed.h"
+#include "libs/fixed.h"
 
 struct lua_State;
 

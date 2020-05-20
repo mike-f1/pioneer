@@ -31,7 +31,7 @@
 #include "ShipAICmd.h"
 #include "Space.h"
 #include "SpaceStation.h"
-#include "StringF.h"
+#include "libs/StringF.h"
 #include "WorldView.h"
 #include "collider/CollisionContact.h"
 #include "galaxy/StarSystem.h"
@@ -1155,7 +1155,7 @@ void Ship::UpdateFuel(const float timeStep)
 	Properties().Set("fuel", GetFuel() * 100); // XXX to match SetFuelPercent
 
 	if (GetPropulsion()->IsFuelStateChanged())
-		LuaEvent::Queue("onShipFuelChanged", this, EnumStrings::GetString("PropulsionFuelStatus", GetPropulsion()->GetFuelState()));
+		LuaEvent::Queue("onShipFuelChanged", this, EnumStrings::GetString("PropulsionFuelStatus", static_cast<std::underlying_type<Propulsion::FuelState>::type>(GetPropulsion()->GetFuelState())));
 }
 
 void Ship::StaticUpdate(const float timeStep)

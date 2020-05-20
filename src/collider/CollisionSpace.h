@@ -4,7 +4,7 @@
 #ifndef _COLLISION_SPACE
 #define _COLLISION_SPACE
 
-#include "../vector3.h"
+#include "libs/vector3.h"
 #include <list>
 
 class Geom;

@@ -7,7 +7,7 @@
 #include "GameConfSingleton.h"
 #include "InputFrame.h"
 
-#include "utils.h"
+#include "libs/utils.h"
 #include "profiler/Profiler.h"
 
 std::string speedModifier = "SpeedModifier";

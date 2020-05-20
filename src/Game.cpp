@@ -17,7 +17,6 @@
 #include "LuaEvent.h"
 #include "LuaSerializer.h"
 #include "LuaTimer.h"
-#include "MathUtil.h"
 #include "Object.h"
 #include "Player.h"
 #include "Sfx.h"
@@ -25,6 +24,7 @@
 #include "SpaceStation.h"
 #include "galaxy/Galaxy.h"
 #include "galaxy/GalaxyGenerator.h"
+#include "libs/MathUtil.h"
 #include "ship/PlayerShipController.h" // <- Only to avoid spinning "like mad" when hitting time accel
 
 #if WITH_OBJECTVIEWER

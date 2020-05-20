@@ -9,7 +9,7 @@
 
 #include "BaseSphere.h"
 #include "Camera.h"
-#include "vector3.h"
+#include "libs/vector3.h"
 
 namespace Graphics {
 	class Texture;
@@ -60,7 +60,7 @@ private:
 	inline vector3d GetColor(const vector3d &p, double height, const vector3d &norm) const;
 	void ProcessQuadSplitRequests();
 
-	std::unique_ptr<GeoPatch> m_patches[6];
+	std::array<std::unique_ptr<GeoPatch>, 6> m_patches;
 	struct TDistanceRequest {
 		TDistanceRequest(double dist, SQuadSplitRequest *pRequest, GeoPatch *pRequester) :
 			mDistance(dist),
@@ -96,6 +96,7 @@ private:
 	EGSInitialisationStage m_initStage;
 
 	int32_t m_maxDepth;
+	GSDebugFlags m_debugFlags;
 };
 
 #endif /* _GEOSPHERE_H */

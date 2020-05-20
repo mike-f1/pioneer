@@ -4,7 +4,6 @@
 #include "GasGiantJobs.h"
 
 #include "GasGiant.h"
-#include "RefCounted.h"
 #include "graphics/Frustum.h"
 #include "graphics/Material.h"
 #include "graphics/Renderer.h"

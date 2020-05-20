@@ -4,9 +4,9 @@
 #ifndef UI_IMAGE_H
 #define UI_IMAGE_H
 
-#include "SmartPtr.h"
+#include "libs/SmartPtr.h"
 #include "Widget.h"
-#include "vector2.h"
+#include "libs/vector2.h"
 
 namespace Graphics {
 	namespace Drawables {

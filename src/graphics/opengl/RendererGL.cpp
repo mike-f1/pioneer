@@ -7,7 +7,7 @@
 #include "Program.h"
 #include "RenderStateGL.h"
 #include "RenderTargetGL.h"
-#include "StringF.h"
+#include "libs/StringF.h"
 #include "TextureGL.h"
 #include "VertexBufferGL.h"
 #include "graphics/Graphics.h"

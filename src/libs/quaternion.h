@@ -9,18 +9,18 @@
 #include <math.h>
 
 template <typename T>
-class Quaternion {
+class quaternion {
 public:
 	T w, x, y, z;
 
 	// Constructor definitions are outside class declaration to enforce that
 	// only float and double versions are possible.
-	Quaternion();
-	Quaternion(T w, T x, T y, T z);
+	quaternion();
+	quaternion(T w, T x, T y, T z);
 	// from angle and axis
-	Quaternion(T ang, vector3<T> axis);
-	Quaternion(const Quaternion<float> &o);
-	Quaternion(const Quaternion<double> &o);
+	quaternion(T ang, vector3<T> axis);
+	quaternion(const quaternion<float> &o);
+	quaternion(const quaternion<double> &o);
 
 	void GetAxisAngle(T &angle, vector3<T> &axis) const
 	{
@@ -39,46 +39,46 @@ public:
 		}
 	}
 	// conjugate (inverse)
-	friend Quaternion operator~(const Quaternion &a)
+	friend quaternion operator~(const quaternion &a)
 	{
-		Quaternion r;
+		quaternion r;
 		r.w = a.w;
 		r.x = -a.x;
 		r.y = -a.y;
 		r.z = -a.z;
 		return r;
 	}
-	friend Quaternion operator*(const Quaternion &a, const Quaternion &b)
+	friend quaternion operator*(const quaternion &a, const quaternion &b)
 	{
-		Quaternion r;
+		quaternion r;
 		r.w = a.w * b.w - a.x * b.x - a.y * b.y - a.z * b.z;
 		r.x = a.w * b.x + a.x * b.w + a.y * b.z - a.z * b.y;
 		r.y = a.w * b.y - a.x * b.z + a.y * b.w + a.z * b.x;
 		r.z = a.w * b.z + a.x * b.y - a.y * b.x + a.z * b.w;
 		return r;
 	}
-	friend Quaternion operator*(const T s, const Quaternion &a) { return a * s; }
-	friend Quaternion operator*(const Quaternion &a, const T s)
+	friend quaternion operator*(const T s, const quaternion &a) { return a * s; }
+	friend quaternion operator*(const quaternion &a, const T s)
 	{
-		Quaternion r;
+		quaternion r;
 		r.w = a.w * s;
 		r.x = a.x * s;
 		r.y = a.y * s;
 		r.z = a.z * s;
 		return r;
 	}
-	friend Quaternion operator+(const Quaternion &a, const Quaternion &b)
+	friend quaternion operator+(const quaternion &a, const quaternion &b)
 	{
-		Quaternion r;
+		quaternion r;
 		r.w = a.w + b.w;
 		r.x = a.x + b.x;
 		r.y = a.y + b.y;
 		r.z = a.z + b.z;
 		return r;
 	}
-	friend Quaternion operator-(const Quaternion &a, const Quaternion &b)
+	friend quaternion operator-(const quaternion &a, const quaternion &b)
 	{
-		Quaternion r;
+		quaternion r;
 		r.w = a.w - b.w;
 		r.x = a.x - b.x;
 		r.y = a.y - b.y;
@@ -86,17 +86,17 @@ public:
 		return r;
 	}
 
-	Quaternion Normalized() const
+	quaternion Normalized() const
 	{
 		T l = 1.0 / sqrt(w * w + x * x + y * y + z * z);
-		return Quaternion(w * l, x * l, y * l, z * l);
+		return quaternion(w * l, x * l, y * l, z * l);
 	}
-	static T Dot(const Quaternion &a, const Quaternion &b) { return a.w * b.w + a.x * b.x + a.y * b.y + a.z * b.z; }
+	static T Dot(const quaternion &a, const quaternion &b) { return a.w * b.w + a.x * b.x + a.y * b.y + a.z * b.z; }
 
 	template <typename U>
-	static Quaternion FromMatrix3x3(const matrix3x3<U> &m)
+	static quaternion FromMatrix3x3(const matrix3x3<U> &m)
 	{
-		Quaternion r;
+		quaternion r;
 		if (m[0] + m[4] + m[8] > 0.0f) {
 			U t = m[0] + m[4] + m[8] + 1.0;
 			U s = 0.5 / sqrt(t);
@@ -159,7 +159,7 @@ public:
 		return m;
 	}
 	/* normalized linear interpolation between 2 quaternions */
-	static Quaternion Nlerp(const Quaternion &a, const Quaternion &b, T t)
+	static quaternion Nlerp(const quaternion &a, const quaternion &b, T t)
 	{
 		//printf("a: %f,%f,%f,%f\n", a.x, a.y, a.z, a.w);
 		//printf("b: %f,%f,%f,%f\n", b.x, b.y, b.z, b.w);
@@ -168,13 +168,13 @@ public:
 
 	// spherical linear interpolation between two quaternions
 	// taken from assimp via #2514
-	static Quaternion Slerp(const Quaternion &a, const Quaternion &b, T t)
+	static quaternion Slerp(const quaternion &a, const quaternion &b, T t)
 	{
 		// calc cosine theta
 		T cosom = a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
 
 		// adjust signs (if necessary)
-		Quaternion end = b;
+		quaternion end = b;
 		if (cosom < T(0.0)) {
 			cosom = -cosom;
 			end.x = -end.x; // Reverse all signs
@@ -198,7 +198,7 @@ public:
 			sclq = t;
 		}
 
-		return Quaternion(
+		return quaternion(
 			sclp * a.w + sclq * end.w,
 			sclp * a.x + sclq * end.x,
 			sclp * a.y + sclq * end.y,
@@ -211,24 +211,24 @@ public:
 };
 
 template <>
-inline Quaternion<float>::Quaternion() {}
+inline quaternion<float>::quaternion() {}
 template <>
-inline Quaternion<double>::Quaternion() {}
+inline quaternion<double>::quaternion() {}
 template <>
-inline Quaternion<float>::Quaternion(float w_, float x_, float y_, float z_) :
+inline quaternion<float>::quaternion(float w_, float x_, float y_, float z_) :
 	w(w_),
 	x(x_),
 	y(y_),
 	z(z_) {}
 template <>
-inline Quaternion<double>::Quaternion(double w_, double x_, double y_, double z_) :
+inline quaternion<double>::quaternion(double w_, double x_, double y_, double z_) :
 	w(w_),
 	x(x_),
 	y(y_),
 	z(z_) {}
 
 template <>
-inline Quaternion<float>::Quaternion(float ang, vector3<float> axis)
+inline quaternion<float>::quaternion(float ang, vector3<float> axis)
 {
 	const float halfAng = ang * 0.5f;
 	const float sinHalfAng = sin(halfAng);
@@ -238,7 +238,7 @@ inline Quaternion<float>::Quaternion(float ang, vector3<float> axis)
 	z = axis.z * sinHalfAng;
 }
 template <>
-inline Quaternion<double>::Quaternion(double ang, vector3<double> axis)
+inline quaternion<double>::quaternion(double ang, vector3<double> axis)
 {
 	const double halfAng = ang * 0.5;
 	const double sinHalfAng = sin(halfAng);
@@ -249,31 +249,31 @@ inline Quaternion<double>::Quaternion(double ang, vector3<double> axis)
 }
 
 template <>
-inline Quaternion<float>::Quaternion(const Quaternion<float> &o) :
+inline quaternion<float>::quaternion(const quaternion<float> &o) :
 	w(o.w),
 	x(o.x),
 	y(o.y),
 	z(o.z) {}
 template <>
-inline Quaternion<float>::Quaternion(const Quaternion<double> &o) :
+inline quaternion<float>::quaternion(const quaternion<double> &o) :
 	w(float(o.w)),
 	x(float(o.x)),
 	y(float(o.y)),
 	z(float(o.z)) {}
 template <>
-inline Quaternion<double>::Quaternion(const Quaternion<float> &o) :
+inline quaternion<double>::quaternion(const quaternion<float> &o) :
 	w(o.w),
 	x(o.x),
 	y(o.y),
 	z(o.z) {}
 template <>
-inline Quaternion<double>::Quaternion(const Quaternion<double> &o) :
+inline quaternion<double>::quaternion(const quaternion<double> &o) :
 	w(o.w),
 	x(o.x),
 	y(o.y),
 	z(o.z) {}
 
-typedef Quaternion<float> Quaternionf;
-typedef Quaternion<double> Quaterniond;
+typedef quaternion<float> quaternionf;
+typedef quaternion<double> quaterniond;
 
 #endif /* _QUATERNION_H */

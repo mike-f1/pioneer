@@ -5,6 +5,8 @@
 #include "ModelSkin.h"
 #include "Serializer.h"
 
+#include "libs/libs.h"
+
 namespace SceneGraph {
 
 	class LuaModelSkin {

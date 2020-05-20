@@ -5,8 +5,8 @@
 #define _SPACESTATION_H
 
 #include "ModelBody.h"
-#include "Quaternion.h"
 #include "SpaceStationType.h"
+#include "libs/quaternion.h"
 
 #define MAX_DOCKING_PORTS 240 //256-(0x10), 0x10 is used because the collision surfaces use it as an identifying flag
 
@@ -111,7 +111,7 @@ private:
 		int stage;
 		double stagePos; // 0 -> 1.0
 		vector3d fromPos; // in station model coords
-		Quaterniond fromRot;
+		quaterniond fromRot;
 		double maxOffset;
 	};
 	typedef std::vector<shipDocking_t>::const_iterator constShipDockingIter;

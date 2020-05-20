@@ -3,9 +3,9 @@
 
 #include "GenGasGiantColourMaterial.h"
 #include "RendererGL.h"
-#include "StringF.h"
 #include "TextureGL.h"
 #include "graphics/Graphics.h"
+#include "libs/StringF.h"
 #include <sstream>
 
 namespace Graphics {

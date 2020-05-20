@@ -9,7 +9,6 @@
 #include "IniConfig.h"
 #include "Player.h"
 #include "Space.h"
-#include "StringF.h"
 #include "galaxy/Galaxy.h"
 #include "galaxy/GalaxyEnums.h"
 #include "galaxy/Sector.h"
@@ -23,6 +22,8 @@
 #include "graphics/TextureBuilder.h"
 #include "graphics/VertexArray.h"
 #include "graphics/VertexBuffer.h"
+#include "libs/StringF.h"
+#include "libs/stringUtils.h"
 #include "perlin.h"
 
 #include <cstdint>
@@ -47,7 +48,7 @@ namespace {
 
 		uint32_t num_matching = 0;
 		for (std::vector<FileSystem::FileInfo>::const_iterator it = fileList.begin(), itEnd = fileList.end(); it != itEnd; ++it) {
-			if (starts_with((*it).GetName(), itemMask)) {
+			if (stringUtils::starts_with((*it).GetName(), itemMask)) {
 				++num_matching;
 			}
 		}

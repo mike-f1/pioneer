@@ -13,8 +13,8 @@
 #include <assert.h>
 #include <cmath>
 
-#include "RefCounted.h"
-#include "fixed.h"
+#include "libs/RefCounted.h"
+#include "libs/fixed.h"
 
 extern "C" {
 #include "jenkins/lookup3.h"

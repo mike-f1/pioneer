@@ -6,7 +6,7 @@
 
 #include "FracDef.h"
 #include "perlin.h"
-#include "../utils.h"
+#include "libs/utils.h"
 
 namespace TerrainNoise {
 

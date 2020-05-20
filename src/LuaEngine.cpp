@@ -36,7 +36,9 @@
 #include "sound/Sound.h"
 #include "sound/SoundMusic.h"
 #include "ui/Context.h"
-#include "utils.h"
+
+#include "SDL_timer.h" // <- Here because there's a need to measure time even outside game
+
 /*
  * Interface: Engine
  *

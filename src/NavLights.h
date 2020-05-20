@@ -6,7 +6,7 @@
 
 #include <cstdint>
 #include "JsonFwd.h"
-#include "RefCounted.h"
+#include "libs/RefCounted.h"
 
 #include "graphics/VertexArray.h"
 

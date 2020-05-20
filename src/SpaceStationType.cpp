@@ -5,11 +5,12 @@
 
 #include "FileSystem.h"
 #include "Json.h"
-#include "MathUtil.h"
 #include "ModelCache.h"
 #include "OS.h"
 #include "Ship.h"
-#include "StringF.h"
+#include "libs/MathUtil.h"
+#include "libs/StringF.h"
+#include "libs/stringUtils.h"
 #include "scenegraph/MatrixTransform.h"
 #include "scenegraph/Model.h"
 
@@ -469,7 +470,7 @@ void SpaceStationType::Init()
 	namespace fs = FileSystem;
 	for (fs::FileEnumerator files(fs::gameDataFiles, "stations", 0); !files.Finished(); files.Next()) {
 		const fs::FileInfo &info = files.Current();
-		if (ends_with_ci(info.GetPath(), ".json")) {
+		if (stringUtils::ends_with_ci(info.GetPath(), ".json")) {
 			const std::string id(info.GetName().substr(0, info.GetName().size() - 5));
 			try {
 				SpaceStationType st = SpaceStationType(id, info.GetPath());

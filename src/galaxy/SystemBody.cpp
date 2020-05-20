@@ -6,7 +6,7 @@
 #include "Lang.h"
 #include "EnumStrings.h"
 #include "AtmosphereParameters.h"
-#include "utils.h"
+#include "libs/utils.h"
 
 SystemBody::SystemBody(const SystemPath &path, StarSystem *system) :
 	m_parent(nullptr),

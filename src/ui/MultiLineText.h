@@ -4,7 +4,7 @@
 #ifndef UI_MULTILINETEXT_H
 #define UI_MULTILINETEXT_H
 
-#include "SmartPtr.h"
+#include "libs/SmartPtr.h"
 #include "Widget.h"
 
 namespace UI {

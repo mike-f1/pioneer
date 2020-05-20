@@ -4,10 +4,9 @@
 #ifndef _FILESYSTEM_H
 #define _FILESYSTEM_H
 
-#include "ByteRange.h"
 #include "DateTime.h"
-#include "RefCounted.h"
-#include "StringRange.h"
+#include "libs/ByteRange.h"
+#include "libs/RefCounted.h"
 #include <deque>
 #include <memory>
 #include <string>
@@ -22,6 +21,8 @@
  *   - Determine the path of the application's installed files.
  *   - Determine a sensible path for application configuration files.
  */
+
+struct StringRange;
 
 namespace FileSystem {
 
@@ -153,7 +154,7 @@ namespace FileSystem {
 			assert(m_info.IsFile());
 			return m_data;
 		}
-		StringRange AsStringRange() const { return StringRange(m_data, m_size); }
+		StringRange AsStringRange() const;
 		ByteRange AsByteRange() const { return ByteRange(m_data, m_size); }
 
 	protected:

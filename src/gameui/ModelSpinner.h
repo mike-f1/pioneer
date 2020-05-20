@@ -5,8 +5,8 @@
 #define GAMEUI_MODELSPINNER_H
 
 #include "Shields.h"
-#include "SmartPtr.h"
 #include "graphics/Light.h"
+#include "libs/SmartPtr.h"
 #include "scenegraph/ModelSkin.h"
 #include "ui/Context.h"
 

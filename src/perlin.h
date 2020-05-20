@@ -4,7 +4,7 @@
 #ifndef _PERLIN_H
 #define _PERLIN_H
 
-#include "vector3.h"
+#include "libs/vector3.h"
 
 double noise(const vector3d &p);
 

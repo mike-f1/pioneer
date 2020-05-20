@@ -4,12 +4,11 @@
 #ifndef _CITYONPLANET_H
 #define _CITYONPLANET_H
 
-#include "CollMesh.h"
 #include "FrameId.h"
 #include "Object.h"
 #include "Random.h"
-#include "vector3.h"
-#include "matrix4x4.h"
+#include "libs/vector3.h"
+#include "libs/matrix4x4.h"
 
 #include <set>
 #include <vector>
@@ -20,6 +19,7 @@ class Planet;
 class SpaceStation;
 class Frame;
 class SystemPath;
+class CollMesh;
 
 namespace Graphics {
 	class Renderer;

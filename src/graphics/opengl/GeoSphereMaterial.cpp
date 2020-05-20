@@ -4,11 +4,11 @@
 #include "GeoSphereMaterial.h"
 
 #include "Camera.h"
-#include "BaseSphere.h"
+#include "sphere/BaseSphere.h"
 #include "RendererGL.h"
-#include "StringF.h"
 #include "TextureGL.h"
 #include "graphics/Graphics.h"
+#include "libs/StringF.h"
 #include <sstream>
 
 namespace Graphics {

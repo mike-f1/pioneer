@@ -11,7 +11,8 @@
 #include "Player.h"
 #include "SectorView.h"
 #include "Space.h"
-#include "StringF.h"
+#include "libs/StringF.h"
+#include "libs/stringUtils.h"
 #include "galaxy/Faction.h"
 #include "galaxy/Galaxy.h"
 #include "galaxy/StarSystem.h"
@@ -126,8 +127,8 @@ void SystemInfoView::OnBodyViewed(SystemBody *b)
 			data += " (" + (pdays > 1000 ? stringf(Lang::N_YEARS, formatarg("years", pdays / 365)) : stringf(Lang::N_DAYS, formatarg("days", b->GetParent()->GetOrbit().Period() / (60 * 60 * 24)))) + ")";
 		}
 		_add_label_and_value(Lang::ORBITAL_PERIOD, data);
-		_add_label_and_value(Lang::PERIAPSIS_DISTANCE, format_distance(b->GetOrbMin() * AU, 3) + (multiple ? (std::string(" (") + format_distance(b->GetParent()->GetOrbMin() * AU, 3) + ")") : ""));
-		_add_label_and_value(Lang::APOAPSIS_DISTANCE, format_distance(b->GetOrbMax() * AU, 3) + (multiple ? (std::string(" (") + format_distance(b->GetParent()->GetOrbMax() * AU, 3) + ")") : ""));
+		_add_label_and_value(Lang::PERIAPSIS_DISTANCE, stringUtils::format_distance(b->GetOrbMin() * AU, 3) + (multiple ? (std::string(" (") + stringUtils::format_distance(b->GetParent()->GetOrbMin() * AU, 3) + ")") : ""));
+		_add_label_and_value(Lang::APOAPSIS_DISTANCE, stringUtils::format_distance(b->GetOrbMax() * AU, 3) + (multiple ? (std::string(" (") + stringUtils::format_distance(b->GetParent()->GetOrbMax() * AU, 3) + ")") : ""));
 		_add_label_and_value(Lang::ECCENTRICITY, stringf("%0{f.2}", b->GetOrbit().GetEccentricity()) + (multiple ? (std::string(" (") + stringf("%0{f.2}", b->GetParent()->GetOrbit().GetEccentricity()) + ")") : ""));
 		if (b->GetType() != GalaxyEnums::BodyType::TYPE_STARPORT_ORBITAL) {
 			_add_label_and_value(Lang::AXIAL_TILT, stringf(Lang::N_DEGREES, formatarg("angle", b->GetAxialTilt() * (180.0 / M_PI))));

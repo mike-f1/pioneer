@@ -3,7 +3,7 @@
 
 #include "SystemView.h"
 
-#include "AnimationCurves.h"
+#include "libs/AnimationCurves.h"
 #include "Frame.h"
 #include "Game.h"
 #include "GameLocator.h"
@@ -17,7 +17,8 @@
 #include "Player.h"
 #include "SectorView.h"
 #include "Space.h"
-#include "StringF.h"
+#include "libs/StringF.h"
+#include "libs/stringUtils.h"
 #include "TransferPlanner.h"
 #include "galaxy/Galaxy.h"
 #include "galaxy/StarSystem.h"
@@ -471,12 +472,12 @@ void SystemView::OnClickObject(const SystemBody *b)
 
 	desc += std::string(Lang::RADIUS);
 	desc += ":\n";
-	data += format_distance(b->GetRadius()) + "\n";
+	data += stringUtils::format_distance(b->GetRadius()) + "\n";
 
 	if (b->GetParent()) {
 		desc += std::string(Lang::SEMI_MAJOR_AXIS);
 		desc += ":\n";
-		data += format_distance(b->GetOrbit().GetSemiMajorAxis()) + "\n";
+		data += stringUtils::format_distance(b->GetOrbit().GetSemiMajorAxis()) + "\n";
 
 		desc += std::string(Lang::ORBITAL_PERIOD);
 		desc += ":\n";
@@ -729,7 +730,7 @@ void SystemView::Draw3D()
 	} else {
 		m_time += m_timeStep * Pi::GetFrameTime();
 	}
-	std::string t = Lang::TIME_POINT + format_date(m_time);
+	std::string t = Lang::TIME_POINT + stringUtils::format_date(m_time);
 	m_timePoint->SetText(t);
 
 	if (!m_system) {

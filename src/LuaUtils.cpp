@@ -2,8 +2,12 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "LuaUtils.h"
+
 #include "FileSystem.h"
-#include "libs.h"
+#include "libs/libs.h"
+#include "libs/stringUtils.h"
+#include "libs/StringRange.h"
+#include "libs/utils.h"
 
 extern "C" {
 #include "jenkins/lookup3.h"
@@ -609,7 +613,7 @@ void pi_lua_import_recursive(lua_State *L, const std::string &basepath)
 			pi_lua_import_recursive(L, fpath);
 		} else {
 			assert(info.IsFile());
-			if (ends_with_ci(fpath, ".lua")) {
+			if (stringUtils::ends_with_ci(fpath, ".lua")) {
 				if (pi_lua_import(L, fpath, true))
 					lua_pop(L, 1); // pop imported value
 			}
@@ -958,7 +962,7 @@ void pi_lua_dofile_recursive(lua_State *l, const std::string &basepath)
 			pi_lua_dofile_recursive(l, fpath);
 		} else {
 			assert(info.IsFile());
-			if (ends_with_ci(fpath, ".lua")) {
+			if (stringUtils::ends_with_ci(fpath, ".lua")) {
 				RefCountedPtr<FileSystem::FileData> code = info.Read();
 				pi_lua_dofile(l, *code);
 			}

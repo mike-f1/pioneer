@@ -7,6 +7,7 @@
 #include "FrameId.h"
 
 #include "JsonFwd.h"
+#include "collider/CollisionCallbackFwd.h"
 #include "libs/utils.h"
 #include "libs/IterationProxy.h"
 #include "libs/matrix3x3.h"
@@ -101,7 +102,7 @@ public:
 	bool HasRotFrame() const { return m_flags & FLAG_HAS_ROT; }
 
 	FrameId GetParent() const { return m_parent; }
-	FrameId GetNonRotFrame() { return IsRotFrame() ? m_parent : m_thisId; }
+	FrameId GetNonRotFrame() const { return IsRotFrame() ? m_parent : m_thisId; }
 	FrameId GetRotFrame() { return HasRotFrame() ? m_children.front() : m_thisId; }
 
 	void SetBodies(SystemBody *s, Body *b)
@@ -128,7 +129,7 @@ public:
 	CollisionSpace *GetCollisionSpace() const;
 
 	static void UpdateOrbitRails(double time, double timestep);
-	static void CollideFrames(void (*callback)(CollisionContact *));
+	static void CollideFrames(CollCallback &callback);
 	void UpdateInterpTransform(double alpha);
 	void ClearMovement();
 

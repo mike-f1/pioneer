@@ -240,4 +240,5 @@ namespace SceneGraph {
 		});
 		RendererLocator::getRenderer()->SetWireFrameMode(false);
 	}
-};
+
+} // namespace SceneGraph

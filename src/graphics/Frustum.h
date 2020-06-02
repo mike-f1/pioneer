@@ -7,6 +7,7 @@
 #include "libs/Plane.h"
 #include "libs/vector3.h"
 #include "libs/matrix4x4.h"
+#include <array>
 
 namespace Graphics {
 
@@ -38,7 +39,7 @@ namespace Graphics {
 
 		matrix4x4d m_projMatrix;
 		matrix4x4d m_modelMatrix;
-		SPlane m_planes[6];
+		std::array<SPlane, 6> m_planes;
 		double m_translateThresholdSqr;
 	};
 

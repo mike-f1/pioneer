@@ -78,7 +78,7 @@ void TerrainBody::Render(const Camera *camera, const vector3d &viewCoords, const
 
 	//stars very far away are downscaled, because they cannot be
 	//accurately drawn using actual distances
-	int shrink = 0;
+	bool shrink = false;
 	if (SystemBodyWrapper::IsSuperType(GalaxyEnums::BodySuperType::SUPERTYPE_STAR)) {
 		double len = fpos.Length();
 		double dist_to_horizon;
@@ -94,7 +94,7 @@ void TerrainBody::Render(const Camera *camera, const vector3d &viewCoords, const
 			rad *= 0.25;
 			fpos = 0.25 * fpos;
 			len *= 0.25;
-			++shrink;
+			shrink = true;
 		}
 	}
 
@@ -106,9 +106,9 @@ void TerrainBody::Render(const Camera *camera, const vector3d &viewCoords, const
 
 	std::vector<Camera::Shadow> shadows;
 	if (camera) {
-		camera->PrincipalShadows(this, 3, shadows);
-		for (std::vector<Camera::Shadow>::iterator it = shadows.begin(), itEnd = shadows.end(); it != itEnd; ++it) {
-			it->centre = ftran * it->centre;
+		shadows = camera->PrincipalShadows(this, 3);
+		for (Camera::Shadow &shadow: shadows) {
+			shadow.centre = ftran * shadow.centre;
 		}
 	}
 
@@ -117,7 +117,7 @@ void TerrainBody::Render(const Camera *camera, const vector3d &viewCoords, const
 	// translation not applied until patch render to fix jitter
 	m_baseSphere->Render(ftran, -campos, SystemBodyWrapper::GetSystemBodyRadius(), shadows);
 
-	ftran.Translate(campos.x, campos.y, campos.z);
+	ftran.Translate(campos);
 	SubRender(ftran, campos);
 
 	//clear depth buffer, shrunken objects should not interact with foreground

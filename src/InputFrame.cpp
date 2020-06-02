@@ -6,6 +6,15 @@
 
 #include <SDL_events.h>
 
+InputFrame::InputFrame(const std::string &name) :
+		m_name(name),
+		m_active(false)
+{
+	m_actions.reserve(4);
+	m_axes.reserve(4);
+	Pi::input->PushInputFrame(this);
+}
+
 InputFrame::~InputFrame()
 {
 	bool success = false;
@@ -17,6 +26,8 @@ InputFrame::~InputFrame()
 		success |= Pi::input->DeleteAxisBinding(ab.first);
 	}
 	assert(success);
+
+	Pi::input->RemoveInputFrame(this);
 }
 
 void InputFrame::SetActive(bool is_active)

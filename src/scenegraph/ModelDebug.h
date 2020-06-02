@@ -56,6 +56,6 @@ namespace SceneGraph {
 		RefCountedPtr<Graphics::VertexBuffer> m_collisionMeshVB;
 		RefCountedPtr<Graphics::Material> m_boxes3DMat;
 	};
-};
+} // namespace SceneGraph
 
 #endif // MODELDEBUG_H

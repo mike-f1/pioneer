@@ -1,6 +1,8 @@
 #ifndef INGAMEVIEWS_H
 #define INGAMEVIEWS_H
 
+#include "buildopts.h"
+
 #include "JsonFwd.h"
 #include "libs/RefCounted.h"
 
@@ -37,6 +39,9 @@ public:
 	InGameViews(Game *game, const SystemPath &path, unsigned int cacheRadius);
 	InGameViews(const Json &jsonObj, Game *game, const SystemPath &path, unsigned int cacheRadius);
 	~InGameViews();
+
+	InGameViews(const InGameViews &) = delete;
+	InGameViews &operator = (const InGameViews &) = delete;
 
 	void SaveToJson(Json &jsonObj);
 
@@ -89,8 +94,10 @@ private:
 	UIView *m_infoView;
 	ShipCpanel *m_cpan;
 
+#ifdef WITH_OBJECTVIEWER
 	/* Only use #if WITH_OBJECTVIEWER */
 	ObjectViewerView *m_objectViewerView;
+#endif
 };
 
 #endif // INGAMEVIEWS_H

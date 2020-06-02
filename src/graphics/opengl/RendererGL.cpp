@@ -228,7 +228,7 @@ namespace Graphics {
 		m_modelViewStack.push(matrix4x4f::Identity());
 		m_projectionStack.push(matrix4x4f::Identity());
 
-		SetClearColor(Color4f(0.f, 0.f, 0.f, 0.f));
+		SetClearColor(Color4ub(0, 0, 0, 0));
 		SetViewport(0, 0, m_width, m_height);
 
 		if (vs.enableDebugMessages)

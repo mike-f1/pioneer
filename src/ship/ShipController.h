@@ -48,5 +48,5 @@ public:
 	virtual double GetSetSpeed() const { return 0.0; }
 	virtual void ChangeSetSpeed(double delta) {}
 	virtual Body *GetSetSpeedTarget() const { return nullptr; }
-	Ship *m_ship;
+	Ship *m_ship = nullptr;
 };

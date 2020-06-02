@@ -42,7 +42,7 @@ public:
 	void SetHyperspaceTarget(const SystemPath &path);
 	void FloatHyperspaceTarget();
 	void LockHyperspaceTarget(bool lock);
-	bool GetLockHyperspaceTarget() { return !m_matchTargetToSelection; }
+	bool GetLockHyperspaceTarget() const { return !m_matchTargetToSelection; }
 	void ResetHyperspaceTarget();
 	void GotoSector(const SystemPath &path);
 	void GotoSystem(const SystemPath &path);
@@ -50,7 +50,7 @@ public:
 	void GotoSelectedSystem() { GotoSystem(m_selected); }
 	void GotoHyperspaceTarget() { GotoSystem(m_hyperspaceTarget); }
 	void SwapSelectedHyperspaceTarget();
-	virtual void SaveToJson(Json &jsonObj);
+	virtual void SaveToJson(Json &jsonObj) override;
 
 	sigc::signal<void> onHyperspaceTargetChanged;
 
@@ -60,18 +60,18 @@ public:
 	vector3f GetCenterSector();
 	double GetCenterDistance();
 	void SetShowFactionColor(bool value) { m_showFactionColor = value; m_rebuildFarSector = true; }
-	bool GetShowFactionColor() { return m_showFactionColor; }
+	bool GetShowFactionColor() const { return m_showFactionColor; }
 	void SetDrawUninhabitedLabels(bool value) { m_drawUninhabitedLabels = value; }
-	bool GetDrawUninhabitedLabels() { return m_drawUninhabitedLabels; }
+	bool GetDrawUninhabitedLabels() const { return m_drawUninhabitedLabels; }
 	void SetDrawVerticalLines(bool value) { m_drawVerticalLines = value; }
-	bool GetDrawVerticalLines() { return m_drawVerticalLines; }
+	bool GetDrawVerticalLines() const { return m_drawVerticalLines; }
 	void SetDrawOutRangeLabels(bool value) { m_drawOutRangeLabels = value; }
-	bool GetDrawOutRangeLabels() { return m_drawOutRangeLabels; }
+	bool GetDrawOutRangeLabels() const { return m_drawOutRangeLabels; }
 	void SetAutomaticSystemSelection(bool value) { m_automaticSystemSelection = value; }
-	bool GetAutomaticSystemSelection() { return m_automaticSystemSelection; }
+	bool GetAutomaticSystemSelection() const { return m_automaticSystemSelection; }
 	std::vector<SystemPath> GetNearbyStarSystemsByName(std::string pattern);
-	const std::set<const Faction *> &GetVisibleFactions() { return m_visibleFactions; }
-	const std::set<const Faction *> &GetHiddenFactions() { return m_hiddenFactions; }
+	const std::set<const Faction *> &GetVisibleFactions() const { return m_visibleFactions; }
+	const std::set<const Faction *> &GetHiddenFactions() const { return m_hiddenFactions; }
 	void SetFactionVisible(const Faction *faction, bool visible);
 
 	// HyperJump Route Planner

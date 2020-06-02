@@ -48,7 +48,7 @@ inline Type LuaPull(lua_State *l, int index)
 
 // Pull a value with an optional default.
 template <typename Type>
-inline Type LuaPull(lua_State *l, int index, Type defaultVal)
+inline Type LuaPull(lua_State *l, int index, const Type &defaultVal)
 {
 	Type value = defaultVal;
 	if (lua_gettop(l) >= index && !lua_isnil(l, index))

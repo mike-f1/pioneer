@@ -22,7 +22,7 @@ public:
 	quaternion(const quaternion<float> &o);
 	quaternion(const quaternion<double> &o);
 
-	void GetAxisAngle(T &angle, vector3<T> &axis) const
+	void GetAxisAngle(T &angle, vector3<T> &axis)
 	{
 		if (w > 1.0) *this = Normalized(); // if w>1 acos and sqrt will produce errors, this cant happen if quaternion is normalised
 		angle = 2.0 * acos(w);
@@ -275,5 +275,8 @@ inline quaternion<double>::quaternion(const quaternion<double> &o) :
 
 typedef quaternion<float> quaternionf;
 typedef quaternion<double> quaterniond;
+
+extern template class quaternion<float>;
+extern template class quaternion<double>;
 
 #endif /* _QUATERNION_H */

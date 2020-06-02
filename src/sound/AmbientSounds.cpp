@@ -242,7 +242,7 @@ void AmbientSounds::Update()
 			// maximum volume at around 2km/sec at earth density, pressure
 			const float pressureVolume = float(density * GameLocator::getGame()->GetPlayer()->GetVelocity().Length() * 0.0005);
 			//volume = Clamp(volume, 0.0f, 1.0f) * v_env;
-			float volumes[eMaxNumAtmosphereSounds];
+			std::array<float, eMaxNumAtmosphereSounds> volumes;
 			for (int i = 0; i < eMaxNumAtmosphereSounds; i++) {
 				const float beg = s_rangeTable[i][0];
 				const float inv = s_rangeTable[i][1];

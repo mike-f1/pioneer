@@ -629,7 +629,7 @@ static int l_sbody_attr_body(lua_State *l)
 		Space *space = GameLocator::getGame()->GetSpace();
 		if (space) {
 			const SystemPath &path = sbody->GetPath();
-			Body *body = space->FindBodyForPath(&path);
+			Body *body = space->FindBodyForPath(path);
 			if (body) {
 				LuaObject<Body>::PushToLua(body);
 			} else {

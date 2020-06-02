@@ -28,6 +28,17 @@ struct CollisionContact {
 		geomFlag(0)
 	{}
 
+	CollisionContact(const vector3d &position_, const vector3d &normal_, double deep, int triIdx_, void *u1, void *u2, int gf_) :
+		pos(position_),
+		normal(normal_),
+		depth(deep),
+		distance(0),
+		timestep(0.),
+		triIdx(triIdx_),
+		userData1(u1),
+		userData2(u2),
+		geomFlag(gf_)
+	{}
 	// ctor for collision with terrain
 	CollisionContact(const vector3d &position_, const vector3d &normal_, double deep, double dt, void *u1, void *u2) :
 		pos(position_),

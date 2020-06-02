@@ -224,11 +224,10 @@ double Projectile::GetRadius() const
 void Projectile::StaticUpdate(const float timeStep)
 {
 	PROFILE_SCOPED()
-	CollisionContact c;
 	// Collision spaces don't store velocity, so dirvel-only is still wrong but less awful than dirvel+basevel
 	vector3d vel = m_dirVel * timeStep;
 	Frame *frame = Frame::GetFrame(GetFrame());
-	frame->GetCollisionSpace()->TraceRay(GetPosition(), vel.Normalized(), vel.Length(), &c);
+	CollisionContact c = frame->GetCollisionSpace()->TraceRay(GetPosition(), vel.Normalized(), vel.Length());
 
 	if (c.userData1) {
 		Object *o = static_cast<Object *>(c.userData1);

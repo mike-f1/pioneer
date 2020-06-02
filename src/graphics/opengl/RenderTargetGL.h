@@ -33,9 +33,9 @@ namespace Graphics {
 
 		class RenderTarget : public Graphics::RenderTarget {
 		public:
-			~RenderTarget();
-			virtual Texture *GetColorTexture() const;
-			virtual Texture *GetDepthTexture() const;
+			~RenderTarget() final;
+			virtual Texture *GetColorTexture() const final;
+			virtual Texture *GetDepthTexture() const final;
 			virtual void SetCubeFaceTexture(const uint32_t face, Texture *t) final;
 			virtual void SetColorTexture(Texture *) final;
 			virtual void SetDepthTexture(Texture *) final;

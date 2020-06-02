@@ -101,7 +101,7 @@ DEF_SMARTPTR_COMPARISON(>=)
 
 // a deleter type for use with std::unique_ptr
 struct FreeDeleter {
-	void operator()(void *p) { std::free(p); }
+	void operator()(void *p) const { std::free(p); }
 };
 
 #endif

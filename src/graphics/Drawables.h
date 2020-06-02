@@ -259,7 +259,7 @@ namespace Graphics {
 		//industry-standard red/green/blue XYZ axis indicator
 		class Axes3D {
 		public:
-			Axes3D(Graphics::Renderer *r, Graphics::RenderState *state = nullptr);
+			explicit Axes3D(Graphics::Renderer *r, Graphics::RenderState *state = nullptr);
 			void Draw(Graphics::Renderer *r);
 
 		private:

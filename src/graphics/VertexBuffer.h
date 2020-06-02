@@ -140,6 +140,7 @@ namespace Graphics {
 	// Instance buffer
 	class InstanceBuffer : public Mappable {
 	public:
+		InstanceBuffer() = delete;
 		InstanceBuffer(uint32_t size, BufferUsage);
 		virtual ~InstanceBuffer();
 		virtual matrix4x4f *Map(BufferMapMode) = 0;

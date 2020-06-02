@@ -81,10 +81,10 @@ namespace stringUtils {
 	{
 		static const std::string delim(",");
 
-		size_t num = 0, start = 0, end = 0;
+		size_t num = 0, end = 0;
 		while (end != std::string::npos) {
 			// get to the first non-delim char
-			start = spec.find_first_not_of(delim, end);
+			size_t start = spec.find_first_not_of(delim, end);
 
 			// read the end, no more to do
 			if (start == std::string::npos)
@@ -104,10 +104,10 @@ namespace stringUtils {
 	{
 		static const std::string delim(",");
 
-		size_t num = 0, start = 0, end = 0;
+		size_t num = 0, end = 0;
 		while (end != std::string::npos) {
 			// get to the first non-delim char
-			start = spec.find_first_not_of(delim, end);
+			size_t start = spec.find_first_not_of(delim, end);
 
 			// read the end, no more to do
 			if (start == std::string::npos)

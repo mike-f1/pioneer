@@ -53,7 +53,7 @@ void PlayerShipController::RegisterInputBindings()
 	using namespace KeyBindings;
 	using namespace std::placeholders;
 
-	m_inputFrame.reset(new InputFrame("PlayerShipController"));
+	m_inputFrame = std::make_unique<InputFrame>("PlayerShipController");
 
 	auto &controlsPage = Pi::input->GetBindingPage("ShipControls");
 
@@ -97,13 +97,10 @@ void PlayerShipController::RegisterInputBindings()
 	m_inputBindings.toggleSetSpeed->StoreOnActionCallback(std::bind(&PlayerShipController::ToggleSetSpeedMode, this, _1));
 
 	m_inputFrame->SetActive(true);
-
-	Pi::input->PushInputFrame(m_inputFrame.get());
 }
 
 PlayerShipController::~PlayerShipController()
 {
-	Pi::input->RemoveInputFrame(m_inputFrame.get());
 }
 
 void PlayerShipController::SaveToJson(Json &jsonObj, Space *space)

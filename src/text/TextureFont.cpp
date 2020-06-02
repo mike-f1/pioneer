@@ -13,6 +13,7 @@
 #include "graphics/VertexArray.h"
 #include "graphics/VertexBuffer.h"
 #include "libs/utils.h"
+#include "libs/vector3.h"
 
 #ifdef __clang__
 #pragma clang diagnostic push
@@ -29,12 +30,13 @@
 #undef FT_FILE // defined by FreeType, conflicts with a symbol name from FileSystem
 
 #include <algorithm>
+#include <string>
 #include <SDL_timer.h>
 
 namespace {
 	static const int ATLAS_SIZE = 1024;
 	static double CACHE_EVICTION_TIME = 0.25;
-}; // namespace
+} // namespace
 
 namespace Text {
 

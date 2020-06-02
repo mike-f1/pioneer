@@ -114,7 +114,7 @@ public:
 private:
 	unsigned int m_cacheRadius;
 
-	void GenCaches(const SystemPath *here, unsigned int cacheRadius,
+	void GenCaches(const SystemPath &here, unsigned int cacheRadius,
 		StarSystemCache::CacheFilledCallback callback = StarSystemCache::CacheFilledCallback());
 	void UpdateStarSystemCache(const SystemPath *here, unsigned int cacheRadius);
 

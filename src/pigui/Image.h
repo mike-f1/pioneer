@@ -11,7 +11,7 @@
 
 namespace Graphics {
 	class Texture;
-};
+}
 
 namespace PiGUI {
 

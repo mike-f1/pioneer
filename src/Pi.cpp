@@ -54,7 +54,7 @@
 #include "sound/AmbientSounds.h"
 #if WITH_OBJECTVIEWER
 #include "ObjectViewerView.h"
-#endif
+#endif // WITH_OBJECTVIEWER
 #include "Beam.h"
 #include "PiGui.h"
 #include "Player.h"
@@ -454,7 +454,7 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 	RandomSingleton::Init(time(0));
 
 	Output("Initialize Input\n");
-	Pi::input.reset(new Input());
+	Pi::input = std::make_unique<Input>();
 
 	RegisterInputBindings();
 
@@ -655,7 +655,6 @@ void Pi::Quit()
 	if (Pi::ffmpegFile != nullptr) {
 		_pclose(Pi::ffmpegFile);
 	}
-	input->RemoveInputFrame(m_inputFrame.get());
 	m_inputFrame.reset();
 	Projectile::FreeModel();
 	Beam::FreeModel();
@@ -802,7 +801,7 @@ void Pi::RegisterInputBindings()
 	using namespace KeyBindings;
 	using namespace std::placeholders;
 
-	m_inputFrame.reset(new InputFrame("ObjectViewer"));
+	m_inputFrame = std::make_unique<InputFrame>("ObjectViewer");
 
 	auto &page = Pi::input->GetBindingPage("TweakAndSetting");
 	page.shouldBeTranslated = false;
@@ -843,8 +842,6 @@ void Pi::RegisterInputBindings()
 	#endif // WITH_OBJECTVIEWER
 
 	m_inputFrame->SetActive(true);
-
-	Pi::input->PushInputFrame(m_inputFrame.get());
 }
 
 void Pi::QuickSave(bool down)

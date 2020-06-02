@@ -16,7 +16,7 @@ class Intro : public Cutscene {
 public:
 	Intro(int width, int height, float amountOfBackgroundStars);
 	~Intro();
-	virtual void Draw(float time);
+	virtual void Draw(float time) override;
 
 private:
 	float m_duration;

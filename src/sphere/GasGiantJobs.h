@@ -243,6 +243,7 @@ namespace GasGiantJobs {
 		std::unique_ptr<SGPUGenRequest> mData;
 		SGPUGenResult *mpResults;
 	};
-}; // namespace GasGiantJobs
+
+} // namespace GasGiantJobs
 
 #endif /* _GASGIANTJOBS_H */

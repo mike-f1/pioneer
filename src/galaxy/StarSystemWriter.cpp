@@ -49,24 +49,28 @@ void StarSystemWriter::MakeShortDescription()
 		case GalacticEconomy::EconType::INDUSTRY: SetShortDesc(Lang::SMALL_INDUSTRIAL_OUTPOST); break;
 		case GalacticEconomy::EconType::MINING: SetShortDesc(Lang::SOME_ESTABLISHED_MINING); break;
 		case GalacticEconomy::EconType::AGRICULTURE: SetShortDesc(Lang::YOUNG_FARMING_COLONY); break;
+		case GalacticEconomy::EconType::NONE: assert(0); break;
 		}
 	} else if (m_ssys->GetTotalPop() < fixed(1, 2)) {
 		switch (m_ssys->GetEconType()) {
 		case GalacticEconomy::EconType::INDUSTRY: SetShortDesc(Lang::INDUSTRIAL_COLONY); break;
 		case GalacticEconomy::EconType::MINING: SetShortDesc(Lang::MINING_COLONY); break;
 		case GalacticEconomy::EconType::AGRICULTURE: SetShortDesc(Lang::OUTDOOR_AGRICULTURAL_WORLD); break;
+		case GalacticEconomy::EconType::NONE: assert(0); break;
 		}
 	} else if (m_ssys->GetTotalPop() < fixed(5, 1)) {
 		switch (m_ssys->GetEconType()) {
 		case GalacticEconomy::EconType::INDUSTRY: SetShortDesc(Lang::HEAVY_INDUSTRY); break;
 		case GalacticEconomy::EconType::MINING: SetShortDesc(Lang::EXTENSIVE_MINING); break;
 		case GalacticEconomy::EconType::AGRICULTURE: SetShortDesc(Lang::THRIVING_OUTDOOR_WORLD); break;
+		case GalacticEconomy::EconType::NONE: assert(0); break;
 		}
 	} else {
 		switch (m_ssys->GetEconType()) {
 		case GalacticEconomy::EconType::INDUSTRY: SetShortDesc(Lang::INDUSTRIAL_HUB_SYSTEM); break;
 		case GalacticEconomy::EconType::MINING: SetShortDesc(Lang::VAST_STRIP_MINE); break;
 		case GalacticEconomy::EconType::AGRICULTURE: SetShortDesc(Lang::HIGH_POPULATION_OUTDOOR_WORLD); break;
+		case GalacticEconomy::EconType::NONE: assert(0); break;
 		}
 	}
 }

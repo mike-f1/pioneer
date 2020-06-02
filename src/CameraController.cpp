@@ -332,7 +332,8 @@ FlyByCameraController::FlyByCameraController(RefCountedPtr<CameraContext> camera
 	m_dist(500),
 	m_distTo(m_dist),
 	m_roll(0),
-	m_flybyOrient(matrix3x3d::Identity())
+	m_flybyOrient(matrix3x3d::Identity()),
+	m_old_frame(nullptr)
 {
 }
 

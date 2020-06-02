@@ -57,7 +57,7 @@ void SystemInfoView::OnBodySelected(SystemBody *b)
 		}
 	} else {
 		if (isCurrentSystem) {
-			Body *body = GameLocator::getGame()->GetSpace()->FindBodyForPath(&path);
+			Body *body = GameLocator::getGame()->GetSpace()->FindBodyForPath(path);
 			if (body != 0)
 				GameLocator::getGame()->GetPlayer()->SetNavTarget(body);
 		} else if (b->GetSuperType() == GalaxyEnums::BodySuperType::SUPERTYPE_STAR) { // We allow hyperjump to any star of the system
@@ -289,8 +289,8 @@ void SystemInfoView::UpdateEconomyTab()
 
 void SystemInfoView::PutBodies(SystemBody *body, Gui::Fixed *container, int dir, float pos[2], int &majorBodies, int &starports, int &onSurface, float &prevSize)
 {
-	float size[2];
-	float myPos[2];
+	std::array<float, 2> size;
+	std::array<float, 2> myPos;
 	myPos[0] = pos[0];
 	myPos[1] = pos[1];
 	if (body->GetSuperType() == GalaxyEnums::BodySuperType::SUPERTYPE_STARPORT) starports++;
@@ -309,7 +309,7 @@ void SystemInfoView::PutBodies(SystemBody *body, Gui::Fixed *container, int dir,
 			}
 		}
 		m_bodyIcons.push_back(std::pair<uint32_t, BodyIcon *>(body->GetPath().bodyIndex, ib));
-		ib->GetSize(size);
+		ib->GetSize(size.data());
 		if (prevSize < 0) prevSize = size[!dir];
 		ib->onSelect.connect(sigc::bind(sigc::mem_fun(this, &SystemInfoView::OnBodySelected), body));
 		ib->onMouseEnter.connect(sigc::bind(sigc::mem_fun(this, &SystemInfoView::OnBodyViewed), body));
@@ -330,7 +330,7 @@ void SystemInfoView::PutBodies(SystemBody *body, Gui::Fixed *container, int dir,
 
 	float prevSizeForKids = size[!dir];
 	for (SystemBody *kid : body->GetChildren()) {
-		PutBodies(kid, container, dir, myPos, majorBodies, starports, onSurface, prevSizeForKids);
+		PutBodies(kid, container, dir, myPos.data(), majorBodies, starports, onSurface, prevSizeForKids);
 	}
 }
 
@@ -528,7 +528,7 @@ static bool IsShownInInfoView(const SystemBody *sb)
 		sb->GetType() == GalaxyEnums::BodyType::TYPE_STARPORT_ORBITAL;
 }
 
-SystemInfoView::RefreshType SystemInfoView::NeedsRefresh()
+SystemInfoView::RefreshType SystemInfoView::NeedsRefresh() const
 {
 	if (!m_system || !InGameViewsLocator::getInGameViews()->GetSectorView()->GetSelected().IsSameSystem(m_system->GetPath()))
 		return REFRESH_ALL;

@@ -261,13 +261,13 @@ public:
 	JobSet(const JobSet &) = delete;
 	JobSet &operator=(const JobSet &other) = delete;
 
-	virtual void Order(Job *job)
+	virtual void Order(Job *job) override
 	{
 		auto x = m_jobs.insert(m_queue->Queue(job, this));
 		if (x.second) Output("Job already queued\n");
 		assert(x.second);
 	}
-	virtual void RemoveJob(Job::Handle *handle) { m_jobs.erase(*handle); }
+	virtual void RemoveJob(Job::Handle *handle) override { m_jobs.erase(*handle); }
 
 	bool IsEmpty() const { return m_jobs.empty(); }
 

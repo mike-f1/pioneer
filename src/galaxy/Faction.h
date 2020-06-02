@@ -48,8 +48,8 @@ public:
 
 	typedef std::vector<SystemPath> ClaimList;
 	ClaimList m_ownedsystemlist;
-	void PushClaim(SystemPath path) { m_ownedsystemlist.push_back(path); }
-	bool IsClaimed(SystemPath) const;
+	void PushClaim(const SystemPath &path) { m_ownedsystemlist.push_back(path); }
+	bool IsClaimed(const SystemPath &) const;
 
 	// commodity legality
 	typedef std::map<GalacticEconomy::Commodity, uint32_t> CommodityProbMap;
@@ -57,10 +57,10 @@ public:
 
 	Color colour;
 
-	const double Radius() const { return (FACTION_CURRENT_YEAR - foundingDate) * expansionRate; };
-	const bool IsValid() const { return idx != BAD_FACTION_IDX; };
-	const Color AdjustedColour(fixed population, bool inRange) const;
-	const Polit::GovType PickGovType(Random &rand) const;
+	double Radius() const { return (FACTION_CURRENT_YEAR - foundingDate) * expansionRate; };
+	bool IsValid() const { return idx != BAD_FACTION_IDX; };
+	Color AdjustedColour(fixed population, bool inRange) const;
+	Polit::GovType PickGovType(Random &rand) const;
 
 	// set the homeworld to one near the supplied co-ordinates
 	void SetBestFitHomeworld(Galaxy *galaxy, int32_t x, int32_t y, int32_t z, int32_t si, uint32_t bi, int32_t axisChange);

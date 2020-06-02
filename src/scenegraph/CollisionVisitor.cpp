@@ -14,6 +14,7 @@
 
 namespace SceneGraph {
 	CollisionVisitor::CollisionVisitor() :
+		m_boundingRadius(0.),
 		m_properData(false),
 		m_totalTris(0)
 	{

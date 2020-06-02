@@ -33,7 +33,6 @@ public:
 	Sfx() = delete;
 	Sfx(const vector3d &pos, const vector3d &vel, const float speed, const SFX_TYPE type);
 	Sfx(const Json &jsonObj);
-	Sfx(const Sfx &);
 	void SetPosition(const vector3d &p);
 	const vector3d &GetPosition() const { return m_pos; }
 
@@ -75,12 +74,14 @@ public:
 
 	SfxManager();
 
+private:
+	template <typename... Args>
+	void AddInstance(SFX_TYPE type, Args&&... args) { m_instances[type].emplace_back(std::forward<Args>(args)...); }
+
+	void Cleanup();
 	size_t GetNumberInstances(const SFX_TYPE t) const { return m_instances[t].size(); }
 	Sfx &GetInstanceByIndex(const SFX_TYPE t, const size_t i) { return m_instances[t][i]; }
-	void AddInstance(Sfx &inst) { return m_instances[inst.m_type].push_back(inst); }
-	void Cleanup();
 
-private:
 	// types
 	struct MaterialData {
 		MaterialData();

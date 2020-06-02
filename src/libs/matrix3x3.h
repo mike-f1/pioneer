@@ -5,31 +5,31 @@
 #define _MATRIX3X3_H
 
 #include "vector3.h"
+#include <array>
 #include <math.h>
 #include <stdio.h>
 
 template <typename T>
 class matrix3x3 {
 private:
-	T cell[9];
+	std::array<T, 9> cell;
 
 public:
 	matrix3x3() {}
 	matrix3x3(T val)
 	{
-		cell[0] = cell[1] = cell[2] = cell[3] = cell[4] = cell[5] = cell[6] =
-			cell[7] = cell[8] = val;
+		cell.fill(val);
 	}
 	matrix3x3(const T *vals)
 	{
-		memcpy(cell, vals, sizeof(T) * 9);
+		memcpy(cell.data(), vals, sizeof(T) * 9);
 	}
 
 	T &operator[](const size_t i) { return cell[i]; } // used for serializing
 	const T &operator[](const size_t i) const { return cell[i]; }
 
-	const T *Data() const { return cell; }
-	T *Data() { return cell; }
+	const T *Data() const { return cell.data(); }
+	T *Data() { return cell.data(); }
 
 	vector3<T> VectorX() const { return vector3<T>(cell[0], cell[3], cell[6]); }
 	vector3<T> VectorY() const { return vector3<T>(cell[1], cell[4], cell[7]); }
@@ -244,5 +244,8 @@ static inline void matrix3x3dtof(const matrix3x3d &in, matrix3x3f &out)
 
 static const matrix3x3f matrix3x3fIdentity(matrix3x3f::Identity());
 static const matrix3x3d matrix3x3dIdentity(matrix3x3d::Identity());
+
+extern template class matrix3x3<float>;
+extern template class matrix3x3<double>;
 
 #endif /* _MATRIX3x3_H */

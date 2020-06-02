@@ -36,15 +36,15 @@ public:
 	void NextPage();
 
 protected:
-	virtual void OnSwitchTo();
+	virtual void OnSwitchTo() override;
 
 private:
 	class BodyIcon : public Gui::ImageRadioButton {
 	public:
 		BodyIcon(const char *img);
-		virtual void Draw();
-		virtual void OnActivate();
-		bool HasStarport() { return m_hasStarport; }
+		virtual void Draw() override;
+		virtual void OnActivate() override;
+		bool HasStarport() const { return m_hasStarport; }
 		void SetHasStarport() { m_hasStarport = true; }
 		void SetSelectColor(const Color &color) { m_selectColor = color; }
 
@@ -62,7 +62,7 @@ private:
 		REFRESH_ALL
 	};
 
-	RefreshType NeedsRefresh();
+	RefreshType NeedsRefresh() const;
 	void SystemChanged(const SystemPath &path);
 	void UpdateEconomyTab();
 	void OnBodyViewed(SystemBody *b);

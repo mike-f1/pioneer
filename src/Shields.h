@@ -30,7 +30,7 @@ public:
 		RefCountedPtr<SceneGraph::StaticGeometry> m_mesh;
 	};
 
-	Shields(SceneGraph::Model *);
+	explicit Shields(SceneGraph::Model *);
 	virtual ~Shields();
 	virtual void SaveToJson(Json &jsonObj);
 	virtual void LoadFromJson(const Json &jsonObj);

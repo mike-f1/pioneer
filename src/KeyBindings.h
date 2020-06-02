@@ -195,7 +195,7 @@ namespace KeyBindings {
 
 		bool IsActive() const;
 
-		void StoreOnActionCallback(std::function<void(bool)> fun);
+		void StoreOnActionCallback(const std::function<void(bool)> &fun);
 
 		InputResponse CheckSDLEventAndDispatch(const SDL_Event &event);
 
@@ -339,7 +339,7 @@ namespace KeyBindings {
 
 		std::string ToString() const;
 
-		void StoreOnAxisCallback(std::function<void(float)> fun);
+		void StoreOnAxisCallback(const std::function<void(float)> &fun);
 
 		bool IsActive() const;
 		float GetValue() const;

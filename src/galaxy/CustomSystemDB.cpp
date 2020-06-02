@@ -161,7 +161,7 @@ static int l_csb_radius_km(lua_State *L)
 	CustomSystemBody *csb = l_csb_check(L, 1);
 	double value = luaL_checknumber(L, 2);
 	// earth mean radiusMean radius = 6371.0 km (source: wikipedia)
-	csb->radius = (value / 6371.0);
+	csb->radius = fixed::FromDouble(value / 6371.0);
 	lua_settop(L, 1);
 	return 1;
 }
@@ -257,7 +257,7 @@ static int l_csb_rings(lua_State *L)
 		col.b = luaL_checknumber(L, -1);
 		lua_rawgeti(L, 4, 4);
 		col.a = luaL_optnumber(L, -1, 0.85); // default alpha value
-		csb->ringColor = col;
+		csb->ringColor = Color4ub(col);
 	}
 	lua_settop(L, 1);
 	return 1;

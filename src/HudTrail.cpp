@@ -14,11 +14,10 @@ const uint16_t MAX_POINTS = 100;
 
 HudTrail::HudTrail(Body *b, const Color &c) :
 	m_body(b),
+	m_currentFrame(b->GetFrame()),
 	m_updateTime(0.f),
 	m_color(c)
 {
-	m_currentFrame = b->GetFrame();
-
 	Graphics::RenderStateDesc rsd;
 	rsd.blendMode = Graphics::BLEND_ALPHA_ONE;
 	rsd.depthWrite = false;

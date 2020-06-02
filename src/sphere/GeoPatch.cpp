@@ -27,10 +27,10 @@
 // tri edge lengths
 static const double GEOPATCH_SUBDIVIDE_AT_CAMDIST = 5.0;
 
-GeoPatch::GeoPatch(const RefCountedPtr<GeoPatchContext> &ctx_, GeoSphere *gs,
+GeoPatch::GeoPatch(const RefCountedPtr<GeoPatchContext> &ctx, GeoSphere *gs,
 	const vector3d &v0_, const vector3d &v1_, const vector3d &v2_, const vector3d &v3_,
 	const int depth, const GeoPatchID &ID_) :
-	m_ctx(ctx_),
+	m_ctx(ctx),
 	m_v0(v0_),
 	m_v1(v1_),
 	m_v2(v2_),

@@ -86,7 +86,9 @@ ImTextureID PiGui::RenderSVG(std::string svgFilename, int width, int height)
 	//	int H = 16*size;
 	int H = height;
 	img = static_cast<unsigned char *>(malloc(W * H * 4));
-	memset(img, 0, W * H * 4);
+	if (img == NULL) {
+		Error("Could not alloc image buffer.\n");
+	}	memset(img, 0, W * H * 4);
 	{
 		PROFILE_SCOPED_DESC("nsvgParseFromFile")
 		image = nsvgParseFromFile(svgFilename.c_str(), "px", 96.0f);
@@ -101,9 +103,6 @@ ImTextureID PiGui::RenderSVG(std::string svgFilename, int width, int height)
 		Error("Could not init rasterizer.\n");
 	}
 
-	if (img == NULL) {
-		Error("Could not alloc image buffer.\n");
-	}
 	{
 		PROFILE_SCOPED_DESC("nsvgRasterize")
 		float scale = double(W) / w;
@@ -759,9 +758,9 @@ PiGui::PiGui() :
 
 	// ensure the tooltip font exists
 	GetFont("pionillium", 14);
-};
+}
 
-const bool PiFace::containsGlyph(unsigned short glyph) const
+bool PiFace::containsGlyph(unsigned short glyph) const
 {
 	PROFILE_SCOPED()
 	for (auto range : m_ranges) {

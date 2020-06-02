@@ -812,7 +812,7 @@ static int l_engine_sector_map_add_to_route(lua_State *l)
 	SectorView *sv = InGameViewsLocator::getInGameViews()->GetSectorView();
 	SystemPath *path = LuaObject<SystemPath>::CheckFromLua(1);
 	if (sv) {
-		sv->AddToRoute(path);
+		sv->AddToRoute(*path);
 	}
 	return 0;
 }

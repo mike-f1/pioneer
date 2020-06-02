@@ -84,7 +84,7 @@ namespace {
 
 		return i == 4;
 	}
-}; // namespace
+} // namespace
 
 class GasPatchContext : public RefCounted {
 public:
@@ -199,7 +199,7 @@ public:
 	vector3d clipCentroid;
 	double clipRadius;
 
-	GasPatch(const RefCountedPtr<GasPatchContext> &_ctx, GasGiant *gs, vector3d v0, vector3d v1, vector3d v2, vector3d v3) :
+	GasPatch(const RefCountedPtr<GasPatchContext> &_ctx, GasGiant *gs, const vector3d &v0, const vector3d &v1, const vector3d &v2, const vector3d &v3) :
 		ctx(_ctx),
 		gasSphere(gs),
 		clipCentroid(((v0 + v1 + v2 + v3) * 0.25).Normalized()),

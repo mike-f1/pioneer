@@ -103,10 +103,10 @@ public:
 		 * are used to pass things to/from shipStats;
 		 * may be better if you not expose these fields
 		*/
-	inline double FuelTankMassLeft() { return m_fuelTankMass * m_thrusterFuel; }
+	inline double FuelTankMassLeft() const { return m_fuelTankMass * m_thrusterFuel; }
 	inline void SetFuelTankMass(int fTank) { m_fuelTankMass = fTank; }
 	void UpdateFuel(const float timeStep);
-	inline bool IsFuelStateChanged() { return m_fuelStateChange; }
+	inline bool IsFuelStateChanged() const { return m_fuelStateChange; }
 
 	void Render(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform);
 

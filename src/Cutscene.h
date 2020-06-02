@@ -20,9 +20,11 @@ class Shields;
 class Cutscene {
 public:
 	Cutscene(int width, int height) :
-		m_aspectRatio(float(width) / float(height))
-	{
-	}
+		m_aspectRatio(float(width) / float(height)),
+		m_model(nullptr),
+		m_shield(nullptr)
+	{}
+
 	virtual ~Cutscene() {}
 
 	virtual void Draw(float time) = 0;

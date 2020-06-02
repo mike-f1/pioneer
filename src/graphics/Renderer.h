@@ -164,13 +164,13 @@ namespace Graphics {
 		// XXX state must die
 		class StateTicket {
 		public:
-			StateTicket(Renderer *r) :
+			StateTicket(const StateTicket &) = delete;
+			StateTicket &operator=(const StateTicket &) = delete;
+			explicit StateTicket(Renderer *r) :
 				m_renderer(r) { m_renderer->PushState(); }
 			virtual ~StateTicket() { m_renderer->PopState(); }
 
 		private:
-			StateTicket(const StateTicket &);
-			StateTicket &operator=(const StateTicket &);
 			Renderer *m_renderer;
 		};
 

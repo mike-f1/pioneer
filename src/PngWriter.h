@@ -17,7 +17,7 @@ namespace Graphics {
 
 namespace PngWriter {
 	// stride is in bytes (bytes per row)
-	void write_png(FileSystem::FileSourceFS &fs, const std::string &path, const uint8_t *bytes, int width, int height, int stride, int bytes_per_pixel);
+	void write_png(const FileSystem::FileSourceFS &fs, const std::string &path, const uint8_t *bytes, int width, int height, int stride, int bytes_per_pixel);
 
 	void write_screenshot(const Graphics::ScreendumpState &sd, const char *destFile);
 }

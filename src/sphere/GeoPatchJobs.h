@@ -162,7 +162,7 @@ public:
 
 	inline const SSplitResultData &data() const { return mData; }
 
-	virtual void OnCancel()
+	virtual void OnCancel() override
 	{}
 
 private:
@@ -186,7 +186,7 @@ public:
 
 	inline const SSplitResultData &data(const int32_t idx) const { return mData[idx]; }
 
-	virtual void OnCancel()
+	virtual void OnCancel() override
 	{}
 
 private:
@@ -199,9 +199,9 @@ private:
 class BasePatchJob : public Job {
 public:
 	BasePatchJob() {}
-	virtual void OnRun() {} // RUNS IN ANOTHER THREAD!! MUST BE THREAD SAFE!
-	virtual void OnFinish() {}
-	virtual void OnCancel() {}
+	virtual void OnRun() override {} // RUNS IN ANOTHER THREAD!! MUST BE THREAD SAFE!
+	virtual void OnFinish() override {}
+	virtual void OnCancel() override {}
 };
 
 // ********************************************************************************

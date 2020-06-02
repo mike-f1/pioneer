@@ -124,7 +124,7 @@ typedef std::chrono::high_resolution_clock Clock;
 // Based on Michael answer to the below problem, then expanded on purpose
 // https://stackoverflow.com/questions/398299/looping-in-a-spiral
 // NOTE: when return falue of passed-in function is true then it early outs
-static bool spiral_gen(const int inner, const int turns, const int layer, std::function<bool(SystemPath &)> fun)
+static bool spiral_gen(const int inner, const int turns, const int layer, const std::function<bool(SystemPath &)> &fun)
 {
 	const int outer = inner + turns;
 	const int start = (inner * 2 + 1) * (inner * 2 + 1);
@@ -143,7 +143,7 @@ static bool spiral_gen(const int inner, const int turns, const int layer, std::f
 	return false;
 }
 
-static void spiral_3d(const int radius, std::function<bool(SystemPath &)> fun)
+static void spiral_3d(const int radius, const std::function<bool(SystemPath &)> &fun)
 {
 	// Build center:
 	SystemPath s(0, 0, 0);

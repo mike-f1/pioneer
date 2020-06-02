@@ -14,7 +14,7 @@
 namespace SceneGraph {
 
 	struct MaterialDefinition {
-		MaterialDefinition(const std::string &n) :
+		explicit MaterialDefinition(const std::string &n) :
 			name(n),
 			tex_diff(""),
 			tex_spec(""),
@@ -49,7 +49,7 @@ namespace SceneGraph {
 	};
 
 	struct LodDefinition {
-		LodDefinition(float size) :
+		explicit LodDefinition(float size) :
 			pixelSize(size)
 		{}
 		float pixelSize;

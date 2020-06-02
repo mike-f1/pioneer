@@ -29,7 +29,6 @@ public:
 	void resetInternalCameraController(void);
 
 protected:
-	float CalculateSignedForwardVelocity(const vector3d &forward, const vector3d &velocity);
 
 private:
 	ShipCockpit(const ShipCockpit &) = delete;

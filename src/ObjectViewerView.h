@@ -90,15 +90,15 @@ private:
 
 	// UI members
 	vector2f m_screen;
-	float m_sbMass;
-	float m_sbRadius;
-	uint32_t m_sbSeed;
-	float m_sbVolatileGas;
-	float m_sbVolatileLiquid;
-	float m_sbVolatileIces;
-	float m_sbLife;
-	float m_sbVolcanicity;
-	float m_sbMetallicity;
+	float m_sbMass = 0.;
+	float m_sbRadius = 0.;
+	uint32_t m_sbSeed = 0;
+	float m_sbVolatileGas = 0.;
+	float m_sbVolatileLiquid = 0.;
+	float m_sbVolatileIces = 0.;
+	float m_sbLife = 0.;
+	float m_sbVolcanicity = 0.;
+	float m_sbMetallicity = 0.;
 
 	void OnChangeTerrain();
 	void OnReloadSBData();

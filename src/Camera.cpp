@@ -23,6 +23,8 @@
 
 using namespace Graphics;
 
+// size of reserved space for shadows vector
+constexpr unsigned STD_SHADOWS_SIZE = 16;
 // if a body would render smaller than this many pixels, just ignore it
 static const float OBJECT_HIDDEN_PIXEL_THRESHOLD = 2.0f;
 
@@ -306,12 +308,14 @@ void Camera::Draw(const Body *excludeBody, ShipCockpit *cockpit)
 		cockpit->RenderCockpit(this, camFrameId);
 }
 
-void Camera::CalcShadows(const int lightNum, const Body *b, std::vector<Shadow> &shadowsOut) const
+ const std::vector<Camera::Shadow> Camera::CalcShadows(const int lightNum, const Body *b) const
 {
+	 std::vector<Shadow> shadowsOut;
+	 shadowsOut.reserve(STD_SHADOWS_SIZE);
 	// Set up data for eclipses. All bodies are assumed to be spheres.
 	const Body *lightBody = m_lightSources[lightNum].GetBody();
 	if (!lightBody)
-		return;
+		return {};
 
 	const double lightRadius = lightBody->GetPhysRadius();
 	const vector3d bLightPos = lightBody->GetPositionRelTo(b);
@@ -354,10 +358,10 @@ void Camera::CalcShadows(const int lightNum, const Body *b, std::vector<Shadow> 
 		const vector3d projectedCentre = (b2pos - perpDist * lightDir) / bRadius;
 		if (projectedCentre.Length() < 1 + srad + lrad) {
 			// some part of b is (partially) eclipsed
-			Camera::Shadow shadow = { projectedCentre, static_cast<float>(srad), static_cast<float>(lrad) };
-			shadowsOut.push_back(shadow);
+			shadowsOut.emplace_back(projectedCentre, static_cast<float>(srad), static_cast<float>(lrad));
 		}
 	}
+	return shadowsOut;
 }
 
 float discCovered(const float dist, const float rad)
@@ -390,8 +394,8 @@ static std::vector<Camera::Shadow> shadows;
 float Camera::ShadowedIntensity(const int lightNum, const Body *b) const
 {
 	shadows.clear();
-	shadows.reserve(16);
-	CalcShadows(lightNum, b, shadows);
+	shadows.reserve(STD_SHADOWS_SIZE);
+	shadows = CalcShadows(lightNum, b);
 	float product = 1.0;
 	for (std::vector<Camera::Shadow>::const_iterator it = shadows.begin(), itEnd = shadows.end(); it != itEnd; ++it)
 		product *= 1.0 - discCovered(it->centre.Length() / it->lrad, it->srad / it->lrad);
@@ -399,18 +403,17 @@ float Camera::ShadowedIntensity(const int lightNum, const Body *b) const
 }
 
 // PrincipalShadows(b,n): returns the n biggest shadows on b in order of size
-void Camera::PrincipalShadows(const Body *b, const int n, std::vector<Shadow> &shadowsOut) const
+std::vector<Camera::Shadow> Camera::PrincipalShadows(const Body *b, const int n) const
 {
+	std::vector<Shadow> shadowsOut;
 	shadows.clear();
-	shadows.reserve(16);
+	shadows.reserve(STD_SHADOWS_SIZE);
 	for (size_t i = 0; i < 4 && i < m_lightSources.size(); i++) {
-		CalcShadows(i, b, shadows);
+		shadows = CalcShadows(i, b);
 	}
 	shadowsOut.reserve(shadows.size());
 	std::sort(shadows.begin(), shadows.end());
-	std::vector<Shadow>::reverse_iterator it = shadows.rbegin(), itREnd = shadows.rend();
-	for (int i = 0; i < n; i++) {
-		if (it == itREnd) break;
-		shadowsOut.push_back(*(it++));
-	}
+
+	std::reverse_copy(begin(shadows), end(shadows), begin(shadowsOut));
+	return shadowsOut;
 }

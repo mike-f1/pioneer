@@ -203,14 +203,12 @@ CityOnPlanet::~CityOnPlanet()
 	}
 }
 
-CityOnPlanet::CityOnPlanet(Planet *planet, SpaceStation *station, const uint32_t seed)
-{
+CityOnPlanet::CityOnPlanet(Planet *planet, SpaceStation *station, const uint32_t seed) :
 	// beware, these are not used in this function, but are used in subroutines!
-	m_planet = planet;
-	m_frame = planet->GetFrame();
-	m_detailLevel = GameConfSingleton::getDetail().cities;
-
-	m_buildings.clear();
+	m_planet(planet),
+	m_frame(planet->GetFrame()),
+	m_detailLevel(GameConfSingleton::getDetail().cities)
+{
 	m_buildings.reserve(DEFAULT_NUM_BUILDINGS);
 
 	const Aabb &aabb = station->GetAabb();

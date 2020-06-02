@@ -14,7 +14,7 @@ namespace UI {
 
 	class EventDispatcher {
 	public:
-		EventDispatcher(Container *baseContainer) :
+		explicit EventDispatcher(Container *baseContainer) :
 			m_baseContainer(baseContainer),
 			m_mouseActiveReceiver(0),
 			m_lastMouseOverTarget(0)

@@ -15,7 +15,7 @@ struct Color4f {
 		g(0.f),
 		b(0.f),
 		a(1.f) {}
-	Color4f(float v_) :
+	explicit Color4f(float v_) :
 		r(v_),
 		g(v_),
 		b(v_),
@@ -81,22 +81,20 @@ struct Color4ub {
 		g(g_),
 		b(b_),
 		a(a_) {}
-	Color4ub(const Color4ub &c) :
-		r(c.r),
-		g(c.g),
-		b(c.b),
-		a(c.a) {}
-	Color4ub(const Color4f &c) :
+	Color4ub(const Color4ub &c) = default;
+
+	explicit Color4ub(const Color4f &c) :
 		r(uint8_t(c.r * 255.f)),
 		g(uint8_t(c.g * 255.f)),
 		b(uint8_t(c.b * 255.f)),
 		a(uint8_t(c.a * 255.f)) {}
-	Color4ub(const uint32_t rgba) :
+	explicit Color4ub(const uint32_t rgba) :
 		r(uint8_t((rgba >> 24) & 0xff)),
 		g(uint8_t((rgba >> 16) & 0xff)),
 		b(uint8_t((rgba >> 8) & 0xff)),
 		a(uint8_t(rgba & 0xff)) {}
 
+	Color4ub &operator=(const Color4ub &) = default;
 	operator unsigned char *() { return &r; }
 	operator const unsigned char *() const { return &r; }
 	Color4ub operator+(const Color4ub &c) const { return Color4ub(uint8_t(c.r + r), uint8_t(c.g + g), uint8_t(c.b + b), uint8_t(c.a + a)); }
@@ -160,7 +158,7 @@ struct Color3ub {
 		r(0),
 		g(0),
 		b(0) {}
-	Color3ub(uint8_t v_) :
+	explicit Color3ub(uint8_t v_) :
 		r(v_),
 		g(v_),
 		b(v_) {}
@@ -168,7 +166,7 @@ struct Color3ub {
 		r(r_),
 		g(g_),
 		b(b_) {}
-	Color3ub(const Color4f &c) :
+	explicit Color3ub(const Color4f &c) :
 		r(uint8_t(c.r * 255.f)),
 		g(uint8_t(c.g * 255.f)),
 		b(uint8_t(c.b * 255.f)) {}

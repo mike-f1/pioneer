@@ -58,12 +58,12 @@ public:
 	IterationProxy<std::vector<RefCountedPtr<SystemBody>>> GetBodies() { return MakeIterationProxy(m_bodies); }
 	const IterationProxy<const std::vector<RefCountedPtr<SystemBody>>> GetBodies() const { return MakeIterationProxy(m_bodies); }
 
-	bool IsCommodityLegal(const GalacticEconomy::Commodity t)
+	bool IsCommodityLegal(const GalacticEconomy::Commodity t) const
 	{
 		return m_commodityLegal[int(t)];
 	}
 
-	int GetCommodityBasePriceModPercent(GalacticEconomy::Commodity t)
+	int GetCommodityBasePriceModPercent(GalacticEconomy::Commodity t) const
 	{
 		return m_tradeLevel[int(t)];
 	}

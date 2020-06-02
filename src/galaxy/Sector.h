@@ -12,6 +12,7 @@
 #include "libs/RefCounted.h"
 #include "libs/vector3.h"
 
+#include <array>
 #include <string>
 #include <vector>
 #include <sigc++/sigc++.h>
@@ -113,7 +114,7 @@ public:
 		std::vector<std::string> m_other_names;
 		vector3f m_pos;
 		unsigned m_numStars;
-		GalaxyEnums::BodyType m_starType[4];
+		std::array<GalaxyEnums::BodyType, 4> m_starType;
 		uint32_t m_seed;
 		const CustomSystem *m_customSys;
 		mutable const Faction *m_faction; // mutable because we only calculate on demand

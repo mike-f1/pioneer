@@ -44,13 +44,13 @@ public:
 	WorldView(Game *game);
 	WorldView(const Json &jsonObj, Game *game);
 	virtual ~WorldView();
-	virtual void ShowAll();
+	virtual void ShowAll() override;
 	virtual void Update(const float frameTime) override;
 	virtual void Draw3D() override;
-	virtual void Draw();
+	virtual void Draw() override;
 	virtual void DrawUI(const float frameTime) override;
 
-	virtual void SaveToJson(Json &jsonObj);
+	virtual void SaveToJson(Json &jsonObj) override;
 
 	RefCountedPtr<CameraContext> GetCameraContext() const { return m_cameraContext; }
 
@@ -70,8 +70,8 @@ public:
 	void BeginCameraFrame() { m_cameraContext->BeginFrame(); };
 	void EndCameraFrame() { m_cameraContext->EndFrame(); };
 
-	bool ShouldShowLabels() { return m_labelsOn; }
-	bool DrawGui() { return m_guiOn; };
+	bool ShouldShowLabels() const { return m_labelsOn; }
+	bool DrawGui() const { return m_guiOn; };
 
 protected:
 	virtual void BuildUI(UI::Single *container) override;
@@ -150,8 +150,8 @@ private:
 class NavTunnelWidget : public Gui::Widget {
 public:
 	NavTunnelWidget(WorldView *worldView, Graphics::RenderState *);
-	virtual void Draw();
-	virtual void GetSizeRequested(float size[2]);
+	virtual void Draw() override;
+	virtual void GetSizeRequested(float size[2]) override;
 	void DrawTargetGuideSquare(const vector2f &pos, const float size, const Color &c);
 
 private:

@@ -20,11 +20,13 @@ public:
 	// Constructor definitions are outside class declaration to enforce that
 	// only float and double versions are possible.
 	vector3();
-	vector3(const vector3<T> &v);
+	vector3(const vector3<T> &v) = default;
 	vector3(const vector2f &v, T t);
 	explicit vector3(const T vals[3]);
 	explicit vector3(T val);
 	vector3(T _x, T _y, T _z);
+
+	vector3 &operator = (const vector3 &) = default;
 
 	// disallow implicit conversion between floating point sizes
 	explicit vector3(const vector3<typename other_floating_type<T>::type> &v);
@@ -215,12 +217,6 @@ template <>
 inline vector3<double>::vector3()
 {}
 template <>
-inline vector3<float>::vector3(const vector3<float> &v) :
-	x(v.x),
-	y(v.y),
-	z(v.z)
-{}
-template <>
 inline vector3<float>::vector3(const vector2f &v, float t) :
 	x(v.x),
 	y(v.y),
@@ -234,12 +230,6 @@ inline vector3<float>::vector3(const vector3<double> &v) :
 {}
 template <>
 inline vector3<double>::vector3(const vector3<float> &v) :
-	x(v.x),
-	y(v.y),
-	z(v.z)
-{}
-template <>
-inline vector3<double>::vector3(const vector3<double> &v) :
 	x(v.x),
 	y(v.y),
 	z(v.z)
@@ -303,5 +293,8 @@ inline vector3<double>::vector3(const double vals[3]) :
 
 typedef vector3<float> vector3f;
 typedef vector3<double> vector3d;
+
+extern template class vector3<float>;
+extern template class vector3<double>;
 
 #endif /* _VECTOR3_H */

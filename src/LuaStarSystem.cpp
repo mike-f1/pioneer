@@ -62,7 +62,7 @@ static int l_starsystem_get_station_paths(lua_State *l)
 
 	for (const SystemBody *station : s->GetSpaceStations()) {
 		lua_pushinteger(l, lua_rawlen(l, -1) + 1);
-		LuaObject<SystemPath>::PushToLua(&station->GetPath());
+		LuaObject<SystemPath>::PushToLua(station->GetPath());
 		lua_rawset(l, -3);
 	}
 
@@ -101,7 +101,7 @@ static int l_starsystem_get_body_paths(lua_State *l)
 
 	for (RefCountedPtr<const SystemBody> sb : s->GetBodies()) {
 		lua_pushinteger(l, lua_rawlen(l, -1) + 1);
-		LuaObject<SystemPath>::PushToLua(&sb->GetPath());
+		LuaObject<SystemPath>::PushToLua(sb->GetPath());
 		lua_rawset(l, -3);
 	}
 
@@ -474,8 +474,8 @@ static int l_starsystem_attr_path(lua_State *l)
 {
 	PROFILE_SCOPED()
 	StarSystem *s = LuaObject<StarSystem>::CheckFromLua(1);
-	SystemPath path = s->GetPath();
-	LuaObject<SystemPath>::PushToLua(&path);
+	const SystemPath &path = s->GetPath();
+	LuaObject<SystemPath>::PushToLua(path);
 	return 1;
 }
 

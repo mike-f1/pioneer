@@ -33,11 +33,11 @@ namespace Graphics {
 
 			char whatsInAName[256];
 			for (uint32_t i = 0; i < MAX_SHIELD_HITS; i++) {
-				sprintf(whatsInAName, "hitPos[%d]", i);
+				sprintf(whatsInAName, "hitPos[%ud]", i);
 				hitPos[i].Init(whatsInAName, m_program);
 			}
 			for (uint32_t i = 0; i < MAX_SHIELD_HITS; i++) {
-				sprintf(whatsInAName, "radii[%d]", i);
+				sprintf(whatsInAName, "radii[%ud]", i);
 				radii[i].Init(whatsInAName, m_program);
 			}
 			numHits.Init("numHits", m_program);

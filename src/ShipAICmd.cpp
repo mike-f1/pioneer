@@ -61,6 +61,8 @@ void AICommand::SaveToJson(Json &jsonObj)
 }
 
 AICommand::AICommand(const Json &jsonObj, CmdName name) :
+	m_dBody(nullptr),
+	m_fguns(nullptr),
 	m_cmdName(name)
 {
 	try {
@@ -240,7 +242,8 @@ AICmdKamikaze::AICmdKamikaze(DynamicBody *dBody, Body *target) :
 }
 
 AICmdKamikaze::AICmdKamikaze(const Json &jsonObj) :
-	AICommand(jsonObj, CMD_KAMIKAZE)
+	AICommand(jsonObj, CMD_KAMIKAZE),
+	m_target(nullptr)
 {
 	if (!jsonObj.count("index_for_target")) {
 		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
@@ -338,7 +341,11 @@ AICmdKill::AICmdKill(DynamicBody *dBody, Ship *target) :
 }
 
 AICmdKill::AICmdKill(const Json &jsonObj) :
-	AICommand(jsonObj, CMD_KILL)
+	AICommand(jsonObj, CMD_KILL),
+	m_target(nullptr),
+	m_leadTime(0.0),
+	m_evadeTime(0.0),
+	m_closeTime(0.0)
 {
 	m_targetIndex = jsonObj["index_for_target"];
 }
@@ -919,7 +926,8 @@ AICmdFlyTo::AICmdFlyTo(DynamicBody *dBody, FrameId targframe, const vector3d &po
 }
 
 AICmdFlyTo::AICmdFlyTo(const Json &jsonObj) :
-	AICommand(jsonObj, CMD_FLYTO)
+	AICommand(jsonObj, CMD_FLYTO),
+	m_target(nullptr)
 {
 	try {
 		m_targetIndex = jsonObj["index_for_target"];
@@ -1190,7 +1198,8 @@ AICmdDock::AICmdDock(DynamicBody *dBody, SpaceStation *target) :
 }
 
 AICmdDock::AICmdDock(const Json &jsonObj) :
-	AICommand(jsonObj, CMD_DOCK)
+	AICommand(jsonObj, CMD_DOCK),
+	m_target(nullptr)
 {
 	try {
 		m_targetIndex = jsonObj["index_for_target"];
@@ -1426,7 +1435,8 @@ AICmdFlyAround::AICmdFlyAround(DynamicBody *dBody, Body *obstructor, double rela
 }
 
 AICmdFlyAround::AICmdFlyAround(DynamicBody *dBody, Body *obstructor, double alt, double vel, int mode) :
-	AICommand(dBody, CMD_FLYAROUND)
+	AICommand(dBody, CMD_FLYAROUND),
+	m_obstructor(nullptr)
 {
 	m_prop.Reset(dBody->GetPropulsion());
 	assert(m_prop != nullptr);
@@ -1436,7 +1446,8 @@ AICmdFlyAround::AICmdFlyAround(DynamicBody *dBody, Body *obstructor, double alt,
 }
 
 AICmdFlyAround::AICmdFlyAround(const Json &jsonObj) :
-	AICommand(jsonObj, CMD_FLYAROUND)
+	AICommand(jsonObj, CMD_FLYAROUND),
+	m_obstructor(nullptr)
 {
 	try {
 		m_obstructorIndex = jsonObj["index_for_obstructor"];
@@ -1591,7 +1602,8 @@ AICmdFormation::AICmdFormation(DynamicBody *dBody, DynamicBody *target, const ve
 }
 
 AICmdFormation::AICmdFormation(const Json &jsonObj) :
-	AICommand(jsonObj, CMD_FORMATION)
+	AICommand(jsonObj, CMD_FORMATION),
+	m_target(nullptr)
 {
 	try {
 		m_targetIndex = jsonObj["index_for_target"];

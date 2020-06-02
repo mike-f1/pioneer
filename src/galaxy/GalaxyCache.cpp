@@ -293,7 +293,7 @@ void GalaxyObjectCache<T, CompareT>::Slave::FillCache(const typename GalaxyObjec
 	}
 
 	// catch the last loop in case it's got some entries (could be less than the spread width)
-	if (current_paths) {
+	if (!current_paths->empty()) {
 		vec_paths.push_back(std::move(current_paths));
 	}
 

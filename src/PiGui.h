@@ -34,10 +34,10 @@ public:
 		m_sizefactor(sizefactor),
 		m_ranges(ranges) {}
 	const std::string &ttfname() const { return m_ttfname; }
-	const float sizefactor() const { return m_sizefactor; }
+	float sizefactor() const { return m_sizefactor; }
 	const std::vector<std::pair<unsigned short, unsigned short>> &ranges() const { return m_ranges; }
 	const std::vector<std::pair<unsigned short, unsigned short>> &used_ranges() const { return m_used_ranges; }
-	const bool containsGlyph(unsigned short glyph) const;
+	bool containsGlyph(unsigned short glyph) const;
 	void addGlyph(unsigned short glyph);
 	void sortUsedRanges() const;
 };
@@ -49,15 +49,23 @@ class PiFont {
 
 public:
 	PiFont(const std::string &name) :
-		m_name(name) {}
+		m_name(name),
+		m_pixelsize(0)
+	{}
 	PiFont(const std::string &name, const std::vector<PiFace> &faces) :
 		m_name(name),
-		m_faces(faces) {}
+		m_faces(faces),
+		m_pixelsize(0)
+	{}
 	PiFont(const PiFont &other) :
 		m_name(other.name()),
-		m_faces(other.faces()) {}
+		m_faces(other.faces()),
+		m_pixelsize(other.m_pixelsize)
+	{}
 	PiFont() :
-		m_name("unknown") {}
+		m_name("unknown"),
+		m_pixelsize(0)
+	{}
 	const std::vector<PiFace> &faces() const { return m_faces; }
 	std::vector<PiFace> &faces() { return m_faces; }
 	const std::string &name() const { return m_name; }

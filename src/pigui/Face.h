@@ -16,7 +16,7 @@ namespace Graphics {
 	namespace Drawables {
 		class TexturedQuad;
 	}
-};
+}
 
 namespace PiGUI {
 

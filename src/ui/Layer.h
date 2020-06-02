@@ -21,7 +21,7 @@ namespace UI {
 		virtual Point PreferredSize() { return Point(); }
 
 		friend class Context;
-		Layer(Context *context) :
+		explicit Layer(Context *context) :
 			Container(context) {}
 
 		RefCountedPtr<Widget> m_widget;

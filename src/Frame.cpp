@@ -24,7 +24,8 @@ Frame::Frame(const Dummy &d_, const FrameId &parent, const char *label, unsigned
 	m_vel(vector3d(0.0)),
 	m_angSpeed(0.0),
 	m_radius(radius),
-	m_flags(flags)
+	m_flags(flags),
+	m_astroBodyIndex(0)
 {
 	if (!d_.madeWithFactory)
 		Error("Frame ctor called directly!\n");
@@ -54,7 +55,8 @@ Frame::Frame(const Dummy &d_, const FrameId &parent) :
 	m_label("camera"),
 	m_radius(0.0),
 	m_flags(FLAG_ROTATING),
-	m_collisionSpace(-1)
+	m_collisionSpace(-1),
+	m_astroBodyIndex(0)
 {
 	if (!d_.madeWithFactory)
 		Error("Frame ctor called directly!\n");
@@ -281,7 +283,7 @@ void Frame::PostUnserializeFixup(const FrameId &fId, Space *space)
 		PostUnserializeFixup(kid, space);
 }
 
-void Frame::CollideFrames(void (*callback)(CollisionContact *))
+void Frame::CollideFrames(CollCallback &callback)
 {
 	PROFILE_SCOPED()
 

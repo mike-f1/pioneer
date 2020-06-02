@@ -28,7 +28,7 @@ Faction::Faction() :
 	govtype_weights_total = 0;
 }
 
-bool Faction::IsClaimed(SystemPath path) const
+bool Faction::IsClaimed(const SystemPath &path) const
 {
 	// check the factions list of claimed systems/sectors, if there is one
 	SystemPath sector = path;
@@ -87,7 +87,7 @@ const bool Faction::IsCloserAndContains(Galaxy *galaxy, double &closestFactionDi
 	}
 }
 
-const Color Faction::AdjustedColour(fixed population, bool inRange) const
+Color Faction::AdjustedColour(fixed population, bool inRange) const
 {
 	PROFILE_SCOPED()
 	Color result;
@@ -98,7 +98,7 @@ const Color Faction::AdjustedColour(fixed population, bool inRange) const
 	return result;
 }
 
-const Polit::GovType Faction::PickGovType(Random &rand) const
+Polit::GovType Faction::PickGovType(Random &rand) const
 {
 	PROFILE_SCOPED()
 	if (!govtype_weights.empty()) {

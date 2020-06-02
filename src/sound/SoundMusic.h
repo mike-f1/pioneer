@@ -15,7 +15,7 @@ namespace Sound {
 		MusicEvent();
 		MusicEvent(uint32_t id);
 		~MusicEvent();
-		virtual void Play(const char *fx, const float volume_left, const float volume_right, Op op);
+		virtual void Play(const char *fx, const float volume_left, const float volume_right, Op op) override;
 	};
 
 	class MusicPlayer {

@@ -36,14 +36,6 @@ void Warning(const char *format, ...) __attribute((format(printf, 1, 2)));
 void Output(const char *format, ...) __attribute((format(printf, 1, 2)));
 void OpenGLDebugMsg(const char *format, ...) __attribute((format(printf, 1, 2)));
 
-/**
-* Works like Output, but adds indent before message.
-* Call IndentIncrease and IndentDecrease to control indent level.
-*/
-void IndentedOutput(const char *format, ...) __attribute((format(printf, 1, 2)));
-void IndentIncrease();
-void IndentDecrease();
-
 template <class T>
 inline const T &Clamp(const T &x, const T &min, const T &max) { return x > max ? max : (x < min ? min : x); }
 
@@ -112,6 +104,6 @@ static inline uint32_t ceil_pow2(uint32_t v)
 	return v;
 }
 
-void hexdump(const unsigned char *buf, int bufsz);
+void hexdump(const unsigned char *buf, int len);
 
 #endif /* _UTILS_H */

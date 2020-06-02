@@ -11,7 +11,8 @@
 #include "libs/StringF.h"
 #include "scenegraph/Model.h"
 
-FixedGuns::FixedGuns(Body* b)
+FixedGuns::FixedGuns(Body* b) :
+	m_cooler_boost(1.0)
 {
 	b->AddFeature(Body::FIXED_GUNS);
 }
@@ -47,7 +48,7 @@ void FixedGuns::SaveToJson(Json &jsonObj, Space *space)
 		gunArray.push_back(gunArrayEl); // Append gun object to array.
 	}
 	jsonObj["guns"] = gunArray; // Add gun array to ship object.
-};
+}
 
 void FixedGuns::LoadFromJson(const Json &jsonObj, Space *space)
 {
@@ -105,7 +106,7 @@ void FixedGuns::LoadFromJson(const Json &jsonObj, Space *space)
 		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 		throw SavedGameCorruptException();
 	}
-};
+}
 
 void FixedGuns::GetGunsTags(SceneGraph::Model *m)
 {
@@ -146,7 +147,7 @@ bool FixedGuns::MountGun(MountId num, const std::string &name, const std::string
 	m_guns.push_back(gs);
 
 	return true;
-};
+}
 
 bool FixedGuns::UnMountGun(MountId num)
 {
@@ -250,7 +251,7 @@ bool FixedGuns::Fire(GunId num, Body *shooter)
 	}
 
 	return true;
-};
+}
 
 bool FixedGuns::UpdateGuns(float timeStep, Body *shooter)
 {
@@ -454,7 +455,7 @@ void FixedGuns::CycleFireModeForGun(GunId num)
 			printf("What?! In FixedGuns::CycleFireModeForGun seems actual fire mode don't exist...\n");
 			abort();
 		}
-		it++;
+		++it;
 		if (it == fire_modes.end())
 			m_guns[num].contemporary_barrels = 1;
 		else m_guns[num].contemporary_barrels = (*it);
@@ -497,6 +498,15 @@ float FixedGuns::GetGunTemperature(GunId idx) const
 		return m_guns[idx].temperature_stat;
 	else
 		return 0.0f;
+}
+
+const std::string &FixedGuns::GetGunName(GunId idx) const
+{
+	static std::string empty_str("");
+	if (unsigned(idx) < m_guns.size())
+		return m_guns[idx].gun_data.gun_name;
+	else
+		return empty_str;
 }
 
 std::vector<int> FixedGuns::GetFiringBarrels(int max_barrels, int contemporary_barrels, int &actual_barrel)

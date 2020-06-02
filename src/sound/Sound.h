@@ -38,7 +38,7 @@ namespace Sound {
 		void Play(const char *fx) { Play(fx, 1.0f, 1.0f, 0); }
 		bool Stop();
 		bool IsPlaying() const;
-		uint32_t EventId() { return eid; }
+		uint32_t EventId() const { return eid; }
 		bool SetOp(Op op);
 		bool VolumeAnimate(const float targetVol1, const float targetVol2, const float dv_dt1, const float dv_dt2);
 		bool VolumeAnimate(const float targetVols[2], const float dv_dt[2])

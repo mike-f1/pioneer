@@ -35,7 +35,7 @@ namespace Serializer {
 	class Writer {
 	public:
 		Writer() {}
-		const std::string &GetData() { return m_str; }
+		const std::string &GetData() const { return m_str; }
 
 		template <typename T>
 		void writeObject(const T &obj)
@@ -95,10 +95,10 @@ namespace Serializer {
 		void String(const char *s) { *this << s; }
 		void String(const std::string &s) { *this << s; }
 
-		void Vector2f(vector2f vec) { *this << vec; }
-		void Vector2d(vector2d vec) { *this << vec; }
-		void Vector3f(vector3f vec) { *this << vec; }
-		void Vector3d(vector3d vec) { *this << vec; }
+		void Vector2f(const vector2f &vec) { *this << vec; }
+		void Vector2d(const vector2d &vec) { *this << vec; }
+		void Vector3f(const vector3f &vec) { *this << vec; }
+		void Vector3d(const vector3d &vec) { *this << vec; }
 		void WrQuaternionf(const quaternionf &q) { *this << q; }
 		void Color4UB(const Color &c) { *this << c; }
 		void WrSection(const std::string &section_label, const std::string &section_data) { *this << section_label << section_data; }
@@ -119,16 +119,18 @@ namespace Serializer {
 	public:
 		Reader() :
 			m_at(nullptr),
-			m_streamVersion(-1) {}
+			m_streamVersion(-1)
+		{}
 
 		explicit Reader(const ByteRange &data) :
 			m_data(data),
-			m_at(data.begin)
+			m_at(data.begin),
+			m_streamVersion(-1)
 		{}
 
-		bool AtEnd() { return m_at != m_data.end; }
+		bool AtEnd() const { return m_at != m_data.end; }
 
-		bool Check(std::size_t needed_size)
+		bool Check(std::size_t needed_size) const
 		{
 			return m_data.end >= m_at + needed_size;
 		}
@@ -139,7 +141,7 @@ namespace Serializer {
 			m_at = m_data.begin + pos;
 		}
 
-		std::size_t Pos() { return std::size_t(m_at - m_data.begin); }
+		std::size_t Pos() const { return std::size_t(m_at - m_data.begin); }
 
 		template <typename T>
 		void readObject(T &out)
@@ -151,7 +153,7 @@ namespace Serializer {
 
 			out = *reinterpret_cast<const T *>(m_at);
 			m_at += sizeof(T);
-		};
+		}
 
 		void readObject(std::string &out)
 		{

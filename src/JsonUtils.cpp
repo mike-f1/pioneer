@@ -28,19 +28,6 @@ extern "C" {
 }
 
 namespace {
-	uint32_t pack4char(const uint8_t a, const uint8_t b, const uint8_t c, const uint8_t d)
-	{
-		return ((a << 24) | (b << 16) | (c << 8) | d);
-	}
-
-	void unpack4char(const uint32_t packed, uint8_t &a, uint8_t &b, uint8_t &c, uint8_t &d)
-	{
-		a = ((packed >> 24) & 0xff);
-		b = ((packed >> 16) & 0xff);
-		c = ((packed >> 8) & 0xff);
-		d = (packed & 0xff);
-	}
-
 	static const vector3f zeroVector3f(0.0f);
 	static const vector3d zeroVector3d(0.0);
 	static const quaternionf identityQuaternionf(1.0f, 0.0f, 0.0f, 0.0f);

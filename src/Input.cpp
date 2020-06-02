@@ -26,7 +26,10 @@ InputFrameStatusTicket::~InputFrameStatusTicket()
 	});
 }
 
-Input::Input()
+Input::Input() :
+	m_keyJustPressed(0),
+	m_keyModStateUnified(SDL_Keymod::KMOD_NONE),
+	m_wheelState(KeyBindings::WheelDirection::NONE)
 {
 	GameConfig &config = GameConfSingleton::getInstance();
 
@@ -142,7 +145,7 @@ int countPrefix(const std::map<std::string, MapValueType> &map, const std::strin
 		if (key.compare(0, search_for.size(), search_for) == 0) {
 			matches++;
 		}
-		iter++;
+		++iter;
 	}
 	return matches;
 }
@@ -220,7 +223,7 @@ std::tuple<bool, int, int> Input::GetMouseMotion(MouseMotionBehaviour mmb)
 	return std::make_tuple(false, 0, 0);
 }
 
-float Input::GetMoveSpeedShiftModifier()
+float Input::GetMoveSpeedShiftModifier() const
 {
 	float speed = 1.0f;
 	if (m_speedModifier->GetBinding(0).IsActive()) speed *= 5.f;

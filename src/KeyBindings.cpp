@@ -453,7 +453,7 @@ namespace KeyBindings {
 		const size_t BUF_SIZE = 64;
 		const size_t len = str.length();
 		if (len >= BUF_SIZE) {
-			Output("invalid ActionBinding string\n");
+			Output("invalid ActionBinding string '%s'\n", str.c_str());
 			if (!KeyBinding::FromString(str.data(), m_binding[0])) m_binding[0].Clear();
 			m_binding[1].Clear();
 		} else {
@@ -491,7 +491,7 @@ namespace KeyBindings {
 		return m_binding[0].IsActive() || m_binding[1].IsActive();
 	}
 
-	void ActionBinding::StoreOnActionCallback(std::function<void(bool)> fun)
+	void ActionBinding::StoreOnActionCallback(const std::function<void(bool)> &fun)
 	{
 		if (m_fun != nullptr) Error("It seems that a 'OnActionCallback' is already stored!");
 		m_fun = fun;
@@ -890,7 +890,7 @@ namespace KeyBindings {
 		return oss.str();
 	}
 
-	void AxisBinding::StoreOnAxisCallback(std::function<void(float)> fun)
+	void AxisBinding::StoreOnAxisCallback(const std::function<void(float)> &fun)
 	{
 		if (m_fun != nullptr) Error("It seems that a 'OnAxisCallback' is already stored!");
 		m_fun = fun;

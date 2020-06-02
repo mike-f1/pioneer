@@ -20,9 +20,9 @@ Intro::~Intro()
 {
 }
 
-void Intro::Draw(float _time)
+void Intro::Draw(float time)
 {
-	m_duration += _time;
+	m_duration += time;
 
 	Graphics::Renderer::StateTicket ticket(RendererLocator::getRenderer());
 

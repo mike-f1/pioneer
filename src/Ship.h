@@ -188,8 +188,6 @@ public:
 	void AIOrbit(Body *target, double alt); // Note: defined in Ship-AI.cpp
 	void AIHoldPosition(); // Note: defined in Ship-AI.cpp
 
-	void AIBodyDeleted(const Body *const body){}; // Note: defined in Ship-AI.cpp // todo: signals
-
 	const AICommand *GetAICommand() const { return m_curAICmd; }
 
 	virtual void PostLoadFixup(Space *space) override;

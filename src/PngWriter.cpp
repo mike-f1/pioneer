@@ -9,7 +9,7 @@
 #include "libs/utils.h"
 
 namespace PngWriter {
-	void write_png(FileSystem::FileSourceFS &fs, const std::string &path, const uint8_t *bytes, int width, int height, int stride, int bytes_per_pixel)
+	void write_png(const FileSystem::FileSourceFS &fs, const std::string &path, const uint8_t *bytes, int width, int height, int stride, int bytes_per_pixel)
 	{
 		// Set up the pixel format color masks for RGB(A) byte arrays.
 		uint32_t rmask, gmask, bmask, amask;

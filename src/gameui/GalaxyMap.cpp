@@ -50,7 +50,7 @@ namespace GameUI {
 		const float inv_sector_size = 1.0 / Sector::SIZE;
 		const float radius_sectors = galaxy->GALAXY_RADIUS * inv_sector_size;
 
-		const UI::Point widget_size = m_baseImage->GetSize();
+		const UI::Point &widget_size = m_baseImage->GetSize();
 		const float widget_aspect = float(widget_size.x) / float(widget_size.y);
 		vector2f viewport_sectors(radius_sectors, radius_sectors);
 		float display_scale;

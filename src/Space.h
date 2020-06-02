@@ -58,7 +58,7 @@ public:
 		const vector3d &dir, vector3d &pos, vector3d &vel) const;
 
 	Body *FindNearestTo(const Body *b, Object::Type t) const;
-	Body *FindBodyForPath(const SystemPath *path) const;
+	Body *FindBodyForPath(const SystemPath &path) const;
 
 	uint32_t GetNumBodies() const { return static_cast<uint32_t>(m_bodies.size()); }
 	IterationProxy<std::list<Body *>> GetBodies() { return MakeIterationProxy(m_bodies); }

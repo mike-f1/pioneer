@@ -18,6 +18,7 @@
 using namespace PiGUI;
 
 ModelSpinner::ModelSpinner() :
+	m_needsResize(true),
 	m_pauseTime(0.),
 	m_rot(vector2f(DEG2RAD(-15.0), DEG2RAD(180.0)))
 {

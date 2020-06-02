@@ -130,7 +130,7 @@ void SectorView::RegisterInputBindings()
 	using namespace KeyBindings;
 	using namespace std::placeholders;
 
-	m_inputFrame.reset(new InputFrame("SectorView"));
+	m_inputFrame = std::make_unique<InputFrame>("SectorView");
 
 	auto &page = Pi::input->GetBindingPage("SectorView");
 
@@ -157,8 +157,6 @@ void SectorView::RegisterInputBindings()
 
 	m_sectorBindings.mapViewRotateLeftRight = m_inputFrame->AddAxisBinding("BindMapViewRotateLeftRight", groupVMC, AxisBinding(SDLK_RIGHT, SDLK_LEFT));
 	m_sectorBindings.mapViewRotateUpDown = m_inputFrame->AddAxisBinding("BindMapViewRotateUpDown", groupVMC, AxisBinding(SDLK_DOWN, SDLK_UP));
-
-	Pi::input->PushInputFrame(m_inputFrame.get());
 }
 
 void SectorView::InitDefaults()
@@ -216,7 +214,6 @@ void SectorView::InitObject(unsigned int cacheRadius)
 
 SectorView::~SectorView()
 {
-	Pi::input->RemoveInputFrame(m_inputFrame.get());
 }
 
 void SectorView::SaveToJson(Json &jsonObj)

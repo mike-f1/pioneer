@@ -1227,8 +1227,8 @@ bool StarSystemRandomGenerator::Apply(Random &rng, RefCountedPtr<Galaxy> galaxy,
 			if (numStars == 3) {
 				star[2] = syswrt.NewBody();
 				star[2]->m_name = sec->m_systems[system->GetPath().systemIndex].GetName() + " C";
-				star[2]->m_orbMin = 0;
-				star[2]->m_orbMax = 0;
+				star[2]->m_orbMin = fixed(0);
+				star[2]->m_orbMax = fixed(0);
 				MakeStarOfTypeLighterThan(star[2], sec->m_systems[system->GetPath().systemIndex].GetStarType(2), star[0]->GetMassAsFixed(), rng);
 				centGrav2 = star[2];
 				syswrt.SetNumStars(3);
@@ -1236,7 +1236,7 @@ bool StarSystemRandomGenerator::Apply(Random &rng, RefCountedPtr<Galaxy> galaxy,
 				centGrav2 = syswrt.NewBody();
 				centGrav2->m_type = GalaxyEnums::BodyType::TYPE_GRAVPOINT;
 				centGrav2->m_name = sec->m_systems[system->GetPath().systemIndex].GetName() + " C,D";
-				centGrav2->m_orbMax = 0;
+				centGrav2->m_orbMax = fixed(0);
 
 				star[2] = syswrt.NewBody();
 				star[2]->m_name = sec->m_systems[system->GetPath().systemIndex].GetName() + " C";
@@ -1582,7 +1582,7 @@ void PopulateStarSystemGenerator::PopulateAddStations(SystemBody *sbody, StarSys
 				sp->m_parent = sbody;
 				sp->m_rotationPeriod = fixed(1, 3600);
 				sp->m_averageTemp = sbody->GetAverageTemp();
-				sp->m_mass = 0;
+				sp->m_mass = fixed(0);
 
 				// place stations between min and max orbits to reduce the number of extremely close/fast orbits
 				sp->m_semiMajorAxis = currOrbit;
@@ -1623,7 +1623,7 @@ void PopulateStarSystemGenerator::PopulateAddStations(SystemBody *sbody, StarSys
 		sp->m_seed = rand.Int32();
 		sp->m_parent = sbody;
 		sp->m_averageTemp = sbody->GetAverageTemp();
-		sp->m_mass = 0;
+		sp->m_mass = fixed(0);
 		sp->m_name = gen_unique_station_name(sp, system, namerand);
 		memset(&sp->m_orbit, 0, sizeof(Orbit));
 		PositionSettlementOnPlanet(sp, previousOrbits);
@@ -1638,7 +1638,7 @@ void PopulateStarSystemGenerator::PopulateAddStations(SystemBody *sbody, StarSys
 		sp->m_seed = rand.Int32();
 		sp->m_parent = sbody;
 		sp->m_averageTemp = sbody->m_averageTemp;
-		sp->m_mass = 0;
+		sp->m_mass = fixed(0);
 		sp->m_name = gen_unique_station_name(sp, system, namerand);
 		memset(&sp->m_orbit, 0, sizeof(Orbit));
 		PositionSettlementOnPlanet(sp, previousOrbits);
@@ -1744,7 +1744,7 @@ bool PopulateStarSystemGenerator::Apply(Random &rng, RefCountedPtr<Galaxy> galax
 	syswrt.SetHumanProx(galaxy->GetFactions()->IsHomeSystem(system->GetPath()) ? fixed(2, 3) : fixed(3, 1) / isqrt(9 + 10 * (system->GetPath().sectorX * system->GetPath().sectorX + system->GetPath().sectorY * system->GetPath().sectorY + system->GetPath().sectorZ * system->GetPath().sectorZ)));
 	syswrt.SetEconType(GalacticEconomy::EconType::INDUSTRY);
 	syswrt.SetIndustrial(rand.Fixed());
-	syswrt.SetAgricultural(0);
+	syswrt.SetAgricultural(fixed(0));
 
 	/* system attributes */
 	fixed totalPop = fixed();

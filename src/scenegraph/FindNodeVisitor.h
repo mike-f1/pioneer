@@ -22,7 +22,7 @@ namespace SceneGraph {
 			//match type etc.
 		};
 		FindNodeVisitor(Criteria crit, const std::string &searchstring);
-		virtual void ApplyNode(Node &);
+		virtual void ApplyNode(Node &) final;
 
 		const std::vector<Node *> &GetResults() { return m_results; }
 

@@ -14,6 +14,7 @@ namespace Graphics {
 		class GLBufferBase {
 		public:
 			GLBufferBase() :
+				m_buffer(0),
 				m_written(false) {}
 			GLuint GetBuffer() const { return m_buffer; }
 

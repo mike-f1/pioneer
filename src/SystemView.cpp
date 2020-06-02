@@ -268,8 +268,6 @@ SystemView::SystemView() :
 
 SystemView::~SystemView()
 {
-	Pi::input->RemoveInputFrame(m_inputFrame.get());
-
 	m_contacts.clear();
 }
 
@@ -278,14 +276,12 @@ void SystemView::RegisterInputBindings()
 	using namespace KeyBindings;
 	using namespace std::placeholders;
 
-	m_inputFrame.reset(new InputFrame("SystemView"));
+	m_inputFrame = std::make_unique<InputFrame>("SystemView");
 
 	BindingPage &page = Pi::input->GetBindingPage("SystemView");
 	BindingGroup &group = page.GetBindingGroup("Miscellaneous");
 
 	m_systemViewBindings.zoomView = m_inputFrame->AddAxisBinding("BindViewZoom", group, AxisBinding(WheelDirection::UP));
-
-	Pi::input->PushInputFrame(m_inputFrame.get());
 }
 
 void SystemView::OnSwitchTo()
@@ -489,7 +485,7 @@ void SystemView::OnClickObject(const SystemBody *b)
 	// click on object (in same system) sets/unsets it as nav target
 	SystemPath path = m_system->GetPathOf(b);
 	if (GameLocator::getGame()->GetSpace()->GetStarSystem()->GetPath() == m_system->GetPath()) {
-		Body *body = GameLocator::getGame()->GetSpace()->FindBodyForPath(&path);
+		Body *body = GameLocator::getGame()->GetSpace()->FindBodyForPath(path);
 		if (body != 0) {
 			if (GameLocator::getGame()->GetPlayer()->GetNavTarget() == body) {
 				GameLocator::getGame()->GetPlayer()->SetNavTarget(body);

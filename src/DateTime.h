@@ -89,10 +89,10 @@ namespace Time {
 		// month = 1 to 12
 		// day = 1 to N where N is the number of days in the specified month and year
 		DateTime(int year, int month, int day, int hour = 0, int minute = 0, int second = 0, int microsecond = 0);
-		DateTime(double gameTime);
+		explicit DateTime(double gameTime);
 
-		void GetDateParts(int *year, int *month, int *day) const;
-		void GetTimeParts(int *hour, int *minute, int *second, int *microsecond = nullptr) const;
+		void GetDateParts(int *out_year, int *out_month, int *out_day) const;
+		void GetTimeParts(int *out_hour, int *out_minute, int *out_second, int *out_microsecond = nullptr) const;
 
 		double ToGameTime() const;
 		std::string ToDateString() const;

@@ -12,7 +12,7 @@
 
 class PropertyMap {
 public:
-	PropertyMap(LuaManager *lua);
+	explicit PropertyMap(LuaManager *lua);
 
 	template <class Value>
 	void Set(const std::string &k, const Value &v)

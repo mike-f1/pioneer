@@ -56,7 +56,7 @@ namespace UI {
 		KeySym(const SDL_Keycode &_sym, const SDL_Keymod &_mod) :
 			sym(_sym),
 			mod(safe_mods(_mod)) {}
-		KeySym(const SDL_Keycode &_sym) :
+		explicit KeySym(const SDL_Keycode &_sym) :
 			sym(_sym),
 			mod(KMOD_NONE) {}
 		SDL_Keycode sym;
@@ -103,7 +103,7 @@ namespace UI {
 
 	class TextInputEvent : public Event {
 	public:
-		TextInputEvent(uint32_t _unicode) :
+		explicit TextInputEvent(uint32_t _unicode) :
 			Event(Event::TEXT_INPUT),
 			unicode(_unicode) {}
 		const uint32_t unicode;

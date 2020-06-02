@@ -80,7 +80,7 @@ namespace PiGUI {
 
 			return 0;
 		}
-	}; // namespace LuaPiguiModelSpinner
+	} // namespace LuaPiguiModelSpinner
 } // namespace PiGUI
 
 using namespace PiGUI::LuaPiguiModelSpinner;

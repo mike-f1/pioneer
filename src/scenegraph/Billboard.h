@@ -21,10 +21,10 @@ namespace SceneGraph {
 	public:
 		Billboard(Graphics::VertexArray &bbVA, float size);
 		Billboard(const Billboard &, NodeCopyCache *cache = 0);
-		virtual Node *Clone(NodeCopyCache *cache = 0);
-		virtual void Accept(NodeVisitor &v);
-		virtual const char *GetTypeName() const { return "Billboard"; }
-		virtual void Render(const matrix4x4f &trans, const RenderData *rd);
+		virtual Node *Clone(NodeCopyCache *cache = 0) override;
+		virtual void Accept(NodeVisitor &nv) override;
+		virtual const char *GetTypeName() const override { return "Billboard"; }
+		virtual void Render(const matrix4x4f &trans, const RenderData *rd) override;
 		void SetColorUVoffset(const vector2f &c) { m_colorUVoffset = c; }
 
 	private:

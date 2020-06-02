@@ -187,9 +187,9 @@ namespace FileSystem {
 		return RefCountedPtr<FileData>(0);
 	}
 
-	bool FileSourceFS::ReadDirectory(const std::string &dirpath, std::vector<FileInfo> &output)
+	bool FileSourceFS::ReadDirectory(const std::string &path, std::vector<FileInfo> &output)
 	{
-		const std::string fulldirpath = JoinPathBelow(GetRoot(), dirpath);
+		const std::string fulldirpath = JoinPathBelow(GetRoot(), path);
 		DIR *dir = opendir(fulldirpath.c_str());
 		if (!dir) {
 			return false;
@@ -212,7 +212,7 @@ namespace FileSystem {
 				ty = FileInfo::FT_NON_EXISTENT;
 			}
 
-			output.push_back(MakeFileInfo(JoinPath(dirpath, entry->d_name), ty, mtime));
+			output.push_back(MakeFileInfo(JoinPath(path, entry->d_name), ty, mtime));
 		}
 
 		closedir(dir);

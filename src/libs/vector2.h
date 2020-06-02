@@ -8,6 +8,8 @@
 
 #include "FloatComparison.h"
 #include <math.h>
+#include <cstdio>
+#include <cstring>
 
 template <typename T>
 struct other_floating_type {};
@@ -40,12 +42,12 @@ public:
 	explicit vector2(T v) :
 		x(v),
 		y(v) {}
-	vector2(const vector2 &v) :
-		x(v.x),
-		y(v.y) {}
+	vector2(const vector2 &v) = default;
 	explicit vector2(const T v[2]) :
 		x(v[0]),
 		y(v[1]) {}
+
+	vector2 &operator = (const vector2 &) = default;
 
 	// disallow implicit conversion between floating point sizes
 	explicit vector2(const vector2<typename other_floating_type<T>::type> &v);
@@ -117,14 +119,6 @@ inline vector2<float>::vector2() {}
 template <>
 inline vector2<double>::vector2() {}
 template <>
-inline vector2<float>::vector2(const vector2<float> &v) :
-	x(v.x),
-	y(v.y) {}
-template <>
-inline vector2<double>::vector2(const vector2<double> &v) :
-	x(v.x),
-	y(v.y) {}
-template <>
 inline vector2<float>::vector2(const vector2<double> &v) :
 	x(float(v.x)),
 	y(float(v.y)) {}
@@ -135,5 +129,8 @@ inline vector2<double>::vector2(const vector2<float> &v) :
 
 typedef vector2<float> vector2f;
 typedef vector2<double> vector2d;
+
+extern template class vector2<float>;
+extern template class vector2<double>;
 
 #endif

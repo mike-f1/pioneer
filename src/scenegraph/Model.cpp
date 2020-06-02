@@ -53,11 +53,11 @@ namespace SceneGraph {
 		m_patterns(other.m_patterns),
 		m_collMesh(other.m_collMesh) //might have to make this per-instance at some point
 		,
-		m_Boxes(other.m_Boxes),
 		m_name(other.m_name),
 		m_curPatternIndex(other.m_curPatternIndex),
 		m_curPattern(other.m_curPattern),
 		m_debugFlags(DebugFlags::NONE),
+		m_Boxes(other.m_Boxes),
 		m_mounts(other.m_mounts)
 	{
 		//selective copying of node structure

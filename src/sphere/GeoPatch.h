@@ -36,7 +36,7 @@ class SSingleSplitResult;
 
 class GeoPatch {
 public:
-	GeoPatch(const RefCountedPtr<GeoPatchContext> &_ctx, GeoSphere *gs,
+	GeoPatch(const RefCountedPtr<GeoPatchContext> &ctx, GeoSphere *gs,
 		const vector3d &v0_, const vector3d &v1_, const vector3d &v2_, const vector3d &v3_,
 		const int depth, const GeoPatchID &ID_);
 

@@ -70,7 +70,8 @@ private:
 ModelBody::ModelBody() :
 	m_isStatic(false),
 	m_colliding(true),
-	m_geom(nullptr)
+	m_geom(nullptr),
+	m_idleAnimation(nullptr)
 {
 }
 

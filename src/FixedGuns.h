@@ -116,10 +116,10 @@ public:
 	bool IsFiring(GunId num) const;
 	bool IsBeam(GunId num) const;
 	float GetGunTemperature(GunId idx) const;
-	const std::string &GetGunName(GunId idx) const { return m_guns[idx].gun_data.gun_name; };
+	const std::string &GetGunName(GunId idx) const;
 	inline float GetGunRange(GunId idx) const { return m_guns[idx].gun_data.projData.speed * m_guns[idx].gun_data.projData.lifespan; };
 	inline float GetProjSpeed(GunId idx) const { return m_guns[idx].gun_data.projData.speed; };
-	inline void SetCoolingBoost(float cooler) { m_cooler_boost = cooler; };
+	inline void SetCoolingBoost(float cooler) { m_cooler_boost = std::max(std::min(cooler, 10.0f), 0.01f); };
 
 private:
 

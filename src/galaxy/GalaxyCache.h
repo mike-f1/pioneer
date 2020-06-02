@@ -34,7 +34,7 @@ public:
 	RefCountedPtr<T> GetIfCached(const SystemPath &path);
 
 	void ClearCache(); // Completely clear slave caches
-	bool IsEmpty() { return m_attic.empty(); }
+	bool IsEmpty() const { return m_attic.empty(); }
 
 	void OutputCacheStatistics(bool reset = true);
 

@@ -217,7 +217,7 @@ float Beam::GetDamage() const
 
 double Beam::GetRadius() const
 {
-	return sqrt(m_length * m_length);
+	return std::abs(m_length);
 }
 
 void Beam::StaticUpdate(const float timeStep)
@@ -227,10 +227,8 @@ void Beam::StaticUpdate(const float timeStep)
 	if (!m_active)
 		return;
 
-	CollisionContact c;
-
 	Frame *frame = Frame::GetFrame(GetFrame());
-	frame->GetCollisionSpace()->TraceRay(GetPosition(), m_dir.Normalized(), m_length, &c, static_cast<ModelBody *>(m_parent)->GetGeom());
+	CollisionContact c = frame->GetCollisionSpace()->TraceRay(GetPosition(), m_dir.Normalized(), m_length, static_cast<ModelBody *>(m_parent)->GetGeom());
 
 	if (c.userData1) {
 		Object *o = static_cast<Object *>(c.userData1);

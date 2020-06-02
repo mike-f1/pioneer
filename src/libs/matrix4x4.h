@@ -6,6 +6,7 @@
 
 #include "matrix3x3.h"
 #include "vector3.h"
+#include <array>
 #include <math.h>
 #include <cassert>
 #include <cstring>
@@ -13,19 +14,17 @@
 template <typename T>
 class matrix4x4 {
 private:
-	T cell[16];
+	std::array<T, 16> cell;
 
 public:
 	matrix4x4() {}
 	matrix4x4(T val)
 	{
-		cell[0] = cell[1] = cell[2] = cell[3] = cell[4] = cell[5] = cell[6] =
-			cell[7] = cell[8] = cell[9] = cell[10] = cell[11] = cell[12] = cell[13] =
-				cell[14] = cell[15] = val;
+		cell.fill(val);
 	}
 	matrix4x4(const T *vals)
 	{
-		memcpy(cell, vals, sizeof(T) * 16);
+		memcpy(cell.data(), vals, sizeof(T) * 16);
 	}
 	void SetTranslate(const vector3<T> &v)
 	{
@@ -378,8 +377,8 @@ public:
 	}
 	T &operator[](const size_t i) { return cell[i]; }
 	const T &operator[](const size_t i) const { return cell[i]; }
-	const T *Data() const { return cell; }
-	T *Data() { return cell; }
+	const T *Data() const { return cell.data(); }
+	T *Data() { return cell.data(); }
 	friend matrix4x4 operator+(const matrix4x4 &a, const matrix4x4 &b)
 	{
 		matrix4x4 m;
@@ -571,5 +570,8 @@ static inline void matrix4x4dtof(const matrix4x4d &in, matrix4x4f &out)
 
 static const matrix4x4f matrix4x4fIdentity(matrix4x4f::Identity());
 static const matrix4x4d matrix4x4dIdentity(matrix4x4d::Identity());
+
+extern template class matrix4x4<float>;
+extern template class matrix4x4<double>;
 
 #endif /* _MATRIX4X4_H */

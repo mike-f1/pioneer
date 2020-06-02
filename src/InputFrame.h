@@ -12,7 +12,7 @@ namespace KeyBindings {
 	struct ActionBinding;
 	struct AxisBinding;
 	enum class InputResponse;
-};
+}
 
 class InputFrame {
 	friend class Input;
@@ -20,15 +20,8 @@ public:
 	InputFrame() = delete;
 	InputFrame(const InputFrame &) = delete;
 
-	InputFrame(const std::string &name) :
-		m_name(name),
-		m_active(false)
-	{
-		m_actions.reserve(4);
-		m_axes.reserve(4);
-	}
-
-	~InputFrame();
+	InputFrame(const std::string &name) ;
+	virtual ~InputFrame();
 
 	bool IsActive() const { return m_active; }
 	void SetActive(bool is_active);

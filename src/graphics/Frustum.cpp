@@ -39,6 +39,13 @@ namespace Graphics {
 	{
 		const matrix4x4d m = m_projMatrix * m_modelMatrix;
 		InitFromMatrix(m);
+
+		// Inverted this system of eqs to obtain zfar and znear (taken from matrix frustum):
+		// m[10] = -(zfar + znear) / (zfar - znear);
+		// m[14] = -(2.0 * zfar * znear) / (zfar - znear);
+		double zfar = m[14] / (m[10] + 1);
+		//znear = m[14] / (m[10] - 1);
+		m_translateThresholdSqr = zfar * zfar * TRANSLATE_STEP;
 	}
 
 	void Frustum::InitFromMatrix(const matrix4x4d &m)
@@ -139,6 +146,7 @@ namespace Graphics {
 	vector3d Frustum::TranslatePoint(const vector3d &in) const
 	{
 		vector3d out = in;
+		// TODO: Can it be calculated with log and exp?
 		while (out.LengthSqr() > m_translateThresholdSqr) {
 			out *= TRANSLATE_STEP;
 		}

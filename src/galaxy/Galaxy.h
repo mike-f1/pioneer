@@ -78,7 +78,7 @@ private:
 		float radius, float sol_offset_x, float sol_offset_y, const std::string &factionsDir, const std::string &customSysDir);
 
 public:
-	virtual uint8_t GetSectorDensity(const int sx, const int sy, const int sz) const;
+	virtual uint8_t GetSectorDensity(const int sx, const int sy, const int sz) const override;
 
 private:
 	std::unique_ptr<float[]> m_galaxyMap;

@@ -299,10 +299,10 @@ void Space::GetRandomOrbitFromDirection(const SystemPath &source, const SystemPa
 	Body *primary = 0;
 	if (dest.IsBodyPath()) {
 		assert(dest.bodyIndex < m_starSystem->GetNumBodies());
-		primary = FindBodyForPath(&dest);
+		primary = FindBodyForPath(dest);
 		while (primary && primary->GetSystemBody()->GetSuperType() != GalaxyEnums::BodySuperType::SUPERTYPE_STAR) {
 			SystemBody *parent = primary->GetSystemBody()->GetParent();
-			primary = parent ? FindBodyForPath(&parent->GetPath()) : nullptr;
+			primary = parent ? FindBodyForPath(parent->GetPath()) : nullptr;
 		}
 	}
 	if (!primary) {
@@ -358,7 +358,7 @@ Body *Space::FindNearestTo(const Body *b, Object::Type t) const
 	return nearest;
 }
 
-Body *Space::FindBodyForPath(const SystemPath *path) const
+Body *Space::FindBodyForPath(const SystemPath &path) const
 {
 	// it is a bit dumb that currentSystem is not part of Space...
 	SystemBody *body = m_starSystem->GetBodyByPath(path);
@@ -635,137 +635,141 @@ void Space::GenBody(const double at_time, SystemBody *sbody, FrameId fId, std::v
 	}
 }
 
-static bool OnCollision(Object *o1, Object *o2, CollisionContact *c, double relativeVel)
+static bool OnCollision(Object *o1, Object *o2, const CollisionContact &c, double relativeVel)
 {
 	Body *pb1 = static_cast<Body *>(o1);
 	Body *pb2 = static_cast<Body *>(o2);
 	/* Not always a Body (could be CityOnPlanet, which is a nasty exception I should eradicate) */
 	if (o1->IsType(Object::BODY)) {
-		if (pb1 && !pb1->OnCollision(o2, c->geomFlag, relativeVel)) return false;
+		if (pb1 && !pb1->OnCollision(o2, c.geomFlag, relativeVel)) return false;
 	}
 	if (o2->IsType(Object::BODY)) {
-		if (pb2 && !pb2->OnCollision(o1, c->geomFlag, relativeVel)) return false;
+		if (pb2 && !pb2->OnCollision(o1, c.geomFlag, relativeVel)) return false;
 	}
 	return true;
 }
 
-static void hitCallback(CollisionContact *c)
+static void hitCallback(const CollisionContactVector &ccv)
 {
-	//Output("OUCH! %x (depth %f)\n", SDL_GetTicks(), c->depth);
+	PROFILE_SCOPED()
 
-	Object *po1 = static_cast<Object *>(c->userData1);
-	Object *po2 = static_cast<Object *>(c->userData2);
+	for (const CollisionContact &c : ccv) {
+		//Output("OUCH! %x (depth %f)\n", SDL_GetTicks(), c->depth);
 
-	const bool po1_isDynBody = po1->IsType(Object::DYNAMICBODY);
-	const bool po2_isDynBody = po2->IsType(Object::DYNAMICBODY);
-	// collision response
-	assert(po1_isDynBody || po2_isDynBody);
+		Object *po1 = static_cast<Object *>(c.userData1);
+		Object *po2 = static_cast<Object *>(c.userData2);
 
-	// Bounce factor
-	const double coeff_rest = 0.35;
-	// Allow stop due to friction
-	const double coeff_slide = 0.700;
+		const bool po1_isDynBody = po1->IsType(Object::DYNAMICBODY);
+		const bool po2_isDynBody = po2->IsType(Object::DYNAMICBODY);
+		// collision response
+		assert(po1_isDynBody || po2_isDynBody);
 
-	if (po1_isDynBody && po2_isDynBody) {
-		DynamicBody *b1 = static_cast<DynamicBody *>(po1);
-		DynamicBody *b2 = static_cast<DynamicBody *>(po2);
-		const vector3d linVel1 = b1->GetVelocity();
-		const vector3d linVel2 = b2->GetVelocity();
-		const vector3d angVel1 = b1->GetAngVelocity();
-		const vector3d angVel2 = b2->GetAngVelocity();
+		// Bounce factor
+		const double coeff_rest = 0.35;
+		// Allow stop due to friction
+		const double coeff_slide = 0.700;
 
-		const double invMass1 = 1.0 / b1->GetMass();
-		const double invMass2 = 1.0 / b2->GetMass();
-		const vector3d hitPos1 = c->pos - b1->GetPosition();
-		const vector3d hitPos2 = c->pos - b2->GetPosition();
-		const vector3d hitVel1 = linVel1 + angVel1.Cross(hitPos1);
-		const vector3d hitVel2 = linVel2 + angVel2.Cross(hitPos2);
-		const double relVel = (hitVel1 - hitVel2).Dot(c->normal);
-		// moving away so no collision
-		if (relVel > 0) return;
-		if (!OnCollision(po1, po2, c, -relVel)) return;
-		const double invAngInert1 = 1.0 / b1->GetAngularInertia();
-		const double invAngInert2 = 1.0 / b2->GetAngularInertia();
-		const double numerator = -(1.0 + coeff_rest) * relVel;
-		const double term1 = invMass1;
-		const double term2 = invMass2;
-		const double term3 = c->normal.Dot((hitPos1.Cross(c->normal) * invAngInert1).Cross(hitPos1));
-		const double term4 = c->normal.Dot((hitPos2.Cross(c->normal) * invAngInert2).Cross(hitPos2));
+		if (po1_isDynBody && po2_isDynBody) {
+			DynamicBody *b1 = static_cast<DynamicBody *>(po1);
+			DynamicBody *b2 = static_cast<DynamicBody *>(po2);
+			const vector3d linVel1 = b1->GetVelocity();
+			const vector3d linVel2 = b2->GetVelocity();
+			const vector3d angVel1 = b1->GetAngVelocity();
+			const vector3d angVel2 = b2->GetAngVelocity();
 
-		const double j = numerator / (term1 + term2 + term3 + term4);
-		const vector3d force = j * c->normal;
+			const double invMass1 = 1.0 / b1->GetMass();
+			const double invMass2 = 1.0 / b2->GetMass();
+			const vector3d hitPos1 = c.pos - b1->GetPosition();
+			const vector3d hitPos2 = c.pos - b2->GetPosition();
+			const vector3d hitVel1 = linVel1 + angVel1.Cross(hitPos1);
+			const vector3d hitVel2 = linVel2 + angVel2.Cross(hitPos2);
+			const double relVel = (hitVel1 - hitVel2).Dot(c.normal);
+			// moving away so no collision
+			if (relVel > 0) return;
+			if (!OnCollision(po1, po2, c, -relVel)) return;
+			const double invAngInert1 = 1.0 / b1->GetAngularInertia();
+			const double invAngInert2 = 1.0 / b2->GetAngularInertia();
+			const double numerator = -(1.0 + coeff_rest) * relVel;
+			const double term1 = invMass1;
+			const double term2 = invMass2;
+			const double term3 = c.normal.Dot((hitPos1.Cross(c.normal) * invAngInert1).Cross(hitPos1));
+			const double term4 = c.normal.Dot((hitPos2.Cross(c.normal) * invAngInert2).Cross(hitPos2));
 
-		b1->SetVelocity(linVel1 * (1 - coeff_slide * c->timestep) + force * invMass1);
-		b1->SetAngVelocity(angVel1 + hitPos1.Cross(force) * invAngInert1);
-		b2->SetVelocity(linVel2 * (1 - coeff_slide * c->timestep) - force * invMass2);
-		b2->SetAngVelocity(angVel2 - hitPos2.Cross(force) * invAngInert2);
-	} else {
-		// one body is static
-		vector3d hitNormal;
-		DynamicBody *mover;
+			const double j = numerator / (term1 + term2 + term3 + term4);
+			const vector3d force = j * c.normal;
 
-		if (po1_isDynBody) {
-			mover = static_cast<DynamicBody *>(po1);
-			hitNormal = c->normal;
+			b1->SetVelocity(linVel1 * (1 - coeff_slide * c.timestep) + force * invMass1);
+			b1->SetAngVelocity(angVel1 + hitPos1.Cross(force) * invAngInert1);
+			b2->SetVelocity(linVel2 * (1 - coeff_slide * c.timestep) - force * invMass2);
+			b2->SetAngVelocity(angVel2 - hitPos2.Cross(force) * invAngInert2);
 		} else {
-			mover = static_cast<DynamicBody *>(po2);
-			hitNormal = -c->normal;
+			// one body is static
+			vector3d hitNormal;
+			DynamicBody *mover;
+
+			if (po1_isDynBody) {
+				mover = static_cast<DynamicBody *>(po1);
+				hitNormal = c.normal;
+			} else {
+				mover = static_cast<DynamicBody *>(po2);
+				hitNormal = -c.normal;
+			}
+
+			const vector3d linVel1 = mover->GetVelocity();
+			const vector3d angVel1 = mover->GetAngVelocity();
+
+			// step back
+			//		mover->UndoTimestep();
+
+			const double invMass1 = 1.0 / mover->GetMass();
+			const vector3d hitPos1 = c.pos - mover->GetPosition();
+			const vector3d hitVel1 = linVel1 + angVel1.Cross(hitPos1);
+			const double relVel = hitVel1.Dot(c.normal);
+			// moving away so no collision
+			if (relVel > 0) return;
+			if (!OnCollision(po1, po2, c, -relVel)) return;
+			const double invAngInert = 1.0 / mover->GetAngularInertia();
+			const double numerator = -(1.0 + coeff_rest) * relVel;
+			const double term1 = invMass1;
+			const double term3 = c.normal.Dot((hitPos1.Cross(c.normal) * invAngInert).Cross(hitPos1));
+
+			const double j = numerator / (term1 + term3);
+			const vector3d force = j * c.normal;
+
+			/*
+			   "Linear projection reduces the penetration of two
+			   objects by a small percentage, and this is performed
+			   after the impulse is applied"
+
+			   From:
+			   https://gamedevelopment.tutsplus.com/tutorials/how-to-create-a-custom-2d-physics-engine-the-basics-and-impulse-resolution--gamedev-6331
+
+			   Correction should never be more than c->depth (std::min) and never negative (std::max)
+			   NOTE: usually instead of 'c->timestep' you find a 'percent',
+			   but here we have a variable timestep and thus the upper limit,
+			   which is intended to trigger a collision in the subsequent frame.
+			   NOTE2: works (as intendend) at low timestep.
+			   Further improvement could be:
+					1) velocity should be projected relative to normal direction,
+					   so bouncing and friction may act on the "correct" components
+					   (though that a reason for fails and glitches are frames skipped
+					   because relVel is quitting before any further calculation)
+					2) with time accel at 10000x you end in space... probably in order
+					   for that to works correctly some deeper change should kick in
+			*/
+			constexpr float threshold = 0.005;
+
+			vector3d correction = std::min(std::max(c.depth - threshold, 0.0) * c.timestep, c.depth + threshold) * c.normal;
+
+			mover->SetPosition(mover->GetPosition() + correction);
+
+			const float reduction = std::max(1 - coeff_slide * c.timestep, 0.0);
+			vector3d final_vel = linVel1 * reduction + force * invMass1;
+			if (final_vel.LengthSqr() < 0.1) final_vel = vector3d(0.0);
+
+			mover->SetVelocity(final_vel);
+			mover->SetAngVelocity(angVel1 + hitPos1.Cross(force) * invAngInert);
 		}
-
-		const vector3d linVel1 = mover->GetVelocity();
-		const vector3d angVel1 = mover->GetAngVelocity();
-
-		// step back
-		//		mover->UndoTimestep();
-
-		const double invMass1 = 1.0 / mover->GetMass();
-		const vector3d hitPos1 = c->pos - mover->GetPosition();
-		const vector3d hitVel1 = linVel1 + angVel1.Cross(hitPos1);
-		const double relVel = hitVel1.Dot(c->normal);
-		// moving away so no collision
-		if (relVel > 0) return;
-		if (!OnCollision(po1, po2, c, -relVel)) return;
-		const double invAngInert = 1.0 / mover->GetAngularInertia();
-		const double numerator = -(1.0 + coeff_rest) * relVel;
-		const double term1 = invMass1;
-		const double term3 = c->normal.Dot((hitPos1.Cross(c->normal) * invAngInert).Cross(hitPos1));
-
-		const double j = numerator / (term1 + term3);
-		const vector3d force = j * c->normal;
-
-		/*
-		   "Linear projection reduces the penetration of two
-		   objects by a small percentage, and this is performed
-		   after the impulse is applied"
-
-		   From:
-		   https://gamedevelopment.tutsplus.com/tutorials/how-to-create-a-custom-2d-physics-engine-the-basics-and-impulse-resolution--gamedev-6331
-
-		   Correction should never be more than c->depth (std::min) and never negative (std::max)
-		   NOTE: usually instead of 'c->timestep' you find a 'percent',
-		   but here we have a variable timestep and thus the upper limit,
-		   which is intended to trigger a collision in the subsequent frame.
-		   NOTE2: works (as intendend) at low timestep.
-		   Further improvement could be:
-				1) velocity should be projected relative to normal direction,
-				   so bouncing and friction may act on the "correct" components
-				   (though that a reason for fails and glitches are frames skipped
-				   because relVel is quitting before any further calculation)
-				2) with time accel at 10000x you end in space... probably in order
-				   for that to works correctly some deeper change should kick in
-		*/
-		const float threshold = 0.005;
-
-		vector3d correction = std::min(std::max(c->depth - threshold, 0.0) * c->timestep, c->depth + threshold) * c->normal;
-
-		mover->SetPosition(mover->GetPosition() + correction);
-
-		const float reduction = std::max(1 - coeff_slide * c->timestep, 0.0);
-		vector3d final_vel = linVel1 * reduction + force * invMass1;
-		if (final_vel.LengthSqr() < 0.1) final_vel = vector3d(0.0);
-
-		mover->SetVelocity(final_vel);
-		mover->SetAngVelocity(angVel1 + hitPos1.Cross(force) * invAngInert);
 	}
 }
 
@@ -797,7 +801,9 @@ static void CollideWithTerrain(Body *body, float timeStep)
 		return;
 
 	CollisionContact c(body->GetPosition(), body->GetPosition().Normalized(), terrHeight - altitude, timeStep, static_cast<void *>(body), static_cast<void *>(f->GetBody()));
-	hitCallback(&c);
+	CollisionContactVector ccv;
+	ccv.push_back(c);
+	hitCallback(ccv);
 }
 
 void Space::TimeStep(float step, double total_time)
@@ -809,7 +815,8 @@ void Space::TimeStep(float step, double total_time)
 
 	m_bodyIndexValid = m_sbodyIndexValid = false;
 
-	Frame::CollideFrames(&hitCallback);
+	CollCallback hitCallbackFunctor = &hitCallback;
+	Frame::CollideFrames(hitCallbackFunctor);
 
 	for (Body *b : m_bodies)
 		CollideWithTerrain(b, step);

@@ -50,7 +50,7 @@ namespace Gui {
 		bool IsVisible() const;
 		Container *GetParent() const { return m_parent; }
 		void SetParent(Container *p) { m_parent = p; }
-		void SetToolTip(std::string s) { m_tooltip = s; }
+		void SetToolTip(const std::string &s) { m_tooltip = s; }
 		const std::string &GetToolTip() const { return m_tooltip; }
 
 		// event handlers should return false to stop propagating event

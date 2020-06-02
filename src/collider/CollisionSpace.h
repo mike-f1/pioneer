@@ -4,6 +4,7 @@
 #ifndef _COLLISION_SPACE
 #define _COLLISION_SPACE
 
+#include "CollisionCallbackFwd.h"
 #include "libs/vector3.h"
 #include <list>
 
@@ -32,8 +33,8 @@ public:
 	void RemoveGeom(Geom *);
 	void AddStaticGeom(Geom *);
 	void RemoveStaticGeom(Geom *);
-	void TraceRay(const vector3d &start, const vector3d &dir, double len, CollisionContact *c, const Geom *ignore = nullptr);
-	void Collide(void (*callback)(CollisionContact *));
+	CollisionContact TraceRay(const vector3d &start, const vector3d &dir, double len, const Geom *ignore = nullptr);
+	void Collide(CollCallback &callback);
 	void SetSphere(const vector3d &pos, double radius, void *user_data)
 	{
 		sphere.pos = pos;
@@ -54,7 +55,7 @@ public:
 	}
 
 private:
-	void CollideGeoms(Geom *a, int minMailboxValue, void (*callback)(CollisionContact *));
+	void CollideGeoms(Geom *a, int minMailboxValue, CollCallback &callback);
 	void CollideRaySphere(const vector3d &start, const vector3d &dir, isect_t *isect);
 	GeomList m_geoms;
 	GeomList m_staticGeoms;

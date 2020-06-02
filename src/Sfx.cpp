@@ -32,7 +32,7 @@ namespace {
 		const float pixrad = Clamp(Graphics::GetScreenHeight() / trans.Length(), 0.1f, 50.0f);
 		return (size * Graphics::GetFovFactor()) * pixrad;
 	}
-}; // namespace
+} // namespace
 
 std::unique_ptr<Graphics::Material> SfxManager::damageParticle;
 std::unique_ptr<Graphics::Material> SfxManager::ecmParticle;
@@ -70,15 +70,6 @@ Sfx::Sfx(const Json &jsonObj)
 	} catch (Json::type_error &) {
 		throw SavedGameCorruptException();
 	}
-}
-
-Sfx::Sfx(const Sfx &b) :
-	m_pos(b.m_pos),
-	m_vel(b.m_vel),
-	m_age(b.m_age),
-	m_speed(b.m_speed),
-	m_type(b.m_type)
-{
 }
 
 void Sfx::SaveToJson(Json &jsonObj)
@@ -165,8 +156,7 @@ void SfxManager::FromJson(const Json &jsonObj, FrameId fId)
 
 	if (sfxArray.size()) f->m_sfx.reset(new SfxManager);
 	for (unsigned int i = 0; i < sfxArray.size(); ++i) {
-		Sfx inst(sfxArray[i]);
-		f->m_sfx->AddInstance(inst);
+		f->m_sfx->AddInstance(sfxArray[i]["sfx"]["type"], sfxArray[i]);
 	}
 }
 
@@ -187,8 +177,7 @@ void SfxManager::Add(const Body *b, SFX_TYPE t)
 	SfxManager *sfxman = AllocSfxInFrame(b->GetFrame());
 	if (!sfxman) return;
 	vector3d vel(b->GetVelocity() + 200.0 * vector3d(RandomSingleton::getInstance().Double() - 0.5, RandomSingleton::getInstance().Double() - 0.5, RandomSingleton::getInstance().Double() - 0.5));
-	Sfx sfx(b->GetPosition(), vel, 200, t);
-	sfxman->AddInstance(sfx);
+	sfxman->AddInstance(t, b->GetPosition(), vel, 200, t);
 }
 
 void SfxManager::AddExplosion(Body *b)
@@ -201,8 +190,7 @@ void SfxManager::AddExplosion(Body *b)
 		ModelBody *mb = static_cast<ModelBody *>(b);
 		speed = mb->GetAabb().radius * 8.0;
 	}
-	Sfx sfx(b->GetPosition(), b->GetVelocity(), speed, TYPE_EXPLOSION);
-	sfxman->AddInstance(sfx);
+	sfxman->AddInstance(TYPE_EXPLOSION, b->GetPosition(), b->GetVelocity(), speed, TYPE_EXPLOSION);
 }
 
 void SfxManager::AddThrustSmoke(const Body *b, const float speed, const vector3d &adjustpos)
@@ -210,8 +198,7 @@ void SfxManager::AddThrustSmoke(const Body *b, const float speed, const vector3d
 	SfxManager *sfxman = AllocSfxInFrame(b->GetFrame());
 	if (!sfxman) return;
 
-	Sfx sfx(b->GetPosition() + adjustpos, vector3d(0, 0, 0), speed, TYPE_SMOKE);
-	sfxman->AddInstance(sfx);
+	sfxman->AddInstance(TYPE_SMOKE, b->GetPosition() + adjustpos, vector3d(0, 0, 0), speed, TYPE_SMOKE);
 }
 
 void SfxManager::TimeStepAll(const float timeStep, FrameId fId)

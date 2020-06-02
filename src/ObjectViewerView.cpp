@@ -74,7 +74,6 @@ ObjectViewerView::ObjectViewerView() :
 
 ObjectViewerView::~ObjectViewerView()
 {
-	Pi::input->RemoveInputFrame(m_inputFrame.get());
 }
 
 void ObjectViewerView::RegisterInputBindings()
@@ -82,7 +81,7 @@ void ObjectViewerView::RegisterInputBindings()
 	using namespace KeyBindings;
 	using namespace std::placeholders;
 
-	m_inputFrame.reset(new InputFrame("ObjectViewer"));
+	m_inputFrame = std::make_unique<InputFrame>("ObjectViewer");
 
 	auto &page = Pi::input->GetBindingPage("ObjectViewer");
 	page.shouldBeTranslated = false;
@@ -98,8 +97,6 @@ void ObjectViewerView::RegisterInputBindings()
 
 	m_objectViewerBindings.rotateLightLeft = m_inputFrame->AddActionBinding("RotateLightLeft", groupVMC, ActionBinding(SDLK_r));
 	m_objectViewerBindings.rotateLightRight = m_inputFrame->AddActionBinding("RotateLightRight", groupVMC, ActionBinding(SDLK_f));
-
-	Pi::input->PushInputFrame(m_inputFrame.get());
 }
 
 void ObjectViewerView::OnSwitchTo()
@@ -487,7 +484,7 @@ void ObjectViewerView::OnChangeTerrain()
 	sbody->m_volatileLiquid = fixed(65536.0 * m_sbVolatileLiquid, 65536);
 	sbody->m_volatileIces = fixed(65536.0 * m_sbVolatileIces, 65536);
 	sbody->m_volcanicity = fixed(65536.0 * m_sbVolcanicity, 65536);
-	sbody->m_life = m_sbLife;
+	sbody->m_life = fixed::FromDouble(m_sbLife);
 
 	// force reload
 	TerrainBody::OnChangeDetailLevel(GameConfSingleton::getDetail().planets);

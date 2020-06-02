@@ -16,7 +16,7 @@ class InputFrame;
 
 namespace KeyBindings {
 	enum class InputResponse;
-};
+}
 
 enum class MouseMotionBehaviour {
 	Select,
@@ -129,7 +129,7 @@ public:
 
 	// Get the default speed modifier to apply to movement (scrolling, zooming...), depending on the "shift" keys.
 	// This is a default value only, centralized here to promote uniform user experience.
-	float GetMoveSpeedShiftModifier();
+	float GetMoveSpeedShiftModifier() const;
 
 	int JoystickButtonState(int joystick, int button);
 	int JoystickHatState(int joystick, int hat);

@@ -50,7 +50,7 @@ namespace Graphics {
 		// don't mix these
 		void Set(const uint32_t idx, const vector3f &v);
 		void Set(const uint32_t idx, const vector3f &v, const Color &c);
-		void Set(const uint32_t idx, const vector3f &v, const Color &c, const vector3f &normal);
+		void Set(const uint32_t idx, const vector3f &v, const Color &c, const vector3f &n);
 		void Set(const uint32_t idx, const vector3f &v, const Color &c, const vector2f &uv);
 		void Set(const uint32_t idx, const vector3f &v, const vector2f &uv);
 		void Set(const uint32_t idx, const vector3f &v, const vector3f &n);

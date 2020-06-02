@@ -50,7 +50,6 @@ void RunCompiler(const std::string &modelName, const std::string &filepath, cons
 // ********************************************************************************
 class CompileJob : public Job {
 public:
-	CompileJob(){};
 	CompileJob(const std::string &name, const std::string &path, const bool inPlace) :
 		m_name(name),
 		m_path(path),

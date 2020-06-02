@@ -81,14 +81,14 @@ public:
 	CustomSystemBody *sBody;
 	GalaxyEnums::BodyType primaryType[4];
 	unsigned numStars;
-	int sectorX, sectorY, sectorZ;
+	int32_t sectorX, sectorY, sectorZ;
 	vector3f pos;
 	uint32_t seed;
 	bool want_rand_explored;
 	bool explored;
+	bool want_rand_lawlessness;
 	const Faction *faction;
 	Polit::GovType govType;
-	bool want_rand_lawlessness;
 	fixed lawlessness; // 0.0 = lawful, 1.0 = totally lawless
 	std::string shortDesc;
 	std::string longDesc;

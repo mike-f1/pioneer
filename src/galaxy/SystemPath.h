@@ -26,39 +26,19 @@ public:
 		sectorY(0),
 		sectorZ(0),
 		systemIndex(std::numeric_limits<uint32_t>::max()),
-		bodyIndex(std::numeric_limits<uint32_t>::max()) {}
+		bodyIndex(std::numeric_limits<uint32_t>::max())
+	{}
 
-	SystemPath(int32_t x, int32_t y, int32_t z) :
-		sectorX(x),
-		sectorY(y),
-		sectorZ(z),
-		systemIndex(std::numeric_limits<uint32_t>::max()),
-		bodyIndex(std::numeric_limits<uint32_t>::max()) {}
-	SystemPath(int32_t x, int32_t y, int32_t z, uint32_t si) :
+	SystemPath(int32_t x, int32_t y, int32_t z, uint32_t si = std::numeric_limits<uint32_t>::max(), uint32_t bi = std::numeric_limits<uint32_t>::max()) :
 		sectorX(x),
 		sectorY(y),
 		sectorZ(z),
 		systemIndex(si),
-		bodyIndex(std::numeric_limits<uint32_t>::max()) {}
-	SystemPath(int32_t x, int32_t y, int32_t z, uint32_t si, uint32_t bi) :
-		sectorX(x),
-		sectorY(y),
-		sectorZ(z),
-		systemIndex(si),
-		bodyIndex(bi) {}
+		bodyIndex(bi)
+	{}
 
-	SystemPath(const SystemPath &path) :
-		sectorX(path.sectorX),
-		sectorY(path.sectorY),
-		sectorZ(path.sectorZ),
-		systemIndex(path.systemIndex),
-		bodyIndex(path.bodyIndex) {}
-	SystemPath(const SystemPath *path) :
-		sectorX(path->sectorX),
-		sectorY(path->sectorY),
-		sectorZ(path->sectorZ),
-		systemIndex(path->systemIndex),
-		bodyIndex(path->bodyIndex) {}
+	SystemPath(const SystemPath &path) = default;
+	SystemPath &operator=(const SystemPath &path) = default;
 
 	int32_t sectorX;
 	int32_t sectorY;
@@ -94,7 +74,7 @@ public:
 	{
 		const int32_t x = b.sectorX - a.sectorX;
 		const int32_t y = b.sectorY - a.sectorY;
-		const int32_t z = b.sectorZ - b.sectorZ;
+		const int32_t z = b.sectorZ - a.sectorZ;
 		return sqrt(x * x + y * y + z * z); // sqrt is slow
 	}
 
@@ -102,7 +82,7 @@ public:
 	{
 		const int32_t x = b.sectorX - a.sectorX;
 		const int32_t y = b.sectorY - a.sectorY;
-		const int32_t z = b.sectorZ - b.sectorZ;
+		const int32_t z = b.sectorZ - a.sectorZ;
 		return (x * x + y * y + z * z); // return the square of the distance
 	}
 

@@ -55,10 +55,10 @@ namespace FileSystem {
 	{
 		static const std::string delim("/");
 
-		size_t start = 0, end = 0;
+		size_t end = 0;
 		while (end != std::string::npos) {
 			// get to the first non-delim char
-			start = path.find_first_not_of(delim, end);
+			size_t start = path.find_first_not_of(delim, end);
 
 			// read the end, no more to do
 			if (start == std::string::npos)

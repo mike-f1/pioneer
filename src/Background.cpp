@@ -75,7 +75,13 @@ namespace Background {
 	};
 #pragma pack(pop)
 
-	BackgroundElement::BackgroundElement()
+	BackgroundElement::BackgroundElement() :
+		m_rMin(0.0),
+		m_rMax(0.0),
+		m_gMin(0.0),
+		m_gMax(0.0),
+		m_bMin(0.0),
+		m_bMax(0.0)
 	{}
 
 	BackgroundElement::~BackgroundElement()

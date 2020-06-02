@@ -18,7 +18,7 @@ namespace SceneGraph {
 
 class ModelViewer {
 public:
-	ModelViewer(LuaManager *l);
+	explicit ModelViewer(LuaManager *l);
 	~ModelViewer();
 
 	static void Run(const std::string &modelName);

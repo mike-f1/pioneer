@@ -26,13 +26,13 @@ namespace SceneGraph {
 		Thruster(bool linear, const vector3f &pos, const vector3f &dir);
 		Thruster(const Thruster &, NodeCopyCache *cache = 0);
 		Node *Clone(NodeCopyCache *cache = 0) override;
-		virtual void Accept(NodeVisitor &v) override;
+		virtual void Accept(NodeVisitor &nv) override;
 		virtual const char *GetTypeName() const override { return "Thruster"; }
 		virtual void Render(const matrix4x4f &trans, const RenderData *rd) override;
 		virtual void Save(NodeDatabase &) override;
 		static Thruster *Load(NodeDatabase &);
 		void SetColor(const Color c) { currentColor = c; }
-		const vector3f &GetDirection() { return dir; }
+		const vector3f &GetDirection() { return m_dir; }
 
 	private:
 		static Graphics::VertexBuffer *CreateThrusterGeometry(Graphics::Material *);
@@ -43,8 +43,8 @@ namespace SceneGraph {
 		RefCountedPtr<Graphics::VertexBuffer> m_glowBuffer;
 		Graphics::RenderState *m_renderState;
 		bool linearOnly;
-		vector3f dir;
-		vector3f pos;
+		vector3f m_dir;
+		vector3f m_pos;
 		Color currentColor;
 	};
 

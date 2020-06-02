@@ -17,7 +17,8 @@
 #include "graphics/RendererLocator.h"
 
 DeathView::DeathView() :
-	View()
+	View(),
+	m_cameraDist(0.0)
 {
 	float size[2];
 	GetSizeRequested(size);

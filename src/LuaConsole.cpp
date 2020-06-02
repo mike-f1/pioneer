@@ -79,13 +79,11 @@ void LuaConsole::RegisterInputBindings()
 	auto &page = Pi::input->GetBindingPage("General");
 	auto &group = page.GetBindingGroup("Miscellaneous");
 
-	m_inputFrame.reset(new InputFrame("Console"));
+	m_inputFrame = std::make_unique<InputFrame>("Console");
 
 	m_consoleBindings.toggleLuaConsole = m_inputFrame->AddActionBinding("ToggleConsole", group, ActionBinding(SDLK_BACKSLASH));
 	m_consoleBindings.toggleLuaConsole->SetBTrait(BehaviourMod::ALLOW_KEYBOARD_ONLY);
 	m_consoleBindings.toggleLuaConsole->StoreOnActionCallback(std::bind(&LuaConsole::OnToggle, this, _1));
-
-	Pi::input->PushInputFrame(m_inputFrame.get());
 
 	// Explicitly activate console binding as it is always active
 	m_inputFrame->SetActive(true);
@@ -202,7 +200,6 @@ void LuaConsole::RegisterAutoexec()
 
 LuaConsole::~LuaConsole()
 {
-	Pi::input->RemoveInputFrame(m_inputFrame.get());
 }
 
 bool LuaConsole::OnKeyDown(const UI::KeyboardEvent &event)

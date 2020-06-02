@@ -17,7 +17,7 @@ public:
 		v(0) {}
 	//	template <int bits>
 	//	fixedf(fixedf<bits> f) { *this = f; }
-	fixedf(int64_t raw) :
+	explicit fixedf(int64_t raw) :
 		v(raw) {}
 	fixedf(int64_t num, int64_t denom) :
 		v((num << FRAC) / denom) {}
@@ -140,12 +140,11 @@ public:
 		x = a1 * b0;
 		lo += x << 32;
 		if (lo < oldlo) hi++;
-		oldlo = lo;
 		hi += x >> 32;
 
 		hi += a1 * b1;
 		int64_t out = (lo >> FRAC) + ((hi & MASK) << (64 - FRAC));
-		return isneg ? -out : out;
+		return isneg ? -static_cast<fixedf>(out) : static_cast<fixedf>(out);
 	}
 	friend fixedf operator/(const fixedf &a, const fixedf &b)
 	{
@@ -176,7 +175,7 @@ public:
 				quotient_lo |= 1;
 			}
 		}
-		return (isneg ? -int64_t(quotient_lo) : quotient_lo);
+		return (isneg ? -static_cast<fixedf>(int64_t(quotient_lo)) : static_cast<fixedf>(quotient_lo));
 	}
 	friend bool operator==(const fixedf &a, const fixedf &b) { return a.v == b.v; }
 	friend bool operator!=(const fixedf &a, const fixedf &b) { return a.v != b.v; }
@@ -207,7 +206,7 @@ public:
 	{
 		/* only works on even-numbered fractional bits */
 		assert(!(FRAC & 1));
-		uint64_t root, remHi, remLo, testDiv, count;
+		uint64_t root, remHi, remLo, count;
 		root = 0;
 		remHi = 0;
 		remLo = a.v;
@@ -216,7 +215,7 @@ public:
 			remHi = (remHi << 2) | (remLo >> 62);
 			remLo <<= 2;
 			root <<= 1;
-			testDiv = (root << 1) + 1;
+			uint64_t testDiv = (root << 1) + 1;
 			if (remHi >= testDiv) {
 				remHi -= testDiv;
 				root++;
@@ -242,8 +241,8 @@ public:
 typedef fixedf<32> fixed;
 
 /* Left here for reference: it was in "libs/utils.h" but seems unused.
-Could be made part of fixedf class but it works for fixed so I don't
-know if it's generic enought to be part of this library.
+Could be made part of fixedf class but it works for fixed (= fixedf<32>)
+and I don't know if it's generic enought to be part of this library.
 static inline int64_t isqrt(fixed v)
 {
 	int64_t ret = 0;

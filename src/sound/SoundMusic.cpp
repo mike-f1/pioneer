@@ -118,7 +118,7 @@ namespace Sound {
 		using std::pair;
 		using std::string;
 		std::vector<string> songs;
-		const std::map<string, Sample> samples = Sound::GetSamples();
+		const std::map<string, Sample> &samples = Sound::GetSamples();
 		for (std::map<string, Sample>::const_iterator it = samples.begin();
 			 it != samples.end(); ++it) {
 			if (it->second.isMusic)

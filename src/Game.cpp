@@ -76,12 +76,12 @@ Game::Game(const SystemPath &path, const double startDateTime, unsigned int cach
 	}
 
 	m_starSystemCache = m_galaxy->NewStarSystemSlaveCache();
-	GenCaches(&path, m_cacheRadius + 2,
+	GenCaches(path, m_cacheRadius + 2,
 			[this, path]() { UpdateStarSystemCache(&path, m_cacheRadius); });
 
 	m_space.reset(new Space(GetTime(), GetTimeStep(), sys, path));
 
-	Body *b = m_space->FindBodyForPath(&path);
+	Body *b = m_space->FindBodyForPath(path);
 	assert(b);
 
 	m_player.reset(new Player("kanara"));
@@ -155,7 +155,7 @@ Game::Game(const Json &jsonObj, unsigned int cacheRadius) :
 	// Prepare caches
 	SystemPath path = starSystem->GetPath();
 	m_starSystemCache = m_galaxy->NewStarSystemSlaveCache();
-	GenCaches(&path, m_cacheRadius + 2,
+	GenCaches(path, m_cacheRadius + 2,
 			[this, path]() { UpdateStarSystemCache(&path, m_cacheRadius); });
 
 	/// HACK!
@@ -437,7 +437,7 @@ void Game::GetHyperspaceExitParams(const SystemPath &source, const SystemPath &d
 void Game::GetHyperspaceExitParams(const SystemPath &source, vector3d &pos, vector3d &vel)
 {
 	GetHyperspaceExitParams(source, m_space->GetStarSystem()->GetPath(), pos, vel);
-};
+}
 
 void Game::SwitchToHyperspace()
 {
@@ -495,7 +495,7 @@ void Game::SwitchToHyperspace()
 
 	// Update caches:
 	assert(m_starSystemCache && m_sectorCache);
-	GenCaches(&m_hyperspaceDest, m_cacheRadius + 2,
+	GenCaches(m_hyperspaceDest, m_cacheRadius + 2,
 			[this]() { UpdateStarSystemCache(&this->m_hyperspaceDest, m_cacheRadius); });
 
 	// put the player in it
@@ -582,7 +582,7 @@ void Game::SwitchToNormalSpace()
 				// want to simulate some travel to their destination. we
 				// naively assume full accel for half the distance, flip and
 				// full brake for the rest.
-				Body *target_body = m_space->FindBodyForPath(&sdest);
+				Body *target_body = m_space->FindBodyForPath(sdest);
 				double dist_to_target = cloud->GetPositionRelTo(target_body).Length();
 				double half_dist_to_target = dist_to_target / 2.0;
 				//double accel = -(ship->GetShipType()->linThrust[ShipType::THRUSTER_FORWARD] / ship->GetMass());
@@ -616,7 +616,7 @@ void Game::SwitchToNormalSpace()
 					// flyto command in onEnterSystem so it should sort it
 					// itself out long before the player can get near
 
-					SystemBody *sbody = m_space->GetStarSystem()->GetBodyByPath(&sdest);
+					SystemBody *sbody = m_space->GetStarSystem()->GetBodyByPath(sdest);
 					if (sbody->GetType() == GalaxyEnums::BodyType::TYPE_STARPORT_ORBITAL) {
 						ship->SetFrame(target_body->GetFrame());
 						ship->SetPosition(MathUtil::RandomPointOnSphere(1000.0) * 1000.0); // somewhere 1000km out
@@ -626,7 +626,7 @@ void Game::SwitchToNormalSpace()
 						if (sbody->GetType() == GalaxyEnums::BodyType::TYPE_STARPORT_SURFACE) {
 							sbody = sbody->GetParent();
 							SystemPath path = m_space->GetStarSystem()->GetPathOf(sbody);
-							target_body = m_space->FindBodyForPath(&path);
+							target_body = m_space->FindBodyForPath(path);
 						}
 
 						double sdist = sbody->GetRadius() * 2.0;
@@ -754,7 +754,7 @@ void Game::RequestTimeAccelDec(bool force)
 	m_forceTimeAccel = force;
 }
 
-void Game::GenCaches(const SystemPath *here, unsigned int sectorRadius,
+void Game::GenCaches(const SystemPath &here, unsigned int sectorRadius,
 	StarSystemCache::CacheFilledCallback callback)
 {
 	PROFILE_SCOPED()

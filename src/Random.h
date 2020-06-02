@@ -37,20 +37,26 @@ public:
 	//
 
 	// Construct a new random generator using the given seed
-	Random(const uint32_t initialSeed = 0xabcd1234)
+	explicit Random(const uint32_t initialSeed = 0xabcd1234) :
+		cached(false),
+		z1(0.0)
 	{
 		seed(initialSeed);
 	}
 
 	// Construct a new generator given an array of 32-bit seeds.
-	Random(const uint32_t *const seeds, size_t length)
+	Random(const uint32_t *const seeds, size_t length) :
+		cached(false),
+		z1(0.0)
 	{
 		seed(seeds, length);
 	}
 
 	// Construct a new random generator from an array of 64-bit
 	// seeds.
-	Random(const uint64_t *const seeds, size_t length)
+	Random(const uint64_t *const seeds, size_t length) :
+		cached(false),
+		z1(0.0)
 	{
 		seed(reinterpret_cast<const uint32_t *const>(seeds), length * 2);
 	}
@@ -185,12 +191,13 @@ public:
 	inline double Normal(const double mean, const double stddev)
 	{
 		//https://en.wikipedia.org/wiki/Box-Muller_transform#Polar_form
-		double u, v, s, z0;
+		double z0;
 
 		if (cached) {
 			z0 = z1;
 			cached = false;
 		} else {
+			double u, v, s;
 			do {
 				u = Double_closed(-1, 1);
 				v = Double_closed(-1, 1);
@@ -221,7 +228,7 @@ public:
 	// Pick a fixed-point integer half open interval [0,1)
 	inline fixed Fixed()
 	{
-		return fixed(Int32());
+		return fixed(int64_t(Int32()));
 	}
 
 	// interval [0,1)

@@ -23,6 +23,7 @@ float SpeedLines::MAX_VEL = 100.f;
 SpeedLines::SpeedLines(Ship *s) :
 	m_ship(s),
 	m_visible(false),
+	m_lineLength(0.0),
 	m_dir(0.f)
 {
 	PROFILE_SCOPED();

@@ -18,9 +18,9 @@ namespace SceneGraph {
 		virtual void Save(NodeDatabase &) override;
 		static Group *Load(NodeDatabase &);
 
-		virtual void AddChild(Node *child);
-		virtual bool RemoveChild(Node *node); //true on success
-		virtual bool RemoveChildAt(unsigned int position); //true on success
+		void AddChild(Node *child);
+		bool RemoveChild(Node *node); //true on success
+		bool RemoveChildAt(unsigned int position); //true on success
 		unsigned int GetNumChildren() const { return static_cast<uint32_t>(m_children.size()); }
 		Node *GetChildAt(unsigned int);
 		virtual void Accept(NodeVisitor &v) override;

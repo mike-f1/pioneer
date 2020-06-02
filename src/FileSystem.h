@@ -162,7 +162,7 @@ namespace FileSystem {
 			m_info(info),
 			m_data(data),
 			m_size(size) {}
-		FileData(const FileInfo &info) :
+		explicit FileData(const FileInfo &info) :
 			m_info(info),
 			m_data(0),
 			m_size(0) {}
@@ -210,9 +210,9 @@ namespace FileSystem {
 		explicit FileSourceFS(const std::string &root, bool trusted = false);
 		~FileSourceFS();
 
-		virtual FileInfo Lookup(const std::string &path);
-		virtual RefCountedPtr<FileData> ReadFile(const std::string &path);
-		virtual bool ReadDirectory(const std::string &path, std::vector<FileInfo> &output);
+		virtual FileInfo Lookup(const std::string &path) override;
+		virtual RefCountedPtr<FileData> ReadFile(const std::string &path) override;
+		virtual bool ReadDirectory(const std::string &path, std::vector<FileInfo> &output) override;
 
 		bool MakeDirectory(const std::string &path);
 
@@ -238,10 +238,10 @@ namespace FileSystem {
 		void AppendSource(FileSource *fs);
 		void RemoveSource(FileSource *fs);
 
-		virtual FileInfo Lookup(const std::string &path);
+		virtual FileInfo Lookup(const std::string &path) override;
 		std::vector<FileInfo> LookupAll(const std::string &path);
-		virtual RefCountedPtr<FileData> ReadFile(const std::string &path);
-		virtual bool ReadDirectory(const std::string &path, std::vector<FileInfo> &output);
+		virtual RefCountedPtr<FileData> ReadFile(const std::string &path) override;
+		virtual bool ReadDirectory(const std::string &path, std::vector<FileInfo> &output) override;
 
 	private:
 		std::vector<FileSource *> m_sources;

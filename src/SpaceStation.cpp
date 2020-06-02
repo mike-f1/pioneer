@@ -32,9 +32,9 @@
 
 SpaceStation::SpaceStation(const SystemBody *sbody) :
 	ModelBody(),
+	m_oldAngDisplacement(0.0),
 	m_type(nullptr),
 	m_sbody(sbody),
-	m_oldAngDisplacement(0.0),
 	m_doorAnimationStep(0.0),
 	m_doorAnimationState(0.0)
 {

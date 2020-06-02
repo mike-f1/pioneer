@@ -103,7 +103,7 @@ namespace SceneGraph {
 	class ModelDebug;
 
 	struct LoadingError : public std::runtime_error {
-		LoadingError(const std::string &str) :
+		explicit LoadingError(const std::string &str) :
 			std::runtime_error(str.c_str()) {}
 	};
 
@@ -117,7 +117,8 @@ namespace SceneGraph {
 		friend class ModelBinarizer;
 		friend class BinaryConverter;
 	public:
-		Model(const std::string &name);
+		explicit Model(const std::string &name);
+		Model &operator=(const Model &) = delete;
 		~Model();
 
 		std::unique_ptr<Model> MakeInstance() const;

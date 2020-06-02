@@ -563,7 +563,6 @@ namespace Graphics {
 			m_renderState = state;
 			// Create vertex descriptor
 			Graphics::VertexBufferDesc vbd;
-			unsigned attIdx = 0;
 			vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
 			vbd.attrib[0].format = Graphics::ATTRIB_FORMAT_FLOAT3;
 			vbd.numVertices = numBoxVertices;
@@ -609,12 +608,11 @@ namespace Graphics {
 			m_vertexBuffer->Populate(vts);
 		}
 
-		Box3D::Box3D(Box3D &&other) noexcept
-		{
-			m_vertexBuffer = std::move(other.m_vertexBuffer);
-			m_material = other.m_material;
-			m_renderState = other.m_renderState;
-		}
+		Box3D::Box3D(Box3D &&other) noexcept:
+			m_vertexBuffer(std::move(other.m_vertexBuffer)),
+			m_material(other.m_material),
+			m_renderState(other.m_renderState)
+		{}
 
 		Box3D::~Box3D()
 		{}

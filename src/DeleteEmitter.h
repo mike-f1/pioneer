@@ -15,7 +15,10 @@
 
 class DeleteEmitter : public LuaWrappable {
 public:
-	DeleteEmitter() {}
+	DeleteEmitter() = default;
+	// sigc++ signals cannot be copied, but long-standing design flaw means
+	// they don't have a private copy constructor. we protect them ourselves
+	DeleteEmitter(const DeleteEmitter &) = delete;
 	virtual ~DeleteEmitter()
 	{
 		onDelete.emit();
@@ -27,9 +30,6 @@ public:
 	mutable sigc::signal<void> onDelete;
 
 private:
-	// sigc++ signals cannot be copied, but long-standing design flaw means
-	// they don't have a private copy constructor. we protect them ourselves
-	DeleteEmitter(const DeleteEmitter &) {}
 };
 
 #endif

@@ -85,7 +85,7 @@ BinaryConverter::BinaryConverter() :
 	RegisterLoader("Label3D", &LoadLabel3D);
 }
 
-void BinaryConverter::RegisterLoader(const std::string &typeName, std::function<Node *(NodeDatabase &)> func)
+void BinaryConverter::RegisterLoader(const std::string &typeName, const std::function<Node *(NodeDatabase &)> &func)
 {
 	m_loaders[typeName] = func;
 }

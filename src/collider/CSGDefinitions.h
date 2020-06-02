@@ -18,7 +18,11 @@ enum class MainDirection { X, Y, Z }; // <- Only *Y* is implemented as all stati
 
 struct CSG_CentralCylinder {
 	CSG_CentralCylinder() :
-		m_diameter(-1.0)
+		m_diameter(-1.0),
+		m_minH(1.0),
+		m_maxH(-1.0),
+		m_shouldTriggerDocking(false),
+		m_mainDir(MainDirection::Y)
 	{}
 	CSG_CentralCylinder(float diameter, float minH, float maxH, bool sTD, MainDirection dir = MainDirection::Y) :
 		m_diameter(diameter),

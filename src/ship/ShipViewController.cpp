@@ -30,7 +30,6 @@ ShipViewController::ShipViewController(WorldView *v) :
 
 ShipViewController::~ShipViewController()
 {
-	Pi::input->RemoveInputFrame(m_inputFrame.get());
 }
 
 void ShipViewController::RegisterInputBindings()
@@ -38,7 +37,7 @@ void ShipViewController::RegisterInputBindings()
 	using namespace KeyBindings;
 	using namespace std::placeholders;
 
-	m_inputFrame.reset(new InputFrame("ShipView"));
+	m_inputFrame = std::make_unique<InputFrame>("ShipView");
 
 	BindingPage &page = Pi::input->GetBindingPage("ShipView");
 
@@ -60,8 +59,6 @@ void ShipViewController::RegisterInputBindings()
 
 	m_inputBindings.resetCamera = m_inputFrame->AddActionBinding("BindResetCamera", group, ActionBinding(SDLK_HOME));
 	m_inputBindings.resetCamera->StoreOnActionCallback(std::bind(&ShipViewController::OnCamReset, this, _1));
-
-	Pi::input->PushInputFrame(m_inputFrame.get());
 }
 
 void ShipViewController::OnCamReset(bool down)

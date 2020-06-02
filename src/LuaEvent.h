@@ -43,7 +43,7 @@ namespace LuaEvent {
 
 		T0 *arg0;
 
-		inline void PrepareStack() const
+		inline void PrepareStack() const override
 		{
 			LuaObject<T0>::PushToLua(arg0);
 		}

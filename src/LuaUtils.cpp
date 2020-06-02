@@ -1009,7 +1009,8 @@ bool pi_lua_split_table_path(lua_State *l, const std::string &path)
 
 	lua_getfield(l, LUA_REGISTRYINDEX, "CoreImports");
 
-	size_t start = 0, end = 0;
+	size_t start = path.find_first_not_of(delim);
+	size_t end = 0;
 	while (end != std::string::npos) {
 		// get to the first non-delim char
 		start = path.find_first_not_of(delim, end);

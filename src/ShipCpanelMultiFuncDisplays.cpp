@@ -89,7 +89,7 @@ void RadarWidget::RegisterInputBindings()
 	using namespace KeyBindings;
 	using namespace std::placeholders;
 
-	m_inputFrame.reset(new InputFrame("RadarWidget"));
+	m_inputFrame = std::make_unique<InputFrame>("RadarWidget");
 
 	BindingPage &page = Pi::input->GetBindingPage("RadarView");
 	BindingGroup &group = page.GetBindingGroup("Miscellaneous");
@@ -99,8 +99,6 @@ void RadarWidget::RegisterInputBindings()
 
 	m_radarWidgetBindings.changeScanRange = m_inputFrame->AddAxisBinding("BindChangeScanRange", group, AxisBinding(SDLK_RIGHTBRACKET, SDLK_LEFTBRACKET));
 
-	Pi::input->PushInputFrame(m_inputFrame.get());
-
 	// Explicitly activate InputFrame as RadarWidget is always active (for now...)
 	// TODO: this is not true as the radar can be sold, thus its InputFrame should be
 	// deactivated... It should be changed when IngameView will grow to something better
@@ -109,7 +107,6 @@ void RadarWidget::RegisterInputBindings()
 
 RadarWidget::~RadarWidget()
 {
-	Pi::input->RemoveInputFrame(m_inputFrame.get());
 }
 
 void RadarWidget::GetSizeRequested(float size[2])

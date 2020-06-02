@@ -12,7 +12,7 @@
 template <typename Container, typename T = void>
 class IterationProxy {
 public:
-	IterationProxy(Container &container) :
+	explicit IterationProxy(Container &container) :
 		m_container(container) {}
 	typename Container::iterator begin() { return m_container.begin(); }
 	typename Container::iterator end() { return m_container.end(); }
@@ -31,7 +31,7 @@ class IterationProxy<Container,
 	typename std::enable_if<std::is_same<typename std::iterator_traits<typename Container::iterator>::iterator_category,
 		std::random_access_iterator_tag>::value>::type> {
 public:
-	IterationProxy(Container &container) :
+	explicit IterationProxy(Container &container) :
 		m_container(container) {}
 	typename Container::iterator begin() { return m_container.begin(); }
 	typename Container::iterator end() { return m_container.end(); }

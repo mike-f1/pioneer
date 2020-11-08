@@ -6,17 +6,17 @@
 #include "Game.h"
 #include "GameLocator.h"
 #include "GameSaveError.h"
+#include "InputFrame.h"
+#include "InputFwd.h"
 #include "KeyBindings.h"
 #include "Lang.h"
-#include "Input.h"
 #include "Missile.h"
-#include "Pi.h"
 #include "Player.h"
 #include "Space.h"
 #include "graphics/Graphics.h"
+#include "graphics/RenderState.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
-#include "graphics/RenderState.h"
 #include "graphics/VertexArray.h"
 
 using namespace Graphics;
@@ -91,7 +91,7 @@ void RadarWidget::RegisterInputBindings()
 
 	m_inputFrame = std::make_unique<InputFrame>("RadarWidget");
 
-	BindingPage &page = Pi::input->GetBindingPage("RadarView");
+	BindingPage &page = m_inputFrame->GetBindingPage("RadarView");
 	BindingGroup &group = page.GetBindingGroup("Miscellaneous");
 
 	m_radarWidgetBindings.toggleScanMode = m_inputFrame->AddActionBinding("BindToggleScanMode", group, ActionBinding(SDLK_SLASH));

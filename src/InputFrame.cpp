@@ -3,6 +3,7 @@
 #include "Input.h"
 #include "KeyBindings.h"
 #include "Pi.h"
+#include "libs/utils.h"
 
 #include <SDL_events.h>
 
@@ -10,6 +11,10 @@ InputFrame::InputFrame(const std::string &name) :
 		m_name(name),
 		m_active(false)
 {
+	if (!Pi::input) {
+		Output("InputFrame needs 'Pi::input'!\n");
+		abort();
+	}
 	m_actions.reserve(4);
 	m_axes.reserve(4);
 	Pi::input->PushInputFrame(this);
@@ -58,6 +63,11 @@ KeyBindings::AxisBinding *InputFrame::AddAxisBinding(std::string id, BindingGrou
 	return axisBind;
 }
 
+BindingPage &InputFrame::GetBindingPage(const std::string &id)
+{
+	return Pi::input->GetBindingPage(id);
+}
+
 KeyBindings::InputResponse InputFrame::ProcessSDLEvent(const SDL_Event &event)
 {
 	using namespace KeyBindings;
@@ -96,3 +106,25 @@ KeyBindings::InputResponse InputFrame::ProcessSDLEvent(const SDL_Event &event)
 
 	return matched ? InputResponse::PASSTHROUGH : InputResponse::NOMATCH;
 }
+
+namespace InputFWD {
+	float GetMoveSpeedShiftModifier()
+	{
+		return Pi::input->GetMoveSpeedShiftModifier();
+	}
+
+	std::tuple<bool, int, int> GetMouseMotion(MouseMotionBehaviour mmb)
+	{
+		return Pi::input->GetMouseMotion(mmb);
+	}
+
+	bool IsMouseYInvert()
+	{
+		return Pi::input->IsMouseYInvert();
+	}
+
+	std::unique_ptr<InputFrameStatusTicket> DisableAllInputFramesExcept(InputFrame *current)
+	{
+		return Pi::input->DisableAllInputFrameExcept(current);
+	}
+} // namespace InputFWD

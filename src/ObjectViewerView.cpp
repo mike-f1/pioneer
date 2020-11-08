@@ -10,23 +10,25 @@
 #include "Camera.h"
 #include "Frame.h"
 #include "Game.h"
-#include "GameConfig.h"
 #include "GameConfSingleton.h"
+#include "GameConfig.h"
 #include "GameLocator.h"
-#include "KeyBindings.h"
 #include "Input.h"
+#include "InputFrame.h"
+#include "InputFwd.h"
+#include "KeyBindings.h"
 #include "Pi.h"
 #include "Player.h"
 #include "Random.h"
 #include "RandomSingleton.h"
-#include "libs/StringF.h"
-#include "libs/stringUtils.h"
 #include "TerrainBody.h"
 #include "galaxy/SystemBody.h"
 #include "graphics/Drawables.h"
 #include "graphics/Light.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
+#include "libs/StringF.h"
+#include "libs/stringUtils.h"
 #include "scenegraph/Model.h"
 #include "sphere/BaseSphereDebugFlags.h"
 
@@ -83,7 +85,7 @@ void ObjectViewerView::RegisterInputBindings()
 
 	m_inputFrame = std::make_unique<InputFrame>("ObjectViewer");
 
-	auto &page = Pi::input->GetBindingPage("ObjectViewer");
+	auto &page = m_inputFrame->GetBindingPage("ObjectViewer");
 	page.shouldBeTranslated = false;
 
 	auto &groupMisce = page.GetBindingGroup("Miscellaneous");
@@ -108,7 +110,7 @@ void ObjectViewerView::OnSwitchTo()
 
 	if (m_bindingLock) m_bindingLock.reset();
 
-	m_bindingLock = Pi::input->DisableAllInputFrameExcept(m_inputFrame.get());
+	m_bindingLock = InputFWD::DisableAllInputFramesExcept(m_inputFrame.get());
 
 	m_inputFrame->SetActive(true);
 
@@ -161,7 +163,7 @@ void ObjectViewerView::Update(const float frameTime)
 	}
 	if (m_lastTarget == nullptr) return;
 
-	const float moveSpeed = MOVEMENT_SPEED * WHEEL_SENSITIVITY * Pi::input->GetMoveSpeedShiftModifier();
+	const float moveSpeed = MOVEMENT_SPEED * WHEEL_SENSITIVITY * InputFWD::GetMoveSpeedShiftModifier();
 	float move = moveSpeed * frameTime;
 
 	if (m_objectViewerBindings.zoom->IsActive()) {
@@ -216,12 +218,12 @@ void ObjectViewerView::Update(const float frameTime)
 		m_camRot = matrix4x4d::RotateYMatrix(m_objectViewerBindings.rotateLeftRight->GetValue() * move * 5.0) * m_camRot;
 	}
 
-	auto motion = Pi::input->GetMouseMotion(MouseMotionBehaviour::Rotate);
+	auto motion = InputFWD::GetMouseMotion(MouseMotionBehaviour::Rotate);
 	if (std::get<0>(motion)) {
 		m_camRot = matrix4x4d::RotateXMatrix(-0.002 * std::get<2>(motion)) *
 			matrix4x4d::RotateYMatrix(-0.002 * std::get<1>(motion)) * m_camRot;
 	} else {
-		motion = Pi::input->GetMouseMotion(MouseMotionBehaviour::DriveShip);
+		motion = InputFWD::GetMouseMotion(MouseMotionBehaviour::DriveShip);
 		if (std::get<0>(motion)) {
 			m_camTwist = matrix3x3d::RotateX(-0.002 * std::get<2>(motion)) *
 				matrix3x3d::RotateY(-0.002 * std::get<1>(motion)) * m_camTwist;

@@ -105,10 +105,9 @@ bool Input::PushInputFrame(InputFrame *frame)
 	if (HasInputFrame(frame)) {
 		return false;
 	}
-
 	if (frame == nullptr) {
 		Error("Pushing a 'null' InputFrame!\n");
-	} else {
+		return false;
 	}
 	m_inputFrames.push_back(frame);
 	frame->onFrameAdded();

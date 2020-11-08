@@ -8,8 +8,9 @@
 
 #include "Game.h"
 #include "GameLocator.h"
-#include "Input.h"
 #include "InputFrame.h"
+#include "InputFwd.h"
+#include "KeyBindings.h"
 #include "Pi.h"
 #include "Player.h"
 #include "PlayerShipController.h"
@@ -39,7 +40,7 @@ void ShipViewController::RegisterInputBindings()
 
 	m_inputFrame = std::make_unique<InputFrame>("ShipView");
 
-	BindingPage &page = Pi::input->GetBindingPage("ShipView");
+	BindingPage &page = m_inputFrame->GetBindingPage("ShipView");
 
 	BindingGroup &group = page.GetBindingGroup("GeneralViewControls");
 
@@ -215,7 +216,7 @@ void ShipViewController::Update(const float frameTime)
 	}
 
 	// external camera mouselook
-	auto motion = Pi::input->GetMouseMotion(MouseMotionBehaviour::Rotate);
+	auto motion = InputFWD::GetMouseMotion(MouseMotionBehaviour::Rotate);
 	if (!headtracker_input_priority && std::get<0>(motion)) {
 		// invert the mouse input to convert between screen coordinates and
 		// right-hand coordinate system rotation.

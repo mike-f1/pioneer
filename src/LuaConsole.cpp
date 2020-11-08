@@ -4,7 +4,7 @@
 #include "LuaConsole.h"
 
 #include "FileSystem.h"
-#include "Input.h"
+#include "InputFwd.h"
 #include "KeyBindings.h"
 #include "LuaManager.h"
 #include "LuaUtils.h"
@@ -76,10 +76,10 @@ void LuaConsole::RegisterInputBindings()
 	using namespace KeyBindings;
 	using namespace std::placeholders;
 
-	auto &page = Pi::input->GetBindingPage("General");
-	auto &group = page.GetBindingGroup("Miscellaneous");
-
 	m_inputFrame = std::make_unique<InputFrame>("Console");
+
+	auto &page = m_inputFrame->GetBindingPage("General");
+	auto &group = page.GetBindingGroup("Miscellaneous");
 
 	m_consoleBindings.toggleLuaConsole = m_inputFrame->AddActionBinding("ToggleConsole", group, ActionBinding(SDLK_BACKSLASH));
 	m_consoleBindings.toggleLuaConsole->SetBTrait(BehaviourMod::ALLOW_KEYBOARD_ONLY);

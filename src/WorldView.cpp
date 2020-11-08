@@ -6,15 +6,17 @@
 
 #include "Frame.h"
 #include "Game.h"
-#include "GameConfig.h"
 #include "GameConfSingleton.h"
+#include "GameConfig.h"
 #include "GameLocator.h"
 #include "GameSaveError.h"
 #include "HudTrail.h"
 #include "HyperspaceCloud.h"
 #include "InGameViews.h"
 #include "InGameViewsLocator.h"
-#include "Input.h"
+#include "InputFrame.h"
+#include "InputFwd.h"
+#include "KeyBindings.h"
 #include "Lang.h"
 #include "Pi.h"
 #include "Player.h"
@@ -22,8 +24,8 @@
 #include "Sensors.h"
 #include "SpeedLines.h"
 #include "graphics/Frustum.h"
-#include "graphics/Material.h"
 #include "graphics/Graphics.h"
+#include "graphics/Material.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/VertexArray.h"
@@ -121,7 +123,7 @@ void WorldView::RegisterInputBindings()
 
 	m_inputFrame = std::make_unique<InputFrame>("WorldView");
 
-	BindingPage &page = Pi::input->GetBindingPage("General");
+	BindingPage &page = m_inputFrame->GetBindingPage("General");
 	BindingGroup &group = page.GetBindingGroup("Miscellaneous");
 
 	m_wviewBindings.toggleHudMode = m_inputFrame->AddActionBinding("BindToggleHudMode", group, ActionBinding(SDLK_TAB));

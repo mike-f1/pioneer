@@ -5,13 +5,14 @@
 
 #include "Frame.h"
 #include "Game.h"
-#include "GameConfig.h"
 #include "GameConfSingleton.h"
+#include "GameConfig.h"
 #include "GameLocator.h"
 #include "GameSaveError.h"
 #include "InGameViews.h"
 #include "InGameViewsLocator.h"
-#include "Input.h"
+#include "InputFrame.h"
+#include "InputFwd.h"
 #include "KeyBindings.h"
 #include "LuaObject.h"
 #include "OS.h"
@@ -55,7 +56,7 @@ void PlayerShipController::RegisterInputBindings()
 
 	m_inputFrame = std::make_unique<InputFrame>("PlayerShipController");
 
-	auto &controlsPage = Pi::input->GetBindingPage("ShipControls");
+	auto &controlsPage = m_inputFrame->GetBindingPage("ShipControls");
 
 	auto &weaponsGroup = controlsPage.GetBindingGroup("Weapons");
 	m_inputBindings.targetObject = m_inputFrame->AddActionBinding("BindTargetObject", weaponsGroup, ActionBinding(SDLK_y));
@@ -307,7 +308,7 @@ void PlayerShipController::PollControls(const float timeStep, const bool force_r
 		const float linearThrustPower = (m_inputBindings.thrustLowPower->IsActive() ? m_lowThrustPower : 1.0f);
 
 		// have to use this function. SDL mouse position event is bugged in windows
-		auto motion = Pi::input->GetMouseMotion(MouseMotionBehaviour::DriveShip);
+		auto motion = InputFWD::GetMouseMotion(MouseMotionBehaviour::DriveShip);
 		if (std::get<0>(motion)) {
 			std::array<int, 2> mouseMotion = {std::get<1>(motion), std::get<2>(motion)};
 			// use ship rotation relative to system, unchanged by frame transitions
@@ -327,7 +328,7 @@ void PlayerShipController::PollControls(const float timeStep, const bool force_r
 			double modx = clipmouse(objDir.x, m_mouseX);
 			m_mouseX -= modx;
 
-			const bool invertY = (Pi::input->IsMouseYInvert() ? !m_invertMouse : m_invertMouse);
+			const bool invertY = (InputFWD::IsMouseYInvert() ? !m_invertMouse : m_invertMouse);
 
 			m_mouseY += mouseMotion[1] * accel * radiansPerPixel * (invertY ? -1 : 1);
 			double mody = clipmouse(objDir.y, m_mouseY);
@@ -368,7 +369,7 @@ void PlayerShipController::PollControls(const float timeStep, const bool force_r
 		if (m_inputBindings.thrustLeft->IsActive())
 			m_ship->SetThrusterState(0, -linearThrustPower * m_inputBindings.thrustLeft->GetValue());
 
-		auto fire = Pi::input->GetMouseMotion(MouseMotionBehaviour::Fire);
+		auto fire = InputFWD::GetMouseMotion(MouseMotionBehaviour::Fire);
 		if (m_inputBindings.primaryFire->IsActive() || std::get<0>(fire)) {
 			//XXX worldview? madness, ask from ship instead
 			GunDir dir = InGameViewsLocator::getInGameViews()->GetWorldView()->GetActiveWeapon() ? GunDir::GUN_REAR : GunDir::GUN_FRONT;

@@ -4,12 +4,13 @@
 #include "SectorView.h"
 
 #include "Game.h"
-#include "GameConfig.h"
 #include "GameConfSingleton.h"
+#include "GameConfig.h"
 #include "GameLocator.h"
 #include "GameSaveError.h"
+#include "InputFrame.h"
+#include "InputFwd.h"
 #include "KeyBindings.h"
-#include "Input.h"
 #include "LuaConstants.h"
 #include "LuaObject.h"
 #include "Pi.h"
@@ -23,9 +24,9 @@
 #include "graphics/Frustum.h"
 #include "graphics/Graphics.h"
 #include "graphics/Material.h"
+#include "graphics/RenderState.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
-#include "graphics/RenderState.h"
 #include "graphics/VertexArray.h"
 #include "graphics/VertexBuffer.h"
 #include "libs/MathUtil.h"
@@ -132,7 +133,7 @@ void SectorView::RegisterInputBindings()
 
 	m_inputFrame = std::make_unique<InputFrame>("SectorView");
 
-	auto &page = Pi::input->GetBindingPage("SectorView");
+	auto &page = m_inputFrame->GetBindingPage("SectorView");
 
 	auto &groupMisc = page.GetBindingGroup("Miscellaneous");
 
@@ -1175,7 +1176,7 @@ void SectorView::UpdateBindings()
 	bool reset_view = false;
 
 	// fast move selection to current player system or hyperspace target
-	const bool shifted = Pi::input->GetMoveSpeedShiftModifier() >= 1.0 ? true : false;
+	const bool shifted = InputFWD::GetMoveSpeedShiftModifier() >= 1.0 ? true : false;
 	if (m_sectorBindings.mapWarpToCurrent->IsActive()) {
 		GotoSystem(m_current);
 		reset_view = shifted;
@@ -1225,7 +1226,7 @@ void SectorView::Update(const float frameTime)
 	if (!Pi::IsConsoleActive()) {
 		UpdateBindings();
 
-		const float moveSpeed = Pi::input->GetMoveSpeedShiftModifier();
+		const float moveSpeed = InputFWD::GetMoveSpeedShiftModifier();
 		float move = moveSpeed * frameTime;
 		vector3f shift(0.0f);
 		if (m_sectorBindings.mapViewShiftLeftRight->IsActive()) {
@@ -1255,7 +1256,7 @@ void SectorView::Update(const float frameTime)
 		}
 	}
 
-	auto motion = Pi::input->GetMouseMotion(MouseMotionBehaviour::Rotate);
+	auto motion = InputFWD::GetMouseMotion(MouseMotionBehaviour::Rotate);
 	m_rotXMovingTo += 0.2f * float(std::get<2>(motion));
 	m_rotZMovingTo += 0.2f * float(std::get<1>(motion));
 
@@ -1379,7 +1380,7 @@ double SectorView::GetZoomLevel() const
 
 void SectorView::ZoomIn()
 {
-	const float moveSpeed = Pi::input->GetMoveSpeedShiftModifier();
+	const float moveSpeed = InputFWD::GetMoveSpeedShiftModifier();
 	float move = moveSpeed * m_lastFrameTime;
 	m_zoomMovingTo -= move;
 	m_zoomMovingTo = Clamp(m_zoomMovingTo, 0.1f, FAR_MAX);
@@ -1387,7 +1388,7 @@ void SectorView::ZoomIn()
 
 void SectorView::ZoomOut()
 {
-	const float moveSpeed = Pi::input->GetMoveSpeedShiftModifier();
+	const float moveSpeed = InputFWD::GetMoveSpeedShiftModifier();
 	float move = moveSpeed * m_lastFrameTime;
 	m_zoomMovingTo += move;
 	m_zoomMovingTo = Clamp(m_zoomMovingTo, 0.1f, FAR_MAX);

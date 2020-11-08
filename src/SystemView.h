@@ -5,7 +5,6 @@
 #define _SYSTEMVIEW_H
 
 #include "Color.h"
-#include "InputFrame.h"
 #include "UIView.h"
 #include "graphics/Drawables.h"
 #include "libs/matrix4x4.h"
@@ -13,6 +12,7 @@
 #include <memory>
 
 class Game;
+class InputFrame;
 class Orbit;
 class Ship;
 class StarSystem;
@@ -21,6 +21,7 @@ class TransferPlanner;
 
 namespace KeyBindings {
 	struct ActionBinding;
+	struct AxisBinding;
 	struct WheelBinding;
 }
 

@@ -4,12 +4,13 @@
 #ifndef _OBJECTVIEWERVIEW_H
 #define _OBJECTVIEWERVIEW_H
 
-#include "InputFrame.h"
 #include "UIView.h"
 #include "libs/RefCounted.h"
 #include "libs/matrix4x4.h"
 #include "libs/vector2.h"
 #include <memory>
+
+class InputFrame;
 
 namespace KeyBindings {
 	struct ActionBinding;

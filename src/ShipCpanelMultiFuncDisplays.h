@@ -4,11 +4,12 @@
 #ifndef _SHIPCPANELMULTIFUNCDISPLAYS_H
 #define _SHIPCPANELMULTIFUNCDISPLAYS_H
 
-#include "InputFrame.h"
 #include "JsonFwd.h"
 #include "Object.h"
 #include "graphics/Drawables.h"
 #include "gui/GuiWidget.h"
+
+class InputFrame;
 
 namespace KeyBindings {
 	struct ActionBinding;

@@ -3,22 +3,21 @@
 
 #include "SystemView.h"
 
-#include "libs/AnimationCurves.h"
 #include "Frame.h"
 #include "Game.h"
 #include "GameLocator.h"
 #include "GameLog.h"
 #include "InGameViews.h"
 #include "InGameViewsLocator.h"
-#include "Input.h"
+#include "InputFrame.h"
+#include "InputFwd.h"
+#include "KeyBindings.h"
 #include "Lang.h"
 #include "LuaObject.h"
 #include "Pi.h"
 #include "Player.h"
 #include "SectorView.h"
 #include "Space.h"
-#include "libs/StringF.h"
-#include "libs/stringUtils.h"
 #include "TransferPlanner.h"
 #include "galaxy/Galaxy.h"
 #include "galaxy/StarSystem.h"
@@ -28,6 +27,9 @@
 #include "graphics/TextureBuilder.h"
 #include "graphics/VertexArray.h"
 #include "graphics/VertexBuffer.h"
+#include "libs/AnimationCurves.h"
+#include "libs/StringF.h"
+#include "libs/stringUtils.h"
 
 #include "gui/GuiLabel.h"
 #include "gui/GuiLabelSet.h"
@@ -278,7 +280,7 @@ void SystemView::RegisterInputBindings()
 
 	m_inputFrame = std::make_unique<InputFrame>("SystemView");
 
-	BindingPage &page = Pi::input->GetBindingPage("SystemView");
+	BindingPage &page = m_inputFrame->GetBindingPage("SystemView");
 	BindingGroup &group = page.GetBindingGroup("Miscellaneous");
 
 	m_systemViewBindings.zoomView = m_inputFrame->AddAxisBinding("BindViewZoom", group, AxisBinding(WheelDirection::UP));
@@ -783,18 +785,19 @@ void SystemView::Update(const float frameTime)
 	// XXX ugly hack checking for console here
 	if (!Pi::IsConsoleActive()) {
 		float speed = 0.0f;
+		const float speed_modifier = InputFWD::GetMoveSpeedShiftModifier();
 		if (m_systemViewBindings.zoomView->IsActive()) {
 			speed = m_systemViewBindings.zoomView->GetValue();
 			if (speed < 0.0f) {
-				m_zoomTo *= -speed * (((ZOOM_OUT_SPEED - 1) * WHEEL_SENSITIVITY + 1) / Pi::input->GetMoveSpeedShiftModifier());
+				m_zoomTo *= -speed * (((ZOOM_OUT_SPEED - 1) * WHEEL_SENSITIVITY + 1) / speed_modifier);
 			} else {
-				m_zoomTo *= +speed * (((ZOOM_IN_SPEED - 1) * WHEEL_SENSITIVITY + 1) * Pi::input->GetMoveSpeedShiftModifier());
+				m_zoomTo *= +speed * (((ZOOM_IN_SPEED - 1) * WHEEL_SENSITIVITY + 1) * speed_modifier);
 			}
 		} else {
 			if (m_zoomInButton->IsPressed())
-				m_zoomTo *= pow(ZOOM_IN_SPEED * Pi::input->GetMoveSpeedShiftModifier(), frameTime);
+				m_zoomTo *= pow(ZOOM_IN_SPEED * speed_modifier, frameTime);
 			if (m_zoomOutButton->IsPressed())
-				m_zoomTo *= pow(ZOOM_OUT_SPEED / Pi::input->GetMoveSpeedShiftModifier(), frameTime);
+				m_zoomTo *= pow(ZOOM_OUT_SPEED / speed_modifier, frameTime);
 		}
 		// transfer planner buttons
 		if (m_plannerIncreaseStartTimeButton->IsPressed()) {
@@ -850,7 +853,7 @@ void SystemView::Update(const float frameTime)
 	AnimationCurves::Approach(m_rot_x, m_rot_x_to, frameTime);
 	AnimationCurves::Approach(m_rot_y, m_rot_y_to, frameTime);
 
-	auto motion = Pi::input->GetMouseMotion(MouseMotionBehaviour::Rotate);
+	auto motion = InputFWD::GetMouseMotion(MouseMotionBehaviour::Rotate);
 	m_rot_x_to += std::get<2>(motion) * 20 * frameTime;
 	m_rot_y_to += std::get<1>(motion) * 20 * frameTime;
 

@@ -4,7 +4,6 @@
 #ifndef _SECTORVIEW_H
 #define _SECTORVIEW_H
 
-#include "InputFrame.h"
 #include "UIView.h"
 #include "galaxy/Sector.h"
 #include "galaxy/SystemPath.h"
@@ -14,6 +13,7 @@
 #include <vector>
 
 class Galaxy;
+class InputFrame;
 
 namespace KeyBindings {
 	struct ActionBinding;

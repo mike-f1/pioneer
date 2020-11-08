@@ -3,11 +3,12 @@
 
 #pragma once
 
-#include "InputFrame.h"
 #include "ShipController.h"
 
 #include "libs/vector3.h"
 #include <array>
+
+class InputFrame;
 
 namespace KeyBindings {
 	struct ActionBinding;

@@ -27,6 +27,7 @@
 #include "graphics/Graphics.h"
 #include "graphics/Material.h"
 #include "graphics/Renderer.h"
+#include "graphics/RenderState.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/VertexArray.h"
 #include "graphics/VertexBuffer.h"
@@ -34,9 +35,6 @@
 #include "libs/matrix4x4.h"
 #include "ship/PlayerShipController.h"
 #include "sound/Sound.h"
-#include "ui/Widget.h"
-
-#include "gui/GuiScreen.h"
 
 #include <imgui/imgui.h>
 
@@ -53,6 +51,8 @@ namespace {
 	static const Color yellow(230, 230, 77, 255);
 	static const Color red(255, 0, 0, 128);
 } // namespace
+
+const int screen_w = 800, screen_h = 600;
 
 WorldView::WorldView(Game *game) :
 	UIView(),
@@ -96,10 +96,9 @@ void WorldView::InitObject(Game *game)
 	rsd.depthWrite = false;
 	rsd.depthTest = false;
 	m_blendState = RendererLocator::getRenderer()->CreateRenderState(rsd); //XXX m_renderer not set yet
-	m_navTunnel = new NavTunnelWidget(this, m_blendState);
-	Add(m_navTunnel, 0, 0);
+	m_navTunnel = std::make_unique<NavTunnelWidget>(this, m_blendState);
 
-	m_speedLines.reset(new SpeedLines(game->GetPlayer()));
+	m_speedLines = std::make_unique<SpeedLines>(game->GetPlayer());
 
 	float znear;
 	float zfar;
@@ -270,6 +269,9 @@ void WorldView::Draw()
 
 	View::Draw();
 
+	if (GameConfSingleton::IsNavTunnelDisplayed())
+		m_navTunnel->Draw();
+
 	// don't draw crosshairs etc in hyperspace
 	if (GameLocator::getGame()->GetPlayer()->GetFlightState() == Ship::HYPERSPACE) return;
 
@@ -283,71 +285,7 @@ void WorldView::Draw()
 void WorldView::DrawUI(const float frameTime)
 {
 	if (Pi::IsConsoleActive()) return;
-#if WITH_DEVKEYS
-	if (Pi::showDebugInfo) {
-		std::ostringstream ss;
 
-		if (GameLocator::getGame()->GetPlayer()->GetFlightState() != Ship::HYPERSPACE) {
-			vector3d pos = GameLocator::getGame()->GetPlayer()->GetPosition();
-			vector3d abs_pos = GameLocator::getGame()->GetPlayer()->GetPositionRelTo(Frame::GetRootFrameId());
-
-			const Frame *playerFrame = Frame::GetFrame(GameLocator::getGame()->GetPlayer()->GetFrame());
-
-			ss << stringf("Pos: %0{f.2}, %1{f.2}, %2{f.2}\n", pos.x, pos.y, pos.z);
-			ss << stringf("AbsPos: %0{f.2}, %1{f.2}, %2{f.2}\n", abs_pos.x, abs_pos.y, abs_pos.z);
-
-			const SystemPath &path(playerFrame->GetSystemBody()->GetPath());
-			ss << stringf("Rel-to: %0 [%1{d},%2{d},%3{d},%4{u},%5{u}] ",
-				playerFrame->GetLabel(),
-				path.sectorX, path.sectorY, path.sectorZ, path.systemIndex, path.bodyIndex);
-			ss << stringf("(%0{f.2} km), rotating: %1, has rotation: %2\n",
-				pos.Length() / 1000, (playerFrame->IsRotFrame() ? "yes" : "no"), (playerFrame->HasRotFrame() ? "yes" : "no"));
-
-			//Calculate lat/lon for ship position
-			const vector3d dir = pos.NormalizedSafe();
-			const float lat = RAD2DEG(asin(dir.y));
-			const float lon = RAD2DEG(atan2(dir.x, dir.z));
-
-			ss << stringf("Lat / Lon: %0{f.8} / %1{f.8}\n", lat, lon);
-		}
-
-		char aibuf[256];
-		GameLocator::getGame()->GetPlayer()->AIGetStatusText(aibuf);
-		aibuf[255] = 0;
-		ss << aibuf << std::endl;
-
-		int32_t viewport[4];
-		RendererLocator::getRenderer()->GetCurrentViewport(&viewport[0]);
-		ImVec2 pos(0.0, 0.5);
-		pos.x = pos.x * viewport[2] + viewport[0];
-		pos.y = pos.y * viewport[3] + viewport[1];
-		pos.y = RendererLocator::getRenderer()->GetWindowHeight() - pos.y;
-
-		ImVec2 size = ImGui::CalcTextSize(ss.str().c_str());
-		ImGuiStyle& style = ImGui::GetStyle();
-		size.x += style.WindowPadding.x * 2;
-		size.y += style.WindowPadding.y * 2;
-
-		pos.y -= size.y / 2.0;
-		ImGui::SetNextWindowBgAlpha(0.7f);
-		ImGui::Begin("dbg", nullptr, ImGuiWindowFlags_NoTitleBar
-					| ImGuiWindowFlags_NoResize
-					| ImGuiWindowFlags_NoMove
-					| ImGuiWindowFlags_NoScrollbar
-					| ImGuiWindowFlags_NoCollapse
-					| ImGuiWindowFlags_NoSavedSettings
-					| ImGuiWindowFlags_NoFocusOnAppearing
-					| ImGuiWindowFlags_NoBringToFrontOnFocus
-					);
-		ImGui::SetWindowPos(pos);
-		ImGui::SetWindowSize(size);
-		ImVec4 color(1.0f, 1.0f, 1.0f, 1.0);
-		ImGui::PushStyleColor(ImGuiCol_Text, color);
-		ImGui::TextUnformatted(ss.str().c_str());
-		ImGui::PopStyleColor(1);
-		ImGui::End();
-	}
-#endif
 	if (!GameLocator::getGame()->IsPaused()) return;
 	int32_t viewport[4];
 	RendererLocator::getRenderer()->GetCurrentViewport(&viewport[0]);
@@ -460,7 +398,7 @@ static inline bool project_to_screen(const vector3d &in, vector3d &out, const Gr
 {
 	if (!frustum.ProjectPoint(in, out)) return false;
 	out.x *= guiSize[0];
-	out.y = Gui::Screen::GetHeight() - out.y * guiSize[1];
+	out.y = screen_h - out.y * guiSize[1];
 	return true;
 }
 
@@ -527,33 +465,30 @@ void WorldView::UpdateProjectedObjects()
 
 void WorldView::UpdateIndicator(Indicator &indicator, const vector3d &cameraSpacePos)
 {
-	const int guiSize[2] = { Gui::Screen::GetWidth(), Gui::Screen::GetHeight() };
+	const int guiSize[2] = { screen_w, screen_h };
 	const Graphics::Frustum &frustum = m_cameraContext->GetFrustum();
 
 	const float BORDER = 10.0;
 	const float BORDER_BOTTOM = 90.0;
 	// XXX BORDER_BOTTOM is 10+the control panel height and shouldn't be needed at all
 
-	const float w = Gui::Screen::GetWidth();
-	const float h = Gui::Screen::GetHeight();
-
 	if (cameraSpacePos.LengthSqr() < 1e-6) { // length < 1e-3
-		indicator.pos.x = w / 2.0f;
-		indicator.pos.y = h / 2.0f;
+		indicator.pos.x = screen_w / 2.0f;
+		indicator.pos.y = screen_h / 2.0f;
 		indicator.side = INDICATOR_ONSCREEN;
 	} else {
 		vector3d proj;
 		bool success = project_to_screen(cameraSpacePos, proj, frustum, guiSize);
 		if (!success)
-			proj = vector3d(w / 2.0, h / 2.0, 0.0);
+			proj = vector3d(screen_w / 2.0, screen_h / 2.0, 0.0);
 
 		indicator.realpos.x = int(proj.x);
 		indicator.realpos.y = int(proj.y);
 
 		bool onscreen =
 			(cameraSpacePos.z < 0.0) &&
-			(proj.x >= BORDER) && (proj.x < w - BORDER) &&
-			(proj.y >= BORDER) && (proj.y < h - BORDER_BOTTOM);
+			(proj.x >= BORDER) && (proj.x < screen_w - BORDER) &&
+			(proj.y >= BORDER) && (proj.y < screen_h - BORDER_BOTTOM);
 
 		if (onscreen) {
 			indicator.pos.x = int(proj.x);
@@ -561,28 +496,28 @@ void WorldView::UpdateIndicator(Indicator &indicator, const vector3d &cameraSpac
 			indicator.side = INDICATOR_ONSCREEN;
 		} else {
 			// homogeneous 2D points and lines are really useful
-			const vector3d ptCentre(w / 2.0, h / 2.0, 1.0);
+			const vector3d ptCentre(screen_w / 2.0, screen_h / 2.0, 1.0);
 			const vector3d ptProj(proj.x, proj.y, 1.0);
 			const vector3d lnDir = ptProj.Cross(ptCentre);
 
 			indicator.side = INDICATOR_TOP;
 
 			// this fallback is used if direction is close to (0, 0, +ve)
-			indicator.pos.x = w / 2.0;
+			indicator.pos.x = screen_w / 2.0;
 			indicator.pos.y = BORDER;
 
 			if (cameraSpacePos.x < -1e-3) {
 				vector3d ptLeft = lnDir.Cross(vector3d(-1.0, 0.0, BORDER));
 				ptLeft /= ptLeft.z;
-				if (ptLeft.y >= BORDER && ptLeft.y < h - BORDER_BOTTOM) {
+				if (ptLeft.y >= BORDER && ptLeft.y < screen_h - BORDER_BOTTOM) {
 					indicator.pos.x = ptLeft.x;
 					indicator.pos.y = ptLeft.y;
 					indicator.side = INDICATOR_LEFT;
 				}
 			} else if (cameraSpacePos.x > 1e-3) {
-				vector3d ptRight = lnDir.Cross(vector3d(-1.0, 0.0, w - BORDER));
+				vector3d ptRight = lnDir.Cross(vector3d(-1.0, 0.0, screen_w - BORDER));
 				ptRight /= ptRight.z;
-				if (ptRight.y >= BORDER && ptRight.y < h - BORDER_BOTTOM) {
+				if (ptRight.y >= BORDER && ptRight.y < screen_h - BORDER_BOTTOM) {
 					indicator.pos.x = ptRight.x;
 					indicator.pos.y = ptRight.y;
 					indicator.side = INDICATOR_RIGHT;
@@ -590,9 +525,9 @@ void WorldView::UpdateIndicator(Indicator &indicator, const vector3d &cameraSpac
 			}
 
 			if (cameraSpacePos.y < -1e-3) {
-				vector3d ptBottom = lnDir.Cross(vector3d(0.0, -1.0, h - BORDER_BOTTOM));
+				vector3d ptBottom = lnDir.Cross(vector3d(0.0, -1.0, screen_h - BORDER_BOTTOM));
 				ptBottom /= ptBottom.z;
-				if (ptBottom.x >= BORDER && ptBottom.x < w - BORDER) {
+				if (ptBottom.x >= BORDER && ptBottom.x < screen_w - BORDER) {
 					indicator.pos.x = ptBottom.x;
 					indicator.pos.y = ptBottom.y;
 					indicator.side = INDICATOR_BOTTOM;
@@ -600,7 +535,7 @@ void WorldView::UpdateIndicator(Indicator &indicator, const vector3d &cameraSpac
 			} else if (cameraSpacePos.y > 1e-3) {
 				vector3d ptTop = lnDir.Cross(vector3d(0.0, -1.0, BORDER));
 				ptTop /= ptTop.z;
-				if (ptTop.x >= BORDER && ptTop.x < w - BORDER) {
+				if (ptTop.x >= BORDER && ptTop.x < screen_w - BORDER) {
 					indicator.pos.x = ptTop.x;
 					indicator.pos.y = ptTop.y;
 					indicator.side = INDICATOR_TOP;
@@ -618,7 +553,7 @@ void WorldView::UpdateIndicator(Indicator &indicator, const vector3d &cameraSpac
 		case INDICATOR_HIDDEN: break;
 		case INDICATOR_ONSCREEN: // when onscreen, default to label-below unless it would clamp to be on top of the marker
 			pos[0] = -(labelSize[0] / 2.0f);
-			if (indicator.pos.y + pos[1] + labelSize[1] + HUD_CROSSHAIR_SIZE + 2.0f > h - BORDER_BOTTOM)
+			if (indicator.pos.y + pos[1] + labelSize[1] + HUD_CROSSHAIR_SIZE + 2.0f > screen_h - BORDER_BOTTOM)
 				pos[1] = -(labelSize[1] + HUD_CROSSHAIR_SIZE + 2.0f);
 			else
 				pos[1] = HUD_CROSSHAIR_SIZE + 2.0f;
@@ -641,8 +576,8 @@ void WorldView::UpdateIndicator(Indicator &indicator, const vector3d &cameraSpac
 			break;
 		}
 
-		pos[0] = Clamp(pos[0] + indicator.pos.x, BORDER, w - BORDER - labelSize[0]);
-		pos[1] = Clamp(pos[1] + indicator.pos.y, BORDER, h - BORDER_BOTTOM - labelSize[1]);
+		pos[0] = Clamp(pos[0] + indicator.pos.x, BORDER, screen_w - BORDER - labelSize[0]);
+		pos[1] = Clamp(pos[1] + indicator.pos.y, BORDER, screen_h - BORDER_BOTTOM - labelSize[1]);
 	}
 }
 
@@ -650,16 +585,6 @@ void WorldView::HideIndicator(Indicator &indicator)
 {
 	indicator.side = INDICATOR_HIDDEN;
 	indicator.pos = vector2f(0.0f, 0.0f);
-}
-
-double getSquareDistance(double initialDist, double scalingFactor, int num)
-{
-	return pow(scalingFactor, num - 1) * num * initialDist;
-}
-
-double getSquareHeight(double distance, double angle)
-{
-	return distance * tan(angle);
 }
 
 void WorldView::DrawCombatTargetIndicator(const Indicator &target, const Indicator &lead, const Color &c)
@@ -720,7 +645,7 @@ void WorldView::DrawCombatTargetIndicator(const Indicator &target, const Indicat
 
 void WorldView::DrawEdgeMarker(const Indicator &marker, const Color &c)
 {
-	const vector2f screenCentre(Gui::Screen::GetWidth() / 2.0f, Gui::Screen::GetHeight() / 2.0f);
+	const vector2f screenCentre(screen_w / 2.0f, screen_h / 2.0f);
 	vector2f dir = screenCentre - marker.pos;
 	float len = dir.Length();
 	dir *= HUD_CROSSHAIR_SIZE / len;
@@ -728,104 +653,6 @@ void WorldView::DrawEdgeMarker(const Indicator &marker, const Color &c)
 	m_edgeMarker.SetStart(vector3f(marker.pos, 0.0f));
 	m_edgeMarker.SetEnd(vector3f(marker.pos + dir, 0.0f));
 	m_edgeMarker.Draw(RendererLocator::getRenderer(), m_blendState);
-}
-
-NavTunnelWidget::NavTunnelWidget(WorldView *worldview, Graphics::RenderState *rs) :
-	Widget(),
-	m_worldView(worldview),
-	m_renderState(rs)
-{
-}
-
-void NavTunnelWidget::Draw()
-{
-	if (!GameConfSingleton::IsNavTunnelDisplayed()) return;
-
-	Body *navtarget = GameLocator::getGame()->GetPlayer()->GetNavTarget();
-	if (navtarget) {
-		const vector3d navpos = navtarget->GetPositionRelTo(GameLocator::getGame()->GetPlayer());
-		const matrix3x3d &rotmat = GameLocator::getGame()->GetPlayer()->GetOrient();
-		const vector3d eyevec = rotmat * m_worldView->shipView.GetCameraController()->GetOrient().VectorZ();
-		if (eyevec.Dot(navpos) >= 0.0) return;
-
-		const double distToDest = GameLocator::getGame()->GetPlayer()->GetPositionRelTo(navtarget).Length();
-
-		const int maxSquareHeight = std::max(Gui::Screen::GetWidth(), Gui::Screen::GetHeight()) / 2;
-		const double angle = atan(maxSquareHeight / distToDest);
-		// ECRAVEN: TODO not the ideal way to handle Begin/EndCameraFrame here :-/
-		m_worldView->BeginCameraFrame();
-		const vector3d nav_screen = m_worldView->WorldSpaceToScreenSpace(navtarget);
-		m_worldView->EndCameraFrame();
-		const vector2f tpos(vector2f(nav_screen.x / Graphics::GetScreenWidth() * Gui::Screen::GetWidth(), nav_screen.y / Graphics::GetScreenHeight() * Gui::Screen::GetHeight()));
-		const vector2f distDiff(tpos - vector2f(Gui::Screen::GetWidth() / 2.0f, Gui::Screen::GetHeight() / 2.0f));
-
-		double dist = 0.0;
-		const double scalingFactor = 1.6; // scales distance between squares: closer to 1.0, more squares
-		for (int squareNum = 1;; squareNum++) {
-			dist = getSquareDistance(10.0, scalingFactor, squareNum);
-			if (dist > distToDest)
-				break;
-
-			const double sqh = getSquareHeight(dist, angle);
-			if (sqh >= 10) {
-				const vector2f off = distDiff * (dist / distToDest);
-				const vector2f sqpos(tpos - off);
-				DrawTargetGuideSquare(sqpos, sqh, green);
-			}
-		}
-	}
-}
-
-void NavTunnelWidget::DrawTargetGuideSquare(const vector2f &pos, const float size, const Color &c)
-{
-	const float x1 = pos.x - size;
-	const float x2 = pos.x + size;
-	const float y1 = pos.y - size;
-	const float y2 = pos.y + size;
-
-	Color black(c);
-	black.a = c.a / 6;
-	Graphics::VertexArray va(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE, 8);
-	va.Add(vector3f(x1, y1, 0.f), c);
-	va.Add(vector3f(pos.x, y1, 0.f), black);
-	va.Add(vector3f(x2, y1, 0.f), c);
-	va.Add(vector3f(x2, pos.y, 0.f), black);
-	va.Add(vector3f(x2, y2, 0.f), c);
-	va.Add(vector3f(pos.x, y2, 0.f), black);
-	va.Add(vector3f(x1, y2, 0.f), c);
-	va.Add(vector3f(x1, pos.y, 0.f), black);
-
-	if (!m_vbuffer.get()) {
-		CreateVertexBuffer(8);
-	}
-
-	m_vbuffer->Populate(va);
-
-	RendererLocator::getRenderer()->DrawBuffer(m_vbuffer.get(), m_renderState, m_material.Get(), Graphics::LINE_LOOP);
-}
-
-void NavTunnelWidget::GetSizeRequested(float size[2])
-{
-	size[0] = Gui::Screen::GetWidth();
-	size[1] = Gui::Screen::GetHeight();
-}
-
-void NavTunnelWidget::CreateVertexBuffer(const uint32_t size)
-{
-	Graphics::Renderer *r = RendererLocator::getRenderer();
-
-	Graphics::MaterialDescriptor desc;
-	desc.vertexColors = true;
-	m_material.Reset(r->CreateMaterial(desc));
-
-	Graphics::VertexBufferDesc vbd;
-	vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
-	vbd.attrib[0].format = Graphics::ATTRIB_FORMAT_FLOAT3;
-	vbd.attrib[1].semantic = Graphics::ATTRIB_DIFFUSE;
-	vbd.attrib[1].format = Graphics::ATTRIB_FORMAT_UBYTE4;
-	vbd.usage = Graphics::BUFFER_USAGE_DYNAMIC;
-	vbd.numVertices = size;
-	m_vbuffer.reset(r->CreateVertexBuffer(vbd));
 }
 
 // project vector vec onto plane (normal must be normalized)
@@ -839,15 +666,7 @@ static double wrapAngleToPositive(const double theta)
 	return (theta >= 0.0 ? theta : M_PI * 2 + theta);
 }
 
-/*
-  heading range: 0 - 359 deg
-  heading  0 - north
-  heading 90 - east
-  pitch range: -90 - +90 deg
-  pitch  0 - level with surface
-  pitch 90 - up
-*/
-std::tuple<double, double, double> WorldView::CalculateHeadingPitchRoll(PlaneType pt)
+vector3d WorldView::CalculateHeadingPitchRoll(PlaneType pt)
 {
 	FrameId frameId = GameLocator::getGame()->GetPlayer()->GetFrame();
 
@@ -875,7 +694,7 @@ std::tuple<double, double, double> WorldView::CalculateHeadingPitchRoll(PlaneTyp
 	const double heading = wrapAngleToPositive(atan2(hedEast, hedNorth));
 	const double roll = (acos(right.Dot(up.Cross(hed).Normalized())) - M_PI) * (right.Dot(up) >= 0 ? -1 : 1);
 
-	return std::make_tuple(
+	return vector3d(
 		std::isnan(heading) ? 0.0 : heading,
 		std::isnan(pitch) ? 0.0 : pitch,
 		std::isnan(roll) ? 0.0 : roll);
@@ -953,4 +772,101 @@ vector3d WorldView::GetMouseDirection() const
 	if (shipView.GetCamType() == ShipViewController::CAM_INTERNAL && shipView.m_internalCameraController->GetMode() == InternalCameraController::MODE_REAR)
 		mouseDir = -mouseDir;
 	return (GameLocator::getGame()->GetPlayer()->GetPhysRadius() * 1.5) * mouseDir;
+}
+
+NavTunnelWidget::NavTunnelWidget(WorldView *worldview, Graphics::RenderState *rs) :
+	m_worldView(worldview),
+	m_renderState(rs)
+{
+	CreateVertexBuffer(8);
+}
+
+static double getSquareDistance(double initialDist, double scalingFactor, int num)
+{
+	return pow(scalingFactor, num - 1) * num * initialDist;
+}
+
+static double getSquareHeight(double distance, double angle)
+{
+	return distance * tan(angle);
+}
+
+void NavTunnelWidget::Draw()
+{
+	Body *navtarget = GameLocator::getGame()->GetPlayer()->GetNavTarget();
+	if (navtarget) {
+		const vector3d navpos = navtarget->GetPositionRelTo(GameLocator::getGame()->GetPlayer());
+		const matrix3x3d &rotmat = GameLocator::getGame()->GetPlayer()->GetOrient();
+		const vector3d eyevec = rotmat * m_worldView->shipView.GetCameraController()->GetOrient().VectorZ();
+		if (eyevec.Dot(navpos) >= 0.0) {
+			return;
+		}
+		const double distToDest = GameLocator::getGame()->GetPlayer()->GetPositionRelTo(navtarget).Length();
+
+		const int maxSquareHeight = std::max(screen_w, screen_h) / 2;
+		const double angle = atan(maxSquareHeight / distToDest);
+		// ECRAVEN: TODO not the ideal way to handle Begin/EndCameraFrame here :-/
+		m_worldView->BeginCameraFrame();
+		const vector3d nav_screen = m_worldView->WorldSpaceToScreenSpace(navtarget);
+		m_worldView->EndCameraFrame();
+		const vector2f tpos(vector2f(nav_screen.x / Graphics::GetScreenWidth() * screen_w, nav_screen.y / Graphics::GetScreenHeight() * screen_h));
+		const vector2f distDiff(tpos - vector2f(screen_w / 2.0f, screen_h / 2.0f));
+
+		double dist = 0.0;
+		const double scalingFactor = 1.6; // scales distance between squares: closer to 1.0, more squares
+		for (int squareNum = 1;; squareNum++) {
+			dist = getSquareDistance(10.0, scalingFactor, squareNum);
+			if (dist > distToDest)
+				break;
+
+			const double sqh = getSquareHeight(dist, angle);
+			if (sqh >= 10) {
+				const vector2f off = distDiff * (dist / distToDest);
+				const vector2f sqpos(tpos - off);
+				DrawTargetGuideSquare(sqpos, sqh, green);
+			}
+		}
+	}
+}
+
+void NavTunnelWidget::DrawTargetGuideSquare(const vector2f &pos, const float size, const Color &c)
+{
+	const float x1 = pos.x - size;
+	const float x2 = pos.x + size;
+	const float y1 = pos.y - size;
+	const float y2 = pos.y + size;
+
+	Color black(c);
+	black.a = c.a / 6;
+	Graphics::VertexArray va(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE, 8);
+	va.Add(vector3f(x1, y1, 0.f), c);
+	va.Add(vector3f(pos.x, y1, 0.f), black);
+	va.Add(vector3f(x2, y1, 0.f), c);
+	va.Add(vector3f(x2, pos.y, 0.f), black);
+	va.Add(vector3f(x2, y2, 0.f), c);
+	va.Add(vector3f(pos.x, y2, 0.f), black);
+	va.Add(vector3f(x1, y2, 0.f), c);
+	va.Add(vector3f(x1, pos.y, 0.f), black);
+
+	m_vbuffer->Populate(va);
+
+	RendererLocator::getRenderer()->DrawBuffer(m_vbuffer.get(), m_renderState, m_material.Get(), Graphics::LINE_LOOP);
+}
+
+void NavTunnelWidget::CreateVertexBuffer(const uint32_t size)
+{
+	Graphics::Renderer *r = RendererLocator::getRenderer();
+
+	Graphics::MaterialDescriptor desc;
+	desc.vertexColors = true;
+	m_material.Reset(r->CreateMaterial(desc));
+
+	Graphics::VertexBufferDesc vbd;
+	vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
+	vbd.attrib[0].format = Graphics::ATTRIB_FORMAT_FLOAT3;
+	vbd.attrib[1].semantic = Graphics::ATTRIB_DIFFUSE;
+	vbd.attrib[1].format = Graphics::ATTRIB_FORMAT_UBYTE4;
+	vbd.usage = Graphics::BUFFER_USAGE_DYNAMIC;
+	vbd.numVertices = size;
+	m_vbuffer.reset(r->CreateVertexBuffer(vbd));
 }

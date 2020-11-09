@@ -62,15 +62,15 @@ public:
 	bool IsInfoView() const { return ViewType::INFO == m_currentViewType; }
 	bool IsObjectView() const { return ViewType::OBJECT == m_currentViewType; }
 
-	SectorView *GetSectorView() const { return m_sectorView; }
-	UIView *GetGalacticView() const { return m_galacticView; }
-	SystemInfoView *GetSystemInfoView() const { return m_systemInfoView; }
-	SystemView *GetSystemView() const { return m_systemView; }
+	SectorView *GetSectorView() const { return m_sectorView.get(); }
+	UIView *GetGalacticView() const { return m_galacticView.get(); }
+	SystemInfoView *GetSystemInfoView() const { return m_systemInfoView.get(); }
+	SystemView *GetSystemView() const { return m_systemView.get(); }
 	WorldView *GetWorldView() const { return m_worldView.get(); }
-	DeathView *GetDeathView() const { return m_deathView; }
-	UIView *GetSpaceStationView() const { return m_spaceStationView; }
-	UIView *GetInfoView() const { return m_infoView; }
-	ShipCpanel *GetCpan() const { return m_cpan; }
+	DeathView *GetDeathView() const { return m_deathView.get(); }
+	UIView *GetSpaceStationView() const { return m_spaceStationView.get(); }
+	UIView *GetInfoView() const { return m_infoView.get(); }
+	ShipCpanel *GetCpan() const { return m_cpan.get(); }
 
 	/* Only use #if WITH_OBJECTVIEWER */
 	ObjectViewerView *GetObjectViewerView() const;
@@ -84,19 +84,19 @@ private:
 	View *m_currentView;
 	ViewType m_currentViewType;
 
-	SectorView *m_sectorView;
-	UIView *m_galacticView;
-	SystemInfoView *m_systemInfoView;
-	SystemView *m_systemView;
+	std::unique_ptr<SectorView> m_sectorView;
+	std::unique_ptr<UIView> m_galacticView;
+	std::unique_ptr<SystemInfoView> m_systemInfoView;
+	std::unique_ptr<SystemView> m_systemView;
 	std::unique_ptr<WorldView> m_worldView;
-	DeathView *m_deathView;
-	UIView *m_spaceStationView;
-	UIView *m_infoView;
-	ShipCpanel *m_cpan;
+	std::unique_ptr<DeathView> m_deathView;
+	std::unique_ptr<UIView> m_spaceStationView;
+	std::unique_ptr<UIView> m_infoView;
+	std::unique_ptr<ShipCpanel> m_cpan;
 
 #ifdef WITH_OBJECTVIEWER
 	/* Only use #if WITH_OBJECTVIEWER */
-	ObjectViewerView *m_objectViewerView;
+	std::unique_ptr<ObjectViewerView> m_objectViewerView;
 #endif
 };
 

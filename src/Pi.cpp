@@ -6,6 +6,7 @@
 #include "sphere/BaseSphere.h"
 #include "CityOnPlanet.h"
 #include "DeathView.h"
+#include "DebugInfo.h"
 #include "EnumStrings.h"
 #include "FaceParts.h"
 #include "FileSystem.h"
@@ -63,7 +64,6 @@
 #include "Sfx.h"
 #include "Shields.h"
 #include "ShipCpanel.h"
-#include "ShipCpanelMultiFuncDisplays.h"
 #include "ShipType.h"
 #include "Space.h"
 #include "SpaceStation.h"
@@ -77,8 +77,6 @@
 #include "gameui/Lua.h"
 #include "libs/libs.h"
 #include "pigui/PiGuiLua.h"
-#include "ship/PlayerShipController.h"
-#include "ship/ShipViewController.h"
 #include "sound/Sound.h"
 #include "sound/SoundMusic.h"
 
@@ -88,12 +86,6 @@
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/Texture.h"
-
-#if WITH_DEVKEYS
-#include "graphics/Graphics.h"
-#include "graphics/Light.h"
-#include "graphics/Stats.h"
-#endif // WITH_DEVKEYS
 
 #include "scenegraph/Lua.h"
 #include "versioningInfo.h"
@@ -148,6 +140,8 @@ Pi::MainState Pi::m_mainState = Pi::MainState::MAIN_MENU;
 
 std::unique_ptr<AsyncJobQueue> Pi::asyncJobQueue;
 std::unique_ptr<SyncJobQueue> Pi::syncJobQueue;
+
+std::unique_ptr<DebugInfo> s_debugInfo;
 
 // Leaving define in place in case of future rendering problems.
 #define USE_RTT 0
@@ -921,6 +915,11 @@ void Pi::ToggleDebug(bool down)
 {
 	if (down) return;
 	Pi::showDebugInfo = !Pi::showDebugInfo;
+	if (Pi::showDebugInfo) {
+		s_debugInfo = std::make_unique<DebugInfo>();
+	} else {
+		s_debugInfo.reset();
+	}
 }
 
 void Pi::ReloadShaders(bool down)
@@ -1143,11 +1142,7 @@ void Pi::MainLoop()
 {
 	double time_player_died = 0;
 #if WITH_DEVKEYS
-	uint32_t last_stats = SDL_GetTicks();
-	int frame_stat = 0;
-	int phys_stat = 0;
-	char fps_readout[2048];
-	memset(fps_readout, 0, sizeof(fps_readout));
+	if (s_debugInfo)  s_debugInfo->NewCycle();
 #endif
 
 	int MAX_PHYSICS_TICKS = GameConfSingleton::getInstance().Int("MaxPhysicsCyclesPerRender");
@@ -1200,7 +1195,7 @@ void Pi::MainLoop()
 				m_gameTickAlpha = accumulator / step;
 
 #if WITH_DEVKEYS
-			phys_stat += phys_ticks;
+			if (s_debugInfo)  s_debugInfo->IncreasePhys(phys_ticks);
 #endif
 		} else {
 			// paused
@@ -1208,7 +1203,7 @@ void Pi::MainLoop()
 			BaseSphere::UpdateAllBaseSphereDerivatives();
 		}
 #if WITH_DEVKEYS
-		frame_stat++;
+		if (s_debugInfo)  s_debugInfo->IncreaseFrame();
 #endif
 
 		// did the player die?
@@ -1282,22 +1277,16 @@ void Pi::MainLoop()
 
 			InGameViewsLocator::getInGameViews()->DrawUI(m_frameTime);
 
+#if WITH_DEVKEYS
+			if (Pi::showDebugInfo)  {
+				s_debugInfo->Update();
+				s_debugInfo->Print();
+			}
+#endif
 			DrawPiGui(m_frameTime, "GAME");
+
 			InGameViewsLocator::getInGameViews()->GetWorldView()->EndCameraFrame();
 		}
-
-#if WITH_DEVKEYS
-		// NB: this needs to be rendered last so that it appears over all other game elements
-		//	preferrably like this where it is just before the buffer swap
-		if (Pi::showDebugInfo) {
-			Gui::Screen::EnterOrtho();
-			Gui::Screen::PushFont("ConsoleFont");
-			static RefCountedPtr<Graphics::VertexBuffer> s_debugInfovb;
-			Gui::Screen::RenderStringBuffer(s_debugInfovb, fps_readout, 0, 0);
-			Gui::Screen::PopFont();
-			Gui::Screen::LeaveOrtho();
-		}
-#endif
 
 		RendererLocator::getRenderer()->SwapBuffers();
 
@@ -1325,53 +1314,6 @@ void Pi::MainLoop()
 
 		HandleRequests();
 
-#if WITH_DEVKEYS
-		if (Pi::showDebugInfo && SDL_GetTicks() - last_stats > 1000) {
-			size_t lua_mem = Lua::manager->GetMemoryUsage();
-			int lua_memB = int(lua_mem & ((1u << 10) - 1));
-			int lua_memKB = int(lua_mem >> 10) % 1024;
-			int lua_memMB = int(lua_mem >> 20);
-			const Graphics::Stats::TFrameData &stats = RendererLocator::getRenderer()->GetStats().FrameStatsPrevious();
-			const uint32_t numDrawCalls = stats.m_stats[Graphics::Stats::STAT_DRAWCALL];
-			const uint32_t numBuffersCreated = stats.m_stats[Graphics::Stats::STAT_CREATE_BUFFER];
-			const uint32_t numDrawTris = stats.m_stats[Graphics::Stats::STAT_DRAWTRIS];
-			const uint32_t numDrawPointSprites = stats.m_stats[Graphics::Stats::STAT_DRAWPOINTSPRITES];
-			const uint32_t numDrawBuildings = stats.m_stats[Graphics::Stats::STAT_BUILDINGS];
-			const uint32_t numDrawCities = stats.m_stats[Graphics::Stats::STAT_CITIES];
-			const uint32_t numDrawGroundStations = stats.m_stats[Graphics::Stats::STAT_GROUNDSTATIONS];
-			const uint32_t numDrawSpaceStations = stats.m_stats[Graphics::Stats::STAT_SPACESTATIONS];
-			const uint32_t numDrawAtmospheres = stats.m_stats[Graphics::Stats::STAT_ATMOSPHERES];
-			const uint32_t numDrawPatches = stats.m_stats[Graphics::Stats::STAT_PATCHES];
-			const uint32_t numDrawPlanets = stats.m_stats[Graphics::Stats::STAT_PLANETS];
-			const uint32_t numDrawGasGiants = stats.m_stats[Graphics::Stats::STAT_GASGIANTS];
-			const uint32_t numDrawStars = stats.m_stats[Graphics::Stats::STAT_STARS];
-			const uint32_t numDrawShips = stats.m_stats[Graphics::Stats::STAT_SHIPS];
-			const uint32_t numDrawBillBoards = stats.m_stats[Graphics::Stats::STAT_BILLBOARD];
-			const uint32_t numDrawPatchesTris = stats.m_stats[Graphics::Stats::STAT_PATCHES_TRIS];
-			snprintf(
-				fps_readout, sizeof(fps_readout),
-				"%d fps (%.1f ms/f), %d phys updates, %d triangles, %.3f M tris/sec, %d glyphs/sec, %d patches/frame\n"
-				"Lua mem usage: %d MB + %d KB + %d bytes (stack top: %d)\n\n"
-				"Draw Calls (%u), of which were:\n Tris (%u)\n Point Sprites (%u)\n Billboards (%u)\n"
-				"Buildings (%u), Cities (%u), GroundStations (%u), SpaceStations (%u), Atmospheres (%u)\n"
-				"Patches (%u), Planets (%u), GasGiants (%u), Stars (%u), Ships (%u)\n"
-				"Buffers Created(%u)\n",
-				frame_stat, (1000.0 / frame_stat), phys_stat, numDrawPatchesTris, numDrawPatchesTris * frame_stat * 1e-6,
-				Text::TextureFont::GetGlyphCount(), numDrawPatches,
-				lua_memMB, lua_memKB, lua_memB, lua_gettop(Lua::manager->GetLuaState()),
-				numDrawCalls, numDrawTris, numDrawPointSprites, numDrawBillBoards,
-				numDrawBuildings, numDrawCities, numDrawGroundStations, numDrawSpaceStations, numDrawAtmospheres,
-				numDrawPatches, numDrawPlanets, numDrawGasGiants, numDrawStars, numDrawShips, numBuffersCreated);
-			frame_stat = 0;
-			phys_stat = 0;
-			Text::TextureFont::ClearGlyphCount();
-			if (SDL_GetTicks() - last_stats > 1200)
-				last_stats = SDL_GetTicks();
-			else
-				last_stats += 1000;
-		}
-
-#endif // WITH_DEVKEYS
 #ifdef PIONEER_PROFILER
 		const uint32_t profTicks = SDL_GetTicks();
 		if (Pi::doProfileOne || (Pi::doProfileSlow && (profTicks - newTicks) > 100)) { // slow: < ~10fps

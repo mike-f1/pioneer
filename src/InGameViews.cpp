@@ -36,20 +36,20 @@ InGameViews::InGameViews(const Json &jsonObj, Game *game, const SystemPath &path
 	m_currentViewType(ViewType::NONE)
 {
 	// Not loaded first as it should diminish initialization issue
-	m_galacticView = new UIView("GalacticView");
-	m_systemView = new SystemView();
-	m_systemInfoView = new SystemInfoView(game);
-	m_spaceStationView = new UIView("StationView");
-	m_infoView = new UIView("InfoView");
-	m_deathView = new DeathView();
+	m_galacticView = std::make_unique<UIView>("GalacticView");
+	m_systemView = std::make_unique<SystemView>();
+	m_systemInfoView  = std::make_unique<SystemInfoView>(game);
+	m_spaceStationView = std::make_unique<UIView>("StationView");
+	m_infoView = std::make_unique<UIView>("InfoView");
+	m_deathView = std::make_unique<DeathView>();
 
 #if WITH_OBJECTVIEWER
-	m_objectViewerView = new ObjectViewerView();
+	m_objectViewerView = std::make_unique<ObjectViewerView>();
 #endif
 
-	m_cpan = new ShipCpanel(jsonObj);
-	m_sectorView = new SectorView(jsonObj, game->GetGalaxy(), cacheRadius);
-	m_worldView.reset(new WorldView(jsonObj, game));
+	m_cpan = std::make_unique<ShipCpanel>(jsonObj);
+	m_sectorView  = std::make_unique<SectorView>(jsonObj, game->GetGalaxy(), cacheRadius);
+	m_worldView = std::make_unique<WorldView>(jsonObj, game);
 }
 
 void InGameViews::SaveToJson(Json &jsonObj)
@@ -61,24 +61,12 @@ void InGameViews::SaveToJson(Json &jsonObj)
 
 InGameViews::~InGameViews()
 {
-#if WITH_OBJECTVIEWER
-	delete m_objectViewerView;
-#endif
-
-	delete m_deathView;
-	delete m_infoView;
-	delete m_spaceStationView;
-	delete m_systemInfoView;
-	delete m_systemView;
-	delete m_galacticView;
-	delete m_sectorView;
-	delete m_cpan;
 }
 
 #if WITH_OBJECTVIEWER
 ObjectViewerView *InGameViews::GetObjectViewerView() const
 {
-	return m_objectViewerView;
+	return m_objectViewerView.get();
 }
 #endif
 

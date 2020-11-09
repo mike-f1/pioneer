@@ -5,7 +5,6 @@
 #define _WORLDVIEW_H
 
 #include "UIView.h"
-#include "gui/GuiWidget.h"
 #include "ship/ShipViewController.h"
 #include "graphics/Drawables.h"
 
@@ -58,7 +57,15 @@ public:
 
 	int GetActiveWeapon() const;
 
-	std::tuple<double, double, double> CalculateHeadingPitchRoll(enum PlaneType);
+	/*
+	  heading range: 0 - 359 deg
+	  heading  0 - north
+	  heading 90 - east
+	  pitch range: -90 - +90 deg
+	  pitch  0 - level with surface
+	  pitch 90 - up
+	*/
+	vector3d CalculateHeadingPitchRoll(enum PlaneType);
 
 	vector3d WorldSpaceToScreenSpace(const Body *body) const;
 	vector3d WorldSpaceToScreenSpace(const vector3d &position) const;
@@ -114,7 +121,7 @@ private:
 
 	void OnPlayerChangeTarget();
 
-	NavTunnelWidget *m_navTunnel;
+	std::unique_ptr<NavTunnelWidget> m_navTunnel;
 	std::unique_ptr<SpeedLines> m_speedLines;
 
 	bool m_labelsOn;
@@ -147,14 +154,13 @@ private:
 	std::unique_ptr<InputFrame> m_inputFrame;
 };
 
-class NavTunnelWidget : public Gui::Widget {
+class NavTunnelWidget  {
 public:
 	NavTunnelWidget(WorldView *worldView, Graphics::RenderState *);
-	virtual void Draw() override;
-	virtual void GetSizeRequested(float size[2]) override;
-	void DrawTargetGuideSquare(const vector2f &pos, const float size, const Color &c);
+	virtual void Draw();
 
 private:
+	void DrawTargetGuideSquare(const vector2f &pos, const float size, const Color &c);
 	void CreateVertexBuffer(const uint32_t size);
 
 	WorldView *m_worldView;

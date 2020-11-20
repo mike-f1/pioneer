@@ -4,8 +4,8 @@
 #include "LuaConsole.h"
 
 #include "FileSystem.h"
-#include "InputFwd.h"
-#include "KeyBindings.h"
+#include "input/InputFwd.h"
+#include "input/KeyBindings.h"
 #include "LuaManager.h"
 #include "LuaUtils.h"
 #include "Pi.h"

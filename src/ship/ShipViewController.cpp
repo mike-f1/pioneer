@@ -8,9 +8,9 @@
 
 #include "Game.h"
 #include "GameLocator.h"
-#include "InputFrame.h"
-#include "InputFwd.h"
-#include "KeyBindings.h"
+#include "input/InputFrame.h"
+#include "input/InputFwd.h"
+#include "input/KeyBindings.h"
 #include "Pi.h"
 #include "Player.h"
 #include "PlayerShipController.h"

@@ -4,7 +4,7 @@
 #ifndef _LUACONSOLE_H
 #define _LUACONSOLE_H
 
-#include "InputFrame.h"
+#include "input/InputFrame.h"
 #include "LuaManager.h"
 #include "libs/RefCounted.h"
 #include <deque>

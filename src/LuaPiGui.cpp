@@ -8,7 +8,7 @@
 #include "GameLocator.h"
 #include "InGameViews.h"
 #include "InGameViewsLocator.h"
-#include "Input.h"
+#include "input/Input.h"
 #include "LuaColor.h"
 #include "LuaConstants.h"
 #include "LuaUtils.h"

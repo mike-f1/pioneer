@@ -5,8 +5,8 @@
 
 #include "GameConfig.h"
 #include "GameConfSingleton.h"
-#include "Input.h"
-#include "KeyBindings.h"
+#include "input/Input.h"
+#include "input/KeyBindings.h"
 #include "Lang.h"
 #include "LuaManager.h"
 #include "LuaObject.h"

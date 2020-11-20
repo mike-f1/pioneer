@@ -12,7 +12,6 @@
 #include "HyperspaceCloud.h"
 #include "InGameViews.h"
 #include "InGameViewsLocator.h"
-#include "KeyBindings.h"
 #include "Lang.h"
 #include "LuaObject.h"
 #include "Orbit.h"
@@ -24,7 +23,6 @@
 #include "SystemView.h"
 #include "ship/PlayerShipController.h"
 #include "TransferPlanner.h"
-#include "libs/StringF.h"
 #include "sound/Sound.h"
 #include "galaxy/SystemBody.h"
 

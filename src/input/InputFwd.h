@@ -4,6 +4,50 @@
 #include <map>
 #include <string>
 
+struct ActionId {
+	static constexpr int Invalid = -1;
+	static constexpr int RootFrameId = 0;
+	constexpr ActionId() :
+		m_id(Invalid) {}
+	constexpr ActionId(int new_id) :
+		m_id(new_id) {}
+
+	constexpr operator bool() const { return m_id > Invalid; }
+	constexpr operator int() const { return m_id; }
+	constexpr operator size_t() const { return m_id; }
+
+	constexpr bool operator==(ActionId rhs) const { return m_id == rhs.m_id; }
+	constexpr bool operator!=(ActionId rhs) const { return m_id != rhs.m_id; }
+
+	constexpr bool valid() const { return m_id > Invalid; }
+	constexpr int id() const { return m_id; }
+
+private:
+	int m_id;
+};
+
+struct AxisId {
+	static constexpr int Invalid = -1;
+	static constexpr int RootFrameId = 0;
+	constexpr AxisId() :
+		m_id(Invalid) {}
+	constexpr AxisId(int new_id) :
+		m_id(new_id) {}
+
+	constexpr operator bool() const { return m_id > Invalid; }
+	constexpr operator int() const { return m_id; }
+	constexpr operator size_t() const { return m_id; }
+
+	constexpr bool operator==(AxisId rhs) const { return m_id == rhs.m_id; }
+	constexpr bool operator!=(AxisId rhs) const { return m_id != rhs.m_id; }
+
+	constexpr bool valid() const { return m_id > Invalid; }
+	constexpr int id() const { return m_id; }
+
+private:
+	int m_id;
+};
+
 // The Page->Group->Binding system serves as a thin veneer for the UI to make
 // sane reasonings about how to structure the Options dialog.
 // TODO: Do a step more defining an 'hint' for ordering

@@ -6,6 +6,7 @@
 #include "GameConfig.h"
 #include "GameConfSingleton.h"
 #include "InputFrame.h"
+#include "BindingContainer.h"
 
 #include "libs/utils.h"
 #include "profiler/Profiler.h"
@@ -36,7 +37,7 @@ Input::Input() :
 	m_joystickEnabled = (config.Int("EnableJoystick")) ? true : false;
 	m_mouseYInvert = (config.Int("InvertMouseY")) ? true : false;
 
-	m_inputFrames.reserve(16);
+	//m_bindingContainers.reserve(8);
 
 	InitJoysticks();
 
@@ -100,28 +101,79 @@ void Input::DebugDumpPage(const std::string &pageId)
 }
 #endif // DEBUG_DUMP_PAGES
 
-bool Input::PushInputFrame(InputFrame *frame)
+RefCountedPtr<BindingContainer> Input::CreateOrShareBindContainer(const std::string &name, InputFrame *iframe)
 {
-	if (HasInputFrame(frame)) {
-		return false;
+	Output("Input::CreateOrShareBindContainer(const std::string &%s) ...", name.c_str());
+	m_inputFrames.push_back(iframe);
+	auto iter = std::find_if(begin(m_bindingContainers), end(m_bindingContainers), [&name](RefCountedPtr<BindingContainer> &bindCont) {
+		return (name == bindCont->GetName());
+	});
+	if (iter != m_bindingContainers.end()) {
+		Output("Found, share it (num = %i!)\n", (*iter)->GetRefCount());
+		return *iter;
+	} else {
+		Output("NOT found, create it!\n");
+		auto new_bindcont = RefCountedPtr<BindingContainer>(new BindingContainer(name));
+		m_bindingContainers.push_back(new_bindcont);
+		Output("[Ref count is: %i\n", m_bindingContainers.back()->GetRefCount());
+		return new_bindcont;
 	}
-	if (frame == nullptr) {
-		Error("Pushing a 'null' InputFrame!\n");
-		return false;
-	}
-	m_inputFrames.push_back(frame);
-	frame->onFrameAdded();
-	return true;
 }
 
-bool Input::RemoveInputFrame(InputFrame *frame)
+bool Input::RemoveBindingContainer(InputFrame *iframe)
 {
-	auto it = std::find(m_inputFrames.begin(), m_inputFrames.end(), frame);
+	Output("Input::RemoveBindingContainer() ...\n");
+	bool removed = false;
+	auto it = std::find(m_inputFrames.begin(), m_inputFrames.end(), iframe);
 	if (it != m_inputFrames.end()) {
 		m_inputFrames.erase(it);
-		frame->m_active = false;
-		frame->onFrameRemoved();
-		return true;
+		removed = true;
+	}
+	Output("%s (m_bindingContainers.size() = %lu)\n", removed ? "found" : "not found", m_bindingContainers.size());
+	std::for_each(m_bindingContainers.begin(), m_bindingContainers.end(), [&](RefCountedPtr<BindingContainer> &bindCont) {
+		Output("\t%s => %i\n", bindCont->GetName().c_str(), bindCont->GetRefCount());
+	});
+	/*
+
+		std::deque<RefCountedPtr<Widget>>::iterator i;
+		for (i = m_widgets.begin(); i != m_widgets.end(); ++i)
+			if ((*i).Get() == widget) break;
+		if (i == m_widgets.end())
+			return;
+
+		widget->Detach();
+		m_widgets.erase(i);
+*/
+
+	Output("During:\n");
+	for (auto iter = m_bindingContainers.begin(); iter != m_bindingContainers.end(); ++iter) {
+		//Output("\t%s => %i\n", (*iter)->GetName().c_str(), (*iter)->GetRefCount());
+		if ((*iter)->GetRefCount() == 1) {
+			Output("\t%s is unique, deleting...\n", (*iter)->GetName().c_str());
+			(*iter)->DecRefCount();
+			iter = m_bindingContainers.erase(iter);
+		}
+	}
+
+/*
+	m_bindingContainers.erase(std::remove(m_bindingContainers.begin(), m_bindingContainers.end(), [](RefCountedPtr<BindingContainer> &bindCont) {
+		return (bindCont->GetRefCount() == 1);
+	}));
+*/
+/*
+	Output("After:\n");
+	std::for_each(m_bindingContainers.begin(), m_bindingContainers.end(), [&](RefCountedPtr<BindingContainer> &bindCont) {
+		Output("\t%s => %i\n", bindCont->GetName().c_str(), bindCont->GetRefCount());
+	});
+*/
+	Output("...exiting\n");
+	return removed;
+}
+
+bool  Input::HasBindingContainer(std::string &name)
+{
+	for (RefCountedPtr<BindingContainer> &bindCont : m_bindingContainers) {
+		if (bindCont->GetName() == name) return true;
 	}
 	return false;
 }
@@ -129,6 +181,7 @@ bool Input::RemoveInputFrame(InputFrame *frame)
 std::unique_ptr<InputFrameStatusTicket> Input::DisableAllInputFrameExcept(InputFrame *current)
 {
 	std::unique_ptr<InputFrameStatusTicket> ifst(new InputFrameStatusTicket(m_inputFrames));
+
 	std::for_each(begin(m_inputFrames), end(m_inputFrames), [&current](InputFrame *iframe) {
 		if (iframe != current) iframe->SetActive(false);
 	});
@@ -296,7 +349,8 @@ void Input::HandleSDLEvent(const SDL_Event &event)
 
 	//Output("ProcessSDLEvent of InputFrames\n");
 	for (auto it = m_inputFrames.rbegin(); it != m_inputFrames.rend(); it++) {
-		auto *inputFrame = *it;
+		auto *inputFrame = (*it);
+		//Output("\t%s\n", bindingCont->m_name.c_str());
 		auto resp = inputFrame->ProcessSDLEvent(event);
 		if (resp == KeyBindings::InputResponse::MATCHED) break;
 	}

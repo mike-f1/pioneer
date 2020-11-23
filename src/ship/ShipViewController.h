@@ -5,6 +5,7 @@
 
 #include "CameraController.h"
 #include "InteractionController.h"
+#include "input/InputFwd.h"
 #include "libs/utils.h"
 
 #include <sigc++/sigc++.h>
@@ -48,27 +49,23 @@ public:
 	void SetCamType(Ship *ship, enum CamType c);
 
 	struct InputBinding {
-		using Action = KeyBindings::ActionBinding;
-		using Axis = KeyBindings::AxisBinding;
+		AxisId cameraYaw;
+		AxisId cameraPitch;
+		AxisId cameraRoll;
+		AxisId cameraZoom;
 
-		Axis *cameraYaw;
-		Axis *cameraPitch;
-		Axis *cameraRoll;
-		Axis *cameraZoom;
+		AxisId lookYaw;
+		AxisId lookPitch;
 
-		Axis *lookYaw;
-		Axis *lookPitch;
+		ActionId frontCamera;
+		ActionId rearCamera;
+		ActionId leftCamera;
+		ActionId rightCamera;
+		ActionId topCamera;
+		ActionId bottomCamera;
 
-		Action *frontCamera;
-		Action *rearCamera;
-		Action *leftCamera;
-		Action *rightCamera;
-		Action *topCamera;
-		Action *bottomCamera;
-
-		Action *cycleCameraMode;
-		Action *resetCamera;
-
+		ActionId cycleCameraMode;
+		ActionId resetCamera;
 	} m_inputBindings;
 
 	std::unique_ptr<InputFrame> m_inputFrame;

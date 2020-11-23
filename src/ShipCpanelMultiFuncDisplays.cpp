@@ -95,7 +95,7 @@ void RadarWidget::RegisterInputBindings()
 	BindingGroup &group = page.GetBindingGroup("Miscellaneous");
 
 	m_radarWidgetBindings.toggleScanMode = m_inputFrame->AddActionBinding("BindToggleScanMode", group, ActionBinding(SDLK_SLASH));
-	m_radarWidgetBindings.toggleScanMode->StoreOnActionCallback(std::bind(&RadarWidget::ToggleMode, this, _1));
+	m_inputFrame->AddCallbackFunction("BindToggleScanMode", std::bind(&RadarWidget::ToggleMode, this, _1));
 
 	m_radarWidgetBindings.changeScanRange = m_inputFrame->AddAxisBinding("BindChangeScanRange", group, AxisBinding(SDLK_RIGHTBRACKET, SDLK_LEFTBRACKET));
 
@@ -272,8 +272,8 @@ void RadarWidget::Update()
 		m_contacts.push_back(c);
 	}
 
-	if (m_radarWidgetBindings.changeScanRange->IsActive()) {
-		if (m_radarWidgetBindings.changeScanRange->GetValue() > 0.0) {
+	if (m_inputFrame->IsActive(m_radarWidgetBindings.changeScanRange)) {
+		if (m_inputFrame->GetValue(m_radarWidgetBindings.changeScanRange) > 0.0) {
 			if (m_mode == RadarMode::MODE_AUTO) {
 				m_manualRange = m_targetRange;
 				m_mode = RadarMode::MODE_MANUAL;
@@ -281,7 +281,7 @@ void RadarWidget::Update()
 				m_manualRange = m_currentRange;
 			}
 			m_manualRange = Clamp(m_manualRange * 1.15f, RADAR_RANGE_MIN, RADAR_RANGE_MAX);
-		} else if (m_radarWidgetBindings.changeScanRange->GetValue() < 0.0) {
+		} else if (m_inputFrame->GetValue(m_radarWidgetBindings.changeScanRange) < 0.0) {
 			if (m_mode == RadarMode::MODE_AUTO) {
 				m_manualRange = m_targetRange;
 				m_mode = RadarMode::MODE_MANUAL;

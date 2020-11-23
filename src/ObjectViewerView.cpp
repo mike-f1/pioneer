@@ -110,7 +110,7 @@ void ObjectViewerView::OnSwitchTo()
 
 	if (m_bindingLock) m_bindingLock.reset();
 
-	m_bindingLock = InputFWD::DisableAllInputFramesExcept(m_inputFrame.get());
+	m_bindingLock = InputFWD::DisableAllInputFrameExcept(m_inputFrame.get());
 
 	m_inputFrame->SetActive(true);
 
@@ -166,8 +166,8 @@ void ObjectViewerView::Update(const float frameTime)
 	const float moveSpeed = MOVEMENT_SPEED * WHEEL_SENSITIVITY * InputFWD::GetMoveSpeedShiftModifier();
 	float move = moveSpeed * frameTime;
 
-	if (m_objectViewerBindings.zoom->IsActive()) {
-		if (m_objectViewerBindings.zoom->GetValue() > 0) {
+	if (m_inputFrame->IsActive(m_objectViewerBindings.zoom)) {
+		if (m_inputFrame->GetValue(m_objectViewerBindings.zoom) > 0) {
 			m_zoomChange = Zooming::IN;
 		} else {
 			m_zoomChange = Zooming::OUT;
@@ -192,14 +192,14 @@ void ObjectViewerView::Update(const float frameTime)
 	m_viewingDist = Clamp(m_viewingDist, min_distance, 1e12f);
 	m_zoomChange = Zooming::NONE;
 
-	if (m_objectViewerBindings.resetZoom->IsActive() && m_lastTarget != nullptr) {
+	if (m_inputFrame->IsActive(m_objectViewerBindings.resetZoom) && m_lastTarget != nullptr) {
 		OnResetViewParams();
 	}
 
-	if (m_objectViewerBindings.rotateLightLeft->IsActive()) {
+	if (m_inputFrame->IsActive(m_objectViewerBindings.rotateLightLeft)) {
 		m_lightRotate = RotateLight::LEFT;
 	}
-	if (m_objectViewerBindings.rotateLightRight->IsActive()) {
+	if (m_inputFrame->IsActive(m_objectViewerBindings.rotateLightRight)) {
 		m_lightRotate = RotateLight::RIGHT;
 	}
 
@@ -211,11 +211,11 @@ void ObjectViewerView::Update(const float frameTime)
 	m_lightAngle = Clamp(m_lightAngle, float(-DEG2RAD(180.0)), float(DEG2RAD(180.0)));
 	m_lightRotate = RotateLight::NONE;
 
-	if (m_objectViewerBindings.rotateUpDown->IsActive()) {
-		m_camRot = matrix4x4d::RotateXMatrix(m_objectViewerBindings.rotateUpDown->GetValue() * move * 5.0) * m_camRot;
+	if (m_inputFrame->IsActive(m_objectViewerBindings.rotateUpDown)) {
+		m_camRot = matrix4x4d::RotateXMatrix(m_inputFrame->GetValue(m_objectViewerBindings.rotateUpDown) * move * 5.0) * m_camRot;
 	}
-	if (m_objectViewerBindings.rotateLeftRight->IsActive()) {
-		m_camRot = matrix4x4d::RotateYMatrix(m_objectViewerBindings.rotateLeftRight->GetValue() * move * 5.0) * m_camRot;
+	if (m_inputFrame->IsActive(m_objectViewerBindings.rotateLeftRight)) {
+		m_camRot = matrix4x4d::RotateYMatrix(m_inputFrame->GetValue(m_objectViewerBindings.rotateLeftRight) * move * 5.0) * m_camRot;
 	}
 
 	auto motion = InputFWD::GetMouseMotion(MouseMotionBehaviour::Rotate);

@@ -5,7 +5,9 @@
 
 #include "ShipController.h"
 
+#include "input/InputFwd.h"
 #include "libs/vector3.h"
+
 #include <array>
 
 class InputFrame;
@@ -62,35 +64,31 @@ private:
 	void ToggleSetSpeedMode(bool down);
 
 	struct InputBinding {
-		// We create a local alias for ease of typing these bindings.
-		using AxisBinding = KeyBindings::AxisBinding;
-		using ActionBinding = KeyBindings::ActionBinding;
-
 		// Weapons
-		ActionBinding *targetObject;
-		ActionBinding *primaryFire;
-		ActionBinding *secondaryFire;
+		ActionId targetObject;
+		ActionId primaryFire;
+		ActionId secondaryFire;
 
-		std::array<ActionBinding *, WEAPON_CONFIG_SLOTS> weaponConfigRecall;
-		std::array<ActionBinding *, WEAPON_CONFIG_SLOTS> weaponConfigStore;
+		std::array<ActionId , WEAPON_CONFIG_SLOTS> weaponConfigRecall;
+		std::array<ActionId , WEAPON_CONFIG_SLOTS> weaponConfigStore;
 
 		// Flight
-		AxisBinding *pitch;
-		AxisBinding *yaw;
-		AxisBinding *roll;
-		ActionBinding *killRot;
-		ActionBinding *toggleRotationDamping;
+		AxisId pitch;
+		AxisId yaw;
+		AxisId roll;
+		ActionId killRot;
+		ActionId toggleRotationDamping;
 
 		// Manual Control
-		AxisBinding *thrustForward;
-		AxisBinding *thrustUp;
-		AxisBinding *thrustLeft;
-		ActionBinding *thrustLowPower;
-		ActionBinding *toggleUC;
+		AxisId thrustForward;
+		AxisId thrustUp;
+		AxisId thrustLeft;
+		ActionId thrustLowPower;
+		ActionId toggleUC;
 
 		// Speed Control
-		AxisBinding *speedControl;
-		ActionBinding *toggleSetSpeed;
+		AxisId speedControl;
+		ActionId toggleSetSpeed;
 	} m_inputBindings;
 
 	std::unique_ptr<InputFrame> m_inputFrame;

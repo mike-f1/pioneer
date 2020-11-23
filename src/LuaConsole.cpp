@@ -82,8 +82,8 @@ void LuaConsole::RegisterInputBindings()
 	auto &group = page.GetBindingGroup("Miscellaneous");
 
 	m_consoleBindings.toggleLuaConsole = m_inputFrame->AddActionBinding("ToggleConsole", group, ActionBinding(SDLK_BACKSLASH));
-	m_consoleBindings.toggleLuaConsole->SetBTrait(BehaviourMod::ALLOW_KEYBOARD_ONLY);
-	m_consoleBindings.toggleLuaConsole->StoreOnActionCallback(std::bind(&LuaConsole::OnToggle, this, _1));
+	m_inputFrame->SetBTrait("ToggleConsole", BehaviourMod::ALLOW_KEYBOARD_ONLY);
+	m_inputFrame->AddCallbackFunction("ToggleConsole", std::bind(&LuaConsole::OnToggle, this, _1));
 
 	// Explicitly activate console binding as it is always active
 	m_inputFrame->SetActive(true);
@@ -103,7 +103,7 @@ void LuaConsole::OnToggle(bool down)
 
 void LuaConsole::CheckEvent(const SDL_Event &event)
 {
-	m_consoleBindings.toggleLuaConsole->CheckSDLEventAndDispatch(event);
+	m_inputFrame->CheckSDLEventAndDispatch(m_consoleBindings.toggleLuaConsole, event);
 }
 
 static int capture_traceback(lua_State *L)

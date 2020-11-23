@@ -1,5 +1,6 @@
 #include "InputFrame.h"
 
+#include "BindingContainer.h"
 #include "Input.h"
 #include "KeyBindings.h"
 #include "Pi.h"
@@ -8,59 +9,67 @@
 #include <SDL_events.h>
 
 InputFrame::InputFrame(const std::string &name) :
-		m_name(name),
 		m_active(false)
 {
 	if (!Pi::input) {
-		Output("InputFrame needs 'Pi::input'!\n");
+		Output("InputFrame '%s' instantiation needs 'Pi::input'!\n", name.c_str());
 		abort();
 	}
-	m_actions.reserve(4);
-	m_axes.reserve(4);
-	Pi::input->PushInputFrame(this);
+	m_bindingContainer = Pi::input->CreateOrShareBindContainer(name, this);
+	Output("In input frame, instead... %i\n", m_bindingContainer->GetRefCount());
 }
 
 InputFrame::~InputFrame()
 {
-	bool success = false;
-	for (TActionPair &ab : m_actions) {
-		success |= Pi::input->DeleteActionBinding(ab.first);
-	}
-
-	for (TAxisPair &ab : m_axes) {
-		success |= Pi::input->DeleteAxisBinding(ab.first);
-	}
-	assert(success);
-
-	Pi::input->RemoveInputFrame(this);
+	Pi::input->RemoveBindingContainer(this);
 }
 
 void InputFrame::SetActive(bool is_active)
 {
-	if (m_active == is_active) return;
 	m_active = is_active;
-	std::for_each(begin(m_actions), end(m_actions), [is_active](TActionPair &each) {
-		each.second->Enable(is_active);
-	});
-	std::for_each(begin(m_axes), end(m_axes), [is_active](TAxisPair &each) {
-		each.second->Enable(is_active);
-	});
 }
 
-KeyBindings::ActionBinding *InputFrame::AddActionBinding(std::string id, BindingGroup &group, KeyBindings::ActionBinding binding)
+ActionId InputFrame::AddActionBinding(std::string id, BindingGroup &group, KeyBindings::ActionBinding binding)
 {
-	KeyBindings::ActionBinding *actionBind = Pi::input->AddActionBinding(id, group, binding);
-	actionBind->Enable(m_active);
-	m_actions.push_back({id, actionBind});
-	return actionBind;
+	return m_bindingContainer->AddActionBinding(id, group, binding);
 }
 
-KeyBindings::AxisBinding *InputFrame::AddAxisBinding(std::string id, BindingGroup &group, KeyBindings::AxisBinding binding)
+AxisId InputFrame::AddAxisBinding(std::string id, BindingGroup &group, KeyBindings::AxisBinding binding)
 {
-	KeyBindings::AxisBinding *axisBind = Pi::input->AddAxisBinding(id, group, binding);
-	axisBind->Enable(m_active);
-	m_axes.push_back({id, axisBind});
-	return axisBind;
+	return m_bindingContainer->AddAxisBinding(id, group, binding);
+}
+
+void InputFrame::AddCallbackFunction(const std::string &id, const std::function<void(bool)> &fun)
+{
+	m_bindingContainer->AddCallbackFunction(id, fun);
+}
+
+void InputFrame::SetBTrait(const std::string &id, const KeyBindings::BehaviourMod &bm)
+{
+	m_bindingContainer->SetBTrait(id, bm);
+}
+
+bool InputFrame::IsActive(ActionId id)
+{
+	if (!m_active) return false;
+	return m_bindingContainer->m_actions.at(id).binding_ptr->IsActive();
+}
+
+bool InputFrame::IsActive(AxisId id)
+{
+	if (!m_active) return false;
+	return m_bindingContainer->m_axes.at(id).binding_ptr->IsActive();
+}
+float InputFrame::GetValue(AxisId id)
+{
+	if (!m_active) return 0.f;
+	return m_bindingContainer->m_axes.at(id).binding_ptr->GetValue();
+}
+
+void InputFrame::CheckSDLEventAndDispatch(ActionId id, const SDL_Event &event)
+{
+	if (!m_active) return;
+	m_bindingContainer->m_actions.at(id).binding_ptr->CheckSDLEventAndDispatch(event);
 }
 
 BindingPage &InputFrame::GetBindingPage(const std::string &id)
@@ -70,41 +79,9 @@ BindingPage &InputFrame::GetBindingPage(const std::string &id)
 
 KeyBindings::InputResponse InputFrame::ProcessSDLEvent(const SDL_Event &event)
 {
-	using namespace KeyBindings;
+	if (!m_active) return KeyBindings::InputResponse::NOMATCH;
 
-	if (!m_active) return InputResponse::NOMATCH;
-
-	// Filter non-(yet-)bindable events
-	switch (event.type) {
-	case SDL_MOUSEMOTION:
-	case SDL_MOUSEBUTTONDOWN:
-	case SDL_MOUSEBUTTONUP:
-	case SDL_WINDOWEVENT:
-	case SDL_DROPFILE:
-	case SDL_DROPTEXT:
-	case SDL_DROPBEGIN:
-	case SDL_DROPCOMPLETE:
-	case SDL_AUDIODEVICEADDED:
-	case SDL_AUDIODEVICEREMOVED:
-	case SDL_SYSWMEVENT:
-		return InputResponse::NOMATCH;
-	};
-
-	bool matched = false;
-
-	for (TActionPair &action : m_actions) {
-		auto resp = action.second->CheckSDLEventAndDispatch(event);
-		if (resp == InputResponse::MATCHED) return resp;
-		matched = matched || resp != InputResponse::NOMATCH;
-	}
-
-	for (TAxisPair &axis : m_axes) {
-		auto resp = axis.second->CheckSDLEventAndDispatch(event);
-		if (resp == InputResponse::MATCHED) return resp;
-		matched = matched || resp != InputResponse::NOMATCH;
-	}
-
-	return matched ? InputResponse::PASSTHROUGH : InputResponse::NOMATCH;
+	return m_bindingContainer->ProcessSDLEvent(event);
 }
 
 namespace InputFWD {
@@ -123,7 +100,7 @@ namespace InputFWD {
 		return Pi::input->IsMouseYInvert();
 	}
 
-	std::unique_ptr<InputFrameStatusTicket> DisableAllInputFramesExcept(InputFrame *current)
+	std::unique_ptr<InputFrameStatusTicket> DisableAllInputFrameExcept(InputFrame *current)
 	{
 		return Pi::input->DisableAllInputFrameExcept(current);
 	}

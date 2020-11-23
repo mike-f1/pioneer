@@ -795,7 +795,7 @@ void Pi::RegisterInputBindings()
 	using namespace KeyBindings;
 	using namespace std::placeholders;
 
-	m_inputFrame = std::make_unique<InputFrame>("ObjectViewer");
+	m_inputFrame = std::make_unique<InputFrame>("TweakAndSetting");
 
 	auto &page = Pi::input->GetBindingPage("TweakAndSetting");
 	page.shouldBeTranslated = false;
@@ -804,35 +804,35 @@ void Pi::RegisterInputBindings()
 
 	// NOTE: All these bindings must use a modifier! Prefer CTRL over ALT or SHIFT
 	m_piBindings.quickSave = m_inputFrame->AddActionBinding("QuickSave", group, ActionBinding(KeyBinding(SDLK_F9, KMOD_LCTRL)));
-	m_piBindings.quickSave->StoreOnActionCallback(std::bind(&Pi::QuickSave, _1));
+	m_inputFrame->AddCallbackFunction("QuickSave", &Pi::QuickSave);
 
 	m_piBindings.reqQuit = m_inputFrame->AddActionBinding("RequestQuit", group, ActionBinding(KeyBinding(SDLK_q, KMOD_LCTRL)));
-	m_piBindings.reqQuit->StoreOnActionCallback(std::bind(&Pi::RequestQuit));
+	m_inputFrame->AddCallbackFunction("RequestQuit", std::bind(&Pi::RequestQuit));
 
 	m_piBindings.screenShot = m_inputFrame->AddActionBinding("Screenshot", group, ActionBinding(KeyBinding(SDLK_a, KMOD_LCTRL)));
-	m_piBindings.screenShot->StoreOnActionCallback(std::bind(&Pi::ScreenShot, _1));
+	m_inputFrame->AddCallbackFunction("Screenshot", &Pi::ScreenShot);
 
 	m_piBindings.toggleVideoRec = m_inputFrame->AddActionBinding("ToggleVideoRec", group, ActionBinding(KeyBinding(SDLK_ASTERISK, KMOD_LCTRL)));
-	m_piBindings.toggleVideoRec->StoreOnActionCallback(std::bind(&Pi::ToggleVideoRecording, _1));
+	m_inputFrame->AddCallbackFunction("ToggleVideoRec", &Pi::ToggleVideoRecording);
 
 	#ifdef WITH_DEVKEYS
 	m_piBindings.toggleDebugInfo = m_inputFrame->AddActionBinding("ToggleDebugInfo", group, ActionBinding(KeyBinding(SDLK_i, KMOD_LCTRL)));
-	m_piBindings.toggleDebugInfo->StoreOnActionCallback(std::bind(&Pi::ToggleDebug, _1));
+	m_inputFrame->AddCallbackFunction("ToggleDebugInfo", &Pi::ToggleDebug);
 
 	m_piBindings.reloadShaders = m_inputFrame->AddActionBinding("ReloadShaders", group, ActionBinding(KeyBinding(SDLK_F11, KMOD_LCTRL)));
-	m_piBindings.reloadShaders->StoreOnActionCallback(&Pi::ReloadShaders);
+	m_inputFrame->AddCallbackFunction("ReloadShaders", &Pi::ReloadShaders);
 	#endif // WITH_DEVKEYS
 
 	#ifdef PIONEER_PROFILER
 	m_piBindings.profilerBindOne = m_inputFrame->AddActionBinding("ProfilerOne", group, ActionBinding(KeyBinding(SDLK_p, KMOD_LCTRL)));
-	m_piBindings.profilerBindOne->StoreOnActionCallback(&Pi::ProfilerCommandOne);
+	m_inputFrame->AddCallbackFunction("ProfilerOne", &Pi::ProfilerCommandOne);
 	m_piBindings.profilerBindSlow = m_inputFrame->AddActionBinding("ProfilerSlow", group, ActionBinding(KeyBinding(SDLK_p, SDL_Keymod(KMOD_LCTRL | KMOD_LSHIFT))));
-	m_piBindings.profilerBindSlow->StoreOnActionCallback(&Pi::ProfilerCommandSlow);
+	m_inputFrame->AddCallbackFunction("ProfilerSlow", &Pi::ProfilerCommandSlow);
 	#endif // PIONEER_PROFILER
 
 	#ifdef WITH_OBJECTVIEWER
 	m_piBindings.objectViewer = m_inputFrame->AddActionBinding("ObjectViewer", group, ActionBinding(KeyBinding(SDLK_F10, KMOD_LCTRL)));
-	m_piBindings.objectViewer->StoreOnActionCallback(&Pi::ObjectViewer);
+	m_inputFrame->AddCallbackFunction("ObjectViewer", &Pi::ObjectViewer);
 	#endif // WITH_OBJECTVIEWER
 
 	m_inputFrame->SetActive(true);

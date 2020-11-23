@@ -786,8 +786,8 @@ void SystemView::Update(const float frameTime)
 	if (!Pi::IsConsoleActive()) {
 		float speed = 0.0f;
 		const float speed_modifier = InputFWD::GetMoveSpeedShiftModifier();
-		if (m_systemViewBindings.zoomView->IsActive()) {
-			speed = m_systemViewBindings.zoomView->GetValue();
+		if (m_inputFrame->IsActive(m_systemViewBindings.zoomView)) {
+			speed = m_inputFrame->GetValue(m_systemViewBindings.zoomView);
 			if (speed < 0.0f) {
 				m_zoomTo *= -speed * (((ZOOM_OUT_SPEED - 1) * WHEEL_SENSITIVITY + 1) / speed_modifier);
 			} else {

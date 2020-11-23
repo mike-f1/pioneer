@@ -5,6 +5,7 @@
 #define _LUACONSOLE_H
 
 #include "input/InputFrame.h"
+#include "input/InputFwd.h"
 #include "LuaManager.h"
 #include "libs/RefCounted.h"
 #include <deque>
@@ -87,10 +88,7 @@ private:
 #endif
 
 	struct ConsoleBinding {
-		using Action = KeyBindings::ActionBinding;
-		using Axis =  KeyBindings::AxisBinding;
-
-		Action *toggleLuaConsole;
+		ActionId toggleLuaConsole;
 
 	} m_consoleBindings;
 

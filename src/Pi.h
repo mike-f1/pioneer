@@ -6,6 +6,7 @@
 
 #include "buildopts.h"
 
+#include "input/InputFwd.h"
 #include "libs/RefCounted.h"
 
 #include <cstdint>
@@ -146,23 +147,20 @@ private:
 	#endif // WITH_OBJECTVIEWER
 
 	static struct PiBinding {
-	public:
-		using Action = KeyBindings::ActionBinding;
-
-		Action *quickSave;
-		Action *reqQuit;
-		Action *screenShot;
-		Action *toggleVideoRec;
+		ActionId quickSave;
+		ActionId reqQuit;
+		ActionId screenShot;
+		ActionId toggleVideoRec;
 		#ifdef WITH_DEVKEYS
-		Action *toggleDebugInfo;
-		Action *reloadShaders;
+		ActionId toggleDebugInfo;
+		ActionId reloadShaders;
 		#endif // WITH_DEVKEYS
 		#ifdef PIONEER_PROFILER
-		Action *profilerBindSlow;
-		Action *profilerBindOne;
+		ActionId profilerBindSlow;
+		ActionId profilerBindOne;
 		#endif
 		#ifdef WITH_OBJECTVIEWER
-		Action *objectViewer;
+		ActionId objectViewer;
 		#endif // WITH_OBJECTVIEWER
 
 	} m_piBindings;

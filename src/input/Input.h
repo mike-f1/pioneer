@@ -6,6 +6,9 @@
 
 #include "InputFwd.h"
 #include "KeyBindings.h"
+#include "BindingContainer.h"
+
+#include "libs/RefCounted.h"
 
 #include <algorithm>
 #include <map>
@@ -13,6 +16,7 @@
 #include <utility>
 #include <vector>
 
+class BindingContainer;
 class InputFrame;
 
 // When this get deleted, automatically restore previous state
@@ -37,16 +41,13 @@ public:
 	BindingPage &GetBindingPage(const std::string &id) { return m_bindingPages[id]; }
 	const std::map<std::string, BindingPage> &GetBindingPages() { return m_bindingPages; };
 
-	// Pushes an InputFrame onto the input stack, return true if
-	// correctly pushed
-	bool PushInputFrame(InputFrame *frame);
+	RefCountedPtr<BindingContainer> CreateOrShareBindContainer(const std::string &name, InputFrame *iframe);
 
-	// Get a read-only list of input frames.
-	const std::vector<InputFrame *> &GetInputFrames() { return m_inputFrames; }
-
-	// Remove an arbitrary input frame from the input stack.
+	// Remove an arbitrary BindingContainer from the input stack.
 	// return true if it was such frame
-	bool RemoveInputFrame(InputFrame *frame);
+	bool RemoveBindingContainer(InputFrame *iframe);
+
+	bool HasBindingContainer(std::string &name);
 
 	std::unique_ptr<InputFrameStatusTicket> DisableAllInputFrameExcept(InputFrame *current);
 
@@ -152,9 +153,9 @@ private:
 	void RegisterInputBindings();
 
 	// Check if a specific input frame is currently on the stack.
-	bool HasInputFrame(InputFrame *frame)
+	bool HasBindingContainer(BindingContainer *frame)
 	{
-		return std::count(m_inputFrames.begin(), m_inputFrames.end(), frame) > 0;
+		return std::count(m_bindingContainers.begin(), m_bindingContainers.end(), frame) > 0;
 	}
 
 	// The only current "action": this is a general binding
@@ -184,6 +185,7 @@ private:
 	std::map<std::string, KeyBindings::ActionBinding> m_actionBindings;
 	std::map<std::string, KeyBindings::AxisBinding> m_axisBindings;
 
+	std::vector<RefCountedPtr<BindingContainer>> m_bindingContainers;
 	std::vector<InputFrame *> m_inputFrames;
 };
 

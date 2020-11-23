@@ -8,6 +8,7 @@
 #include "galaxy/Sector.h"
 #include "galaxy/SystemPath.h"
 #include "graphics/Drawables.h"
+#include "input/InputFwd.h"
 #include <set>
 #include <string>
 #include <vector>
@@ -157,25 +158,21 @@ private:
 	std::set<const Faction *> m_hiddenFactions;
 
 	struct SectorBinding {
-	public:
-		using Action = KeyBindings::ActionBinding;
-		using Axis =  KeyBindings::AxisBinding;
+		ActionId mapLockHyperspaceTarget;
+		ActionId mapToggleSelectionFollowView;
+		ActionId mapWarpToCurrent;
+		ActionId mapWarpToSelected;
+		ActionId mapWarpToHyperspaceTarget;
+		ActionId mapViewReset;
 
-		Action *mapLockHyperspaceTarget;
-		Action *mapToggleSelectionFollowView;
-		Action *mapWarpToCurrent;
-		Action *mapWarpToSelected;
-		Action *mapWarpToHyperspaceTarget;
-		Action *mapViewReset;
+		AxisId mapViewShiftLeftRight;
+		AxisId mapViewShiftUpDown;
+		AxisId mapViewShiftForwardBackward;
 
-		Axis *mapViewShiftLeftRight;
-		Axis *mapViewShiftUpDown;
-		Axis *mapViewShiftForwardBackward;
+		AxisId mapViewZoom;
 
-		Axis *mapViewZoom;
-
-		Axis *mapViewRotateLeftRight;
-		Axis *mapViewRotateUpDown;
+		AxisId mapViewRotateLeftRight;
+		AxisId mapViewRotateUpDown;
 
 	} m_sectorBindings;
 

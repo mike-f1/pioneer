@@ -4,8 +4,8 @@
 #ifndef KEYBINDINGS_H
 #define KEYBINDINGS_H
 
+#include <array>
 #include <cassert>
-#include <functional>
 #include <iosfwd>
 #include <limits>
 #include <string>
@@ -194,8 +194,7 @@ namespace KeyBindings {
 		std::string ToString() const;
 
 		bool IsActive() const;
-
-		void StoreOnActionCallback(const std::function<void(bool)> &fun);
+		bool GetIsUp() const { return m_isUp; };
 
 		InputResponse CheckSDLEventAndDispatch(const SDL_Event &event);
 
@@ -208,9 +207,8 @@ namespace KeyBindings {
 		}
 	private:
 		bool m_disabled;
+		bool m_isUp;
 		std::array<KeyBinding, 2> m_binding;
-
-		std::function<void(bool)> m_fun;
 	};
 
 	struct WheelAxisBinding {
@@ -339,8 +337,6 @@ namespace KeyBindings {
 
 		std::string ToString() const;
 
-		void StoreOnAxisCallback(const std::function<void(float)> &fun);
-
 		bool IsActive() const;
 		float GetValue() const;
 		InputResponse CheckSDLEventAndDispatch(const SDL_Event &event);
@@ -358,7 +354,6 @@ namespace KeyBindings {
 		KeyBinding m_positive;
 		KeyBinding m_negative;
 
-		std::function<void(float)> m_fun;
 	};
 
 	void InitBindings();

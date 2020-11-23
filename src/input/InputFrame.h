@@ -1,22 +1,31 @@
 #ifndef INPUTFRAME_H
 #define INPUTFRAME_H
 
+#include <cstdint>
+#include <functional>
 #include <memory>
 #include <string>
 #include <utility>
 #include <vector>
+
+#include "libs/RefCounted.h"
 
 struct BindingGroup;
 struct BindingPage;
 union SDL_Event;
 enum class MouseMotionBehaviour;
 class InputFrameStatusTicket;
+class BindingContainer;
 
 namespace KeyBindings {
 	struct ActionBinding;
 	struct AxisBinding;
 	enum class InputResponse;
+	enum class BehaviourMod;
 }
+
+class ActionId;
+class AxisId;
 
 class InputFrame {
 	friend class Input;
@@ -30,8 +39,16 @@ public:
 	bool IsActive() const { return m_active; }
 	void SetActive(bool is_active);
 
-	KeyBindings::ActionBinding *AddActionBinding(std::string id, BindingGroup &group, KeyBindings::ActionBinding binding);
-	KeyBindings::AxisBinding *AddAxisBinding(std::string id, BindingGroup &group, KeyBindings::AxisBinding binding);
+	ActionId AddActionBinding(std::string id, BindingGroup &group, KeyBindings::ActionBinding binding);
+	AxisId AddAxisBinding(std::string id, BindingGroup &group, KeyBindings::AxisBinding binding);
+
+	void AddCallbackFunction(const std::string &id, const std::function<void(bool)> &fun);
+	void SetBTrait(const std::string &id, const KeyBindings::BehaviourMod &bm);
+
+	bool IsActive(ActionId id);
+	bool IsActive(AxisId id);
+	float GetValue(AxisId id);
+	void CheckSDLEventAndDispatch(ActionId id, const SDL_Event &event);
 
 	BindingPage &GetBindingPage(const std::string &id);
 
@@ -45,17 +62,12 @@ public:
 	virtual void onFrameRemoved() {};
 
 private:
-	std::string m_name;
+	// Check the event against all the inputs in this frame.
+	KeyBindings::InputResponse ProcessSDLEvent(const SDL_Event &event);
 
 	bool m_active;
 
-	typedef std::pair<std::string, KeyBindings::ActionBinding *> TActionPair;
-	typedef std::pair<std::string, KeyBindings::AxisBinding *> TAxisPair;
-	std::vector<TActionPair> m_actions;
-	std::vector<TAxisPair> m_axes;
-
-	// Check the event against all the inputs in this frame.
-	KeyBindings::InputResponse ProcessSDLEvent(const SDL_Event &event);
+	RefCountedPtr<BindingContainer> m_bindingContainer;
 };
 
 namespace InputFWD {
@@ -69,7 +81,7 @@ namespace InputFWD {
 
 	bool IsMouseYInvert();
 
-	std::unique_ptr<InputFrameStatusTicket> DisableAllInputFramesExcept(InputFrame *current);
+	std::unique_ptr<InputFrameStatusTicket> DisableAllInputFrameExcept(InputFrame *current);
 } // namespace InputFWD
 
 #endif // INPUTFRAME_H

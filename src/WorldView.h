@@ -7,6 +7,7 @@
 #include "UIView.h"
 #include "ship/ShipViewController.h"
 #include "graphics/Drawables.h"
+#include "input/InputFwd.h"
 
 class Body;
 class Camera;
@@ -141,13 +142,9 @@ private:
 	Graphics::Drawables::Lines m_indicator;
 
 	struct BaseBinding {
-	public:
-		using Action = KeyBindings::ActionBinding;
-		using Axis =  KeyBindings::AxisBinding;
-
-		Action *toggleHudMode;
-		Action *increaseTimeAcceleration;
-		Action *decreaseTimeAcceleration;
+		ActionId toggleHudMode;
+		ActionId increaseTimeAcceleration;
+		ActionId decreaseTimeAcceleration;
 
 	} m_wviewBindings;
 

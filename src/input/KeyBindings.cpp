@@ -491,26 +491,20 @@ namespace KeyBindings {
 		return m_binding[0].IsActive() || m_binding[1].IsActive();
 	}
 
-	void ActionBinding::StoreOnActionCallback(const std::function<void(bool)> &fun)
-	{
-		if (m_fun != nullptr) Error("It seems that a 'OnActionCallback' is already stored!");
-		m_fun = fun;
-	}
-
 	InputResponse ActionBinding::CheckSDLEventAndDispatch(const SDL_Event &event)
 	{
 		if (m_disableBindings || m_disabled) return InputResponse::NOMATCH;
 		switch (event.type) {
 		case SDL_KEYDOWN: {
 			if (m_binding[0].Matches(event.key.keysym) || m_binding[1].Matches(event.key.keysym) ) {
-				if (m_fun != nullptr) m_fun(true);
+				m_isUp = true;
 				return InputResponse::MATCHED;
 			}
 		}
 		break;
 		case SDL_KEYUP: {
 			if (m_binding[0].Matches(event.key.keysym) || m_binding[1].Matches(event.key.keysym) ) {
-				if (m_fun != nullptr) m_fun(false);
+				m_isUp = false;
 				return InputResponse::MATCHED;
 			}
 		}
@@ -519,9 +513,9 @@ namespace KeyBindings {
 		case SDL_JOYBUTTONUP: {
 			if (m_binding[0].Matches(event.jbutton) || m_binding[1].Matches(event.jbutton)) {
 				if (event.jbutton.state == SDL_PRESSED) {
-					if (m_fun != nullptr) m_fun(true);
+					m_isUp = true;
 				} else if (event.jbutton.state == SDL_RELEASED) {
-					if (m_fun != nullptr) m_fun(false);
+					m_isUp = false;
 				}
 				return InputResponse::MATCHED;
 			}
@@ -529,7 +523,7 @@ namespace KeyBindings {
 		break;
 		case SDL_JOYHATMOTION: {
 			if (m_binding[0].Matches(event.jhat) || m_binding[1].Matches(event.jhat)) {
-				if (m_fun != nullptr) m_fun(true);
+				m_isUp = true;
 				// XXX to emit onRelease, we need to have access to the state of the joystick hat prior to this event,
 				// so that we can detect the case of switching from a direction that matches the binding to some other direction
 				return InputResponse::MATCHED;
@@ -539,10 +533,8 @@ namespace KeyBindings {
 		break;
 		case SDL_MOUSEWHEEL: {
 			if (m_binding[0].Matches(event.wheel) || m_binding[1].Matches(event.wheel)) {
-				if (m_fun != nullptr) {
-					// 'false' so it can be treated as a SDL_RELEASED
-					m_fun(false);
-				}
+				// 'false' so it can be treated as a SDL_RELEASED
+				m_isUp = false;
 				return InputResponse::MATCHED;
 			}
 		}
@@ -890,12 +882,6 @@ namespace KeyBindings {
 		return oss.str();
 	}
 
-	void AxisBinding::StoreOnAxisCallback(const std::function<void(float)> &fun)
-	{
-		if (m_fun != nullptr) Error("It seems that a 'OnAxisCallback' is already stored!");
-		m_fun = fun;
-	}
-
 	bool AxisBinding::IsActive() const
 	{
 		if (m_disabled) return false;
@@ -922,14 +908,12 @@ namespace KeyBindings {
 		case SDL_KEYDOWN:
 		case SDL_KEYUP: {
 			if (m_positive.Matches(event.key.keysym) && m_negative.Matches(event.key.keysym)) {
-				if (m_fun != nullptr) m_fun(value);
 				return InputResponse::MATCHED;
 			}
 		}
 		break;
 		case SDL_MOUSEWHEEL: {
 			if (m_wheel.Matches(event.wheel)) {
-				if (m_fun != nullptr) m_fun(value);
 				return InputResponse::MATCHED;
 			}
 		}
@@ -937,14 +921,12 @@ namespace KeyBindings {
 		case SDL_JOYBUTTONDOWN:
 		case SDL_JOYBUTTONUP: {
 			if (m_positive.Matches(event.jbutton) || m_negative.Matches(event.jbutton)) {
-				if (m_fun != nullptr) m_fun(value);
 				return InputResponse::MATCHED;
 			}
 		}
 		break;
 		case SDL_JOYHATMOTION: {
 			if (m_positive.Matches(event.jhat) || m_positive.Matches(event.jhat)) {
-				if (m_fun != nullptr) m_fun(value);
 				// XXX to emit onRelease, we need to have access to the state of the joystick hat prior to this event,
 				// so that we can detect the case of switching from a direction that matches the binding to some other direction
 				return InputResponse::MATCHED;
@@ -953,7 +935,6 @@ namespace KeyBindings {
 		break;
 		case SDL_JOYAXISMOTION: {
 			if (m_axis.Matches(event.jaxis)) {
-				if (m_fun != nullptr) m_fun(value);
 				return InputResponse::MATCHED;
 			}
 		}

@@ -59,7 +59,7 @@ void ShipViewController::RegisterInputBindings()
 	m_inputBindings.bottomCamera = m_inputFrame->AddActionBinding("BindBottomCamera", group, ActionBinding(SDLK_KP_3));
 
 	m_inputBindings.resetCamera = m_inputFrame->AddActionBinding("BindResetCamera", group, ActionBinding(SDLK_HOME));
-	m_inputBindings.resetCamera->StoreOnActionCallback(std::bind(&ShipViewController::OnCamReset, this, _1));
+	m_inputFrame->AddCallbackFunction("BindResetCamera", std::bind(&ShipViewController::OnCamReset, this, _1));
 }
 
 void ShipViewController::OnCamReset(bool down)
@@ -170,22 +170,22 @@ void ShipViewController::Update(const float frameTime)
 	if (!m_inputFrame->IsActive() || Pi::IsConsoleActive()) return;
 
 	if (GetCamType() == CAM_INTERNAL) {
-		if (m_inputBindings.frontCamera->IsActive())
+		if (m_inputFrame->IsActive(m_inputBindings.frontCamera))
 			ChangeInternalCameraMode(InternalCameraController::MODE_FRONT);
-		else if (m_inputBindings.rearCamera->IsActive())
+		else if (m_inputFrame->IsActive(m_inputBindings.rearCamera))
 			ChangeInternalCameraMode(InternalCameraController::MODE_REAR);
-		else if (m_inputBindings.leftCamera->IsActive())
+		else if (m_inputFrame->IsActive(m_inputBindings.leftCamera))
 			ChangeInternalCameraMode(InternalCameraController::MODE_LEFT);
-		else if (m_inputBindings.rightCamera->IsActive())
+		else if (m_inputFrame->IsActive(m_inputBindings.rightCamera))
 			ChangeInternalCameraMode(InternalCameraController::MODE_RIGHT);
-		else if (m_inputBindings.topCamera->IsActive())
+		else if (m_inputFrame->IsActive(m_inputBindings.topCamera))
 			ChangeInternalCameraMode(InternalCameraController::MODE_TOP);
-		else if (m_inputBindings.bottomCamera->IsActive())
+		else if (m_inputFrame->IsActive(m_inputBindings.bottomCamera))
 			ChangeInternalCameraMode(InternalCameraController::MODE_BOTTOM);
 
 		vector3f rotate = vector3f(
-			m_inputBindings.lookPitch->GetValue() * M_PI / 2.0,
-			m_inputBindings.lookYaw->GetValue() * M_PI / 2.0,
+			m_inputFrame->GetValue(m_inputBindings.lookPitch) * M_PI / 2.0,
+			m_inputFrame->GetValue(m_inputBindings.lookYaw) * M_PI / 2.0,
 			0.0);
 
 		if (rotate.LengthSqr() > 0.0001) {
@@ -196,10 +196,10 @@ void ShipViewController::Update(const float frameTime)
 			headtracker_input_priority = false;
 		}
 	} else {
-		vector3d rotate = vector3d(
-			-m_inputBindings.cameraPitch->GetValue(),
-			m_inputBindings.cameraYaw->GetValue(),
-			m_inputBindings.cameraRoll->GetValue());
+		auto rotate = vector3d(
+			-m_inputFrame->GetValue(m_inputBindings.cameraPitch),
+			m_inputFrame->GetValue(m_inputBindings.cameraYaw),
+			m_inputFrame->GetValue(m_inputBindings.cameraRoll));
 
 		rotate *= frameTime;
 
@@ -209,8 +209,8 @@ void ShipViewController::Update(const float frameTime)
 		if (rotate.x != 0.0) cam->PitchCamera(rotate.x);
 		if (rotate.z != 0.0) cam->RollCamera(rotate.z);
 
-		if (m_inputBindings.cameraZoom->IsActive()) {
-			cam->ZoomEvent(-m_inputBindings.cameraZoom->GetValue() * ZOOM_SPEED * frameTime);
+		if (m_inputFrame->IsActive(m_inputBindings.cameraZoom)) {
+			cam->ZoomEvent(-m_inputFrame->GetValue(m_inputBindings.cameraZoom) * ZOOM_SPEED * frameTime);
 		}
 		cam->ZoomEventUpdate(frameTime);
 	}

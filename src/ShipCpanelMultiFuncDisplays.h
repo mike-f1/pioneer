@@ -8,6 +8,7 @@
 #include "Object.h"
 #include "graphics/Drawables.h"
 #include "gui/GuiWidget.h"
+#include "input/InputFwd.h"
 
 class InputFrame;
 
@@ -96,11 +97,8 @@ private:
 	Graphics::Drawables::Lines m_edgeLines;
 
 	struct RadarWidgetBinding {
-		using Action = KeyBindings::ActionBinding;
-		using Axis = KeyBindings::AxisBinding;
-
-		Action *toggleScanMode;
-		Axis *changeScanRange;
+		ActionId toggleScanMode;
+		AxisId changeScanRange;
 
 	} m_radarWidgetBindings;
 

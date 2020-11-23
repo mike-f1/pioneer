@@ -126,11 +126,11 @@ void WorldView::RegisterInputBindings()
 	BindingGroup &group = page.GetBindingGroup("Miscellaneous");
 
 	m_wviewBindings.toggleHudMode = m_inputFrame->AddActionBinding("BindToggleHudMode", group, ActionBinding(SDLK_TAB));
-	m_wviewBindings.toggleHudMode->StoreOnActionCallback(std::bind(&WorldView::OnToggleLabels, this, _1));
+	m_inputFrame->AddCallbackFunction("BindToggleHudMode", std::bind(&WorldView::OnToggleLabels, this, _1));
 	m_wviewBindings.increaseTimeAcceleration = m_inputFrame->AddActionBinding("BindIncreaseTimeAcceleration", group, ActionBinding(SDLK_PAGEUP));
-	m_wviewBindings.increaseTimeAcceleration->StoreOnActionCallback(std::bind(&WorldView::OnRequestTimeAccelInc, this, _1));
+	m_inputFrame->AddCallbackFunction("BindIncreaseTimeAcceleration", std::bind(&WorldView::OnRequestTimeAccelInc, this, _1));
 	m_wviewBindings.decreaseTimeAcceleration = m_inputFrame->AddActionBinding("BindDecreaseTimeAcceleration", group, ActionBinding(SDLK_PAGEDOWN));
-	m_wviewBindings.decreaseTimeAcceleration->StoreOnActionCallback(std::bind(&WorldView::OnRequestTimeAccelDec, this, _1));
+	m_inputFrame->AddCallbackFunction("BindDecreaseTimeAcceleration", std::bind(&WorldView::OnRequestTimeAccelDec, this, _1));
 }
 
 WorldView::~WorldView()

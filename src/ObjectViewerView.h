@@ -10,6 +10,8 @@
 #include "libs/vector2.h"
 #include <memory>
 
+#include "input/InputFwd.h"
+
 class InputFrame;
 
 namespace KeyBindings {
@@ -109,17 +111,14 @@ private:
 
 	struct ObjectViewerBinding {
 	public:
-		using Action = KeyBindings::ActionBinding;
-		using Axis =  KeyBindings::AxisBinding;
+		ActionId resetZoom;
+		AxisId zoom;
 
-		Action *resetZoom;
-		Axis *zoom;
+		AxisId rotateLeftRight;
+		AxisId rotateUpDown;
 
-		Axis *rotateLeftRight;
-		Axis *rotateUpDown;
-
-		Action *rotateLightLeft;
-		Action *rotateLightRight;
+		ActionId rotateLightLeft;
+		ActionId rotateLightRight;
 
 	} m_objectViewerBindings;
 

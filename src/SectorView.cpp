@@ -138,10 +138,10 @@ void SectorView::RegisterInputBindings()
 	auto &groupMisc = page.GetBindingGroup("Miscellaneous");
 
 	m_sectorBindings.mapLockHyperspaceTarget = m_inputFrame->AddActionBinding("BindMapLockHyperspaceTarget", groupMisc, ActionBinding(SDLK_SPACE));
-	m_sectorBindings.mapLockHyperspaceTarget->StoreOnActionCallback(std::bind(&SectorView::OnMapLockHyperspaceToggle, this, _1));
+	m_inputFrame->AddCallbackFunction("BindMapLockHyperspaceTarget", std::bind(&SectorView::OnMapLockHyperspaceToggle, this, _1));
 
 	m_sectorBindings.mapToggleSelectionFollowView = m_inputFrame->AddActionBinding("BindMapToggleSelectionFollowView", groupMisc, ActionBinding(SDLK_RETURN, SDLK_KP_ENTER));
-	m_sectorBindings.mapToggleSelectionFollowView->StoreOnActionCallback(std::bind(&SectorView::OnToggleSelectionFollowView, this, _1));
+	m_inputFrame->AddCallbackFunction("BindMapToggleSelectionFollowView", std::bind(&SectorView::OnToggleSelectionFollowView, this, _1));
 
 	m_sectorBindings.mapWarpToCurrent = m_inputFrame->AddActionBinding("BindMapWarpToCurrent", groupMisc, ActionBinding(SDLK_c));
 	m_sectorBindings.mapWarpToSelected = m_inputFrame->AddActionBinding("BindMapWarpToSelection", groupMisc, ActionBinding(SDLK_g));
@@ -1177,19 +1177,19 @@ void SectorView::UpdateBindings()
 
 	// fast move selection to current player system or hyperspace target
 	const bool shifted = InputFWD::GetMoveSpeedShiftModifier() >= 1.0 ? true : false;
-	if (m_sectorBindings.mapWarpToCurrent->IsActive()) {
+	if (m_inputFrame->IsActive(m_sectorBindings.mapWarpToCurrent)) {
 		GotoSystem(m_current);
 		reset_view = shifted;
-	} else if (m_sectorBindings.mapWarpToSelected->IsActive()) {
+	} else if (m_inputFrame->IsActive(m_sectorBindings.mapWarpToSelected)) {
 		GotoSystem(m_selected);
 		reset_view = shifted;
-	} else if (m_sectorBindings.mapWarpToHyperspaceTarget->IsActive()) {
+	} else if (m_inputFrame->IsActive(m_sectorBindings.mapWarpToHyperspaceTarget)) {
 		GotoSystem(m_hyperspaceTarget);
 		reset_view = shifted;
 	}
 
 	// reset rotation and zoom
-	if (reset_view || m_sectorBindings.mapViewReset->IsActive()) {
+	if (reset_view || m_inputFrame->IsActive(m_sectorBindings.mapViewReset)) {
 		while (m_rotZ < -180.0f)
 			m_rotZ += 360.0f;
 		while (m_rotZ > 180.0f)
@@ -1229,30 +1229,30 @@ void SectorView::Update(const float frameTime)
 		const float moveSpeed = InputFWD::GetMoveSpeedShiftModifier();
 		float move = moveSpeed * frameTime;
 		vector3f shift(0.0f);
-		if (m_sectorBindings.mapViewShiftLeftRight->IsActive()) {
-			shift.x -= m_sectorBindings.mapViewShiftLeftRight->GetValue() * move;
+		if (m_inputFrame->IsActive(m_sectorBindings.mapViewShiftLeftRight)) {
+			shift.x -= m_inputFrame->GetValue(m_sectorBindings.mapViewShiftLeftRight) * move;
 		}
-		if (m_sectorBindings.mapViewShiftUpDown->IsActive()) {
-			shift.y -= m_sectorBindings.mapViewShiftUpDown->GetValue() * move;
+		if (m_inputFrame->IsActive(m_sectorBindings.mapViewShiftUpDown)) {
+			shift.y -= m_inputFrame->GetValue(m_sectorBindings.mapViewShiftUpDown) * move;
 		}
-		if (m_sectorBindings.mapViewShiftForwardBackward->IsActive()) {
-			shift.z += m_sectorBindings.mapViewShiftForwardBackward->GetValue() * move;
+		if (m_inputFrame->IsActive(m_sectorBindings.mapViewShiftForwardBackward)) {
+			shift.z += m_inputFrame->GetValue(m_sectorBindings.mapViewShiftForwardBackward) * move;
 		}
 
 		m_posMovingTo += shift * rot;
 
-		if (m_sectorBindings.mapViewZoom->IsActive()) {
-			m_zoomMovingTo -= m_sectorBindings.mapViewZoom->GetValue() * move * 5.0f;
+		if (m_inputFrame->IsActive(m_sectorBindings.mapViewZoom)) {
+			m_zoomMovingTo -= m_inputFrame->GetValue(m_sectorBindings.mapViewZoom) * move * 5.0f;
 		}
 		m_zoomMovingTo = Clamp(m_zoomMovingTo, 0.1f, FAR_MAX);
 
-		if (m_sectorBindings.mapViewRotateLeftRight->IsActive()) {
-			if (m_sectorBindings.mapViewRotateLeftRight->GetValue() < 0.0) m_rotZMovingTo -= 0.2f * moveSpeed;
-			if (m_sectorBindings.mapViewRotateLeftRight->GetValue() > 0.0) m_rotZMovingTo += 0.2f * moveSpeed;
+		if (m_inputFrame->IsActive(m_sectorBindings.mapViewRotateLeftRight)) {
+			if (m_inputFrame->GetValue(m_sectorBindings.mapViewRotateLeftRight) < 0.0) m_rotZMovingTo -= 0.2f * moveSpeed;
+			if (m_inputFrame->GetValue(m_sectorBindings.mapViewRotateLeftRight) > 0.0) m_rotZMovingTo += 0.2f * moveSpeed;
 		}
-		if (m_sectorBindings.mapViewRotateUpDown->IsActive()) {
-			if (m_sectorBindings.mapViewRotateUpDown->GetValue() > 0.0) m_rotXMovingTo -= 0.2f * moveSpeed;
-			if (m_sectorBindings.mapViewRotateUpDown->GetValue() < 0.0) m_rotXMovingTo += 0.2f * moveSpeed;
+		if (m_inputFrame->IsActive(m_sectorBindings.mapViewRotateUpDown)) {
+			if (m_inputFrame->GetValue(m_sectorBindings.mapViewRotateUpDown) > 0.0) m_rotXMovingTo -= 0.2f * moveSpeed;
+			if (m_inputFrame->GetValue(m_sectorBindings.mapViewRotateUpDown) < 0.0) m_rotXMovingTo += 0.2f * moveSpeed;
 		}
 	}
 

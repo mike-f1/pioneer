@@ -7,6 +7,7 @@
 #include "Color.h"
 #include "UIView.h"
 #include "graphics/Drawables.h"
+#include "input/InputFwd.h"
 #include "libs/matrix4x4.h"
 #include "libs/vector3.h"
 #include <memory>
@@ -145,10 +146,7 @@ private:
 	Graphics::Drawables::Lines m_lines;
 
 	struct SystemViewBinding {
-		using Action = KeyBindings::ActionBinding;
-		using Axis =  KeyBindings::AxisBinding;
-
-		Axis *zoomView;
+		AxisId zoomView;
 
 	} m_systemViewBindings;
 

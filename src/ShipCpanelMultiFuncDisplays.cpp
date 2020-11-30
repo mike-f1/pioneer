@@ -7,7 +7,6 @@
 #include "GameLocator.h"
 #include "GameSaveError.h"
 #include "input/InputFrame.h"
-#include "input/InputFwd.h"
 #include "input/KeyBindings.h"
 #include "Lang.h"
 #include "Missile.h"
@@ -91,7 +90,7 @@ void RadarWidget::RegisterInputBindings()
 
 	m_inputFrame = std::make_unique<InputFrame>("RadarWidget");
 
-	BindingPage &page = m_inputFrame->GetBindingPage("RadarView");
+	BindingPage &page = InputFWD::GetBindingPage("RadarView");
 	BindingGroup &group = page.GetBindingGroup("Miscellaneous");
 
 	m_radarWidgetBindings.toggleScanMode = m_inputFrame->AddActionBinding("BindToggleScanMode", group, ActionBinding(SDLK_SLASH));

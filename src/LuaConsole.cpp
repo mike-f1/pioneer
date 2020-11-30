@@ -4,7 +4,8 @@
 #include "LuaConsole.h"
 
 #include "FileSystem.h"
-#include "input/InputFwd.h"
+#include "input/InputFrame.h"
+#include "input/InputFrameStatusTicket.h"
 #include "input/KeyBindings.h"
 #include "LuaManager.h"
 #include "LuaUtils.h"
@@ -78,32 +79,39 @@ void LuaConsole::RegisterInputBindings()
 
 	m_inputFrame = std::make_unique<InputFrame>("Console");
 
-	auto &page = m_inputFrame->GetBindingPage("General");
+	auto &page = InputFWD::GetBindingPage("General");
 	auto &group = page.GetBindingGroup("Miscellaneous");
 
 	m_consoleBindings.toggleLuaConsole = m_inputFrame->AddActionBinding("ToggleConsole", group, ActionBinding(SDLK_BACKSLASH));
 	m_inputFrame->SetBTrait("ToggleConsole", BehaviourMod::ALLOW_KEYBOARD_ONLY);
 	m_inputFrame->AddCallbackFunction("ToggleConsole", std::bind(&LuaConsole::OnToggle, this, _1));
 
-	// Explicitly activate console binding as it is always active
 	m_inputFrame->SetActive(true);
 }
 
 void LuaConsole::OnToggle(bool down)
 {
 	if (down) return;
+	m_active = !m_active;
 	if (m_active) {
-		Pi::ui->DropLayer();
-	} else {
+		m_lockEnabled = InputFWD::DisableAllInputFrameExcept(m_inputFrame.get());
+		m_inputFrame->SetActive(false);
 		Pi::ui->NewLayer()->SetInnerWidget(m_container.Get());
 		Pi::ui->SelectWidget(m_entry);
+	} else {
+		m_lockEnabled.reset();
+		m_inputFrame->SetActive(true);
+		Pi::ui->DropLayer();
 	}
-	m_active = !m_active;
 }
 
-void LuaConsole::CheckEvent(const SDL_Event &event)
+void LuaConsole::Deactivate()
 {
-	m_inputFrame->CheckSDLEventAndDispatch(m_consoleBindings.toggleLuaConsole, event);
+	if (!m_active) return;
+	m_active = false;
+	m_lockEnabled.reset();
+	m_inputFrame->SetActive(true);
+	Pi::ui->DropLayer();
 }
 
 static int capture_traceback(lua_State *L)

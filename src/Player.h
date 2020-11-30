@@ -22,6 +22,8 @@ public:
 
 	~Player();
 
+	void SetInputActive(bool active);
+
 	virtual void SetDockedWith(SpaceStation *, int port) override;
 	virtual bool DoDamage(float kgDamage) override final; // overloaded to add "crush" audio
 	virtual bool OnDamage(Object *attacker, float kgDamage, const CollisionContact &contactData) override;

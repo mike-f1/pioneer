@@ -10,7 +10,6 @@
 #include "InGameViews.h"
 #include "InGameViewsLocator.h"
 #include "input/InputFrame.h"
-#include "input/InputFwd.h"
 #include "input/KeyBindings.h"
 #include "Lang.h"
 #include "LuaObject.h"
@@ -38,14 +37,15 @@
 
 using namespace Graphics;
 
-const double SystemView::PICK_OBJECT_RECT_SIZE = 12.0;
-const uint16_t SystemView::N_VERTICES_MAX = 100;
-static const float MIN_ZOOM = 1e-30f; // Just to avoid having 0
-static const float MAX_ZOOM = 1e20f;
-static const float ZOOM_IN_SPEED = 2.0f;
-static const float ZOOM_OUT_SPEED = 1.f / ZOOM_IN_SPEED;
-static const float WHEEL_SENSITIVITY = .1f; // Should be a variable in user settings.
-static const double DEFAULT_VIEW_DISTANCE = 10.0;
+constexpr double SystemView::PICK_OBJECT_RECT_SIZE = 12.0;
+constexpr uint16_t SystemView::N_VERTICES_MAX = 100;
+constexpr float MIN_ZOOM = 1e-30f; // Just to avoid having 0
+constexpr float MAX_ZOOM = 1e20f;
+constexpr float ZOOM_IN_SPEED = 2.0f;
+constexpr float ZOOM_OUT_SPEED = 1.f / ZOOM_IN_SPEED;
+constexpr float WHEEL_SENSITIVITY = .1f; // Should be a variable in user settings.
+constexpr double DEFAULT_VIEW_DISTANCE = 10.0;
+constexpr float ROTATION_SPEED_FACTOR = 30;
 
 SystemView::SystemView() :
 	UIView(),
@@ -278,12 +278,12 @@ void SystemView::RegisterInputBindings()
 	using namespace KeyBindings;
 	using namespace std::placeholders;
 
-	m_inputFrame = std::make_unique<InputFrame>("SystemView");
+	m_inputFrame = std::make_unique<InputFrame>("GeneralPanRotateZoom");
 
-	BindingPage &page = m_inputFrame->GetBindingPage("SystemView");
-	BindingGroup &group = page.GetBindingGroup("Miscellaneous");
+	m_systemViewBindings.mapViewZoom = m_inputFrame->GetAxisBinding("BindMapViewZoom");
 
-	m_systemViewBindings.zoomView = m_inputFrame->AddAxisBinding("BindViewZoom", group, AxisBinding(WheelDirection::UP));
+	m_systemViewBindings.mapViewRotateLeftRight = m_inputFrame->GetAxisBinding("BindMapViewRotateLeftRight");
+	m_systemViewBindings.mapViewRotateUpDown = m_inputFrame->GetAxisBinding("BindMapViewRotateUpDown");
 }
 
 void SystemView::OnSwitchTo()
@@ -391,8 +391,8 @@ void SystemView::PutOrbit(const Orbit *orbit, const vector3d &offset, const Colo
 		}
 	}
 
-	static const float startTrailPercent = 0.85;
-	static const float fadedColorParameter = 0.8;
+	constexpr float startTrailPercent = 0.85;
+	constexpr float fadedColorParameter = 0.8;
 
 	uint16_t fadingColors = 0;
 	const double tMinust0 = m_time - GameLocator::getGame()->GetTime();
@@ -782,67 +782,71 @@ void SystemView::ResetPlanner()
 
 void SystemView::Update(const float frameTime)
 {
-	// XXX ugly hack checking for console here
-	if (!Pi::IsConsoleActive()) {
-		float speed = 0.0f;
-		const float speed_modifier = InputFWD::GetMoveSpeedShiftModifier();
-		if (m_inputFrame->IsActive(m_systemViewBindings.zoomView)) {
-			speed = m_inputFrame->GetValue(m_systemViewBindings.zoomView);
-			if (speed < 0.0f) {
-				m_zoomTo *= -speed * (((ZOOM_OUT_SPEED - 1) * WHEEL_SENSITIVITY + 1) / speed_modifier);
-			} else {
-				m_zoomTo *= +speed * (((ZOOM_IN_SPEED - 1) * WHEEL_SENSITIVITY + 1) * speed_modifier);
-			}
+	float speed = 0.0f;
+	const float speed_modifier = InputFWD::GetMoveSpeedShiftModifier();
+	if (m_inputFrame->IsActive(m_systemViewBindings.mapViewZoom)) {
+		speed = m_inputFrame->GetValue(m_systemViewBindings.mapViewZoom);
+		if (speed < 0.0f) {
+			m_zoomTo *= -speed * (((ZOOM_OUT_SPEED - 1) * WHEEL_SENSITIVITY + 1) / speed_modifier);
 		} else {
-			if (m_zoomInButton->IsPressed())
-				m_zoomTo *= pow(ZOOM_IN_SPEED * speed_modifier, frameTime);
-			if (m_zoomOutButton->IsPressed())
-				m_zoomTo *= pow(ZOOM_OUT_SPEED / speed_modifier, frameTime);
+			m_zoomTo *= +speed * (((ZOOM_IN_SPEED - 1) * WHEEL_SENSITIVITY + 1) * speed_modifier);
 		}
-		// transfer planner buttons
-		if (m_plannerIncreaseStartTimeButton->IsPressed()) {
-			m_planner->AddStartTime(10.);
-		}
-		if (m_plannerDecreaseStartTimeButton->IsPressed()) {
-			m_planner->AddStartTime(-10.);
-		}
-		if (m_plannerAddProgradeVelButton->IsPressed()) {
-			m_planner->AddDv(PROGRADE, 10.0);
-		}
-		if (m_plannerAddRetrogradeVelButton->IsPressed()) {
-			m_planner->AddDv(PROGRADE, -10.0);
-		}
-		if (m_plannerAddNormalVelButton->IsPressed()) {
-			m_planner->AddDv(NORMAL, 10.0);
-		}
-		if (m_plannerAddAntiNormalVelButton->IsPressed()) {
-			m_planner->AddDv(NORMAL, -10.0);
-		}
-		if (m_plannerAddRadiallyInVelButton->IsPressed()) {
-			m_planner->AddDv(RADIAL, 10.0);
-		}
-		if (m_plannerAddRadiallyOutVelButton->IsPressed()) {
-			m_planner->AddDv(RADIAL, -10.0);
-		}
-		if (m_plannerResetStartTimeButton->IsPressed()) {
-			m_planner->ResetStartTime();
-		}
-		if (m_plannerZeroProgradeVelButton->IsPressed()) {
-			m_planner->ResetDv(PROGRADE);
-		}
-		if (m_plannerZeroNormalVelButton->IsPressed()) {
-			m_planner->ResetDv(NORMAL);
-		}
-		if (m_plannerZeroRadialVelButton->IsPressed()) {
-			m_planner->ResetDv(RADIAL);
-		}
-
-		m_plannerFactorText->SetText(m_planner->printFactor());
-		m_plannerStartTimeText->SetText(m_planner->printDeltaTime());
-		m_plannerProgradeDvText->SetText(m_planner->printDv(PROGRADE));
-		m_plannerNormalDvText->SetText(m_planner->printDv(NORMAL));
-		m_plannerRadialDvText->SetText(m_planner->printDv(RADIAL));
+	} else {
+		if (m_zoomInButton->IsPressed())
+			m_zoomTo *= pow(ZOOM_IN_SPEED * speed_modifier, frameTime);
+		if (m_zoomOutButton->IsPressed())
+			m_zoomTo *= pow(ZOOM_OUT_SPEED / speed_modifier, frameTime);
 	}
+	if (m_inputFrame->IsActive(m_systemViewBindings.mapViewRotateLeftRight)) {
+		m_rot_y_to += m_inputFrame->GetValue(m_systemViewBindings.mapViewRotateLeftRight) * speed_modifier * ROTATION_SPEED_FACTOR * frameTime;
+	}
+	if (m_inputFrame->IsActive(m_systemViewBindings.mapViewRotateUpDown)) {
+		m_rot_x_to -= m_inputFrame->GetValue(m_systemViewBindings.mapViewRotateUpDown) * speed_modifier * ROTATION_SPEED_FACTOR * frameTime;
+	}
+	// transfer planner buttons
+	if (m_plannerIncreaseStartTimeButton->IsPressed()) {
+		m_planner->AddStartTime(10.);
+	}
+	if (m_plannerDecreaseStartTimeButton->IsPressed()) {
+		m_planner->AddStartTime(-10.);
+	}
+	if (m_plannerAddProgradeVelButton->IsPressed()) {
+		m_planner->AddDv(PROGRADE, 10.0);
+	}
+	if (m_plannerAddRetrogradeVelButton->IsPressed()) {
+		m_planner->AddDv(PROGRADE, -10.0);
+	}
+	if (m_plannerAddNormalVelButton->IsPressed()) {
+		m_planner->AddDv(NORMAL, 10.0);
+	}
+	if (m_plannerAddAntiNormalVelButton->IsPressed()) {
+		m_planner->AddDv(NORMAL, -10.0);
+	}
+	if (m_plannerAddRadiallyInVelButton->IsPressed()) {
+		m_planner->AddDv(RADIAL, 10.0);
+	}
+	if (m_plannerAddRadiallyOutVelButton->IsPressed()) {
+		m_planner->AddDv(RADIAL, -10.0);
+	}
+	if (m_plannerResetStartTimeButton->IsPressed()) {
+		m_planner->ResetStartTime();
+	}
+	if (m_plannerZeroProgradeVelButton->IsPressed()) {
+		m_planner->ResetDv(PROGRADE);
+	}
+	if (m_plannerZeroNormalVelButton->IsPressed()) {
+		m_planner->ResetDv(NORMAL);
+	}
+	if (m_plannerZeroRadialVelButton->IsPressed()) {
+		m_planner->ResetDv(RADIAL);
+	}
+
+	m_plannerFactorText->SetText(m_planner->printFactor());
+	m_plannerStartTimeText->SetText(m_planner->printDeltaTime());
+	m_plannerProgradeDvText->SetText(m_planner->printDv(PROGRADE));
+	m_plannerNormalDvText->SetText(m_planner->printDv(NORMAL));
+	m_plannerRadialDvText->SetText(m_planner->printDv(RADIAL));
+
 	// TODO: add "true" lower/upper bounds to m_zoomTo / m_zoom
 	m_zoomTo = Clamp(m_zoomTo, MIN_ZOOM, MAX_ZOOM);
 	m_zoom = Clamp(m_zoom, MIN_ZOOM, MAX_ZOOM);
@@ -854,8 +858,10 @@ void SystemView::Update(const float frameTime)
 	AnimationCurves::Approach(m_rot_y, m_rot_y_to, frameTime);
 
 	auto motion = InputFWD::GetMouseMotion(MouseMotionBehaviour::Rotate);
-	m_rot_x_to += std::get<2>(motion) * 20 * frameTime;
-	m_rot_y_to += std::get<1>(motion) * 20 * frameTime;
+	if (std::get<0>(motion)) {
+		m_rot_x_to += std::get<2>(motion) * ROTATION_SPEED_FACTOR * frameTime;
+		m_rot_y_to += std::get<1>(motion) * ROTATION_SPEED_FACTOR * frameTime;
+	}
 
 	UIView::Update(frameTime);
 }

@@ -12,11 +12,9 @@
 #include "InGameViews.h"
 #include "InGameViewsLocator.h"
 #include "input/InputFrame.h"
-#include "input/InputFwd.h"
 #include "input/KeyBindings.h"
 #include "LuaObject.h"
 #include "OS.h"
-#include "Pi.h"
 #include "Player.h"
 #include "Ship.h"
 #include "Space.h"
@@ -56,7 +54,7 @@ void PlayerShipController::RegisterInputBindings()
 
 	m_inputFrame = std::make_unique<InputFrame>("PlayerShipController");
 
-	auto &controlsPage = m_inputFrame->GetBindingPage("ShipControls");
+	auto &controlsPage = InputFWD::GetBindingPage("ShipControls");
 
 	auto &weaponsGroup = controlsPage.GetBindingGroup("Weapons");
 	m_inputBindings.targetObject = m_inputFrame->AddActionBinding("BindTargetObject", weaponsGroup, ActionBinding(SDLK_y));
@@ -114,6 +112,7 @@ void PlayerShipController::SaveToJson(Json &jsonObj, Space *space)
 	playerShipControllerObj["index_for_combat_target"] = space->GetIndexForBody(m_combatTarget);
 	playerShipControllerObj["index_for_nav_target"] = space->GetIndexForBody(m_navTarget);
 	playerShipControllerObj["index_for_set_speed_target"] = space->GetIndexForBody(m_setSpeedTarget);
+	playerShipControllerObj["is_input_active"] = m_inputFrame->IsActive();
 	Json gunStatusesSlots = Json::array();
 	for (std::vector<int> statuses : m_gunStatuses) {
 		Json gunStatusesSlot = Json::array();
@@ -140,6 +139,7 @@ void PlayerShipController::LoadFromJson(const Json &jsonObj)
 		m_combatTargetIndex = playerShipControllerObj["index_for_combat_target"];
 		m_navTargetIndex = playerShipControllerObj["index_for_nav_target"];
 		m_setSpeedTargetIndex = playerShipControllerObj["index_for_set_speed_target"];
+		m_inputFrame->SetActive(playerShipControllerObj["is_input_active"]);
 
 		Json gunStatuses = playerShipControllerObj["gun_statuses"];
 		assert(gunStatuses.size() == WEAPON_CONFIG_SLOTS);
@@ -266,12 +266,16 @@ void PlayerShipController::StaticUpdate(const float timeStep)
 	OS::DisableFPE();
 }
 
+void PlayerShipController::SetInputActive(bool active)
+{
+	m_inputFrame->SetActive(active);
+}
+
 void PlayerShipController::CheckControlsLock()
 {
 	m_controlsLocked = (GameLocator::getGame()->IsPaused() ||
 		GameLocator::getGame()->GetPlayer()->IsDead() ||
 		(m_ship->GetFlightState() != Ship::FLYING) ||
-		Pi::IsConsoleActive() ||
 		!InGameViewsLocator::getInGameViews()->IsWorldView()); //to prevent moving the ship in starmap etc.
 }
 
@@ -402,12 +406,12 @@ void PlayerShipController::PollControls(const float timeStep, const bool force_r
 
 bool PlayerShipController::IsAnyAngularThrusterKeyDown()
 {
-	return !Pi::IsConsoleActive() && (m_inputFrame->IsActive(m_inputBindings.pitch) || m_inputFrame->IsActive(m_inputBindings.yaw) || m_inputFrame->IsActive(m_inputBindings.roll));
+	return (m_inputFrame->IsActive(m_inputBindings.pitch) || m_inputFrame->IsActive(m_inputBindings.yaw) || m_inputFrame->IsActive(m_inputBindings.roll));
 }
 
 bool PlayerShipController::IsAnyLinearThrusterKeyDown()
 {
-	return !Pi::IsConsoleActive() && (m_inputFrame->IsActive(m_inputBindings.thrustForward) || m_inputFrame->IsActive(m_inputBindings.thrustLeft) || m_inputFrame->IsActive(m_inputBindings.thrustUp));
+	return (m_inputFrame->IsActive(m_inputBindings.thrustForward) || m_inputFrame->IsActive(m_inputBindings.thrustLeft) || m_inputFrame->IsActive(m_inputBindings.thrustUp));
 }
 
 void PlayerShipController::SetFlightControlState(FlightControlState s)

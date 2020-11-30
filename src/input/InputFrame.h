@@ -27,20 +27,26 @@ namespace KeyBindings {
 class ActionId;
 class AxisId;
 
-class InputFrame {
+class InputFrame final {
 	friend class Input;
 public:
 	InputFrame() = delete;
 	InputFrame(const InputFrame &) = delete;
 
 	InputFrame(const std::string &name) ;
-	virtual ~InputFrame();
+	~InputFrame();
 
 	bool IsActive() const { return m_active; }
 	void SetActive(bool is_active);
 
+	// Useful for shared InputFrames, when is set it throw if Add*Binding is called
+	void LockInsertion() { m_lockInsertion = true; }
+
 	ActionId AddActionBinding(std::string id, BindingGroup &group, KeyBindings::ActionBinding binding);
 	AxisId AddAxisBinding(std::string id, BindingGroup &group, KeyBindings::AxisBinding binding);
+
+	ActionId GetActionBinding(const std::string &id);
+	AxisId GetAxisBinding(const std::string &id);
 
 	void AddCallbackFunction(const std::string &id, const std::function<void(bool)> &fun);
 	void SetBTrait(const std::string &id, const KeyBindings::BehaviourMod &bm);
@@ -48,30 +54,20 @@ public:
 	bool IsActive(ActionId id);
 	bool IsActive(AxisId id);
 	float GetValue(AxisId id);
-	void CheckSDLEventAndDispatch(ActionId id, const SDL_Event &event);
-
-	BindingPage &GetBindingPage(const std::string &id);
-
-	// Call this at startup and register all the bindings associated with the frame.
-	virtual void RegisterBindings() {};
-
-	// Called when the frame is added to the stack.
-	virtual void onFrameAdded() {};
-
-	// Called when the frame is removed from the stack.
-	virtual void onFrameRemoved() {};
 
 private:
 	// Check the event against all the inputs in this frame.
 	KeyBindings::InputResponse ProcessSDLEvent(const SDL_Event &event);
 
 	bool m_active;
+	bool m_lockInsertion;
 
 	RefCountedPtr<BindingContainer> m_bindingContainer;
 };
 
 namespace InputFWD {
-	// These functions are here to avoid direct inclusion of Pi::input
+	// These functions are here to avoid direct inclusion of InputLocator & Input
+	BindingPage &GetBindingPage(const std::string &id);
 
 	float GetMoveSpeedShiftModifier();
 

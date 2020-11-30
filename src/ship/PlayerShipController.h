@@ -12,11 +12,6 @@
 
 class InputFrame;
 
-namespace KeyBindings {
-	struct ActionBinding;
-	struct AxisBinding;
-} // namespace KeyBindings
-
 constexpr int WEAPON_CONFIG_SLOTS = 4;
 
 // autopilot AI + input
@@ -26,10 +21,15 @@ public:
 	~PlayerShipController();
 
 	ControllerType GetType() override { return ControllerType::PLAYER; }
+
 	void SaveToJson(Json &jsonObj, Space *s) override;
 	void LoadFromJson(const Json &jsonObj) override;
 	void PostLoadFixup(Space *s) override;
+
 	void StaticUpdate(float timeStep) override;
+
+	void SetInputActive(bool active);
+
 	// Poll controls, set thruster states, gun states and target velocity
 	void PollControls(float timeStep, const bool force_rotation_damping);
 	bool IsMouseActive() const { return m_mouseActive; }
@@ -118,6 +118,5 @@ private:
 	int m_setSpeedTargetIndex;
 	vector3d m_mouseDir;
 
-	// TODO: Store/Recall barrels configuration
 	std::array<std::vector<int>, WEAPON_CONFIG_SLOTS> m_gunStatuses;
 };

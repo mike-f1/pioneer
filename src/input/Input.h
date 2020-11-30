@@ -18,19 +18,8 @@
 
 class BindingContainer;
 class InputFrame;
-
-// When this get deleted, automatically restore previous state
-// TODO: would be good to catch if InputFrames are changed (e.g. size is changed) in the means
-class InputFrameStatusTicket {
-	friend class Input;
-public:
-	~InputFrameStatusTicket();
-	InputFrameStatusTicket &operator =(InputFrameStatusTicket &) = delete;
-	InputFrameStatusTicket(const InputFrameStatusTicket &) = delete;
-private:
-	InputFrameStatusTicket(const std::vector<InputFrame *> &inputFrames);
-	std::map<InputFrame *, bool> m_statuses;
-};
+class InputFrameStatusTicket;
+class JoyStick;
 
 class Input {
 public:
@@ -47,18 +36,17 @@ public:
 	// return true if it was such frame
 	bool RemoveBindingContainer(InputFrame *iframe);
 
-	bool HasBindingContainer(std::string &name);
-
 	std::unique_ptr<InputFrameStatusTicket> DisableAllInputFrameExcept(InputFrame *current);
 
 	// Creates a new action binding, copying the provided binding.
 	// The returned binding pointer points to the actual binding.
-	// NOTE: 'id' may change if the same string is already in use
+	// NOTE: 'id' will change if the same string is already in use
 	KeyBindings::ActionBinding *AddActionBinding(std::string &id, BindingGroup &group, KeyBindings::ActionBinding binding);
 	KeyBindings::ActionBinding *GetActionBinding(const std::string &id)
 	{
 		return m_actionBindings.count(id) ? &m_actionBindings.at(id) : nullptr;
 	}
+
 	bool DeleteActionBinding(const std::string &id)
 	{
 		if (m_actionBindings.erase(id) != 0) {
@@ -70,12 +58,13 @@ public:
 
 	// Creates a new axis binding, copying the provided binding.
 	// The returned binding pointer points to the actual binding.
-	// PS: 'id' may change if the same string is already in use
+	// PS: 'id' will change if the same string is already in use
 	KeyBindings::AxisBinding *AddAxisBinding(std::string &id, BindingGroup &group, KeyBindings::AxisBinding binding);
 	KeyBindings::AxisBinding *GetAxisBinding(const std::string &id)
 	{
 		return m_axisBindings.count(id) ? &m_axisBindings.at(id) : nullptr;
 	}
+
 	bool DeleteAxisBinding(const std::string &id)
 	{
 		if (m_axisBindings.erase(id) != 0) {
@@ -94,32 +83,9 @@ public:
 	// This is a default value only, centralized here to promote uniform user experience.
 	float GetMoveSpeedShiftModifier() const;
 
-	int JoystickButtonState(int joystick, int button);
-	int JoystickHatState(int joystick, int hat);
-	float JoystickAxisState(int joystick, int axis);
-
-	bool IsJoystickEnabled() { return m_joystickEnabled; }
-	void SetJoystickEnabled(bool state) { m_joystickEnabled = state; }
-
-	struct JoystickState {
-		SDL_Joystick *joystick;
-		SDL_JoystickGUID guid;
-		std::vector<bool> buttons;
-		std::vector<int> hats;
-		std::vector<float> axes;
-	};
-	std::map<SDL_JoystickID, JoystickState> GetJoysticksState() { return m_joysticks; }
-
-	// User display name for the joystick from the API/OS.
-	std::string JoystickName(int joystick);
-	// fetch the GUID for the named joystick
-	SDL_JoystickGUID JoystickGUID(int joystick);
-	std::string JoystickGUIDString(int joystick);
-
-	// reverse map a JoystickGUID to the actual internal ID.
-	int JoystickFromGUIDString(const std::string &guid);
-	int JoystickFromGUIDString(const char *guid);
-	int JoystickFromGUID(SDL_JoystickGUID guid);
+	auto GetJoystick() const {return m_joystick.get(); }
+	bool IsJoystickEnabled() const { return m_joystickEnabled; }
+	void SetJoystickEnabled(bool state);
 
 	void SetMouseYInvert(bool state) { m_mouseYInvert = state; }
 	bool IsMouseYInvert() { return m_mouseYInvert; }
@@ -149,14 +115,7 @@ public:
 private:
 	unsigned m_keyJustPressed;
 
-	void InitJoysticks();
 	void RegisterInputBindings();
-
-	// Check if a specific input frame is currently on the stack.
-	bool HasBindingContainer(BindingContainer *frame)
-	{
-		return std::count(m_bindingContainers.begin(), m_bindingContainers.end(), frame) > 0;
-	}
 
 	// The only current "action": this is a general binding
 	// used to speed up scroll/rotation/... of various bindings
@@ -177,16 +136,24 @@ private:
 	std::array<int, 2> m_mouseMotion; // Store last frame relative mouse motion (must reset every frame)
 	std::array<bool, 6> m_mouseButton; // Store mouse button state
 
+	// TODO: finish decoupling these classes as actually, because of how Keybindings works, they always needs
+	//  an instance of JoyStick up and running. This means we never can reset m_joystick or we incur in segfaults,
+	// and there's a need for below bool :P
 	bool m_joystickEnabled;
+	std::unique_ptr<JoyStick> m_joystick;
+
 	bool m_mouseYInvert;
-	std::map<SDL_JoystickID, JoystickState> m_joysticks;
 
 	std::map<std::string, BindingPage> m_bindingPages;
 	std::map<std::string, KeyBindings::ActionBinding> m_actionBindings;
 	std::map<std::string, KeyBindings::AxisBinding> m_axisBindings;
 
+	void PurgeBindingContainers();
+
 	std::vector<RefCountedPtr<BindingContainer>> m_bindingContainers;
 	std::vector<InputFrame *> m_inputFrames;
+
+	std::unique_ptr<InputFrame> m_generalPanRotateZoom;
 };
 
 #endif

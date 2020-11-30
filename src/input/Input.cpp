@@ -6,26 +6,14 @@
 #include "GameConfig.h"
 #include "GameConfSingleton.h"
 #include "InputFrame.h"
+#include "InputFrameStatusTicket.h"
 #include "BindingContainer.h"
+#include "JoyStick.h"
 
 #include "libs/utils.h"
 #include "profiler/Profiler.h"
 
 std::string speedModifier = "SpeedModifier";
-
-InputFrameStatusTicket::InputFrameStatusTicket(const std::vector<InputFrame *> &inputFrames)
-{
-	std::for_each(begin(inputFrames), end(inputFrames), [this](InputFrame *iframe) {
-		m_statuses[iframe] = iframe->IsActive();
-	});
-}
-
-InputFrameStatusTicket::~InputFrameStatusTicket()
-{
-	std::for_each(begin(m_statuses), end(m_statuses), [](std::pair<InputFrame *, bool> old_status) {
-		old_status.first->SetActive(old_status.second);
-	});
-}
 
 Input::Input() :
 	m_keyJustPressed(0),
@@ -37,31 +25,49 @@ Input::Input() :
 	m_joystickEnabled = (config.Int("EnableJoystick")) ? true : false;
 	m_mouseYInvert = (config.Int("InvertMouseY")) ? true : false;
 
-	//m_bindingContainers.reserve(8);
+	m_bindingContainers.reserve(8);
 
-	InitJoysticks();
+	m_joystick = std::make_unique<JoyStick>();
 
 	RegisterInputBindings();
 }
 
 void Input::InitGame()
 {
+	Output("Input::InitGame()\n");
 	//reset input states
 	m_keyState.clear();
 	m_keyModStateUnified = KMOD_NONE;
 	m_mouseButton.fill(false);
 	m_mouseMotion.fill(0);
 
-	for (std::map<SDL_JoystickID, JoystickState>::iterator stick = m_joysticks.begin(); stick != m_joysticks.end(); ++stick) {
-		JoystickState &state = stick->second;
-		std::fill(state.buttons.begin(), state.buttons.end(), false);
-		std::fill(state.hats.begin(), state.hats.end(), 0);
-		std::fill(state.axes.begin(), state.axes.end(), 0.f);
-	}
+	if (m_joystick) m_joystick->InitGame();
+
+	// create a shared InputFrame for standard movement:
+	using namespace KeyBindings;
+	using namespace std::placeholders;
+
+	m_generalPanRotateZoom = std::make_unique<InputFrame>("GeneralPanRotateZoom");
+
+	auto &page = GetBindingPage("General");
+	auto &group = page.GetBindingGroup("GenViewControl");
+
+	m_generalPanRotateZoom->AddAxisBinding("BindMapViewShiftForwardBackward", group, AxisBinding(SDLK_r, SDLK_f));
+	m_generalPanRotateZoom->AddAxisBinding("BindMapViewShiftLeftRight", group, AxisBinding(SDLK_a, SDLK_d));
+	m_generalPanRotateZoom->AddAxisBinding("BindMapViewShiftUpDown", group, AxisBinding(SDLK_w, SDLK_s));
+
+	m_generalPanRotateZoom->AddAxisBinding("BindMapViewZoom", group, AxisBinding(SDLK_PLUS, SDLK_MINUS));
+
+	m_generalPanRotateZoom->AddAxisBinding("BindMapViewRotateLeftRight", group, AxisBinding(SDLK_RIGHT, SDLK_LEFT));
+	m_generalPanRotateZoom->AddAxisBinding("BindMapViewRotateUpDown", group, AxisBinding(SDLK_DOWN, SDLK_UP));
+
+	m_generalPanRotateZoom->LockInsertion();
 }
 
 void Input::TerminateGame()
 {
+	Output("Input::TerminateGame()\n");
+	m_generalPanRotateZoom.reset();
 }
 
 void Input::RegisterInputBindings()
@@ -103,7 +109,7 @@ void Input::DebugDumpPage(const std::string &pageId)
 
 RefCountedPtr<BindingContainer> Input::CreateOrShareBindContainer(const std::string &name, InputFrame *iframe)
 {
-	Output("Input::CreateOrShareBindContainer(const std::string &%s) ...", name.c_str());
+	Output("Input::CreateOrShareBindContainer(%s) ...", name.c_str());
 	m_inputFrames.push_back(iframe);
 	auto iter = std::find_if(begin(m_bindingContainers), end(m_bindingContainers), [&name](RefCountedPtr<BindingContainer> &bindCont) {
 		return (name == bindCont->GetName());
@@ -115,67 +121,19 @@ RefCountedPtr<BindingContainer> Input::CreateOrShareBindContainer(const std::str
 		Output("NOT found, create it!\n");
 		auto new_bindcont = RefCountedPtr<BindingContainer>(new BindingContainer(name));
 		m_bindingContainers.push_back(new_bindcont);
-		Output("[Ref count is: %i\n", m_bindingContainers.back()->GetRefCount());
 		return new_bindcont;
 	}
 }
 
 bool Input::RemoveBindingContainer(InputFrame *iframe)
 {
-	Output("Input::RemoveBindingContainer() ...\n");
 	bool removed = false;
-	auto it = std::find(m_inputFrames.begin(), m_inputFrames.end(), iframe);
-	if (it != m_inputFrames.end()) {
+	if (auto it = std::find(m_inputFrames.begin(), m_inputFrames.end(), iframe); it != m_inputFrames.end()) {
 		m_inputFrames.erase(it);
 		removed = true;
 	}
-	Output("%s (m_bindingContainers.size() = %lu)\n", removed ? "found" : "not found", m_bindingContainers.size());
-	std::for_each(m_bindingContainers.begin(), m_bindingContainers.end(), [&](RefCountedPtr<BindingContainer> &bindCont) {
-		Output("\t%s => %i\n", bindCont->GetName().c_str(), bindCont->GetRefCount());
-	});
-	/*
-
-		std::deque<RefCountedPtr<Widget>>::iterator i;
-		for (i = m_widgets.begin(); i != m_widgets.end(); ++i)
-			if ((*i).Get() == widget) break;
-		if (i == m_widgets.end())
-			return;
-
-		widget->Detach();
-		m_widgets.erase(i);
-*/
-
-	Output("During:\n");
-	for (auto iter = m_bindingContainers.begin(); iter != m_bindingContainers.end(); ++iter) {
-		//Output("\t%s => %i\n", (*iter)->GetName().c_str(), (*iter)->GetRefCount());
-		if ((*iter)->GetRefCount() == 1) {
-			Output("\t%s is unique, deleting...\n", (*iter)->GetName().c_str());
-			(*iter)->DecRefCount();
-			iter = m_bindingContainers.erase(iter);
-		}
-	}
-
-/*
-	m_bindingContainers.erase(std::remove(m_bindingContainers.begin(), m_bindingContainers.end(), [](RefCountedPtr<BindingContainer> &bindCont) {
-		return (bindCont->GetRefCount() == 1);
-	}));
-*/
-/*
-	Output("After:\n");
-	std::for_each(m_bindingContainers.begin(), m_bindingContainers.end(), [&](RefCountedPtr<BindingContainer> &bindCont) {
-		Output("\t%s => %i\n", bindCont->GetName().c_str(), bindCont->GetRefCount());
-	});
-*/
-	Output("...exiting\n");
+	PurgeBindingContainers();
 	return removed;
-}
-
-bool  Input::HasBindingContainer(std::string &name)
-{
-	for (RefCountedPtr<BindingContainer> &bindCont : m_bindingContainers) {
-		if (bindCont->GetName() == name) return true;
-	}
-	return false;
 }
 
 std::unique_ptr<InputFrameStatusTicket> Input::DisableAllInputFrameExcept(InputFrame *current)
@@ -283,6 +241,11 @@ float Input::GetMoveSpeedShiftModifier() const
 	return speed;
 }
 
+void Input::SetJoystickEnabled(bool state)
+{
+	m_joystickEnabled = state;
+}
+
 void Input::HandleSDLEvent(const SDL_Event &event)
 {
 	PROFILE_SCOPED()
@@ -325,24 +288,11 @@ void Input::HandleSDLEvent(const SDL_Event &event)
 		m_mouseMotion[1] += event.motion.yrel;
 	break;
 	case SDL_JOYAXISMOTION:
-		if (!m_joysticks[event.jaxis.which].joystick)
-			break;
-		if (event.jaxis.value == -32768)
-			m_joysticks[event.jaxis.which].axes[event.jaxis.axis] = 1.f;
-		else
-			m_joysticks[event.jaxis.which].axes[event.jaxis.axis] = -event.jaxis.value / 32767.f;
-	break;
 	case SDL_JOYBUTTONUP:
 	case SDL_JOYBUTTONDOWN:
-		if (!m_joysticks[event.jaxis.which].joystick)
-			break;
-		m_joysticks[event.jbutton.which].buttons[event.jbutton.button] = event.jbutton.state != 0;
-		break;
 	case SDL_JOYHATMOTION:
-		if (!m_joysticks[event.jaxis.which].joystick)
-			break;
-		m_joysticks[event.jhat.which].hats[event.jhat.hat] = event.jhat.value;
-		break;
+		if (m_joystickEnabled) m_joystick->HandleSDLEvent(event);
+	break;
 	}
 
 	if (m_speedModifier) m_speedModifier->CheckSDLEventAndDispatch(event);
@@ -378,111 +328,14 @@ void Input::FindAndEraseEntryInPagesAndGroups(const std::string &id)
 	}
 }
 
-void Input::InitJoysticks()
+void Input::PurgeBindingContainers()
 {
-	int joy_count = SDL_NumJoysticks();
-	Output("Initializing joystick subsystem.\n");
-	for (int n = 0; n < joy_count; n++) {
-		JoystickState state;
-
-		state.joystick = SDL_JoystickOpen(n);
-		if (!state.joystick) {
-			Warning("SDL_JoystickOpen(%i): %s\n", n, SDL_GetError());
-			continue;
-		}
-
-		state.guid = SDL_JoystickGetGUID(state.joystick);
-		state.axes.resize(SDL_JoystickNumAxes(state.joystick));
-		state.buttons.resize(SDL_JoystickNumButtons(state.joystick));
-		state.hats.resize(SDL_JoystickNumHats(state.joystick));
-
-		std::array<char, 33> joystickGUIDName;
-		SDL_JoystickGetGUIDString(state.guid, joystickGUIDName.data(), joystickGUIDName.size());
-		Output("Found joystick '%s' (GUID: %s)\n", SDL_JoystickName(state.joystick), joystickGUIDName.data());
-		Output("  - %ld axes, %ld buttons, %ld hats\n", state.axes.size(), state.buttons.size(), state.hats.size());
-
-		SDL_JoystickID joyID = SDL_JoystickInstanceID(state.joystick);
-		m_joysticks[joyID] = state;
-	}
-}
-
-std::string Input::JoystickName(int joystick)
-{
-	return std::string(SDL_JoystickName(m_joysticks[joystick].joystick));
-}
-
-std::string Input::JoystickGUIDString(int joystick)
-{
-	const int guidBufferLen = 33; // as documented by SDL
-	char guidBuffer[guidBufferLen];
-
-	SDL_JoystickGetGUIDString(m_joysticks[joystick].guid, guidBuffer, guidBufferLen);
-	return std::string(guidBuffer);
-}
-
-// conveniance version of JoystickFromGUID below that handles the string mangling.
-int Input::JoystickFromGUIDString(const std::string &guid)
-{
-	return JoystickFromGUIDString(guid.c_str());
-}
-
-// conveniance version of JoystickFromGUID below that handles the string mangling.
-int Input::JoystickFromGUIDString(const char *guid)
-{
-	return JoystickFromGUID(SDL_JoystickGetGUIDFromString(guid));
-}
-
-// return the internal ID of the stated joystick guid.
-// returns -1 if we couldn't find the joystick in question.
-int Input::JoystickFromGUID(SDL_JoystickGUID guid)
-{
-	const int guidLength = 16; // as defined
-	for (std::map<SDL_JoystickID, JoystickState>::iterator stick = m_joysticks.begin(); stick != m_joysticks.end(); ++stick) {
-		JoystickState &state = stick->second;
-		if (0 == memcmp(state.guid.data, guid.data, guidLength)) {
-			return static_cast<int>(stick->first);
-		}
-	}
-	return -1;
-}
-
-SDL_JoystickGUID Input::JoystickGUID(int joystick)
-{
-	return m_joysticks[joystick].guid;
-}
-
-int Input::JoystickButtonState(int joystick, int button)
-{
-	if (!m_joystickEnabled) return 0;
-	if (joystick < 0 || joystick >= int(m_joysticks.size()))
-		return 0;
-
-	if (button < 0 || button >= int(m_joysticks[joystick].buttons.size()))
-		return 0;
-
-	return m_joysticks[joystick].buttons[button];
-}
-
-int Input::JoystickHatState(int joystick, int hat)
-{
-	if (!m_joystickEnabled) return 0;
-	if (joystick < 0 || joystick >= int(m_joysticks.size()))
-		return 0;
-
-	if (hat < 0 || hat >= int(m_joysticks[joystick].hats.size()))
-		return 0;
-
-	return m_joysticks[joystick].hats[hat];
-}
-
-float Input::JoystickAxisState(int joystick, int axis)
-{
-	if (!m_joystickEnabled) return 0;
-	if (joystick < 0 || joystick >= int(m_joysticks.size()))
-		return 0;
-
-	if (axis < 0 || axis >= int(m_joysticks[joystick].axes.size()))
-		return 0;
-
-	return m_joysticks[joystick].axes[axis];
+	Output("PurgeBindingContainers(), size = %lu)\n", m_bindingContainers.size());
+	std::for_each(m_bindingContainers.begin(), m_bindingContainers.end(), [&](RefCountedPtr<BindingContainer> &bindCont) {
+		Output("\t%s => %i\n", bindCont->GetName().c_str(), bindCont->GetRefCount());
+	});
+	m_bindingContainers.erase(std::remove_if(m_bindingContainers.begin(), m_bindingContainers.end(), [](RefCountedPtr<BindingContainer> &bindCont) {
+		return bindCont.Unique();
+	}), m_bindingContainers.end());
+	Output("Exit purge\n");
 }

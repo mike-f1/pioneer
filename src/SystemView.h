@@ -20,12 +20,6 @@ class StarSystem;
 class SystemBody;
 class TransferPlanner;
 
-namespace KeyBindings {
-	struct ActionBinding;
-	struct AxisBinding;
-	struct WheelBinding;
-}
-
 namespace Gui {
 	class ImageButton;
 	class Label;
@@ -146,7 +140,10 @@ private:
 	Graphics::Drawables::Lines m_lines;
 
 	struct SystemViewBinding {
-		AxisId zoomView;
+		AxisId mapViewZoom;
+
+		AxisId mapViewRotateLeftRight;
+		AxisId mapViewRotateUpDown;
 
 	} m_systemViewBindings;
 

@@ -9,9 +9,7 @@
 #include "Game.h"
 #include "GameLocator.h"
 #include "input/InputFrame.h"
-#include "input/InputFwd.h"
 #include "input/KeyBindings.h"
-#include "Pi.h"
 #include "Player.h"
 #include "PlayerShipController.h"
 
@@ -38,16 +36,19 @@ void ShipViewController::RegisterInputBindings()
 	using namespace KeyBindings;
 	using namespace std::placeholders;
 
+	m_shipViewFrame = std::make_unique<InputFrame>("GeneralPanRotateZoom");
+
+	m_inputBindings.cameraYaw = m_shipViewFrame->GetAxisBinding("BindMapViewRotateLeftRight");
+	m_inputBindings.cameraPitch = m_shipViewFrame->GetAxisBinding("BindMapViewRotateUpDown");
+	m_inputBindings.cameraZoom = m_shipViewFrame->GetAxisBinding("BindMapViewZoom");
+
 	m_inputFrame = std::make_unique<InputFrame>("ShipView");
 
-	BindingPage &page = m_inputFrame->GetBindingPage("ShipView");
+	BindingPage &page =InputFWD::GetBindingPage("ShipView");
 
 	BindingGroup &group = page.GetBindingGroup("GeneralViewControls");
 
 	m_inputBindings.cameraRoll = m_inputFrame->AddAxisBinding("BindCameraRoll", group, AxisBinding(SDLK_KP_1, SDLK_KP_3));
-	m_inputBindings.cameraPitch = m_inputFrame->AddAxisBinding("BindCameraPitch", group, AxisBinding(SDLK_KP_2, SDLK_KP_8));
-	m_inputBindings.cameraYaw = m_inputFrame->AddAxisBinding("BindCameraYaw", group, AxisBinding(SDLK_KP_4, SDLK_KP_6));
-	m_inputBindings.cameraZoom = m_inputFrame->AddAxisBinding("BindViewZoom", group, AxisBinding(SDLK_EQUALS, SDLK_MINUS));
 	m_inputBindings.lookYaw = m_inputFrame->AddAxisBinding("BindLookYaw", group, AxisBinding(0, 0));
 	m_inputBindings.lookPitch = m_inputFrame->AddAxisBinding("BindLookPitch", group, AxisBinding(0, 0));
 
@@ -99,6 +100,7 @@ void ShipViewController::Init(Ship *ship)
 void ShipViewController::Activated()
 {
 	m_inputFrame->SetActive(true);
+	m_shipViewFrame->SetActive(true);
 
 	GameLocator::getGame()->GetPlayer()->GetPlayerController()->SetMouseForRearView(GetCamType() == CAM_INTERNAL && m_internalCameraController->GetMode() == InternalCameraController::MODE_REAR);
 }
@@ -106,6 +108,7 @@ void ShipViewController::Activated()
 void ShipViewController::Deactivated()
 {
 	m_inputFrame->SetActive(false);
+	m_shipViewFrame->SetActive(false);
 }
 
 void ShipViewController::SetCamType(Ship *ship, enum CamType c)
@@ -167,7 +170,7 @@ void ShipViewController::Update(const float frameTime)
 	auto *cam = static_cast<MoveableCameraController *>(m_activeCameraController);
 
 	// XXX ugly hack checking for console here
-	if (!m_inputFrame->IsActive() || Pi::IsConsoleActive()) return;
+	if (!m_inputFrame->IsActive()) return;
 
 	if (GetCamType() == CAM_INTERNAL) {
 		if (m_inputFrame->IsActive(m_inputBindings.frontCamera))
@@ -197,8 +200,8 @@ void ShipViewController::Update(const float frameTime)
 		}
 	} else {
 		auto rotate = vector3d(
-			-m_inputFrame->GetValue(m_inputBindings.cameraPitch),
-			m_inputFrame->GetValue(m_inputBindings.cameraYaw),
+			m_shipViewFrame->GetValue(m_inputBindings.cameraPitch),
+			-m_shipViewFrame->GetValue(m_inputBindings.cameraYaw),
 			m_inputFrame->GetValue(m_inputBindings.cameraRoll));
 
 		rotate *= frameTime;
@@ -209,8 +212,8 @@ void ShipViewController::Update(const float frameTime)
 		if (rotate.x != 0.0) cam->PitchCamera(rotate.x);
 		if (rotate.z != 0.0) cam->RollCamera(rotate.z);
 
-		if (m_inputFrame->IsActive(m_inputBindings.cameraZoom)) {
-			cam->ZoomEvent(-m_inputFrame->GetValue(m_inputBindings.cameraZoom) * ZOOM_SPEED * frameTime);
+		if (m_shipViewFrame->IsActive(m_inputBindings.cameraZoom)) {
+			cam->ZoomEvent(-m_shipViewFrame->GetValue(m_inputBindings.cameraZoom) * ZOOM_SPEED * frameTime);
 		}
 		cam->ZoomEventUpdate(frameTime);
 	}

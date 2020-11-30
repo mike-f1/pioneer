@@ -72,6 +72,12 @@ Player::~Player()
 {
 }
 
+void Player::SetInputActive(bool active)
+{
+	PlayerShipController *controller = static_cast<PlayerShipController *>(GetController());
+	if (controller) controller->SetInputActive(active);
+}
+
 void Player::SetShipType(const ShipType::Id &shipId)
 {
 	Ship::SetShipType(shipId);

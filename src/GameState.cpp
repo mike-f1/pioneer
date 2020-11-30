@@ -12,6 +12,8 @@
 #include "GZipFormat.h"
 #include "InGameViews.h"
 #include "InGameViewsLocator.h"
+#include "input/Input.h"
+#include "input/InputLocator.h"
 #include "Player.h"
 #include "Space.h"
 #include "galaxy/StarSystem.h"
@@ -30,8 +32,11 @@ void GameState::MakeNewGame(const SystemPath &path,
 	// calls to GameLocator during initialization... :P
 	GameLocator::provideGame(game);
 
+	InputLocator::getInput()->InitGame();
+
 	// Sub optimal: need a better way to couple inGameViews to game
 	InGameViewsLocator::NewInGameViews(new InGameViews(game, path, sectorRadius_));
+
 	// Here because 'l_game_attr_player' would have
 	// a player to be pushed on Lua VM through GameLocator,
 	// but that is not yet set in a ctor
@@ -73,6 +78,9 @@ void GameState::LoadGame(const std::string &filename)
 
 	try {
 		 game = new Game(rootNode, sectorRadius);
+
+		InputLocator::getInput()->InitGame();
+
 		// Sub optimal: need a better way to couple inGameViews to game
 		const SystemPath &path = game->GetSpace()->GetStarSystem()->GetPath();
 		InGameViewsLocator::NewInGameViews(new InGameViews(rootNode, game, path, sectorRadius + 2));
@@ -161,6 +169,8 @@ void GameState::DestroyGame()
 		Output("Attempt to destroy a not existing Game!\n");
 		return;
 	}
+
+	InputLocator::getInput()->TerminateGame();
 
 	InGameViewsLocator::NewInGameViews(nullptr);
 

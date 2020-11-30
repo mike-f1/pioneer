@@ -13,11 +13,9 @@
 #include "GameConfSingleton.h"
 #include "GameConfig.h"
 #include "GameLocator.h"
-#include "input/Input.h"
 #include "input/InputFrame.h"
-#include "input/InputFwd.h"
+#include "input/InputFrameStatusTicket.h"
 #include "input/KeyBindings.h"
-#include "Pi.h"
 #include "Player.h"
 #include "Random.h"
 #include "RandomSingleton.h"
@@ -85,7 +83,7 @@ void ObjectViewerView::RegisterInputBindings()
 
 	m_inputFrame = std::make_unique<InputFrame>("ObjectViewer");
 
-	auto &page = m_inputFrame->GetBindingPage("ObjectViewer");
+	auto &page = InputFWD::GetBindingPage("ObjectViewer");
 	page.shouldBeTranslated = false;
 
 	auto &groupMisce = page.GetBindingGroup("Miscellaneous");
@@ -275,8 +273,6 @@ void ObjectViewerView::Draw3D()
 
 void ObjectViewerView::DrawUI(const float frameTime)
 {
-	if (Pi::IsConsoleActive()) return;
-
 	std::ostringstream pathStr;
 	if (m_lastTarget) {
 		// fill in pathStr from sp values and sys->GetName()

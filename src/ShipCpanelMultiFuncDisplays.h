@@ -12,12 +12,6 @@
 
 class InputFrame;
 
-namespace KeyBindings {
-	struct ActionBinding;
-	struct AxisBinding;
-	struct WheelBinding;
-}
-
 namespace Graphics {
 	class RenderState;
 }

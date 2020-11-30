@@ -36,6 +36,9 @@ public:
 	ActionId AddActionBinding(std::string &id, BindingGroup &group, KeyBindings::ActionBinding binding);
 	AxisId AddAxisBinding(std::string &id, BindingGroup &group, KeyBindings::AxisBinding binding);
 
+	ActionId GetActionBinding(const std::string &id);
+	AxisId GetAxisBinding(const std::string &id);
+
 	void AddCallbackFunction(const std::string &id, const std::function<void(bool)> &fun);
 	void SetBTrait(const std::string &id, const KeyBindings::BehaviourMod &bm);
 

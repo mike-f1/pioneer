@@ -12,17 +12,11 @@
 
 #include "input/InputFwd.h"
 
-class InputFrame;
-
-namespace KeyBindings {
-	struct ActionBinding;
-	struct AxisBinding;
-}
-
 class Body;
 class Camera;
 class CameraContext;
 class Game;
+class InputFrame;
 class InputFrameStatusTicket;
 
 enum class GSDebugFlags;
@@ -125,7 +119,6 @@ private:
 	std::unique_ptr<InputFrame> m_inputFrame;
 
 	std::unique_ptr<InputFrameStatusTicket> m_bindingLock;
-
 };
 
 #endif /* _OBJECTVIEWERVIEW_H */

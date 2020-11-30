@@ -21,11 +21,6 @@ enum class PlaneType {
 	PARENT
 };
 
-namespace KeyBindings {
-	struct ActionBinding;
-	struct AxisBinding;
-}
-
 namespace UI {
 	class Widget;
 	class Single;

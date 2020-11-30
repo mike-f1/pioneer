@@ -6,7 +6,6 @@
 
 struct ActionId {
 	static constexpr int Invalid = -1;
-	static constexpr int RootFrameId = 0;
 	constexpr ActionId() :
 		m_id(Invalid) {}
 	constexpr ActionId(int new_id) :
@@ -28,7 +27,6 @@ private:
 
 struct AxisId {
 	static constexpr int Invalid = -1;
-	static constexpr int RootFrameId = 0;
 	constexpr AxisId() :
 		m_id(Invalid) {}
 	constexpr AxisId(int new_id) :

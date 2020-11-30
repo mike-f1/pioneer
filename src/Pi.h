@@ -57,7 +57,6 @@ public:
 
 	static void Init(const std::map<std::string, std::string> &options, bool no_gui = false);
 	static void InitGame();
-	static void TerminateGame();
 	static void StartGame();
 	static void RequestEndGame(); // request that the game is ended as soon as safely possible
 	static void EndGame();
@@ -68,8 +67,6 @@ public:
 	static void OnChangeDetailLevel();
 	static float GetFrameTime() { return m_frameTime; }
 	static float GetGameTickAlpha() { return m_gameTickAlpha; }
-
-	static bool IsConsoleActive();
 
 	static void SetMouseGrab(bool on);
 	static bool DoingMouseGrab() { return doingMouseGrab; }
@@ -94,7 +91,6 @@ public:
 	static bool doProfileOne;
 #endif
 
-	static std::unique_ptr<Input> input;
 	static std::unique_ptr<LuaConsole> m_luaConsole;
 
 	static JobQueue *GetAsyncJobQueue();
@@ -118,12 +114,6 @@ private:
 	};
 	static void Quit() __attribute((noreturn));
 
-	// Return true if there'a a need of further checks
-	// (basically it should return true if a windows (as settings)
-	// needs to be displayed, thus the event should be passed to
-	// PiGui...
-	// TODO: Right now this can't be "informed" from Lua if there's
-	// a need to perform any operation, so it can't work correctly
 	static bool HandleEscKey();
 
 	static void HandleEvents();

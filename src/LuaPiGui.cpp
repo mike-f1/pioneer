@@ -9,6 +9,8 @@
 #include "InGameViews.h"
 #include "InGameViewsLocator.h"
 #include "input/Input.h"
+#include "input/JoyStick.h"
+#include "input/InputLocator.h"
 #include "LuaColor.h"
 #include "LuaConstants.h"
 #include "LuaUtils.h"
@@ -848,7 +850,7 @@ static int l_pigui_get_axisbinding(lua_State *l)
 {
 	PROFILE_SCOPED()
 	std::string binding = "";
-	if (!Pi::input->IsJoystickEnabled()) {
+	if (!InputLocator::getInput()->IsJoystickEnabled()) {
 		lua_pushnil(l);
 		return 1;
 	}
@@ -866,7 +868,7 @@ static int l_pigui_get_axisbinding(lua_State *l)
 	int mod = get_standard_modifiers(io);
 
 	// otherwise actually check the joystick
-	auto joysticks = Pi::input->GetJoysticksState();
+	auto joysticks = InputLocator::getInput()->GetJoystick()->GetJoysticksState();
 
 	for (auto js : joysticks) {
 		std::vector<float> axes = js.second.axes;
@@ -934,8 +936,8 @@ static int l_pigui_get_keybinding(lua_State *l)
 	}
 
 	// Check joysticks if no keys are held down
-	if (Pi::input->IsJoystickEnabled() && (key == 0 || (key >= SDLK_LCTRL && key <= SDLK_RGUI))) {
-		auto joysticks = Pi::input->GetJoysticksState();
+	if (InputLocator::getInput()->IsJoystickEnabled() && (key == 0 || (key >= SDLK_LCTRL && key <= SDLK_RGUI))) {
+		auto joysticks = InputLocator::getInput()->GetJoystick()->GetJoysticksState();
 
 		for (auto js : joysticks) {
 			std::vector<bool> buttons = js.second.buttons;
@@ -1723,7 +1725,7 @@ static int l_pigui_set_mouse_button_state(lua_State *l)
 	PROFILE_SCOPED()
 	int button = LuaPull<int>(l, 1);
 	bool state = LuaPull<bool>(l, 2);
-	Pi::input->SetMouseButtonState(button, state);
+	InputLocator::getInput()->SetMouseButtonState(button, state);
 	if (state == false) {
 		// new UI caches which widget should receive the mouse up event
 		// after a mouse down. This function exists exactly because the mouse-up event

@@ -1,9 +1,11 @@
 #include "BindingContainer.h"
 
 #include "Input.h"
+#include "InputLocator.h"
 #include "KeyBindings.h"
-#include "Pi.h"
 #include "libs/utils.h"
+
+#include <exception>
 
 BindingContainer::BindingContainer(const std::string &name) :
 	m_name(name)
@@ -18,18 +20,21 @@ BindingContainer::~BindingContainer()
 	Output("~BindingContainer() of %s\n", m_name.c_str());
 	bool success = false;
 	for (TAction &ab : m_actions) {
-		success |= Pi::input->DeleteActionBinding(ab.name);
+		success |= InputLocator::getInput()->DeleteActionBinding(ab.name);
 	}
 
 	for (TAxis &ab : m_axes) {
-		success |= Pi::input->DeleteAxisBinding(ab.name);
+		success |= InputLocator::getInput()->DeleteAxisBinding(ab.name);
 	}
 	assert(success);
 }
 
 ActionId BindingContainer::AddActionBinding(std::string &id, BindingGroup &group, KeyBindings::ActionBinding binding)
 {
-	KeyBindings::ActionBinding *actionBind = Pi::input->AddActionBinding(id, group, binding);
+	for (int i = 0; i < m_actions.size(); i++) {
+		if (id == m_actions[i].name) throw std::runtime_error{"AddActionBinding of '" + id + "' is already added!\n"};
+	}
+	KeyBindings::ActionBinding *actionBind = InputLocator::getInput()->AddActionBinding(id, group, binding);
 	actionBind->Enable(true);
 	m_actions.push_back({id, actionBind});
 	return m_actions.size() - 1;
@@ -37,10 +42,29 @@ ActionId BindingContainer::AddActionBinding(std::string &id, BindingGroup &group
 
 AxisId BindingContainer::AddAxisBinding(std::string &id, BindingGroup &group, KeyBindings::AxisBinding binding)
 {
-	KeyBindings::AxisBinding *axisBind = Pi::input->AddAxisBinding(id, group, binding);
+	for (int i = 0; i < m_axes.size(); i++) {
+		if (id == m_axes[i].name) throw std::runtime_error{"AddAxisBinding of '" + id + "' is already added!\n"};
+	}
+	KeyBindings::AxisBinding *axisBind = InputLocator::getInput()->AddAxisBinding(id, group, binding);
 	axisBind->Enable(true);
 	m_axes.push_back({id, axisBind});
 	return m_axes.size() - 1;
+}
+
+ActionId BindingContainer::GetActionBinding(const std::string &id)
+{
+	for (int i = 0; i < m_actions.size(); i++) {
+		if (id == m_actions[i].name) return i;
+	}
+	throw std::runtime_error{"GetActionBinding of '" + id + "' isn't present!\n"};
+}
+
+AxisId BindingContainer::GetAxisBinding(const std::string &id)
+{
+	for (int i = 0; i < m_axes.size(); i++) {
+		if (id == m_axes[i].name) return i;
+	}
+	throw std::runtime_error{"GetAxisBinding of '" + id + "' isn't present!\n"};
 }
 
 void BindingContainer::AddCallbackFunction(const std::string &id, const std::function<void(bool)> &fun)

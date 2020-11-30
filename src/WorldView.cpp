@@ -1,6 +1,5 @@
 // Copyright © 2008-2019 Pioneer Developers. See AUTHORS.txt for details
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
-#include "buildopts.h"
 
 #include "WorldView.h"
 
@@ -15,10 +14,8 @@
 #include "InGameViews.h"
 #include "InGameViewsLocator.h"
 #include "input/InputFrame.h"
-#include "input/InputFwd.h"
 #include "input/KeyBindings.h"
 #include "Lang.h"
-#include "Pi.h"
 #include "Player.h"
 #include "SectorView.h"
 #include "Sensors.h"
@@ -122,7 +119,7 @@ void WorldView::RegisterInputBindings()
 
 	m_inputFrame = std::make_unique<InputFrame>("WorldView");
 
-	BindingPage &page = m_inputFrame->GetBindingPage("General");
+	BindingPage &page = InputFWD::GetBindingPage("General");
 	BindingGroup &group = page.GetBindingGroup("Miscellaneous");
 
 	m_wviewBindings.toggleHudMode = m_inputFrame->AddActionBinding("BindToggleHudMode", group, ActionBinding(SDLK_TAB));
@@ -284,8 +281,6 @@ void WorldView::Draw()
 
 void WorldView::DrawUI(const float frameTime)
 {
-	if (Pi::IsConsoleActive()) return;
-
 	if (!GameLocator::getGame()->IsPaused()) return;
 	int32_t viewport[4];
 	RendererLocator::getRenderer()->GetCurrentViewport(&viewport[0]);
@@ -330,6 +325,9 @@ void WorldView::OnSwitchTo()
 	UIView::OnSwitchTo();
 	shipView.Activated();
 
+	// TODO: this should be elsewhere. Player input should be in "something which control" which view
+	// is enabled and choose what to do. InGameView will do when it will become more "advanced"
+	GameLocator::getGame()->GetPlayer()->SetInputActive(true);
 	m_inputFrame->SetActive(true);
 }
 
@@ -338,6 +336,7 @@ void WorldView::OnSwitchFrom()
 	shipView.Deactivated();
 	m_guiOn = true;
 
+	GameLocator::getGame()->GetPlayer()->SetInputActive(false);
 	m_inputFrame->SetActive(false);
 }
 

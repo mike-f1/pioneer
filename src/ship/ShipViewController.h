@@ -13,11 +13,6 @@
 class InputFrame;
 class Ship;
 
-namespace KeyBindings {
-	struct ActionBinding;
-	struct AxisBinding;
-}
-
 class ShipViewController : public InteractionController {
 	friend class WorldView;
 public:
@@ -69,6 +64,7 @@ public:
 	} m_inputBindings;
 
 	std::unique_ptr<InputFrame> m_inputFrame;
+	std::unique_ptr<InputFrame> m_shipViewFrame;
 
 private:
 	void ChangeInternalCameraMode(InternalCameraController::Mode m);

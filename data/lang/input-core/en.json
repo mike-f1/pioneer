@@ -227,6 +227,10 @@
     "description": "Header for the ManualControl input group.",
     "message": "Manual Thrust Control"
   },
+  "GROUP_GEN_VIEW_CONTROL": {
+    "description": "Header for the ViewMovement input group.",
+    "message": "General View Controls"
+  },
   "GROUP_VIEW_MOVEMENT_CONTROLS": {
     "description": "Header for the ViewMovement input group.",
     "message": "View Movement Controls"

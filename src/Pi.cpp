@@ -19,7 +19,9 @@
 #include "GameState.h"
 #include "InGameViews.h"
 #include "InGameViewsLocator.h"
+#include "input/InputLocator.h"
 #include "input/Input.h"
+#include "input/InputFrame.h"
 #include "Intro.h"
 #include "JobQueue.h"
 #include "input/KeyBindings.h"
@@ -34,7 +36,7 @@
 #include "LuaFileSystem.h"
 #include "LuaFormat.h"
 #include "LuaGame.h"
-#include "LuaInput.h"
+#include "input/LuaInput.h"
 #include "LuaJson.h"
 #include "LuaLang.h"
 #include "LuaManager.h"
@@ -113,7 +115,6 @@ Pi::PiBinding Pi::m_piBindings;
 #ifdef ENABLE_SERVER_AGENT
 ServerAgent *Pi::serverAgent;
 #endif
-std::unique_ptr<Input> Pi::input;
 std::unique_ptr<LuaConsole> Pi::m_luaConsole;
 float Pi::m_frameTime;
 bool Pi::doingMouseGrab;
@@ -448,7 +449,7 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 	RandomSingleton::Init(time(0));
 
 	Output("Initialize Input\n");
-	Pi::input = std::make_unique<Input>();
+	InputLocator::provideInput(new Input());
 
 	RegisterInputBindings();
 
@@ -636,11 +637,6 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 	Output("\n\nLoading took: %lf milliseconds\n", timer.millicycles());
 }
 
-bool Pi::IsConsoleActive()
-{
-	return m_luaConsole && m_luaConsole->IsActive();
-}
-
 void Pi::Quit()
 {
 	if (GameLocator::getGame()) { // always end the game if there is one before quitting
@@ -681,6 +677,11 @@ void Pi::OnChangeDetailLevel()
 
 bool Pi::HandleEscKey()
 {
+	if (m_luaConsole && m_luaConsole->IsActive()) {
+		m_luaConsole->Deactivate();
+		return false;
+	}
+
 	if (!InGameViewsLocator::getInGameViews()) return true;
 
 	switch (InGameViewsLocator::getInGameViews()->GetViewType()) {
@@ -713,7 +714,7 @@ void Pi::HandleEvents()
 	// unified input system
 	bool skipTextInput = false;
 
-	Pi::input->ResetFrameInput();
+	InputLocator::getInput()->ResetFrameInput();
 	while (SDL_PollEvent(&event)) {
 		if (event.type == SDL_QUIT) {
 			Pi::RequestQuit();
@@ -753,19 +754,13 @@ void Pi::HandleEvents()
 		if (ui->DispatchSDLEvent(event))
 			continue;
 
-		bool consoleActive = Pi::IsConsoleActive();
-		if (consoleActive) {
-			m_luaConsole->CheckEvent(event);
-		} else {
-		}
-
-		//if (Pi::IsConsoleActive())
-		//	continue;
+		bool consoleActive = true;
+		if (m_luaConsole) consoleActive = m_luaConsole->IsActive();
 
 		Gui::HandleSDLEvent(&event);
-		input->HandleSDLEvent(event);
+		InputLocator::getInput()->HandleSDLEvent(event);
 
-		if (consoleActive != Pi::IsConsoleActive()) {
+		if (consoleActive != m_luaConsole->IsActive()) {
 			skipTextInput = true;
 			continue;
 		}
@@ -797,7 +792,7 @@ void Pi::RegisterInputBindings()
 
 	m_inputFrame = std::make_unique<InputFrame>("TweakAndSetting");
 
-	auto &page = Pi::input->GetBindingPage("TweakAndSetting");
+	auto &page = InputLocator::getInput()->GetBindingPage("TweakAndSetting");
 	page.shouldBeTranslated = false;
 
 	auto &group = page.GetBindingGroup("None");
@@ -1003,16 +998,9 @@ void Pi::InitGame()
 	// this is a bit brittle. skank may be forgotten and survive between
 	// games
 
-	input->InitGame();
-
 	if (!GameConfSingleton::getInstance().Int("DisableSound")) AmbientSounds::Init();
 
 	LuaInitGame();
-}
-
-void Pi::TerminateGame()
-{
-	input->TerminateGame();
 }
 
 static void OnPlayerDockOrUndock()
@@ -1083,7 +1071,6 @@ void Pi::Start(const SystemPath &startPath)
 				Graphics::GetScreenHeight(),
 				GameConfSingleton::GetAmountBackgroundStars()
 				));
-			TerminateGame();
 			m_mainState = MainState::MAIN_MENU;
 		break;
 		case MainState::TO_TOMBSTONE:
@@ -1097,7 +1084,7 @@ void Pi::Start(const SystemPath &startPath)
 		case MainState::TOMBSTONE:
 			time += m_frameTime;
 			CutSceneLoop(m_frameTime, m_cutscene.get());
-			if ((time > 2.0) && (input->IsAnyKeyJustPressed())) {
+			if ((time > 2.0) && (InputLocator::getInput()->IsAnyKeyJustPressed())) {
 				m_cutscene.reset();
 				m_mainState = MainState::TO_MAIN_MENU;
 			}
@@ -1239,7 +1226,7 @@ void Pi::MainLoop()
 		InGameViewsLocator::getInGameViews()->Draw3DView();
 
 		// hide cursor for ship control. Do this before imgui runs, to prevent the mouse pointer from jumping
-		Pi::SetMouseGrab(input->MouseButtonState(SDL_BUTTON_RIGHT) | input->MouseButtonState(SDL_BUTTON_MIDDLE));
+		Pi::SetMouseGrab(InputLocator::getInput()->MouseButtonState(SDL_BUTTON_RIGHT) | InputLocator::getInput()->MouseButtonState(SDL_BUTTON_MIDDLE));
 
 		// XXX HandleEvents at the moment must be after view->Draw3D and before
 		// Gui::Draw so that labels drawn to screen can have mouse events correctly
@@ -1273,17 +1260,21 @@ void Pi::MainLoop()
 			// FIXME: Always begin a camera frame because WorldSpaceToScreenSpace
 			// requires it and is exposed to pigui.
 			InGameViewsLocator::getInGameViews()->GetWorldView()->BeginCameraFrame();
-			PiGui::NewFrame(RendererLocator::getRenderer()->GetSDLWindow(), InGameViewsLocator::getInGameViews()->ShouldDrawGui());
+			bool active = true;
+			if (m_luaConsole) active = !m_luaConsole->IsActive();
+			if (active) {
+				PiGui::NewFrame(RendererLocator::getRenderer()->GetSDLWindow(), InGameViewsLocator::getInGameViews()->ShouldDrawGui());
 
-			InGameViewsLocator::getInGameViews()->DrawUI(m_frameTime);
+				InGameViewsLocator::getInGameViews()->DrawUI(m_frameTime);
 
 #if WITH_DEVKEYS
-			if (Pi::showDebugInfo)  {
-				s_debugInfo->Update();
-				s_debugInfo->Print();
-			}
+				if (Pi::showDebugInfo)  {
+					s_debugInfo->Update();
+					s_debugInfo->Print();
+				}
 #endif
-			DrawPiGui(m_frameTime, "GAME");
+				DrawPiGui(m_frameTime, "GAME");
+			}
 
 			InGameViewsLocator::getInGameViews()->GetWorldView()->EndCameraFrame();
 		}
@@ -1352,8 +1343,10 @@ void Pi::SetMouseGrab(bool on)
 void Pi::DrawPiGui(double delta, std::string handler)
 {
 	PROFILE_SCOPED()
+	bool active = true;
+	if (m_luaConsole) active = !m_luaConsole->IsActive();
 
-	if (!IsConsoleActive())
+	if (active)
 		Pi::pigui->Render(delta, handler);
 
 	PiGui::RenderImGui();

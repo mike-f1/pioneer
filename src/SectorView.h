@@ -16,11 +16,6 @@
 class Galaxy;
 class InputFrame;
 
-namespace KeyBindings {
-	struct ActionBinding;
-	struct AxisBinding;
-}
-
 namespace Graphics {
 	class RenderState;
 }
@@ -177,6 +172,7 @@ private:
 	} m_sectorBindings;
 
 	std::unique_ptr<InputFrame> m_inputFrame;
+	std::unique_ptr<InputFrame> m_sectorFrame;
 
 	RefCountedPtr<SectorCache::Slave> m_sectorCache;
 	std::string m_previousSearch;

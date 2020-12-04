@@ -79,7 +79,7 @@ Game::Game(const SystemPath &path, const double startDateTime, unsigned int cach
 	GenCaches(path, m_cacheRadius + 2,
 			[this, path]() { UpdateStarSystemCache(&path, m_cacheRadius); });
 
-	m_space.reset(new Space(GetTime(), GetTimeStep(), sys, path));
+	m_space = std::make_unique<Space>(GetTime(), GetTimeStep(), sys, path);
 
 	Body *b = m_space->FindBodyForPath(path);
 	assert(b);
@@ -98,7 +98,7 @@ Game::Game(const SystemPath &path, const double startDateTime, unsigned int cach
 		m_player->SetVelocity(vector3d(0, 0, 0));
 	}
 
-	m_luaTimer.reset(new LuaTimer());
+	m_luaTimer = std::make_unique<LuaTimer>();
 
 	m_log.reset(new GameLog());
 
@@ -527,7 +527,7 @@ void Game::SwitchToNormalSpace()
 
 	// create a new space for the system
 	m_space.reset(); // HACK: Here because next line will create Frames *before* deleting existing ones
-	m_space.reset(new Space(GetTime(), GetTimeStep(), m_galaxy->GetStarSystem(m_hyperspaceDest), m_hyperspaceDest));
+	m_space = std::make_unique<Space>(GetTime(), GetTimeStep(), m_galaxy->GetStarSystem(m_hyperspaceDest), m_hyperspaceDest);
 
 	// put the player in it
 	m_player->SetFrame(Frame::GetRootFrameId());

@@ -135,6 +135,7 @@ void Frame::ToJson(Json &frameObj, const FrameId &fId, Space *space)
 	assert(f != nullptr);
 
 	frameObj["frameId"] = f->m_thisId;
+	frameObj["parentId"] = f->m_parent;
 	frameObj["flags"] = f->m_flags;
 	frameObj["radius"] = f->m_radius;
 	frameObj["label"] = f->m_label;
@@ -160,7 +161,7 @@ void Frame::ToJson(Json &frameObj, const FrameId &fId, Space *space)
 Frame::~Frame()
 {
 	if (!d.madeWithFactory) {
-		Error("Frame instance deletion outside 'DeleteFrame' [%i]\n", m_thisId.id());
+		Output("WARNING: Frame instance deletion outside 'DeleteFrame' [%i]\n", m_thisId.id());
 	}
 }
 
@@ -184,11 +185,11 @@ FrameId Frame::FromJson(const Json &frameObj, Space *space, const FrameId &paren
 
 	Frame *f = &s_frames.back();
 
-	f->m_parent = parent;
 	f->d.madeWithFactory = false;
 
 	try {
-		f->m_thisId = frameObj["frameId"];
+		f->m_thisId = frameObj["frameId"].get<int>();
+		f->m_parent = frameObj["parentId"].get<int>();
 
 		// Check if frames order in load and save are the same
 		assert(int(s_frames.size() - 1) == f->m_thisId.id());

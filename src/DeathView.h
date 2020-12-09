@@ -12,7 +12,7 @@
 class Camera;
 class CameraContext;
 
-class DeathView : public View {
+class DeathView final: public View {
 public:
 	DeathView();
 	virtual ~DeathView();

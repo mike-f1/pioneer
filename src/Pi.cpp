@@ -687,20 +687,7 @@ bool Pi::HandleEscKey()
 	}
 
 	if (!InGameViewsLocator::getInGameViews()) return true;
-
-	switch (InGameViewsLocator::getInGameViews()->GetViewType()) {
-	case ViewType::OBJECT:
-	case ViewType::SPACESTATION:
-	case ViewType::INFO:
-	case ViewType::SECTOR: InGameViewsLocator::getInGameViews()->SetView(ViewType::WORLD); break;
-	case ViewType::GALACTIC:
-	case ViewType::SYSTEMINFO:
-	case ViewType::SYSTEM: InGameViewsLocator::getInGameViews()->SetView(ViewType::SECTOR); break;
-	case ViewType::NONE:
-	case ViewType::DEATH: break;
-	case ViewType::WORLD: return true;
-	};
-	return false;
+	else return InGameViewsLocator::getInGameViews()->HandleEscKey();
 }
 
 void Pi::HandleEvents()
@@ -1253,7 +1240,7 @@ void Pi::MainLoop()
 		// wrong, because we shouldn't this when the HUD is disabled, but
 		// probably sure draw it if they switch to eg infoview while the HUD is
 		// disabled so we need much smarter control for all this rubbish
-		if ((!GameLocator::getGame() || !InGameViewsLocator::getInGameViews()->IsDeathView()) && InGameViewsLocator::getInGameViews()->ShouldDrawGui()) {
+		if ((!GameLocator::getGame() || InGameViewsLocator::getInGameViews()->GetViewType() != ViewType::DEATH) && InGameViewsLocator::getInGameViews()->ShouldDrawGui()) {
 			Pi::ui->Update();
 			Pi::ui->Draw();
 		}

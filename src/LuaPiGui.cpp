@@ -1739,7 +1739,7 @@ static int l_pigui_set_mouse_button_state(lua_State *l)
 static int l_pigui_should_show_labels(lua_State *l)
 {
 	PROFILE_SCOPED()
-	bool show_labels = InGameViewsLocator::getInGameViews()->GetWorldView()->ShouldShowLabels();
+	bool show_labels = InGameViewsLocator::getInGameViews()->ShouldDrawLabels();
 	LuaPush(l, show_labels);
 	return 1;
 }

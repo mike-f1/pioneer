@@ -27,7 +27,6 @@ PlayerShipController::PlayerShipController() :
 	m_combatTarget(0),
 	m_navTarget(0),
 	m_setSpeedTarget(0),
-	m_controlsLocked(false),
 	m_invertMouse(false),
 	m_mouseActive(false),
 	m_disableMouseFacing(false),
@@ -271,14 +270,6 @@ void PlayerShipController::StaticUpdate(const float timeStep)
 void PlayerShipController::SetInputActive(bool active)
 {
 	m_inputFrame->SetActive(active);
-}
-
-void PlayerShipController::CheckControlsLock()
-{
-	m_controlsLocked = (GameLocator::getGame()->IsPaused() ||
-		GameLocator::getGame()->GetPlayer()->IsDead() ||
-		(m_ship->GetFlightState() != Ship::FLYING) ||
-		!InGameViewsLocator::getInGameViews()->IsWorldView()); //to prevent moving the ship in starmap etc.
 }
 
 vector3d PlayerShipController::GetMouseDir() const

@@ -7,7 +7,6 @@
 #include "UIView.h"
 #include "ship/ShipViewController.h"
 #include "graphics/Drawables.h"
-#include "input/InputFwd.h"
 
 class Body;
 class Camera;
@@ -73,9 +72,6 @@ public:
 	void BeginCameraFrame() { m_cameraContext->BeginFrame(); };
 	void EndCameraFrame() { m_cameraContext->EndFrame(); };
 
-	bool ShouldShowLabels() const { return m_labelsOn; }
-	bool DrawGui() const { return m_guiOn; };
-
 protected:
 	virtual void BuildUI(UI::Single *container) override;
 	virtual void OnSwitchTo() override;
@@ -83,7 +79,6 @@ protected:
 
 private:
 	void InitObject(Game *game);
-	void RegisterInputBindings();
 
 	enum IndicatorSide {
 		INDICATOR_HIDDEN,
@@ -111,17 +106,10 @@ private:
 	void DrawCombatTargetIndicator(const Indicator &target, const Indicator &lead, const Color &c);
 	void DrawEdgeMarker(const Indicator &marker, const Color &c);
 
-	void OnToggleLabels(bool down);
-	void OnRequestTimeAccelInc(bool down);
-	void OnRequestTimeAccelDec(bool down);
-
 	void OnPlayerChangeTarget();
 
 	std::unique_ptr<NavTunnelWidget> m_navTunnel;
 	std::unique_ptr<SpeedLines> m_speedLines;
-
-	bool m_labelsOn;
-	bool m_guiOn;
 
 	sigc::connection m_onPlayerChangeTargetCon;
 
@@ -135,15 +123,6 @@ private:
 
 	Graphics::Drawables::Line3D m_edgeMarker;
 	Graphics::Drawables::Lines m_indicator;
-
-	struct BaseBinding {
-		ActionId toggleHudMode;
-		ActionId increaseTimeAcceleration;
-		ActionId decreaseTimeAcceleration;
-
-	} m_wviewBindings;
-
-	std::unique_ptr<InputFrame> m_inputFrame;
 };
 
 class NavTunnelWidget  {

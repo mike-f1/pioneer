@@ -4,13 +4,14 @@
 #include "buildopts.h"
 
 #include "JsonFwd.h"
+#include "input/InputFwd.h"
 #include "libs/RefCounted.h"
 
 #include <memory>
 
 class Game;
 class SystemPath;
-
+class InputFrame;
 class SectorView;
 class UIView;
 class SystemInfoView;
@@ -36,31 +37,25 @@ enum class ViewType {
 
 class InGameViews {
 public:
+	InGameViews() = delete;
+	InGameViews(const InGameViews &) = delete;
+	InGameViews &operator = (const InGameViews &) = delete;
+
 	InGameViews(Game *game, const SystemPath &path, unsigned int cacheRadius);
 	InGameViews(const Json &jsonObj, Game *game, const SystemPath &path, unsigned int cacheRadius);
 	~InGameViews();
-
-	InGameViews(const InGameViews &) = delete;
-	InGameViews &operator = (const InGameViews &) = delete;
 
 	void SaveToJson(Json &jsonObj);
 
 	void SetView(ViewType vt);
 
-	bool ShouldDrawGui();
+	void ShouldDrawGui(bool dont) { m_shouldDrawGui = dont; };
+	bool ShouldDrawGui() { return m_shouldDrawGui; }
+	bool ShouldDrawLabels() { return m_shouldDrawLabels; }
+
+	bool HandleEscKey();
 
 	ViewType GetViewType() const { return m_currentViewType; }
-
-	bool IsEmptyView() const { return nullptr == m_currentView; }
-	bool IsSectorView() const { return ViewType::SECTOR == m_currentViewType; }
-	bool IsGalacticView() const { return ViewType::GALACTIC == m_currentViewType; }
-	bool IsSystemInfoView() const { return ViewType::SYSTEMINFO == m_currentViewType; }
-	bool IsSystemView() const { return ViewType::SYSTEM == m_currentViewType; }
-	bool IsWorldView() const { return ViewType::WORLD == m_currentViewType; }
-	bool IsDeathView() const { return ViewType::DEATH == m_currentViewType; }
-	bool IsSpaceStationView() const { return ViewType::SPACESTATION == m_currentViewType; }
-	bool IsInfoView() const { return ViewType::INFO == m_currentViewType; }
-	bool IsObjectView() const { return ViewType::OBJECT == m_currentViewType; }
 
 	SectorView *GetSectorView() const { return m_sectorView.get(); }
 	UIView *GetGalacticView() const { return m_galacticView.get(); }
@@ -81,8 +76,13 @@ public:
 	void DrawUI(const float frameTime);
 
 private:
+	void RegisterInputBindings();
+
 	View *m_currentView;
 	ViewType m_currentViewType;
+
+	bool m_shouldDrawGui;
+	bool m_shouldDrawLabels;
 
 	std::unique_ptr<SectorView> m_sectorView;
 	std::unique_ptr<UIView> m_galacticView;
@@ -98,6 +98,19 @@ private:
 	/* Only use #if WITH_OBJECTVIEWER */
 	std::unique_ptr<ObjectViewerView> m_objectViewerView;
 #endif
+
+	struct BaseBinding {
+		ActionId toggleHudMode;
+		ActionId increaseTimeAcceleration;
+		ActionId decreaseTimeAcceleration;
+		ActionId setTimeAccel1x;
+		ActionId setTimeAccel10x;
+		ActionId setTimeAccel100x;
+		ActionId setTimeAccel1000x;
+		ActionId setTimeAccel10000x;
+	} m_viewBindings;
+
+	std::unique_ptr<InputFrame> m_inputFrame;
 };
 
 #endif // INGAMEVIEWS_H

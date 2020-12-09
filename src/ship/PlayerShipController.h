@@ -98,12 +98,9 @@ private:
 	bool IsAnyAngularThrusterKeyDown();
 	bool IsAnyLinearThrusterKeyDown();
 
-	//do a variety of checks to see if input is allowed
-	void CheckControlsLock();
 	Body *m_combatTarget;
 	Body *m_navTarget;
 	Body *m_setSpeedTarget;
-	bool m_controlsLocked;
 	bool m_invertMouse; // used for rear view, *not* for invert Y-axis option (which is Pi::input.IsMouseYInvert)
 	bool m_mouseActive;
 	bool m_disableMouseFacing;

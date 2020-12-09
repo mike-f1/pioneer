@@ -13,8 +13,6 @@
 #include "HyperspaceCloud.h"
 #include "InGameViews.h"
 #include "InGameViewsLocator.h"
-#include "input/InputFrame.h"
-#include "input/KeyBindings.h"
 #include "Lang.h"
 #include "Player.h"
 #include "SectorView.h"
@@ -84,8 +82,6 @@ void WorldView::InitObject(Game *game)
 	float size[2];
 	GetSizeRequested(size);
 
-	m_labelsOn = true;
-	m_guiOn = true;
 	SetTransparency(true);
 
 	Graphics::RenderStateDesc rsd;
@@ -107,30 +103,7 @@ void WorldView::InitObject(Game *game)
 	m_camera.reset(new Camera(m_cameraContext));
 	shipView.Init(game->GetPlayer());
 
-	RegisterInputBindings();
-
 	m_onPlayerChangeTargetCon = game->GetPlayer()->onPlayerChangeTarget.connect(sigc::mem_fun(this, &WorldView::OnPlayerChangeTarget));
-}
-
-void WorldView::RegisterInputBindings()
-{
-	using namespace KeyBindings;
-	using namespace std::placeholders;
-
-	m_inputFrame = std::make_unique<InputFrame>("WorldView");
-
-	BindingPage &page = InputFWD::GetBindingPage("General");
-	BindingGroup &group = page.GetBindingGroup("Miscellaneous");
-
-	m_wviewBindings.toggleHudMode = m_inputFrame->AddActionBinding("BindToggleHudMode", group, ActionBinding(SDLK_TAB));
-	m_inputFrame->AddCallbackFunction("BindToggleHudMode", std::bind(&WorldView::OnToggleLabels, this, _1));
-
-	BindingGroup &group_tc = page.GetBindingGroup("TimeControl");
-
-	m_wviewBindings.increaseTimeAcceleration = m_inputFrame->AddActionBinding("BindIncreaseTimeAcceleration", group_tc, ActionBinding(SDLK_PAGEUP));
-	m_inputFrame->AddCallbackFunction("BindIncreaseTimeAcceleration", std::bind(&WorldView::OnRequestTimeAccelInc, this, _1));
-	m_wviewBindings.decreaseTimeAcceleration = m_inputFrame->AddActionBinding("BindDecreaseTimeAcceleration", group_tc, ActionBinding(SDLK_PAGEDOWN));
-	m_inputFrame->AddCallbackFunction("BindDecreaseTimeAcceleration", std::bind(&WorldView::OnRequestTimeAccelDec, this, _1));
 }
 
 WorldView::~WorldView()
@@ -145,35 +118,6 @@ void WorldView::SaveToJson(Json &jsonObj)
 	shipView.SaveToJson(worldViewObj);
 
 	jsonObj["world_view"] = worldViewObj; // Add world view object to supplied object.
-}
-
-void WorldView::OnRequestTimeAccelInc(bool down)
-{
-	if (down) return;
-	// requests an increase in time acceleration
-	GameLocator::getGame()->RequestTimeAccelInc();
-}
-
-void WorldView::OnRequestTimeAccelDec(bool down)
-{
-	if (down) return;
-	// requests a decrease in time acceleration
-	GameLocator::getGame()->RequestTimeAccelDec();
-}
-
-void WorldView::OnToggleLabels(bool down)
-{
-	if (down) return;
-	if (InGameViewsLocator::getInGameViews()->IsWorldView()) {
-		if (m_guiOn && m_labelsOn) {
-			m_labelsOn = false;
-		} else if (m_guiOn && !m_labelsOn) {
-			m_guiOn = false;
-		} else if (!m_guiOn) {
-			m_guiOn = true;
-			m_labelsOn = true;
-		}
-	}
 }
 
 void WorldView::ShowAll()
@@ -331,16 +275,13 @@ void WorldView::OnSwitchTo()
 	// TODO: this should be elsewhere. Player input should be in "something which control" which view
 	// is enabled and choose what to do. InGameView will do when it will become more "advanced"
 	GameLocator::getGame()->GetPlayer()->SetInputActive(true);
-	m_inputFrame->SetActive(true);
 }
 
 void WorldView::OnSwitchFrom()
 {
 	shipView.Deactivated();
-	m_guiOn = true;
 
 	GameLocator::getGame()->GetPlayer()->SetInputActive(false);
-	m_inputFrame->SetActive(false);
 }
 
 // XXX paying fine remotely can't really be done until crime and

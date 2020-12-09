@@ -9,18 +9,10 @@ local Event = import("Event")
 local SystemPath = import("SystemPath")
 local Format = import("Format")
 
-local Iframes = import("InputFrames")
-
-local ifr = Iframes.CreateOrUse("luaInputF")
-
 local player = nil
 local colors = ui.theme.colors
 local icons = ui.theme.icons
 local hideSectorViewWindows = false
-
-ifr:AddAction("HideSectorUI", "", "", "Key9Mod0", function(isUp)
-		if isUp then hideSectorViewWindows = not hideSectorViewWindows end
-	end)
 
 local mainButtonSize = Vector2(32,32) * (ui.screenHeight / 1200)
 local mainButtonFramePadding = 3
@@ -251,10 +243,8 @@ local function displaySectorViewWindow()
 	if current_view == "sector" then
 		ui.setNextWindowSize(Vector2(ui.screenWidth / 5, ui.screenHeight / 3 * 2.1), "Always")
 		ui.setNextWindowPos(Vector2(10, 10) , "Always")
-		if not hideSectorViewWindows then
-			showInfoWindow()
-			showFactionLegendWindow()
-		end
+		showInfoWindow()
+		showFactionLegendWindow()
 	end
 end
 

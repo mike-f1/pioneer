@@ -151,6 +151,10 @@
     "description": "Descriptive name for the SpeedControl axis.",
     "message": "Set Target Speed"
   },
+  "BIND_TAKE_OFF": {
+    "description": "Descriptive name for blast-off or undock action.",
+    "message": "Take off"
+  },
   "BIND_TARGET_OBJECT": {
     "description": "Descriptive name for the TargetObject action.",
     "message": "Target Object"
@@ -246,9 +250,21 @@
     "description": "Header for the SpeedControl input group.",
     "message": "Set-Speed Thrust Control"
   },
+  "GROUP_TIME_CONTROL": {
+    "description": "Header for the time controls input group.",
+    "message": "Time acceleration controls"
+  },
+  "GROUP_VIEWS_CONTROLS": {
+    "description": "Header for views control",
+    "message": "Views Controls"
+  },
   "GROUP_WEAPONS": {
     "description": "Header for the Weapons input group.",
     "message": "Weapons"
+  },
+  "HYPERSPACE": {
+    "description": "Try hyperspace to",
+    "message": "Hyperspace"
   },
   "PAGE_GENERAL": {
     "description": "Header for the General input page.",
@@ -274,9 +290,65 @@
     "description": "Header for the SystemView input page.",
     "message": "System - View"
   },
+  "SHOW_INFO": {
+    "description": "Binding to switch to personal info view",
+    "message": "Show personal info"
+  },
+  "SHOW_SPACE_STATION": {
+    "description": "Binding to switch to space station view",
+    "message": "Show space station view"
+  },
+  "SHOW_THURSTER_SL": {
+    "description": "Binding showing thruster power reduction",
+    "message": "Show thruster reducer"
+  },
+  "SHOW_WORLD_VIEW": {
+    "description": "Binding to switch to or change worldview mode",
+    "message": "Toggle or show WorldView"
+  },
   "SPEED_MODIFIER": {
     "description": "General modifier used to scroll/rotate/zoom faster",
     "message": "Speed Modifier"
+  },
+  "SPEED_1X": {
+    "description": "General modifier to recall an accelerated time of 1x",
+    "message": "Speed at 1x"
+  },
+  "SPEED_10X": {
+    "description": "General modifier to recall an accelerated time of 10x",
+    "message": "Speed at 10x"
+  },
+  "SPEED_100X": {
+    "description": "General modifier to recall an accelerated time of 100x",
+    "message": "Speed at 100x"
+  },
+  "SPEED_1000X": {
+    "description": "General modifier to recall an accelerated time of 1000x",
+    "message": "Speed at 1000x"
+  },
+  "SPEED_10000X": {
+    "description": "General modifier to recall an accelerated time of 10000x",
+    "message": "Speed at 10000x"
+  },
+  "SWITCH_MAP_WORLD_VIEW": {
+    "description": "Toggle between map and worldview",
+    "message": "Toggle map/worldview"
+  },
+  "SWITCH_TO_GALAXY_VIEW": {
+    "description": "Toggle between galaxy and world view",
+    "message": "Switch to Galaxy view"
+  },
+  "SWITCH_TO_SECTOR_VIEW": {
+    "description": "Toggle between sector and world view",
+    "message": "Switch to Sector view"
+  },
+  "SWITCH_TO_SYSTEM_INFO_VIEW": {
+    "description": "Toggle between system info and world view",
+    "message": "Switch to SystemInfo view"
+  },
+  "SWITCH_TO_SYSTEM_VIEW": {
+    "description": "Toggle between system and world view",
+    "message": "Switch to System view"
   },
   "TEXT_ALT_BINDING": {
     "description": "",

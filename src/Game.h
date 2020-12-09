@@ -16,6 +16,7 @@
 class Galaxy;
 class GameLog;
 class HyperspaceCloud;
+class LuaInputFrames;
 class LuaTimer;
 class Player;
 class Space;
@@ -130,6 +131,7 @@ private:
 
 	std::unique_ptr<Player> m_player;
 	std::unique_ptr<LuaTimer> m_luaTimer;
+	std::unique_ptr<LuaInputFrames> m_luaInputFrame;
 
 	std::unique_ptr<GameLog> m_log;
 

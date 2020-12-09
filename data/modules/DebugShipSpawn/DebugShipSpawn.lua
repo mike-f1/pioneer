@@ -8,6 +8,16 @@ do
   local _obj_0 = _G
   Vector2, Color = _obj_0.Vector2, _obj_0.Color
 end
+
+local Iframes = import("InputFrames")
+
+local ifr = Iframes.CreateOrUse("Debug")
+
+local displayDebugWindow = false
+ifr:AddAction("DisplayShipSpawn2", "", "", "Key1073741893Mod0", function(isUp)
+		if isUp then displayDebugWindow = not displayDebugWindow end
+	end)
+
 local ui = require('pigui.pigui')
 local ship_defs = { }
 local update_ship_def_table
@@ -106,12 +116,7 @@ ship_spawn_debug_window = function()
   end
 end
 
-local displayDebugWindow = false
-
 return ui.registerModule('game', function()
-  if ui.isKeyReleased(ui.keys.f12) and ui.ctrlHeld() then
-    displayDebugWindow = not displayDebugWindow
-  end
   if displayDebugWindow and Game.CurrentView() == "world" then
     return ui.withStyleColors({
       ["WindowBg"] = Color(15, 15, 16, 240)

@@ -8,6 +8,9 @@ local lui = Lang.GetResource("ui-core");
 local Equipment = import("Equipment")
 local Format = import("Format")
 
+local Iframes = import("InputFrames")
+
+local ifr = Iframes.CreateOrUse("luaInputF")
 local player = nil
 local colors = ui.theme.colors
 local icons = ui.theme.icons
@@ -26,6 +29,10 @@ local selected_jump
 local current_fuel
 local remove_first_if_current = true
 local hideHyperJumpPlaner = false
+
+ifr:AddAction("hideHyperJumpPlanner", "", "", "Key48Mod0", function(isUp)
+		if isUp then hideHyperJumpPlaner = not hideHyperJumpPlaner end
+	end)
 
 local function showSettings()
 	if ui.collapsingHeader(lui.SETTINGS, {"DefaultOpen"}) then
@@ -237,9 +244,6 @@ local function displayHyperJumpPlanner()
 		map_selected_path = Engine.GetSectorMapSelectedSystemPath()
 		hyperjump_route = Engine.SectorMapGetRoute()
 		route_jumps = Engine.SectorMapGetRouteSize()
-		if ui.isKeyReleased(ui.keys.tab) then
-			hideHyperJumpPlaner = not hideHyperJumpPlaner;
-		end
 		if not hideHyperJumpPlaner then
 			showHyperJumpPlannerWindow()
 		end

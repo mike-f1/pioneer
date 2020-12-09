@@ -2,7 +2,6 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "PiGui.h"
-#include "Pi.h"
 
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
@@ -27,35 +26,6 @@
 #include "nanosvg/nanosvgrast.h"
 
 std::vector<Graphics::Texture *> PiGui::m_svg_textures;
-
-static int to_keycode(int key)
-{
-	/*if(key & SDLK_SCANCODE_MASK) {
-		return (key & ~SDLK_SCANCODE_MASK) | 0x100;
-	}*/
-	return key;
-}
-
-static std::vector<std::pair<std::string, int>> keycodes = {
-	{ "left", to_keycode(SDLK_LEFT) },
-	{ "right", to_keycode(SDLK_RIGHT) },
-	{ "up", to_keycode(SDLK_UP) },
-	{ "down", to_keycode(SDLK_DOWN) },
-	{ "escape", to_keycode(SDLK_ESCAPE) },
-	{ "f1", to_keycode(SDLK_F1) },
-	{ "f2", to_keycode(SDLK_F2) },
-	{ "f3", to_keycode(SDLK_F3) },
-	{ "f4", to_keycode(SDLK_F4) },
-	{ "f5", to_keycode(SDLK_F5) },
-	{ "f6", to_keycode(SDLK_F6) },
-	{ "f7", to_keycode(SDLK_F7) },
-	{ "f8", to_keycode(SDLK_F8) },
-	{ "f9", to_keycode(SDLK_F9) },
-	{ "f10", to_keycode(SDLK_F10) },
-	{ "f11", to_keycode(SDLK_F11) },
-	{ "f12", to_keycode(SDLK_F12) },
-	{ "tab", to_keycode(SDLK_TAB) },
-};
 
 ImTextureID PiGui::RenderSVG(std::string svgFilename, int width, int height)
 {
@@ -198,13 +168,6 @@ void PiGui::Init(SDL_Window *window)
 	lua_State *l = Lua::manager->GetLuaState();
 	lua_newtable(l);
 	m_handlers = LuaRef(l, -1);
-
-	lua_newtable(l);
-	m_keys = LuaRef(l, -1);
-	LuaTable keys(l, -1);
-	for (auto p : keycodes) {
-		keys.Set(p.first, p.second);
-	}
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();

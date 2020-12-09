@@ -37,6 +37,7 @@
 #include "LuaFormat.h"
 #include "LuaGame.h"
 #include "input/LuaInput.h"
+#include "input/LuaInputFrames.h"
 #include "LuaJson.h"
 #include "LuaLang.h"
 #include "LuaManager.h"
@@ -263,6 +264,7 @@ static void LuaInit()
 	LuaObject<SystemBody>::RegisterClass();
 	LuaObject<Random>::RegisterClass();
 	LuaObject<Faction>::RegisterClass();
+	LuaObject<InputFrame>::RegisterClass();
 
 	LuaObject<LuaSerializer>::RegisterClass();
 	LuaObject<LuaTimer>::RegisterClass();
@@ -659,6 +661,8 @@ void Pi::Quit()
 	Pi::pigui->Uninit();
 	Pi::ui.Reset(nullptr);
 	Pi::pigui.Reset(nullptr);
+	// TODO: remove explicit Reset of LuaInputFrames
+	LuaInputFrames::Reset();
 	LuaUninit();
 	Gui::Uninit();
 	delete RendererLocator::getRenderer();

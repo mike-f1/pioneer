@@ -2,12 +2,12 @@
 #define BINDINGCONTAINER_H
 
 #include <functional>
-#include <utility>
 #include <string>
 #include <vector>
 
 #include "input/InputFwd.h"
 #include "libs/RefCounted.h"
+#include "LuaRef.h"
 
 struct BindingGroup;
 union SDL_Event;
@@ -40,6 +40,7 @@ public:
 	AxisId GetAxisBinding(const std::string &id);
 
 	void AddCallbackFunction(const std::string &id, const std::function<void(bool)> &fun);
+	void AddCallbackFunction(const std::string &id, LuaRef &fun);
 	void SetBTrait(const std::string &id, const KeyBindings::BehaviourMod &bm);
 
 private:
@@ -51,11 +52,13 @@ private:
 		std::string name;
 		KeyBindings::ActionBinding *binding_ptr;
 		std::function<void(bool)> callback;
+		LuaRef lua_callback;
 	};
 	struct TAxis {
 		std::string name;
 		KeyBindings::AxisBinding *binding_ptr;
 		std::function<void(float)> callback;
+		LuaRef lua_callback;
 	};
 	std::vector<TAction> m_actions;
 	std::vector<TAxis> m_axes;

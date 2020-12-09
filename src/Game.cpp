@@ -17,6 +17,7 @@
 #include "LuaEvent.h"
 #include "LuaSerializer.h"
 #include "LuaTimer.h"
+#include "input/LuaInputFrames.h"
 #include "Object.h"
 #include "Player.h"
 #include "Sfx.h"
@@ -99,8 +100,9 @@ Game::Game(const SystemPath &path, const double startDateTime, unsigned int cach
 	}
 
 	m_luaTimer = std::make_unique<LuaTimer>();
+	m_luaInputFrame = std::make_unique<LuaInputFrames>();
 
-	m_log.reset(new GameLog());
+	m_log = std::make_unique<GameLog>();
 
 #ifdef PIONEER_PROFILER
 	Profiler::dumphtml(profilerPath.c_str());
@@ -168,9 +170,10 @@ Game::Game(const Json &jsonObj, unsigned int cacheRadius) :
 
 	luaSerializer->UninitTableRefs();
 
-	m_luaTimer.reset(new LuaTimer());
+	m_luaTimer = std::make_unique<LuaTimer>();
+	m_luaInputFrame = std::make_unique<LuaInputFrames>();
 
-	m_log.reset(new GameLog());
+	m_log = std::make_unique<GameLog>();
 }
 
 Game::~Game()

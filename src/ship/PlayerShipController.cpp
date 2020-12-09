@@ -89,6 +89,8 @@ void PlayerShipController::RegisterInputBindings()
 	m_inputBindings.thrustLowPower = m_inputFrame->AddActionBinding("BindThrustLowPower", thrustGroup, ActionBinding(SDLK_LSHIFT));
 	m_inputBindings.toggleUC = m_inputFrame->AddActionBinding("BindToggleUC", thrustGroup, ActionBinding(SDLK_g));
 	m_inputFrame->AddCallbackFunction("BindToggleUC", std::bind(&PlayerShipController::ToggleUC, this, _1));
+	m_inputBindings.takeOff = m_inputFrame->AddActionBinding("BindTakeOff", thrustGroup, ActionBinding(SDLK_F5));
+	m_inputFrame->AddCallbackFunction("BindTakeOff", std::bind(&PlayerShipController::TakeOff, this, _1));
 
 	auto &speedGroup = controlsPage.GetBindingGroup("SpeedControl");
 	m_inputBindings.speedControl = m_inputFrame->AddAxisBinding("BindSpeedControl", speedGroup, AxisBinding(SDLK_RETURN, SDLK_RSHIFT));
@@ -297,8 +299,13 @@ static double clipmouse(double cur, double inp)
 void PlayerShipController::PollControls(const float timeStep, const bool force_rotation_damping)
 {
 	static bool stickySpeedKey = false;
-	CheckControlsLock();
-	if (m_controlsLocked) return;
+	//do a variety of checks to see if input is allowed
+	bool controlsLocked = (GameLocator::getGame()->IsPaused() ||
+		GameLocator::getGame()->GetPlayer()->IsDead() ||
+		(m_ship->GetFlightState() != Ship::FLYING) ||
+		InGameViewsLocator::getInGameViews()->GetViewType() != ViewType::WORLD); //to prevent moving the ship in starmap etc.
+
+	if (controlsLocked) return;
 
 	// if flying
 	{
@@ -456,6 +463,13 @@ void PlayerShipController::ToggleUC(bool down)
 {
 	if (down) return;
 	m_ship->SetWheelState(is_equal_exact(m_ship->GetWheelState(), 0.0f));
+}
+
+void PlayerShipController::TakeOff(bool down)
+{
+	if (down) return;
+	if (m_ship->IsLanded()) m_ship->Blastoff();
+	if (m_ship->IsDocked()) m_ship->Undock();
 }
 
 void PlayerShipController::FireMissile(bool down)

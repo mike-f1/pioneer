@@ -124,9 +124,12 @@ void WorldView::RegisterInputBindings()
 
 	m_wviewBindings.toggleHudMode = m_inputFrame->AddActionBinding("BindToggleHudMode", group, ActionBinding(SDLK_TAB));
 	m_inputFrame->AddCallbackFunction("BindToggleHudMode", std::bind(&WorldView::OnToggleLabels, this, _1));
-	m_wviewBindings.increaseTimeAcceleration = m_inputFrame->AddActionBinding("BindIncreaseTimeAcceleration", group, ActionBinding(SDLK_PAGEUP));
+
+	BindingGroup &group_tc = page.GetBindingGroup("TimeControl");
+
+	m_wviewBindings.increaseTimeAcceleration = m_inputFrame->AddActionBinding("BindIncreaseTimeAcceleration", group_tc, ActionBinding(SDLK_PAGEUP));
 	m_inputFrame->AddCallbackFunction("BindIncreaseTimeAcceleration", std::bind(&WorldView::OnRequestTimeAccelInc, this, _1));
-	m_wviewBindings.decreaseTimeAcceleration = m_inputFrame->AddActionBinding("BindDecreaseTimeAcceleration", group, ActionBinding(SDLK_PAGEDOWN));
+	m_wviewBindings.decreaseTimeAcceleration = m_inputFrame->AddActionBinding("BindDecreaseTimeAcceleration", group_tc, ActionBinding(SDLK_PAGEDOWN));
 	m_inputFrame->AddCallbackFunction("BindDecreaseTimeAcceleration", std::bind(&WorldView::OnRequestTimeAccelDec, this, _1));
 }
 

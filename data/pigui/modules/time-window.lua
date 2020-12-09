@@ -11,6 +11,37 @@ local utils = import("utils")
 local Event = import("Event")
 local Format = import("Format")
 
+local Iframes = import("InputFrames")
+
+local ifr = Iframes.CreateOrUse("luaInputF")
+
+timeSpeeds = {
+	[0] = "paused",
+	[1] = "1x",
+	[10] = "10x",
+	[100] = "100x",
+	[1000] = "1000x",
+	[10000] = "10000x",
+}
+
+local changeSpeed = false
+local wantedSpeed = 0
+ifr:AddAction("Speed1x", "General", "TimeControl", "Key1073741882Mod0", function(isUp)
+		if isUp then wantedSpeed = 1 changeSpeed = true end
+	end)
+ifr:AddAction("Speed10x", "General", "TimeControl", "Key1073741882Mod0", function(isUp)
+		if isUp then wantedSpeed = 10 changeSpeed = true end
+	end)
+ifr:AddAction("Speed100x", "General", "TimeControl", "Key1073741882Mod0", function(isUp)
+		if isUp then wantedSpeed = 100 changeSpeed = true end
+	end)
+ifr:AddAction("Speed1000x", "General", "TimeControl", "Key1073741882Mod0", function(isUp)
+		if isUp then wantedSpeed = 1000 changeSpeed = true end
+	end)
+ifr:AddAction("Speed10000x", "General", "TimeControl", "Key1073741882Mod0", function(isUp)
+		if isUp then wantedSpeed = 10000 changeSpeed = true end
+	end)
+
 local player = nil
 local pionillium = ui.fonts.pionillium
 local colors = ui.theme.colors
@@ -21,14 +52,13 @@ local frame_padding = 3
 local bg_color = colors.buttonBlue
 local fg_color = colors.white
 
-
 local function displayTimeWindow()
 	player = Game.player
 	local date = Format.Date(Game.time)
 
 	local current = Game.GetTimeAcceleration()
 	local requested = Game.GetRequestedTimeAcceleration()
-	function accelButton(name, key)
+	function accelButton(name)
 		local color = bg_color
 		if requested == name and current ~= name then
 			color = colors.white
@@ -40,8 +70,13 @@ local function displayTimeWindow()
 		end
 		tooltip = string.interp(lui.HUD_REQUEST_TIME_ACCEL, { time = time })
 		if ui.coloredSelectedIconButton(icons['time_accel_' .. name], button_size, current == name, frame_padding, color, fg_color, tooltip)
-		or (ui.shiftHeld() and ui.isKeyReleased(key)) then
-			Game.SetTimeAcceleration(name, ui.ctrlHeld() or ui.isMouseDown(1))
+		or changeSpeed then
+			if changeSpeed then
+				changeSpeed = false
+				Game.SetTimeAcceleration(timeSpeeds[wantedSpeed], ui.ctrlHeld() or ui.isMouseDown(1))
+			else
+				Game.SetTimeAcceleration(name, ui.ctrlHeld() or ui.isMouseDown(1))
+			end
 		end
 		ui.sameLine()
 	end
@@ -53,12 +88,12 @@ local function displayTimeWindow()
 								ui.setNextWindowPos(Vector2(0, ui.screenHeight - window_size.y), "Always")
 								ui.window("Time", {"NoTitleBar", "NoResize", "NoSavedSettings", "NoFocusOnAppearing", "NoBringToFrontOnFocus"}, function()
 														ui.text(date)
-														accelButton("paused", ui.keys.escape)
-														accelButton("1x", ui.keys.f1)
-														accelButton("10x", ui.keys.f2)
-														accelButton("100x", ui.keys.f3)
-														accelButton("1000x", ui.keys.f4)
-														accelButton("10000x", ui.keys.f5)
+														accelButton("paused")
+														accelButton("1x")
+														accelButton("10x")
+														accelButton("100x")
+														accelButton("1000x")
+														accelButton("10000x")
 								end)
 	end)
 end

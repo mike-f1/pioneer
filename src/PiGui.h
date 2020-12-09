@@ -9,7 +9,6 @@
 #include "libs/utils.h"
 #include "imgui/imgui.h"
 
-
 #include <SDL_video.h>
 #include <SDL_events.h>
 
@@ -99,8 +98,6 @@ public:
 
 	LuaRef GetHandlers() const { return m_handlers; }
 
-	LuaRef GetKeys() const { return m_keys; }
-
 	void Render(double delta, std::string handler = "GAME");
 
 	void Init(SDL_Window *window);
@@ -111,7 +108,6 @@ public:
 	{
 		Cleanup();
 		m_handlers.Unref();
-		m_keys.Unref();
 	}
 	ImFont *AddFont(const std::string &name, int size);
 
@@ -151,6 +147,5 @@ public:
 
 private:
 	LuaRef m_handlers;
-	LuaRef m_keys;
 	static std::vector<Graphics::Texture *> m_svg_textures;
 };

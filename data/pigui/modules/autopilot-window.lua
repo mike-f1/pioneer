@@ -11,6 +11,14 @@ local utils = import("utils")
 local Event = import("Event")
 local Format = import("Format")
 
+local Iframes = import("InputFrames")
+
+local ifr = Iframes.CreateOrUse("luaInputF")
+local hyperspace = false
+ifr:AddAction("Hyperspace", "ShipControls", "ManualControl", "Key104Mod0", function(isUp)
+		if isUp then hyperspace = true end
+	end)
+
 local player = nil
 local colors = ui.theme.colors
 local icons = ui.theme.icons
@@ -53,7 +61,8 @@ local function button_hyperspace()
 				icon = icons.hyperspace
 				tooltip = lui.HUD_BUTTON_INITIATE_HYPERJUMP
 			end
-			if mainMenuButton(icon, false, tooltip) or ui.isKeyReleased(ui.keys.f7)  then
+			if mainMenuButton(icon, false, tooltip) or hyperspace  then
+				hyperspace = false
 				if player:IsHyperspaceActive() then
 					player:AbortHyperjump()
 				else
@@ -67,12 +76,12 @@ end
 local function button_undock()
 	if player:IsLanded() then
 		ui.sameLine()
-		if mainMenuButton(icons.autopilot_blastoff, false, lui.HUD_BUTTON_BLASTOFF) or (ui.noModifierHeld() and ui.isKeyReleased(ui.keys.f5)) then
+		if mainMenuButton(icons.autopilot_blastoff, false, lui.HUD_BUTTON_BLASTOFF) then
 			player:BlastOff()
 		end
 	elseif player:IsDocked() then
 		ui.sameLine()
-		if mainMenuButton(icons.autopilot_undock, false, lui.HUD_BUTTON_UNDOCK) or (ui.noModifierHeld() and ui.isKeyReleased(ui.keys.f5)) then
+		if mainMenuButton(icons.autopilot_undock, false, lui.HUD_BUTTON_UNDOCK) then
 			player:Undock()
 		end
 	end

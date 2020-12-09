@@ -1752,14 +1752,6 @@ static int l_attr_handlers(lua_State *l)
 	return 1;
 }
 
-static int l_attr_keys(lua_State *l)
-{
-	PROFILE_SCOPED()
-	PiGui *pigui = LuaObject<PiGui>::CheckFromLua(1);
-	pigui->GetKeys().PushCopyToStack();
-	return 1;
-}
-
 static int l_attr_screen_width(lua_State *l)
 {
 	PROFILE_SCOPED()
@@ -2043,11 +2035,10 @@ static int l_pigui_vsliderfloat(lua_State *l)
 	return 1;
 }
 
-static int l_pigui_is_key_released(lua_State *l)
+static int l_pigui_is_escape_released(lua_State *l)
 {
 	PROFILE_SCOPED()
-	SDL_Keycode key = LuaPull<int>(l, 1);
-	LuaPush<bool>(l, ImGui::IsKeyReleased(SDL_GetScancodeFromKey(key)));
+	LuaPush<bool>(l, ImGui::IsKeyReleased(SDL_SCANCODE_ESCAPE));
 	return 1;
 }
 
@@ -2311,7 +2302,7 @@ void LuaObject<PiGui>::RegisterClass()
 		{ "VSliderInt", l_pigui_vsliderint },
 		{ "GetMouseClickedPos", l_pigui_get_mouse_clicked_pos },
 		{ "AddConvexPolyFilled", l_pigui_add_convex_poly_filled },
-		{ "IsKeyReleased", l_pigui_is_key_released },
+		{ "IsEscapeReleased", l_pigui_is_escape_released },
 		{ "DragInt4", l_pigui_drag_int_4 },
 		{ "GetWindowPos", l_pigui_get_window_pos },
 		{ "GetWindowSize", l_pigui_get_window_size },
@@ -2356,7 +2347,6 @@ void LuaObject<PiGui>::RegisterClass()
 		{ "key_none", l_attr_key_none },
 		{ "key_shift", l_attr_key_shift },
 		{ "key_alt", l_attr_key_alt },
-		{ "keys", l_attr_keys },
 		{ 0, 0 }
 	};
 

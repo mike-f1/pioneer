@@ -5,7 +5,6 @@
 #include "InputFrameStatusTicket.h"
 #include "InputLocator.h"
 #include "KeyBindings.h"
-#include "libs/utils.h"
 
 #include <SDL_events.h>
 #include <exception>
@@ -27,7 +26,11 @@ InputFrame::~InputFrame()
 	*/
 	m_bindingContainer.Reset();
 	InputLocator::getInput()->RemoveBindingContainer(this);
-	Output("~InputFrame()\n");
+}
+
+const std::string &InputFrame::GetName()
+{
+	return m_bindingContainer->GetName();
 }
 
 void InputFrame::SetActive(bool is_active)
@@ -43,7 +46,7 @@ ActionId InputFrame::AddActionBinding(std::string id, BindingGroup &group, KeyBi
 
 AxisId InputFrame::AddAxisBinding(std::string id, BindingGroup &group, KeyBindings::AxisBinding binding)
 {
-	if (m_lockInsertion) throw std::runtime_error { "Attemp to add an axi on '" + m_bindingContainer->GetName() + "' which is locked\n" };
+	if (m_lockInsertion) throw std::runtime_error { "Attemp to add an axis on '" + m_bindingContainer->GetName() + "' which is locked\n" };
 	return m_bindingContainer->AddAxisBinding(id, group, binding);
 }
 
@@ -59,6 +62,13 @@ AxisId InputFrame::GetAxisBinding(const std::string &id)
 
 void InputFrame::AddCallbackFunction(const std::string &id, const std::function<void(bool)> &fun)
 {
+	if (m_lockInsertion) throw std::runtime_error { "Attemp to add a callback on '" + m_bindingContainer->GetName() + "' which is locked\n" };
+	m_bindingContainer->AddCallbackFunction(id, fun);
+}
+
+void InputFrame::AddCallbackFunction(const std::string &id, LuaRef &fun)
+{
+	if (m_lockInsertion) throw std::runtime_error { "Attemp to add a callback on '" + m_bindingContainer->GetName() + "' which is locked\n" };
 	m_bindingContainer->AddCallbackFunction(id, fun);
 }
 

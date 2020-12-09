@@ -1,14 +1,13 @@
 #ifndef INPUTFRAME_H
 #define INPUTFRAME_H
 
-#include <cstdint>
 #include <functional>
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "libs/RefCounted.h"
+#include "DeleteEmitter.h"
 
 struct BindingGroup;
 struct BindingPage;
@@ -16,6 +15,7 @@ union SDL_Event;
 enum class MouseMotionBehaviour;
 class InputFrameStatusTicket;
 class BindingContainer;
+class LuaRef;
 
 namespace KeyBindings {
 	struct ActionBinding;
@@ -27,15 +27,16 @@ namespace KeyBindings {
 class ActionId;
 class AxisId;
 
-class InputFrame final {
+class InputFrame final: public DeleteEmitter {
 	friend class Input;
 public:
 	InputFrame() = delete;
 	InputFrame(const InputFrame &) = delete;
 
-	InputFrame(const std::string &name) ;
-	~InputFrame();
+	InputFrame(const std::string &name);
+	virtual ~InputFrame();
 
+	const std::string &GetName();
 	bool IsActive() const { return m_active; }
 	void SetActive(bool is_active);
 
@@ -49,6 +50,7 @@ public:
 	AxisId GetAxisBinding(const std::string &id);
 
 	void AddCallbackFunction(const std::string &id, const std::function<void(bool)> &fun);
+	void AddCallbackFunction(const std::string &id, LuaRef &fun);
 	void SetBTrait(const std::string &id, const KeyBindings::BehaviourMod &bm);
 
 	bool IsActive(ActionId id);
@@ -59,10 +61,10 @@ private:
 	// Check the event against all the inputs in this frame.
 	KeyBindings::InputResponse ProcessSDLEvent(const SDL_Event &event);
 
+	RefCountedPtr<BindingContainer> m_bindingContainer;
+
 	bool m_active;
 	bool m_lockInsertion;
-
-	RefCountedPtr<BindingContainer> m_bindingContainer;
 };
 
 namespace InputFWD {

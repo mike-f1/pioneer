@@ -10,14 +10,12 @@
 BindingContainer::BindingContainer(const std::string &name) :
 	m_name(name)
 {
-	Output("BindingContainer(%s)\n", m_name.c_str());
 	m_actions.reserve(4);
 	m_axes.reserve(4);
 }
 
 BindingContainer::~BindingContainer()
 {
-	Output("~BindingContainer() of %s\n", m_name.c_str());
 	bool success = false;
 	for (TAction &ab : m_actions) {
 		success |= InputLocator::getInput()->DeleteActionBinding(ab.name);
@@ -32,7 +30,7 @@ BindingContainer::~BindingContainer()
 ActionId BindingContainer::AddActionBinding(std::string &id, BindingGroup &group, KeyBindings::ActionBinding binding)
 {
 	for (int i = 0; i < m_actions.size(); i++) {
-		if (id == m_actions[i].name) throw std::runtime_error{"AddActionBinding of '" + id + "' is already added!\n"};
+		if (id == m_actions[i].name) throw std::runtime_error{"AddActionBinding of '" + id + "' is already in '"  + m_name + "'!\n"};
 	}
 	KeyBindings::ActionBinding *actionBind = InputLocator::getInput()->AddActionBinding(id, group, binding);
 	actionBind->Enable(true);
@@ -43,7 +41,7 @@ ActionId BindingContainer::AddActionBinding(std::string &id, BindingGroup &group
 AxisId BindingContainer::AddAxisBinding(std::string &id, BindingGroup &group, KeyBindings::AxisBinding binding)
 {
 	for (int i = 0; i < m_axes.size(); i++) {
-		if (id == m_axes[i].name) throw std::runtime_error{"AddAxisBinding of '" + id + "' is already added!\n"};
+		if (id == m_axes[i].name) throw std::runtime_error{"AddAxisBinding of '" + id + "' is already in '"  + m_name + "'!\n"};
 	}
 	KeyBindings::AxisBinding *axisBind = InputLocator::getInput()->AddAxisBinding(id, group, binding);
 	axisBind->Enable(true);
@@ -56,7 +54,7 @@ ActionId BindingContainer::GetActionBinding(const std::string &id)
 	for (int i = 0; i < m_actions.size(); i++) {
 		if (id == m_actions[i].name) return i;
 	}
-	throw std::runtime_error{"GetActionBinding of '" + id + "' isn't present!\n"};
+	throw std::runtime_error{"GetActionBinding of '" + id + "' isn't present in '" + m_name + "'!\n"};
 }
 
 AxisId BindingContainer::GetAxisBinding(const std::string &id)
@@ -64,7 +62,7 @@ AxisId BindingContainer::GetAxisBinding(const std::string &id)
 	for (int i = 0; i < m_axes.size(); i++) {
 		if (id == m_axes[i].name) return i;
 	}
-	throw std::runtime_error{"GetAxisBinding of '" + id + "' isn't present!\n"};
+	throw std::runtime_error{"GetAxisBinding of '" + id + "' isn't in '" + m_name + "'!\n"};
 }
 
 void BindingContainer::AddCallbackFunction(const std::string &id, const std::function<void(bool)> &fun)
@@ -73,7 +71,8 @@ void BindingContainer::AddCallbackFunction(const std::string &id, const std::fun
 		return (action.name == id);
 	});
 	if (ac != m_actions.end()) {
-		if (ac->callback != nullptr) Output("WARNING: overwriting callback for '%s' in '%s'\n", ac->name.c_str(), m_name.c_str());
+		if (ac->callback || ac->lua_callback.IsValid()) Output("WARNING: overwriting callback for '%s' in '%s'\n", ac->name.c_str(), m_name.c_str());
+		if (ac->lua_callback.IsValid()) ac->lua_callback.Unref();
 		ac->callback = fun;
 		return;
 	};
@@ -81,8 +80,39 @@ void BindingContainer::AddCallbackFunction(const std::string &id, const std::fun
 		return (axis.name == id);
 	});
 	if (ax != m_axes.end()) {
-		if (ax->callback != nullptr) Output("WARNING: overwriting callback for '%s' in '%s'\n", ax->name.c_str(), m_name.c_str());
+		if (ax->callback || ax->lua_callback.IsValid()) Output("WARNING: overwriting callback for '%s' in '%s'\n", ax->name.c_str(), m_name.c_str());
+		if (ax->lua_callback.IsValid()) ax->lua_callback.Unref();
 		ax->callback = fun;
+		return;
+	};
+}
+
+void BindingContainer::AddCallbackFunction(const std::string &id, LuaRef &fun)
+{
+	lua_State *l = fun.GetLua();
+	if (l) {
+		fun.PushCopyToStack();
+		if (!lua_isfunction(l, -1)) {
+			Output("WARNING: Invalid function as callback for '%s' in '%s'!\n", id.c_str(), m_name.c_str());
+			return;
+		}
+	}
+	std::vector<TAction>::iterator ac = std::find_if(begin(m_actions), end(m_actions), [&id](TAction &action) {
+		return (action.name == id);
+	});
+	if (ac != m_actions.end()) {
+		if (ac->callback  || ac->lua_callback.IsValid()) Output("WARNING: overwriting callback for '%s' in '%s'\n", ac->name.c_str(), m_name.c_str());
+		if (ac->callback) ac->callback = nullptr;
+		ac->lua_callback = fun;
+		return;
+	};
+	std::vector<TAxis>::iterator ax = std::find_if(begin(m_axes), end(m_axes), [&id](TAxis &axis) {
+		return (axis.name == id);
+	});
+	if (ax != m_axes.end()) {
+		if (ax->callback || ax->lua_callback.IsValid()) Output("WARNING: overwriting callback for '%s' in '%s'\n", ax->name.c_str(), m_name.c_str());
+		if (ax->callback) ax->callback = nullptr;
+		ax->lua_callback = fun;
 		return;
 	};
 }
@@ -109,22 +139,6 @@ KeyBindings::InputResponse BindingContainer::ProcessSDLEvent(const SDL_Event &ev
 {
 	using namespace KeyBindings;
 
-	// Filter non-(yet-)bindable events
-	switch (event.type) {
-	case SDL_MOUSEMOTION:
-	case SDL_MOUSEBUTTONDOWN:
-	case SDL_MOUSEBUTTONUP:
-	case SDL_WINDOWEVENT:
-	case SDL_DROPFILE:
-	case SDL_DROPTEXT:
-	case SDL_DROPBEGIN:
-	case SDL_DROPCOMPLETE:
-	case SDL_AUDIODEVICEADDED:
-	case SDL_AUDIODEVICEREMOVED:
-	case SDL_SYSWMEVENT:
-		return InputResponse::NOMATCH;
-	};
-
 	bool matched = false;
 
 	for (TAction &action : m_actions) {
@@ -134,6 +148,13 @@ KeyBindings::InputResponse BindingContainer::ProcessSDLEvent(const SDL_Event &ev
 			if (action.callback) {
 				//Output("Callback for %s\n", action.name.c_str());
 				action.callback(action.binding_ptr->GetIsUp());
+			}
+			if (action.lua_callback.IsValid()) {
+				//Output("LuaCallback for %s\n", action.name.c_str());
+				lua_State *l = action.lua_callback.GetLua();
+				action.lua_callback.PushCopyToStack();
+				lua_pushboolean(l, action.binding_ptr->GetIsUp());
+				lua_call(l, 1, 0);
 			}
 			return resp;
 		}

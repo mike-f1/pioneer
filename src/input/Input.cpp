@@ -25,7 +25,7 @@ Input::Input() :
 	m_joystickEnabled = (config.Int("EnableJoystick")) ? true : false;
 	m_mouseYInvert = (config.Int("InvertMouseY")) ? true : false;
 
-	m_bindingContainers.reserve(8);
+	m_bindingContainers.reserve(10);
 
 	m_joystick = std::make_unique<JoyStick>();
 
@@ -68,6 +68,7 @@ void Input::TerminateGame()
 {
 	Output("Input::TerminateGame()\n");
 	m_generalPanRotateZoom.reset();
+	PurgeBindingContainers();
 }
 
 void Input::RegisterInputBindings()
@@ -109,16 +110,13 @@ void Input::DebugDumpPage(const std::string &pageId)
 
 RefCountedPtr<BindingContainer> Input::CreateOrShareBindContainer(const std::string &name, InputFrame *iframe)
 {
-	Output("Input::CreateOrShareBindContainer(%s) ...", name.c_str());
 	m_inputFrames.push_back(iframe);
 	auto iter = std::find_if(begin(m_bindingContainers), end(m_bindingContainers), [&name](RefCountedPtr<BindingContainer> &bindCont) {
 		return (name == bindCont->GetName());
 	});
 	if (iter != m_bindingContainers.end()) {
-		Output("Found, share it (num = %i!)\n", (*iter)->GetRefCount());
 		return *iter;
 	} else {
-		Output("NOT found, create it!\n");
 		auto new_bindcont = RefCountedPtr<BindingContainer>(new BindingContainer(name));
 		m_bindingContainers.push_back(new_bindcont);
 		return new_bindcont;
@@ -249,6 +247,7 @@ void Input::SetJoystickEnabled(bool state)
 void Input::HandleSDLEvent(const SDL_Event &event)
 {
 	PROFILE_SCOPED()
+
 	switch (event.type) {
 	case SDL_KEYDOWN:
 		m_keyJustPressed++;
@@ -293,6 +292,16 @@ void Input::HandleSDLEvent(const SDL_Event &event)
 	case SDL_JOYHATMOTION:
 		if (m_joystickEnabled) m_joystick->HandleSDLEvent(event);
 	break;
+	// Filter non-(yet-)bindable events
+	case SDL_WINDOWEVENT:
+	case SDL_DROPFILE:
+	case SDL_DROPTEXT:
+	case SDL_DROPBEGIN:
+	case SDL_DROPCOMPLETE:
+	case SDL_AUDIODEVICEADDED:
+	case SDL_AUDIODEVICEREMOVED:
+	case SDL_SYSWMEVENT:
+		return;
 	}
 
 	if (m_speedModifier) m_speedModifier->CheckSDLEventAndDispatch(event);
@@ -330,12 +339,7 @@ void Input::FindAndEraseEntryInPagesAndGroups(const std::string &id)
 
 void Input::PurgeBindingContainers()
 {
-	Output("PurgeBindingContainers(), size = %lu)\n", m_bindingContainers.size());
-	std::for_each(m_bindingContainers.begin(), m_bindingContainers.end(), [&](RefCountedPtr<BindingContainer> &bindCont) {
-		Output("\t%s => %i\n", bindCont->GetName().c_str(), bindCont->GetRefCount());
-	});
 	m_bindingContainers.erase(std::remove_if(m_bindingContainers.begin(), m_bindingContainers.end(), [](RefCountedPtr<BindingContainer> &bindCont) {
 		return bindCont.Unique();
 	}), m_bindingContainers.end());
-	Output("Exit purge\n");
 }

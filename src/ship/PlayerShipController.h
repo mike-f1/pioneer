@@ -61,6 +61,7 @@ private:
 
 	void ToggleRotationDamping(bool down);
 	void ToggleUC(bool down);
+	void TakeOff(bool down);
 	void ToggleSetSpeedMode(bool down);
 
 	struct InputBinding {
@@ -85,6 +86,7 @@ private:
 		AxisId thrustLeft;
 		ActionId thrustLowPower;
 		ActionId toggleUC;
+		ActionId takeOff;
 
 		// Speed Control
 		AxisId speedControl;

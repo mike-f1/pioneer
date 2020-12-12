@@ -3,10 +3,10 @@
 
 #include "ModelSpinner.h"
 #include "Game.h"
-#include "Pi.h"
 #include "Shields.h"
 #include "Ship.h"
 #include "scenegraph/Model.h"
+#include "pi_state/PiState.h"
 
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
@@ -45,7 +45,7 @@ namespace GameUI {
 	void ModelSpinner::Update()
 	{
 		if (!(m_rightMouseButton && IsMouseActive()))
-			m_rotY += Pi::GetFrameTime();
+			m_rotY += MainState_::PiState::GetFrameTime();
 
 		if (m_model) {
 			m_shields->SetEnabled(false);

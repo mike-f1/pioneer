@@ -6,7 +6,6 @@
 
 #include "buildopts.h"
 
-#include "input/InputFwd.h"
 #include "libs/RefCounted.h"
 
 #include <cstdint>
@@ -15,13 +14,15 @@
 #include <string>
 #include <vector>
 
-class Cutscene;
-class Input;
-class InputFrame;
 class LuaConsole;
 class LuaNameGen;
 class PiGui;
 class SystemPath;
+
+namespace MainState_ {
+	class PiState;
+	class GameState;
+}
 
 class AsyncJobQueue;
 class SyncJobQueue;
@@ -48,7 +49,11 @@ namespace UI {
 	class Context;
 }
 
+enum class MainState;
+
 class Pi {
+	friend class MainState_::PiState;
+	friend class MainState_::GameState;
 public:
 	static void CreateRenderTarget(const uint16_t width, const uint16_t height);
 	static void DrawRenderTarget();
@@ -56,20 +61,10 @@ public:
 	static void EndRenderTarget();
 
 	static void Init(const std::map<std::string, std::string> &options, bool no_gui = false);
-	static void InitGame();
-	static void StartGame();
 	static void RequestEndGame(); // request that the game is ended as soon as safely possible
-	static void EndGame();
 	static void Start(const SystemPath &startPath);
 	static void RequestQuit();
-	static void MainLoop();
-	static void CutSceneLoop(double step, Cutscene *cutscene);
 	static void OnChangeDetailLevel();
-	static float GetFrameTime() { return m_frameTime; }
-	static float GetGameTickAlpha() { return m_gameTickAlpha; }
-
-	static void SetMouseGrab(bool on);
-	static bool DoingMouseGrab() { return doingMouseGrab; }
 
 	static std::unique_ptr<LuaNameGen> m_luaNameGen;
 
@@ -81,9 +76,6 @@ public:
 	static RefCountedPtr<PiGui> pigui;
 
 	static void DrawPiGui(double delta, std::string handler);
-
-	/* Only use #if WITH_DEVKEYS */
-	static bool showDebugInfo;
 
 #if PIONEER_PROFILER
 	static std::string profilerPath;
@@ -97,16 +89,6 @@ public:
 	static JobQueue *GetSyncJobQueue();
 
 private:
-	enum class MainState {
-		MAIN_MENU,
-		GAME_START,
-		TOMBSTONE,
-		TO_GAME_START,
-		TO_MAIN_MENU,
-		TO_TOMBSTONE,
-	};
-	static MainState m_mainState;
-
 	// msgs/requests that can be posted which the game processes at the end of a game loop in HandleRequests
 	enum InternalRequests {
 		END_GAME = 0,
@@ -114,69 +96,18 @@ private:
 	};
 	static void Quit() __attribute((noreturn));
 
-	static bool HandleEscKey();
-
-	static void HandleEvents();
-	static void HandleRequests();
+	static void HandleRequests(MainState &current);
 
 	static void RegisterInputBindings();
-	// Key-press action feedback functions
-	static void QuickSave(bool down);
-	static void ScreenShot(bool down);
-	static void ToggleVideoRecording(bool down);
-	#ifdef WITH_DEVKEYS
-	static void ToggleDebug(bool down);
-	static void ReloadShaders(bool down);
-	#endif // WITH_DEVKEYS
-	#ifdef PIONEER_PROFILER
-	static void ProfilerCommandOne(bool down);
-	static void ProfilerCommandSlow(bool down);
-	#endif // PIONEER_PROFILER
-	#ifdef WITH_OBJECTVIEWER
-	static void ObjectViewer(bool down);
-	#endif // WITH_OBJECTVIEWER
-
-	static struct PiBinding {
-		ActionId quickSave;
-		ActionId reqQuit;
-		ActionId screenShot;
-		ActionId toggleVideoRec;
-		#ifdef WITH_DEVKEYS
-		ActionId toggleDebugInfo;
-		ActionId reloadShaders;
-		#endif // WITH_DEVKEYS
-		#ifdef PIONEER_PROFILER
-		ActionId profilerBindSlow;
-		ActionId profilerBindOne;
-		#endif
-		#ifdef WITH_OBJECTVIEWER
-		ActionId objectViewer;
-		#endif // WITH_OBJECTVIEWER
-
-	} m_piBindings;
-
-	static std::unique_ptr<InputFrame> m_inputFrame;
 	// private members
 	static std::vector<InternalRequests> internalRequests;
-	static const uint32_t SYNC_JOBS_PER_LOOP = 1;
 	static std::unique_ptr<AsyncJobQueue> asyncJobQueue;
 	static std::unique_ptr<SyncJobQueue> syncJobQueue;
-
-	/** So, the game physics rate (50Hz) can run slower
-	  * than the frame rate. m_gameTickAlpha is the interpolation
-	  * factor between one physics tick and another [0.0-1.0]
-	  */
-	static float m_gameTickAlpha;
-	static float m_frameTime;
-
-	static std::unique_ptr<Cutscene> m_cutscene;
 
 	static Graphics::RenderTarget *m_renderTarget;
 	static RefCountedPtr<Graphics::Texture> m_renderTexture;
 	static std::unique_ptr<Graphics::Drawables::TexturedQuad> m_renderQuad;
 	static Graphics::RenderState *m_quadRenderState;
-
-	static bool doingMouseGrab;
 
 	static bool isRecordingVideo;
 	static FILE *ffmpegFile;

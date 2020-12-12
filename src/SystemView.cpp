@@ -13,7 +13,6 @@
 #include "input/KeyBindings.h"
 #include "Lang.h"
 #include "LuaObject.h"
-#include "Pi.h"
 #include "Player.h"
 #include "SectorView.h"
 #include "Space.h"
@@ -29,6 +28,7 @@
 #include "libs/AnimationCurves.h"
 #include "libs/StringF.h"
 #include "libs/stringUtils.h"
+#include "pi_state/PiState.h"
 
 #include "gui/GuiLabel.h"
 #include "gui/GuiLabelSet.h"
@@ -726,7 +726,7 @@ void SystemView::Draw3D()
 	if (m_realtime) {
 		m_time = GameLocator::getGame()->GetTime();
 	} else {
-		m_time += m_timeStep * Pi::GetFrameTime();
+		m_time += m_timeStep * MainState_::PiState::GetFrameTime();
 	}
 	std::string t = Lang::TIME_POINT + stringUtils::format_date(m_time);
 	m_timePoint->SetText(t);

@@ -81,18 +81,6 @@ public:
 
 /* Class to wrap ImGui. */
 class PiGui : public RefCounted {
-	std::map<std::pair<std::string, int>, ImFont *> m_fonts;
-	std::map<ImFont *, std::pair<std::string, int>> m_im_fonts;
-	std::map<std::pair<std::string, int>, PiFont> m_pi_fonts;
-	bool m_should_bake_fonts;
-
-	std::map<std::string, PiFont> m_font_definitions;
-
-	void BakeFonts();
-	void BakeFont(PiFont &font);
-	void AddFontDefinition(const PiFont &font) { m_font_definitions[font.name()] = font; }
-	void ClearFonts();
-
 public:
 	PiGui();
 
@@ -127,6 +115,8 @@ public:
 
 	static void *makeTexture(unsigned char *pixels, int width, int height);
 
+	void DoMouseGrab(bool grab) { m_doingMouseGrab = grab; }
+
 	static bool WantCaptureMouse()
 	{
 		return ImGui::GetIO().WantCaptureMouse;
@@ -148,4 +138,18 @@ public:
 private:
 	LuaRef m_handlers;
 	static std::vector<Graphics::Texture *> m_svg_textures;
+
+	bool m_doingMouseGrab;
+
+	std::map<std::pair<std::string, int>, ImFont *> m_fonts;
+	std::map<ImFont *, std::pair<std::string, int>> m_im_fonts;
+	std::map<std::pair<std::string, int>, PiFont> m_pi_fonts;
+	bool m_should_bake_fonts;
+
+	std::map<std::string, PiFont> m_font_definitions;
+
+	void BakeFonts();
+	void BakeFont(PiFont &font);
+	void AddFontDefinition(const PiFont &font) { m_font_definitions[font.name()] = font; }
+	void ClearFonts();
 };

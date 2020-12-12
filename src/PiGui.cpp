@@ -366,7 +366,7 @@ void PiGui::NewFrame(SDL_Window *window, bool skip)
 	ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
 #if 0 // Mouse cursors are set via the OS facilities.
 	// We may want to revisit this at a later date.
-	if(Pi::DoingMouseGrab() || !skip) {
+	if(m_doingMouseGrab || !skip) {
 		ImGui::GetIO().MouseDrawCursor = false;
 	} else {
 		ImGui::GetIO().MouseDrawCursor = true;
@@ -704,6 +704,7 @@ void PiGui::Cleanup()
 }
 
 PiGui::PiGui() :
+	m_doingMouseGrab(false),
 	m_should_bake_fonts(true)
 {
 	PiFont uiheading("orbiteer", {

@@ -5,6 +5,7 @@
 #define _CUTSCENE_H
 
 #include "Color.h"
+#include "graphics/Light.h"
 #include <vector>
 
 namespace Graphics {

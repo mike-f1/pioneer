@@ -99,14 +99,14 @@ namespace KeyBindings {
 		{
 			u.keyboard.key = SDLK_UNKNOWN;
 		}
-		KeyBinding(SDL_Keycode key, SDL_Keymod mod = KMOD_NONE) :
+		explicit KeyBinding(SDL_Keycode key, SDL_Keymod mod = KMOD_NONE) :
 			BehaviourTrait(),
 			m_mod(mod),
 			type(BindType::KEYBOARD_KEY)
 		{
 			u.keyboard.key = key;
 		}
-		KeyBinding(WheelDirection dir, SDL_Keymod mod = KMOD_NONE) :
+		explicit KeyBinding(WheelDirection dir, SDL_Keymod mod = KMOD_NONE) :
 			BehaviourTrait(),
 			m_mod(mod),
 			type(BindType::MOUSE_WHEEL)
@@ -114,8 +114,8 @@ namespace KeyBindings {
 			assert(dir != WheelDirection::NONE);
 			u.mouseWheel.dir = dir;
 		}
-		KeyBinding(const SDL_JoystickGUID &joystickGuid, uint8_t button, SDL_Keymod mod = KMOD_NONE);
-		KeyBinding(const SDL_JoystickGUID &joystickGuid, uint8_t hat, uint8_t dir, SDL_Keymod mod = KMOD_NONE);
+		explicit KeyBinding(const SDL_JoystickGUID &joystickGuid, uint8_t button, SDL_Keymod mod = KMOD_NONE);
+		explicit KeyBinding(const SDL_JoystickGUID &joystickGuid, uint8_t hat, uint8_t dir, SDL_Keymod mod = KMOD_NONE);
 
 		// return true if all is ok, otherwise it return false
 		static bool FromString(const char *str, KeyBinding &binding);

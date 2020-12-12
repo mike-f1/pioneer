@@ -8,7 +8,6 @@
 #include "GameSaveError.h"
 #include "Json.h"
 #include "Lang.h"
-#include "Pi.h" // <- For GameTickAlpha
 #include "Player.h"
 #include "Ship.h"
 #include "Space.h"
@@ -17,6 +16,7 @@
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/VertexArray.h"
+#include "pi_state/PiState.h"
 #include "perlin.h"
 
 using namespace Graphics;
@@ -173,7 +173,7 @@ void HyperspaceCloud::Render(const Camera *camera, const vector3d &viewCoords, c
 	RendererLocator::getRenderer()->SetTransform(trans * rot);
 
 	// precise to the rendered frame (better than PHYSICS_HZ granularity)
-	const double preciseTime = GameLocator::getGame()->GetTime() + Pi::GetGameTickAlpha() * GameLocator::getGame()->GetTimeStep();
+	const double preciseTime = GameLocator::getGame()->GetTime() + MainState_::PiState::GetGameTickAlpha() * GameLocator::getGame()->GetTimeStep();
 
 	// Flickering gradient circle, departure clouds are red and arrival clouds blue
 	// XXX could just alter the scale instead of recreating the model

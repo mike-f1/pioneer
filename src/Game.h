@@ -27,7 +27,7 @@ namespace Graphics {
 }
 
 class Game {
-	friend class GameState;
+	friend class GameStateStatic;
 	// start docked in station referenced by path or nearby to body if it is no station
 	Game(const SystemPath &path, const double startDateTime, unsigned int cacheRadius);
 

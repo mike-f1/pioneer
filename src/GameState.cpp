@@ -21,7 +21,7 @@
 
 static const int s_saveVersion = 90;
 
-void GameState::MakeNewGame(const SystemPath &path,
+void GameStateStatic::MakeNewGame(const SystemPath &path,
 		const double startDateTime,
 		const unsigned int sectorRadius_)
 {
@@ -43,7 +43,7 @@ void GameState::MakeNewGame(const SystemPath &path,
 	game->EmitPauseState(game->IsPaused());
 }
 
-Json GameState::LoadGameToJson(const std::string &filename)
+Json GameStateStatic::LoadGameToJson(const std::string &filename)
 {
 	Json rootNode = JsonUtils::LoadJsonSaveFile(FileSystem::JoinPathBelow(GameConfSingleton::GetSaveDir(), filename), FileSystem::userFiles);
 	if (!rootNode.is_object()) {
@@ -57,7 +57,7 @@ Json GameState::LoadGameToJson(const std::string &filename)
 	return rootNode;
 }
 
-void GameState::LoadGame(const std::string &filename)
+void GameStateStatic::LoadGame(const std::string &filename)
 {
 	Output("Game::LoadGame('%s')\n", filename.c_str());
 
@@ -93,7 +93,7 @@ void GameState::LoadGame(const std::string &filename)
 	GameLocator::provideGame(game);
 }
 
-bool GameState::CanLoadGame(const std::string &filename)
+bool GameStateStatic::CanLoadGame(const std::string &filename)
 {
 	auto file = FileSystem::userFiles.ReadFile(FileSystem::JoinPathBelow(GameConfSingleton::GetSaveDir(), filename));
 	if (!file)
@@ -103,7 +103,7 @@ bool GameState::CanLoadGame(const std::string &filename)
 	// file data is freed here
 }
 
-void GameState::SaveGame(const std::string &filename)
+void GameStateStatic::SaveGame(const std::string &filename)
 {
 	PROFILE_SCOPED()
 
@@ -163,7 +163,7 @@ void GameState::SaveGame(const std::string &filename)
 #endif
 }
 
-void GameState::DestroyGame()
+void GameStateStatic::DestroyGame()
 {
 	if (GameLocator::getGame() == nullptr) {
 		Output("Attempt to destroy a not existing Game!\n");

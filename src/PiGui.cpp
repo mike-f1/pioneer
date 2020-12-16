@@ -160,42 +160,6 @@ void PiDefaultStyle(ImGuiStyle &style)
 	style.WindowBorderSize = 0.0f; // Thickness of border around windows. Generally set to 0.0f or 1.0f. Other values not well tested.
 }
 
-void PiGui::Init(SDL_Window *window)
-{
-	PROFILE_SCOPED()
-	m_handlers.Unref();
-
-	lua_State *l = Lua::manager->GetLuaState();
-	lua_newtable(l);
-	m_handlers = LuaRef(l, -1);
-
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-
-	ImGuiIO &io = ImGui::GetIO();
-	io.IniFilename = nullptr;
-	// TODO: FIXME before upgrading! The sdl_gl_context parameter is currently
-	// unused, but that is slated to change very soon.
-	// We will need to fill this with a valid pointer to the OpenGL context.
-	ImGui_ImplSDL2_InitForOpenGL(window, NULL);
-	switch (RendererLocator::getRenderer()->GetRendererType()) {
-	default:
-	case Graphics::RENDERER_DUMMY:
-		Error("RENDERER_DUMMY is not a valid renderer, aborting.");
-		return;
-	case Graphics::RENDERER_OPENGL_3x:
-		ImGui_ImplOpenGL3_Init();
-		break;
-	}
-
-	// Apply the base style
-	ImGui::StyleColorsDark();
-
-	// Apply Pioneer's style.
-	// TODO: load this from Lua.
-	PiDefaultStyle(ImGui::GetStyle());
-}
-
 int PiGui::RadialPopupSelectMenu(const ImVec2 &center, std::string popup_id, int mouse_button, std::vector<ImTextureID> tex_ids, std::vector<std::pair<ImVec2, ImVec2>> uvs, unsigned int size, std::vector<std::string> tooltips)
 {
 	PROFILE_SCOPED()
@@ -305,43 +269,82 @@ bool PiGui::CircularSlider(const ImVec2 &center, float *v, float v_min, float v_
 		id, ImGuiDataType_Float, v, &v_min, &v_max, "%.4f", 1.0, ImGuiSliderFlags_None, &grab_bb);
 }
 
-bool PiGui::ProcessEvent(SDL_Event *event)
+PiGui::PiGui(SDL_Window *window) :
+	m_doingMouseGrab(false),
+	m_should_bake_fonts(true)
 {
-	PROFILE_SCOPED()
-	ImGui_ImplSDL2_ProcessEvent(event);
-	return false;
+	PiFont uiheading("orbiteer", {
+									 PiFace("DejaVuSans.ttf", /*18.0/20.0*/ 1.2, { { 0x400, 0x4ff }, { 0x500, 0x527 } }), PiFace("wqy-microhei.ttc", 1.0, { { 0x4e00, 0x9fff }, { 0x3400, 0x4dff } }), PiFace("Orbiteer-Bold.ttf", 1.0, { { 0, 0xffff } }) // imgui only supports 0xffff, not 0x10ffff
+								 });
+	PiFont guifont("pionillium", { PiFace("DejaVuSans.ttf", 13.0 / 14.0, { { 0x400, 0x4ff }, { 0x500, 0x527 } }), PiFace("wqy-microhei.ttc", 1.0, { { 0x4e00, 0x9fff }, { 0x3400, 0x4dff } }), PiFace("PionilliumText22L-Medium.ttf", 1.0, { { 0, 0xffff } }) });
+	AddFontDefinition(uiheading);
+	AddFontDefinition(guifont);
+
+	// Output("Fonts:\n");
+	for (auto entry : m_font_definitions) {
+		//		Output("  entry %s:\n", entry.first.c_str());
+		entry.second.describe();
+	}
+
+	// ensure the tooltip font exists
+	GetFont("pionillium", 14);
+
+	m_handlers.Unref();
+
+	lua_State *l = Lua::manager->GetLuaState();
+	lua_newtable(l);
+	m_handlers = LuaRef(l, -1);
+
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+
+	ImGuiIO &io = ImGui::GetIO();
+	io.IniFilename = nullptr;
+	// TODO: FIXME before upgrading! The sdl_gl_context parameter is currently
+	// unused, but that is slated to change very soon.
+	// We will need to fill this with a valid pointer to the OpenGL context.
+	ImGui_ImplSDL2_InitForOpenGL(window, NULL);
+	switch (RendererLocator::getRenderer()->GetRendererType()) {
+	default:
+	case Graphics::RENDERER_DUMMY:
+		Error("RENDERER_DUMMY is not a valid renderer, aborting.");
+		return;
+	case Graphics::RENDERER_OPENGL_3x:
+		ImGui_ImplOpenGL3_Init();
+		break;
+	}
+
+	// Apply the base style
+	ImGui::StyleColorsDark();
+
+	// Apply Pioneer's style.
+	// TODO: load this from Lua.
+	PiDefaultStyle(ImGui::GetStyle());
 }
 
-void *PiGui::makeTexture(unsigned char *pixels, int width, int height)
+PiGui::~PiGui()
 {
 	PROFILE_SCOPED()
-	// this is not very pretty code and uses the Graphics::TextureGL class directly
-	// Texture descriptor defines the size, type.
-	// Gone for LINEAR_CLAMP here and RGBA like the original code
-	const vector2f texSize(1.0f, 1.0f);
-	const vector2f dataSize(width, height);
-	const Graphics::TextureDescriptor texDesc(Graphics::TextureFormat::RGBA_8888,
-		dataSize, texSize, Graphics::TextureSampleMode::LINEAR_CLAMP,
-		false, false, false, 0, Graphics::TextureType::T_2D);
-	// Create the texture, calling it via renderer directly avoids the caching call of TextureBuilder
-	// However interestingly this gets called twice which would have been a WIN for the TextureBuilder :/
-	Graphics::Texture *pTex = RendererLocator::getRenderer()->CreateTexture(texDesc);
-	// Update it with the actual pixels, this is a two step process due to legacy code
-	pTex->Update(pixels, dataSize, Graphics::TextureFormat::RGBA_8888);
-	// nasty bit as I invoke the TextureGL
-	Graphics::OGL::TextureGL *pGLTex = reinterpret_cast<Graphics::OGL::TextureGL *>(pTex);
-	uint32_t result = pGLTex->GetTextureID();
-	m_svg_textures.push_back(pTex); // store for cleanup later
-	return reinterpret_cast<void *>(result);
+	for (auto tex : m_svg_textures) {
+		delete tex;
+	}
+
+	switch (RendererLocator::getRenderer()->GetRendererType()) {
+	default:
+	case Graphics::RENDERER_DUMMY:
+		return;
+	case Graphics::RENDERER_OPENGL_3x:
+		ImGui_ImplOpenGL3_Shutdown();
+		break;
+	}
+
+	ImGui_ImplSDL2_Shutdown();
+	ImGui::DestroyContext();
+
+	m_handlers.Unref();
 }
 
-void PiGui::EndFrame()
-{
-	PROFILE_SCOPED()
-	ImGui::EndFrame();
-}
-
-void PiGui::NewFrame(SDL_Window *window, bool skip)
+PiGui *PiGui::NewFrame(SDL_Window *window, bool skip)
 {
 	PROFILE_SCOPED()
 	// Ask ImGui to hide OS cursor if GUI is not being drawn:
@@ -354,7 +357,7 @@ void PiGui::NewFrame(SDL_Window *window, bool skip)
 	default:
 	case Graphics::RENDERER_DUMMY:
 		Error("RENDERER_DUMMY is not a valid renderer, aborting.");
-		return;
+		return this;
 	case Graphics::RENDERER_OPENGL_3x:
 		ImGui_ImplOpenGL3_NewFrame();
 		break;
@@ -372,19 +375,15 @@ void PiGui::NewFrame(SDL_Window *window, bool skip)
 		ImGui::GetIO().MouseDrawCursor = true;
 	}
 #endif
+	return this;
 }
 
-void PiGui::Render(double delta, std::string handler)
+void PiGui::EndFrame()
 {
 	PROFILE_SCOPED()
-	ScopedTable t(m_handlers);
-	if (t.Get<bool>(handler)) {
-		t.Call<bool>(handler, delta);
-		RendererLocator::getRenderer()->CheckRenderErrors(__FUNCTION__, __LINE__);
-	}
 	// Explicitly end frame, to show tooltips. Otherwise, they are shown at the next NextFrame,
 	// which might crash because the font atlas was rebuilt, and the old fonts were cached inside imgui.
-	EndFrame();
+	ImGui::EndFrame();
 
 	// Iterate through our fonts and check if IMGUI wants a character we don't have.
 	for (auto &iter : m_fonts) {
@@ -403,11 +402,7 @@ void PiGui::Render(double delta, std::string handler)
 	if (m_should_bake_fonts) {
 		BakeFonts();
 	}
-}
 
-void PiGui::RenderImGui()
-{
-	PROFILE_SCOPED()
 	ImGui::Render();
 
 	switch (RendererLocator::getRenderer()->GetRendererType()) {
@@ -418,6 +413,23 @@ void PiGui::RenderImGui()
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 		break;
 	}
+}
+
+void PiGui::Render(double delta, std::string handler)
+{
+	PROFILE_SCOPED()
+	ScopedTable t(m_handlers);
+	if (t.Get<bool>(handler)) {
+		t.Call<bool>(handler, delta);
+		RendererLocator::getRenderer()->CheckRenderErrors(__FUNCTION__, __LINE__);
+	}
+}
+
+bool PiGui::ProcessEvent(SDL_Event *event)
+{
+	PROFILE_SCOPED()
+	ImGui_ImplSDL2_ProcessEvent(event);
+	return false;
 }
 
 void PiGui::ClearFonts()
@@ -683,45 +695,27 @@ bool PiGui::ButtonImageSized(ImTextureID user_texture_id, const ImVec2 &size, co
 	return pressed;
 }
 
-void PiGui::Cleanup()
+void *PiGui::makeTexture(unsigned char *pixels, int width, int height)
 {
 	PROFILE_SCOPED()
-	for (auto tex : m_svg_textures) {
-		delete tex;
-	}
-
-	switch (RendererLocator::getRenderer()->GetRendererType()) {
-	default:
-	case Graphics::RENDERER_DUMMY:
-		return;
-	case Graphics::RENDERER_OPENGL_3x:
-		ImGui_ImplOpenGL3_Shutdown();
-		break;
-	}
-
-	ImGui_ImplSDL2_Shutdown();
-	ImGui::DestroyContext();
-}
-
-PiGui::PiGui() :
-	m_doingMouseGrab(false),
-	m_should_bake_fonts(true)
-{
-	PiFont uiheading("orbiteer", {
-									 PiFace("DejaVuSans.ttf", /*18.0/20.0*/ 1.2, { { 0x400, 0x4ff }, { 0x500, 0x527 } }), PiFace("wqy-microhei.ttc", 1.0, { { 0x4e00, 0x9fff }, { 0x3400, 0x4dff } }), PiFace("Orbiteer-Bold.ttf", 1.0, { { 0, 0xffff } }) // imgui only supports 0xffff, not 0x10ffff
-								 });
-	PiFont guifont("pionillium", { PiFace("DejaVuSans.ttf", 13.0 / 14.0, { { 0x400, 0x4ff }, { 0x500, 0x527 } }), PiFace("wqy-microhei.ttc", 1.0, { { 0x4e00, 0x9fff }, { 0x3400, 0x4dff } }), PiFace("PionilliumText22L-Medium.ttf", 1.0, { { 0, 0xffff } }) });
-	AddFontDefinition(uiheading);
-	AddFontDefinition(guifont);
-
-	// Output("Fonts:\n");
-	for (auto entry : m_font_definitions) {
-		//		Output("  entry %s:\n", entry.first.c_str());
-		entry.second.describe();
-	}
-
-	// ensure the tooltip font exists
-	GetFont("pionillium", 14);
+	// this is not very pretty code and uses the Graphics::TextureGL class directly
+	// Texture descriptor defines the size, type.
+	// Gone for LINEAR_CLAMP here and RGBA like the original code
+	const vector2f texSize(1.0f, 1.0f);
+	const vector2f dataSize(width, height);
+	const Graphics::TextureDescriptor texDesc(Graphics::TextureFormat::RGBA_8888,
+		dataSize, texSize, Graphics::TextureSampleMode::LINEAR_CLAMP,
+		false, false, false, 0, Graphics::TextureType::T_2D);
+	// Create the texture, calling it via renderer directly avoids the caching call of TextureBuilder
+	// However interestingly this gets called twice which would have been a WIN for the TextureBuilder :/
+	Graphics::Texture *pTex = RendererLocator::getRenderer()->CreateTexture(texDesc);
+	// Update it with the actual pixels, this is a two step process due to legacy code
+	pTex->Update(pixels, dataSize, Graphics::TextureFormat::RGBA_8888);
+	// nasty bit as I invoke the TextureGL
+	Graphics::OGL::TextureGL *pGLTex = reinterpret_cast<Graphics::OGL::TextureGL *>(pTex);
+	uint32_t result = pGLTex->GetTextureID();
+	m_svg_textures.push_back(pTex); // store for cleanup later
+	return reinterpret_cast<void *>(result);
 }
 
 bool PiFace::containsGlyph(unsigned short glyph) const

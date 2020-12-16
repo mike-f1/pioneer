@@ -75,8 +75,6 @@ public:
 	static RefCountedPtr<UI::Context> ui;
 	static RefCountedPtr<PiGui> pigui;
 
-	static void DrawPiGui(double delta, std::string handler);
-
 #if PIONEER_PROFILER
 	static std::string profilerPath;
 	static bool doProfileSlow;

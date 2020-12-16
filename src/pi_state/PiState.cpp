@@ -84,8 +84,12 @@ namespace MainState_ {
 		Gui::Draw();
 
 		if (dynamic_cast<Intro *>(m_cutscene) != nullptr) {
-			Pi::pigui->NewFrame(RendererLocator::getRenderer()->GetSDLWindow());
-			Pi::DrawPiGui(step, "MAINMENU");
+			PiGuiFrameHelper piFH(Pi::pigui.Get(), RendererLocator::getRenderer()->GetSDLWindow());
+			bool active = true;
+			if (Pi::m_luaConsole) active = !Pi::m_luaConsole->IsActive();
+
+			if (active)
+				Pi::pigui->Render(step, "MAINMENU");
 
 #if WITH_DEVKEYS
 			if (m_debugInfo)  {

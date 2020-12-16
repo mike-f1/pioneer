@@ -337,11 +337,13 @@ void TestGPUJobsSupport()
 	}
 }
 
-static void draw_progress(float progress)
+static void draw_progress(float progress, RefCountedPtr<PiGui> pigui = Pi::pigui)
 {
 	RendererLocator::getRenderer()->ClearScreen();
-	PiGui::NewFrame(RendererLocator::getRenderer()->GetSDLWindow());
-	Pi::DrawPiGui(progress, "INIT");
+	{
+		PiGuiFrameHelper piFH(pigui.Get(), RendererLocator::getRenderer()->GetSDLWindow());
+		pigui->Render(progress, "INIT");
+	}
 	RendererLocator::getRenderer()->SwapBuffers();
 }
 
@@ -454,8 +456,7 @@ void Pi::Init(const std::map<std::string, std::string> &options, bool no_gui)
 	Output("Lua::Init()\n");
 	Lua::Init();
 
-	Pi::pigui.Reset(new PiGui);
-	Pi::pigui->Init(RendererLocator::getRenderer()->GetSDLWindow());
+	Pi::pigui.Reset(new PiGui(RendererLocator::getRenderer()->GetSDLWindow()));
 
 	float ui_scale = GameConfSingleton::getInstance().Float("UIScaleFactor", 1.0f);
 	if (Graphics::GetScreenHeight() < 768) {
@@ -627,7 +628,7 @@ void Pi::Quit()
 	BaseSphere::Uninit();
 	FaceParts::Uninit();
 	Graphics::Uninit();
-	Pi::pigui->Uninit();
+	Pi::pigui.Reset(nullptr);
 	Pi::ui.Reset(nullptr);
 	Pi::pigui.Reset(nullptr);
 	// TODO: remove explicit Reset of LuaInputFrames
@@ -703,16 +704,4 @@ void Pi::RequestEndGame()
 void Pi::RequestQuit()
 {
 	internalRequests.push_back(QUIT_GAME);
-}
-
-void Pi::DrawPiGui(double delta, std::string handler)
-{
-	PROFILE_SCOPED()
-	bool active = true;
-	if (m_luaConsole) active = !m_luaConsole->IsActive();
-
-	if (active)
-		Pi::pigui->Render(delta, handler);
-
-	PiGui::RenderImGui();
 }

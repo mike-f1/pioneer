@@ -79,57 +79,65 @@ public:
 	}
 };
 
+class PiGui;
+
+template <class T = PiGui>
+class PiGuiFrameHelper {
+public:
+	PiGuiFrameHelper(const PiGuiFrameHelper &) = delete;
+	PiGuiFrameHelper &operator=(const PiGuiFrameHelper &) = delete;
+
+	PiGuiFrameHelper(T *pigui, SDL_Window *window, bool skip = true):
+		m_pigui(pigui)
+	{
+		m_pigui->NewFrame(window, skip);
+	}
+	~PiGuiFrameHelper() { m_pigui->EndFrame(); }
+private:
+	T* m_pigui;
+};
+
 /* Class to wrap ImGui. */
 class PiGui : public RefCounted {
 public:
-	PiGui();
+	PiGui(SDL_Window *window);
+
+	~PiGui();
 
 	LuaRef GetHandlers() const { return m_handlers; }
 
+	PiGui *NewFrame(SDL_Window *window, bool skip = true);
+
+	void EndFrame();
+
 	void Render(double delta, std::string handler = "GAME");
 
-	void Init(SDL_Window *window);
+	bool ProcessEvent(SDL_Event *event);
 
 	ImFont *GetFont(const std::string &name, int size);
 
-	void Uninit()
-	{
-		Cleanup();
-		m_handlers.Unref();
-	}
 	ImFont *AddFont(const std::string &name, int size);
 
 	void AddGlyph(ImFont *font, unsigned short glyph);
 
-	static ImTextureID RenderSVG(std::string svgFilename, int width, int height);
-
-	static void NewFrame(SDL_Window *window, bool skip = true);
-
-	static void EndFrame();
-
-	static void RenderImGui();
-
-	static bool ProcessEvent(SDL_Event *event);
+	ImTextureID RenderSVG(std::string svgFilename, int width, int height);
 
 	void RefreshFontsTexture();
 
-	static void *makeTexture(unsigned char *pixels, int width, int height);
-
 	void DoMouseGrab(bool grab) { m_doingMouseGrab = grab; }
 
-	static bool WantCaptureMouse()
+	bool WantCaptureMouse()
 	{
 		return ImGui::GetIO().WantCaptureMouse;
 	}
 
-	static bool WantCaptureKeyboard()
+	bool WantCaptureKeyboard()
 	{
 		return ImGui::GetIO().WantCaptureKeyboard;
 	}
 	static int RadialPopupSelectMenu(const ImVec2 &center, std::string popup_id, int mouse_button, std::vector<ImTextureID> tex_ids, std::vector<std::pair<ImVec2, ImVec2>> uvs, unsigned int size, std::vector<std::string> tooltips);
 	static bool CircularSlider(const ImVec2 &center, float *v, float v_min, float v_max);
 
-	void Cleanup();
 	static bool LowThrustButton(const char *label, const ImVec2 &size_arg, int thrust_level, const ImVec4 &bg_col, int frame_padding, ImColor gauge_fg, ImColor gauge_bg);
 	static bool ButtonImageSized(ImTextureID user_texture_id, const ImVec2& size, const ImVec2& imgSize, const ImVec2& uv0, const ImVec2& uv1, int frame_padding, const ImVec4& bg_col, const ImVec4& tint_col);
 
@@ -152,4 +160,6 @@ private:
 	void BakeFont(PiFont &font);
 	void AddFontDefinition(const PiFont &font) { m_font_definitions[font.name()] = font; }
 	void ClearFonts();
+
+	void *makeTexture(unsigned char *pixels, int width, int height);
 };

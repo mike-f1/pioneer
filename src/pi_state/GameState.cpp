@@ -254,17 +254,17 @@ namespace MainState_ {
 				bool active = true;
 				if (Pi::m_luaConsole) active = !Pi::m_luaConsole->IsActive();
 				if (active) {
-					Pi::pigui->NewFrame(RendererLocator::getRenderer()->GetSDLWindow(), InGameViewsLocator::getInGameViews()->ShouldDrawGui());
+					PiGuiFrameHelper pifh(Pi::pigui.Get(), RendererLocator::getRenderer()->GetSDLWindow(), InGameViewsLocator::getInGameViews()->ShouldDrawGui());
 
 					InGameViewsLocator::getInGameViews()->DrawUI(m_frameTime);
-					Pi::DrawPiGui(m_frameTime, "GAME");
-
+					Pi::pigui->Render(m_frameTime, "GAME");
 #if WITH_DEVKEYS
 					if (m_debugInfo)  {
 						m_debugInfo->Update();
 						m_debugInfo->Print();
 					}
 #endif
+					Pi::pigui->EndFrame();
 				}
 				InGameViewsLocator::getInGameViews()->GetWorldView()->EndCameraFrame();
 			}

@@ -56,10 +56,12 @@ public:
 	const TransferPlanner *GetPlanner() const { return m_planner.get(); };
 	void ResetPlanner();
 
+	static void RegisterInputBindings();
+	void AttachBindingCallback();
+
 private:
 	virtual void OnSwitchTo() override;
 	virtual void OnSwitchFrom() override;
-	void RegisterInputBindings();
 
 	static const double PICK_OBJECT_RECT_SIZE;
 	static const uint16_t N_VERTICES_MAX;
@@ -139,7 +141,7 @@ private:
 	std::unique_ptr<Graphics::VertexArray> m_lineVerts;
 	Graphics::Drawables::Lines m_lines;
 
-	struct SystemViewBinding {
+	inline static struct SystemViewBinding {
 		AxisId mapViewZoom;
 
 		AxisId mapViewRotateLeftRight;
@@ -147,7 +149,7 @@ private:
 
 	} m_systemViewBindings;
 
-	std::unique_ptr<InputFrame> m_inputFrame;
+	static std::unique_ptr<InputFrame> m_inputFrame;
 };
 
 #endif /* _SYSTEMVIEW_H */

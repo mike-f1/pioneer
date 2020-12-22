@@ -131,6 +131,10 @@
     "description": "Descriptive name for the PrimaryFire action.",
     "message": "Primary Fire"
   },
+  "BIND_QUICK_SAVE": {
+    "description": "Descriptive name for the quicksave action.",
+    "message": "Quick save"
+  },
   "BIND_REAR_CAMERA": {
     "description": "Descriptive name for the RearCamera action.",
     "message": "Switch to Rear Camera"
@@ -139,9 +143,17 @@
     "description": "Descriptive name for the ResetCamera action.",
     "message": "Reset Camera View to Default"
   },
+  "BIND_REQUEST_QUIT": {
+    "description": "Descriptive name for the quit-as-soon-as-possible action.",
+    "message": "Request Quit"
+  },
   "BIND_RIGHT_CAMERA": {
     "description": "Descriptive name for the RightCamera action.",
     "message": "Switch to Right Camera"
+  },
+  "BIND_SCREENSHOT": {
+    "description": "Descriptive name for taking screenshot action.",
+    "message": "Screenshot"
   },
   "BIND_SECONDARY_FIRE": {
     "description": "Descriptive name for the SecondaryFire action.",
@@ -182,6 +194,10 @@
   "BIND_TOGGLE_SET_SPEED": {
     "description": "Descriptive name for the ToggleSetSpeed action.",
     "message": "Toggle Speed Control Mode"
+  },
+  "BIND_TOGGLE_VIDEO_REC": {
+    "description": "Descriptive name for the toggle video recording action.",
+    "message": "Toggle Video Recording"
   },
   "BIND_TOP_CAMERA": {
     "description": "Descriptive name for the TopCamera action.",

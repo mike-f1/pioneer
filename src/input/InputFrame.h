@@ -57,6 +57,8 @@ public:
 	bool IsActive(AxisId id);
 	float GetValue(AxisId id);
 
+	void RemoveCallbacks();
+
 private:
 	// Check the event against all the inputs in this frame.
 	KeyBindings::InputResponse ProcessSDLEvent(const SDL_Event &event);

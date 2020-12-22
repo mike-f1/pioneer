@@ -171,28 +171,24 @@ start:
 			}
 		}
 
-		Pi::Init(options, mode == RunMode::GALAXYDUMP);
-
-		if (mode == RunMode::GAME)
-			for (;;) {
-				Pi::Start(startPath);
-				startPath = SystemPath(0, 0, 0, 0, 0); // Reset the start planet when coming back to the menu
+	{
+			if (mode == RunMode::GAME) {
+					Pi m_pi(options, startPath, mode == RunMode::GALAXYDUMP);
+			}	else if (mode == RunMode::GALAXYDUMP) {
+				FILE *file = filename == "-" ? stdout : fopen(filename.c_str(), "w");
+				if (file == nullptr) {
+					Output("pioneer: could not open \"%s\" for writing: %s\n", filename.c_str(), strerror(errno));
+					break;
+				}
+				RefCountedPtr<Galaxy> galaxy = GalaxyGenerator::Create();
+				galaxy->Dump(file, sx, sy, sz, radius);
+				if (filename != "-" && fclose(file) != 0) {
+					Output("pioneer: writing to \"%s\" failed: %s\n", filename.c_str(), strerror(errno));
+				}
 			}
-		else if (mode == RunMode::GALAXYDUMP) {
-			FILE *file = filename == "-" ? stdout : fopen(filename.c_str(), "w");
-			if (file == nullptr) {
-				Output("pioneer: could not open \"%s\" for writing: %s\n", filename.c_str(), strerror(errno));
-				break;
-			}
-			RefCountedPtr<Galaxy> galaxy = GalaxyGenerator::Create();
-			galaxy->Dump(file, sx, sy, sz, radius);
-			if (filename != "-" && fclose(file) != 0) {
-				Output("pioneer: writing to \"%s\" failed: %s\n", filename.c_str(), strerror(errno));
-			}
+			break;
 		}
-		break;
 	}
-
 	case RunMode::MODELVIEWER: {
 		std::string modelName;
 		if (argc > 2)

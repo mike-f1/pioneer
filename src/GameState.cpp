@@ -162,18 +162,3 @@ void GameStateStatic::SaveGame(const std::string &filename)
 	Profiler::dumphtml(profilerPath.c_str());
 #endif
 }
-
-void GameStateStatic::DestroyGame()
-{
-	if (GameLocator::getGame() == nullptr) {
-		Output("Attempt to destroy a not existing Game!\n");
-		return;
-	}
-
-	InputLocator::getInput()->TerminateGame();
-
-	InGameViewsLocator::NewInGameViews(nullptr);
-
-	delete GameLocator::getGame();
-	GameLocator::provideGame(nullptr);
-}

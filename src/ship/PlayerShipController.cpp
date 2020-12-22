@@ -22,6 +22,8 @@
 
 #include <algorithm>
 
+std::unique_ptr<InputFrame> PlayerShipController::m_inputFrame;
+
 PlayerShipController::PlayerShipController() :
 	ShipController(),
 	m_combatTarget(0),
@@ -43,13 +45,17 @@ PlayerShipController::PlayerShipController() :
 	m_fovY = GameConfSingleton::getInstance().Float("FOVVertical");
 	m_lowThrustPower = GameConfSingleton::getInstance().Float("DefaultLowThrustPower");
 
-	RegisterInputBindings();
+	AttachBindingCallback();
+}
+
+PlayerShipController::~PlayerShipController()
+{
+	m_inputFrame->RemoveCallbacks();
 }
 
 void PlayerShipController::RegisterInputBindings()
 {
 	using namespace KeyBindings;
-	using namespace std::placeholders;
 
 	m_inputFrame = std::make_unique<InputFrame>("PlayerShipController");
 
@@ -59,7 +65,6 @@ void PlayerShipController::RegisterInputBindings()
 	m_inputBindings.targetObject = m_inputFrame->AddActionBinding("BindTargetObject", weaponsGroup, ActionBinding(SDLK_y));
 	m_inputBindings.primaryFire = m_inputFrame->AddActionBinding("BindPrimaryFire", weaponsGroup, ActionBinding(SDLK_SPACE));
 	m_inputBindings.secondaryFire = m_inputFrame->AddActionBinding("BindSecondaryFire", weaponsGroup, ActionBinding(SDLK_m));
-	m_inputFrame->AddCallbackFunction("BindSecondaryFire", std::bind(&PlayerShipController::FireMissile, this, _1));
 
 	std::string bindRecString = "BindWCRecall";
 	for (int i = 0; i < WEAPON_CONFIG_SLOTS; i++) {
@@ -79,7 +84,6 @@ void PlayerShipController::RegisterInputBindings()
 	m_inputBindings.roll = m_inputFrame->AddAxisBinding("BindAxisRoll", flightGroup, AxisBinding(SDLK_u, SDLK_o));
 	m_inputBindings.killRot = m_inputFrame->AddActionBinding("BindKillRot", flightGroup, ActionBinding(SDLK_p, SDLK_x));
 	m_inputBindings.toggleRotationDamping = m_inputFrame->AddActionBinding("BindToggleRotationDamping", flightGroup, ActionBinding(SDLK_v));
-	m_inputFrame->AddCallbackFunction("BindToggleRotationDamping", std::bind(&PlayerShipController::ToggleRotationDamping, this, _1));
 
 	auto &thrustGroup = controlsPage.GetBindingGroup("ManualControl");
 	m_inputBindings.thrustForward = m_inputFrame->AddAxisBinding("BindAxisThrustForward", thrustGroup, AxisBinding(SDLK_w, SDLK_s));
@@ -87,20 +91,24 @@ void PlayerShipController::RegisterInputBindings()
 	m_inputBindings.thrustLeft = m_inputFrame->AddAxisBinding("BindAxisThrustLeft", thrustGroup, AxisBinding(SDLK_a, SDLK_d));
 	m_inputBindings.thrustLowPower = m_inputFrame->AddActionBinding("BindThrustLowPower", thrustGroup, ActionBinding(SDLK_LSHIFT));
 	m_inputBindings.toggleUC = m_inputFrame->AddActionBinding("BindToggleUC", thrustGroup, ActionBinding(SDLK_g));
-	m_inputFrame->AddCallbackFunction("BindToggleUC", std::bind(&PlayerShipController::ToggleUC, this, _1));
 	m_inputBindings.takeOff = m_inputFrame->AddActionBinding("BindTakeOff", thrustGroup, ActionBinding(SDLK_F5));
-	m_inputFrame->AddCallbackFunction("BindTakeOff", std::bind(&PlayerShipController::TakeOff, this, _1));
 
 	auto &speedGroup = controlsPage.GetBindingGroup("SpeedControl");
 	m_inputBindings.speedControl = m_inputFrame->AddAxisBinding("BindSpeedControl", speedGroup, AxisBinding(SDLK_RETURN, SDLK_RSHIFT));
 	m_inputBindings.toggleSetSpeed = m_inputFrame->AddActionBinding("BindToggleSetSpeed", speedGroup, ActionBinding(SDLK_v));
-	m_inputFrame->AddCallbackFunction("BindToggleSetSpeed", std::bind(&PlayerShipController::ToggleSetSpeedMode, this, _1));
 
 	m_inputFrame->SetActive(true);
 }
 
-PlayerShipController::~PlayerShipController()
+void PlayerShipController::AttachBindingCallback()
 {
+	using namespace std::placeholders;
+
+	m_inputFrame->AddCallbackFunction("BindSecondaryFire", std::bind(&PlayerShipController::FireMissile, this, _1));
+	m_inputFrame->AddCallbackFunction("BindToggleRotationDamping", std::bind(&PlayerShipController::ToggleRotationDamping, this, _1));
+	m_inputFrame->AddCallbackFunction("BindToggleUC", std::bind(&PlayerShipController::ToggleUC, this, _1));
+	m_inputFrame->AddCallbackFunction("BindTakeOff", std::bind(&PlayerShipController::TakeOff, this, _1));
+	m_inputFrame->AddCallbackFunction("BindToggleSetSpeed", std::bind(&PlayerShipController::ToggleSetSpeedMode, this, _1));
 }
 
 void PlayerShipController::SaveToJson(Json &jsonObj, Space *space)

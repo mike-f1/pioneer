@@ -135,6 +135,16 @@ void BindingContainer::SetBTrait(const std::string &id, const KeyBindings::Behav
 	};
 }
 
+void BindingContainer::RemoveCallbacks()
+{
+	std::for_each(m_actions.begin(), m_actions.end(), [](TAction &action) {
+		action.callback = nullptr;
+	});
+	std::for_each(m_axes.begin(), m_axes.end(), [](TAxis &axis) {
+		axis.callback = nullptr;
+	});
+}
+
 KeyBindings::InputResponse BindingContainer::ProcessSDLEvent(const SDL_Event &event)
 {
 	using namespace KeyBindings;

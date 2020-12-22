@@ -23,8 +23,6 @@ public:
 	static bool CanLoadGame(const std::string &filename);
 	static void SaveGame(const std::string &filename);
 
-	static void DestroyGame();
-
 protected:
 
 private:

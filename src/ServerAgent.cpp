@@ -1,6 +1,7 @@
 // Copyright © 2008-2019 Pioneer Developers. See AUTHORS.txt for details
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
+#include "buildopts.h"
 #ifdef ENABLE_SERVER_AGENT
 
 #if defined(_MSC_VER) && !defined(NOMINMAX)
@@ -12,7 +13,7 @@
 #endif
 
 #include "ServerAgent.h"
-#include "StringF.h"
+#include "libs/StringF.h"
 #include <curl/curl.h>
 
 void NullServerAgent::Call(const std::string &method, const Json &data, SuccessCallback onSuccess, FailCallback onFail, void *userdata)
@@ -153,8 +154,11 @@ void HTTPServerAgent::ThreadMain()
 		// done with the queue
 		SDL_UnlockMutex(m_requestQueueLock);
 
-		Json::FastWriter writer;
-		req.buffer = writer.write(req.data);
+		// FIXME: This is completely untested, just a fast replacement to get it compile again
+		//Json::FastWriter writer;
+		//req.buffer = writer.write(req.data);
+		auto vector_uint8_t = Json::to_cbor(req.data);
+		req.buffer = std::string(vector_uint8_t.begin(), vector_uint8_t.end());
 
 		Response resp(req.onSuccess, req.onFail, req.userdata);
 
@@ -177,11 +181,14 @@ void HTTPServerAgent::ThreadMain()
 			}
 		}
 
+		// FIXME: This is completely untested, just a fast replacement to get it compile again
 		if (resp.success) {
-			Json::Reader reader;
-			resp.success = reader.parse(resp.buffer, resp.data, false);
-			if (!resp.success)
-				resp.buffer = std::string("JSON parse error: " + reader.getFormattedErrorMessages());
+		//	Json::Reader reader;
+		//	resp.success = reader.parse(resp.buffer, resp.data, false);
+		//	if (!resp.success)
+		//		resp.buffer = std::string("JSON parse error: " + reader.getFormattedErrorMessages());
+			std::vector<std::uint8_t> vector_uint8_t(resp.buffer.begin(), resp.buffer.end());
+			resp.data = Json::from_cbor(vector_uint8_t);
 		}
 
 		SDL_LockMutex(m_responseQueueLock);

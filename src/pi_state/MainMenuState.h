@@ -13,7 +13,7 @@ namespace MainState_ {
 	class MainMenuState: public PiState {
 	public:
 		MainMenuState();
-		~MainMenuState();
+		virtual ~MainMenuState();
 
 		PiState *Update() override final;
 
@@ -22,5 +22,6 @@ namespace MainState_ {
 		uint32_t m_last_time;
 	};
 
-} // namespace MainState
+} // namespace MainState_
+
 #endif // MAIN_MENU_STATE_H

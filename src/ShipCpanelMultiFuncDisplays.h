@@ -43,9 +43,10 @@ public:
 
 	void SaveToJson(Json &jsonObj);
 
+	static void RegisterInputBindings();
+	void AttachBindingCallback();
 private:
 	void InitObject();
-	void RegisterInputBindings();
 
 	void ToggleMode(bool down);
 
@@ -90,13 +91,13 @@ private:
 	Graphics::Drawables::Lines m_scanLines;
 	Graphics::Drawables::Lines m_edgeLines;
 
-	struct RadarWidgetBinding {
+	inline static struct RadarWidgetBinding {
 		ActionId toggleScanMode;
 		AxisId changeScanRange;
 
 	} m_radarWidgetBindings;
 
-	std::unique_ptr<InputFrame> m_inputFrame;
+	static std::unique_ptr<InputFrame> m_inputFrame;
 };
 
 #endif /* _SHIPCPANELMULTIFUNCDISPLAYS_H */

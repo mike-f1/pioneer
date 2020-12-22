@@ -26,8 +26,13 @@ namespace Graphics {
 	class Renderer;
 }
 
+namespace MainState_ {
+	class GameState;
+}
+
 class Game {
 	friend class GameStateStatic;
+	friend class MainState_::GameState;
 	// start docked in station referenced by path or nearby to body if it is no station
 	Game(const SystemPath &path, const double startDateTime, unsigned int cacheRadius);
 

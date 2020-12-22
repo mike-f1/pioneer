@@ -34,12 +34,13 @@ public:
 
 	void SetObject(Body *b) { m_newTarget = b; }
 
+	static void RegisterInputBindings();
+	void AttachBindingCallback();
 protected:
 	virtual void OnSwitchTo() override;
 	virtual void OnSwitchFrom() override;
 
 private:
-	void RegisterInputBindings();
 
 	void DrawAdditionalUIForSysBodies();
 	void DrawAdditionalUIForBodies();
@@ -103,7 +104,7 @@ private:
 	void OnNextSeed();
 	void OnPrevSeed();
 
-	struct ObjectViewerBinding {
+	inline static struct ObjectViewerBinding {
 	public:
 		ActionId resetZoom;
 		AxisId zoom;
@@ -116,7 +117,7 @@ private:
 
 	} m_objectViewerBindings;
 
-	std::unique_ptr<InputFrame> m_inputFrame;
+	static std::unique_ptr<InputFrame> m_inputFrame;
 
 	std::unique_ptr<InputFrameStatusTicket> m_bindingLock;
 };

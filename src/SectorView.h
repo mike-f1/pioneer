@@ -80,6 +80,8 @@ public:
 	void AutoRoute(const SystemPath &start, const SystemPath &target, std::vector<SystemPath> &outRoute) const;
 	void SetDrawRouteLines(bool value) { m_drawRouteLines = value; }
 
+	static void RegisterInputBindings();
+	void AttachBindingCallback();
 protected:
 	virtual void OnSwitchTo() override;
 	virtual void OnSwitchFrom() override;
@@ -87,7 +89,6 @@ protected:
 private:
 	void InitDefaults();
 	void InitObject(unsigned int cacheRadius);
-	void RegisterInputBindings();
 
 	void PrepareLegs(const matrix4x4f &trans, const vector3f &pos, int z_diff);
 	void PrepareGrid(const matrix4x4f &trans, int radius);
@@ -152,7 +153,7 @@ private:
 	std::set<const Faction *> m_visibleFactions;
 	std::set<const Faction *> m_hiddenFactions;
 
-	struct SectorBinding {
+	inline static struct SectorBinding {
 		ActionId mapLockHyperspaceTarget;
 		ActionId mapToggleSelectionFollowView;
 		ActionId mapWarpToCurrent;
@@ -171,8 +172,8 @@ private:
 
 	} m_sectorBindings;
 
-	std::unique_ptr<InputFrame> m_inputFrame;
-	std::unique_ptr<InputFrame> m_sectorFrame;
+	static std::unique_ptr<InputFrame> m_inputFrame;
+	static std::unique_ptr<InputFrame> m_sectorFrame;
 
 	RefCountedPtr<SectorCache::Slave> m_sectorCache;
 	std::string m_previousSearch;

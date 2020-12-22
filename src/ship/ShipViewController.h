@@ -43,7 +43,23 @@ public:
 	// Here temporarely because of initialization order
 	void SetCamType(Ship *ship, enum CamType c);
 
-	struct InputBinding {
+	static void RegisterInputBindings();
+	void AttachBindingCallback();
+
+private:
+	void ChangeInternalCameraMode(InternalCameraController::Mode m);
+
+	void OnCamReset(bool down);
+
+	enum CamType m_camType;
+
+	std::unique_ptr<InternalCameraController> m_internalCameraController;
+	std::unique_ptr<ExternalCameraController> m_externalCameraController;
+	std::unique_ptr<SiderealCameraController> m_siderealCameraController;
+	std::unique_ptr<FlyByCameraController> m_flybyCameraController;
+	CameraController *m_activeCameraController; //one of the above
+
+	inline static struct InputBinding {
 		AxisId cameraYaw;
 		AxisId cameraPitch;
 		AxisId cameraRoll;
@@ -63,23 +79,8 @@ public:
 		ActionId resetCamera;
 	} m_inputBindings;
 
-	std::unique_ptr<InputFrame> m_inputFrame;
-	std::unique_ptr<InputFrame> m_shipViewFrame;
-
-private:
-	void ChangeInternalCameraMode(InternalCameraController::Mode m);
-
-	void RegisterInputBindings();
-
-	void OnCamReset(bool down);
-
-	enum CamType m_camType;
-
-	std::unique_ptr<InternalCameraController> m_internalCameraController;
-	std::unique_ptr<ExternalCameraController> m_externalCameraController;
-	std::unique_ptr<SiderealCameraController> m_siderealCameraController;
-	std::unique_ptr<FlyByCameraController> m_flybyCameraController;
-	CameraController *m_activeCameraController; //one of the above
+	static std::unique_ptr<InputFrame> m_inputFrame;
+	static std::unique_ptr<InputFrame> m_shipViewFrame;
 
 	bool headtracker_input_priority;
 };

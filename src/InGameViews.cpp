@@ -16,6 +16,8 @@
 #include "input/InputFrame.h"
 #include "input/KeyBindings.h"
 
+std::unique_ptr<InputFrame> InGameViews::m_inputFrame;
+
 InGameViews::InGameViews(Game *game, const SystemPath &path, unsigned int cacheRadius) :
 	m_shouldDrawGui(true),
 	m_shouldDrawLabels(true),
@@ -34,7 +36,7 @@ InGameViews::InGameViews(Game *game, const SystemPath &path, unsigned int cacheR
 	,m_objectViewerView(std::make_unique<ObjectViewerView>())
 #endif
 {
-	RegisterInputBindings();
+	AttachBindingCallback();
 }
 
 InGameViews::InGameViews(const Json &jsonObj, Game *game, const SystemPath &path, unsigned int cacheRadius) :
@@ -59,7 +61,7 @@ InGameViews::InGameViews(const Json &jsonObj, Game *game, const SystemPath &path
 	m_sectorView  = std::make_unique<SectorView>(jsonObj, game->GetGalaxy(), cacheRadius);
 	m_worldView = std::make_unique<WorldView>(jsonObj, game);
 
-	RegisterInputBindings();
+	AttachBindingCallback();
 }
 
 void InGameViews::SaveToJson(Json &jsonObj)
@@ -71,12 +73,12 @@ void InGameViews::SaveToJson(Json &jsonObj)
 
 InGameViews::~InGameViews()
 {
+	m_inputFrame->RemoveCallbacks();
 }
 
 void InGameViews::RegisterInputBindings()
 {
 	using namespace KeyBindings;
-	using namespace std::placeholders;
 
 	m_inputFrame = std::make_unique<InputFrame>("GeneralView");
 
@@ -84,6 +86,22 @@ void InGameViews::RegisterInputBindings()
 	BindingGroup &group = page.GetBindingGroup("Miscellaneous");
 
 	m_viewBindings.toggleHudMode = m_inputFrame->AddActionBinding("BindToggleHudMode", group, ActionBinding(SDLK_TAB));
+
+	BindingGroup &group_tc = page.GetBindingGroup("TimeControl");
+
+	m_viewBindings.increaseTimeAcceleration = m_inputFrame->AddActionBinding("BindIncreaseTimeAcceleration", group_tc, ActionBinding(SDLK_PAGEUP));
+	m_viewBindings.decreaseTimeAcceleration = m_inputFrame->AddActionBinding("BindDecreaseTimeAcceleration", group_tc, ActionBinding(SDLK_PAGEDOWN));
+	m_viewBindings.setTimeAccel1x = m_inputFrame->AddActionBinding("Speed1x", group_tc, ActionBinding(SDLK_PAGEDOWN));
+	m_viewBindings.setTimeAccel10x = m_inputFrame->AddActionBinding("Speed10x", group_tc, ActionBinding(SDLK_PAGEDOWN));
+	m_viewBindings.setTimeAccel100x = m_inputFrame->AddActionBinding("Speed100x", group_tc, ActionBinding(SDLK_PAGEDOWN));
+	m_viewBindings.setTimeAccel1000x = m_inputFrame->AddActionBinding("Speed1000x", group_tc, ActionBinding(SDLK_PAGEDOWN));
+	m_viewBindings.setTimeAccel10000x = m_inputFrame->AddActionBinding("Speed10000x", group_tc, ActionBinding(SDLK_PAGEDOWN));
+
+	m_inputFrame->SetActive(true);
+}
+
+void InGameViews::AttachBindingCallback()
+{
 	m_inputFrame->AddCallbackFunction("BindToggleHudMode", [&](bool down) {
 		if (down) return;
 		if (ViewType::WORLD == m_currentViewType) {
@@ -102,52 +120,34 @@ void InGameViews::RegisterInputBindings()
 			m_shouldDrawLabels = true;
 		}
 	});
-
-	BindingGroup &group_tc = page.GetBindingGroup("TimeControl");
-
-	m_viewBindings.increaseTimeAcceleration = m_inputFrame->AddActionBinding("BindIncreaseTimeAcceleration", group_tc, ActionBinding(SDLK_PAGEUP));
 	m_inputFrame->AddCallbackFunction("BindIncreaseTimeAcceleration", [](bool down) {
 		if (down) return;
 		GameLocator::getGame()->RequestTimeAccelInc();
 	});
-
-	m_viewBindings.decreaseTimeAcceleration = m_inputFrame->AddActionBinding("BindDecreaseTimeAcceleration", group_tc, ActionBinding(SDLK_PAGEDOWN));
 	m_inputFrame->AddCallbackFunction("BindDecreaseTimeAcceleration",  [](bool down) {
 		if (down) return;
 		GameLocator::getGame()->RequestTimeAccelDec();
 	});
-
-	m_viewBindings.setTimeAccel1x = m_inputFrame->AddActionBinding("Speed1x", group_tc, ActionBinding(SDLK_PAGEDOWN));
 	m_inputFrame->AddCallbackFunction("Speed1x",  [](bool down) {
 		if (down) return;
 		GameLocator::getGame()->RequestTimeAccel(Game::TIMEACCEL_1X);
 	});
-
-	m_viewBindings.setTimeAccel10x = m_inputFrame->AddActionBinding("Speed10x", group_tc, ActionBinding(SDLK_PAGEDOWN));
 	m_inputFrame->AddCallbackFunction("Speed10x",  [](bool down) {
 		if (down) return;
 		GameLocator::getGame()->RequestTimeAccel(Game::TIMEACCEL_10X);
 	});
-
-	m_viewBindings.setTimeAccel100x = m_inputFrame->AddActionBinding("Speed100x", group_tc, ActionBinding(SDLK_PAGEDOWN));
 	m_inputFrame->AddCallbackFunction("Speed100x",  [](bool down) {
 		if (down) return;
 		GameLocator::getGame()->RequestTimeAccel(Game::TIMEACCEL_100X);
 	});
-
-	m_viewBindings.setTimeAccel1000x = m_inputFrame->AddActionBinding("Speed1000x", group_tc, ActionBinding(SDLK_PAGEDOWN));
 	m_inputFrame->AddCallbackFunction("Speed1000x",  [](bool down) {
 		if (down) return;
 		GameLocator::getGame()->RequestTimeAccel(Game::TIMEACCEL_1000X);
 	});
-
-	m_viewBindings.setTimeAccel10000x = m_inputFrame->AddActionBinding("Speed10000x", group_tc, ActionBinding(SDLK_PAGEDOWN));
 	m_inputFrame->AddCallbackFunction("Speed10000x",  [](bool down) {
 		if (down) return;
 		GameLocator::getGame()->RequestTimeAccel(Game::TIMEACCEL_10000X);
 	});
-
-	m_inputFrame->SetActive(true);
 }
 
 #if WITH_OBJECTVIEWER

@@ -6,8 +6,8 @@
 #include "DateTime.h"
 #include "FileSystem.h"
 #include "Game.h"
-#include "GameState.h"
 #include "GameConfSingleton.h"
+#include "GameState.h"
 #include "GameLocator.h"
 #include "GameSaveError.h"
 #include "InGameViews.h"
@@ -23,7 +23,6 @@
 #include "WorldView.h"
 #include "galaxy/StarSystem.h"
 #include "libs/StringF.h"
-
 
 /*
  * Interface: Game

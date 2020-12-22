@@ -1,6 +1,7 @@
 // Copyright © 2008-2019 Pioneer Developers. See AUTHORS.txt for details
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
+#include "buildopts.h"
 #ifdef ENABLE_SERVER_AGENT
 
 #include "LuaServerAgent.h"
@@ -9,7 +10,7 @@
 #include "LuaRef.h"
 #include "Pi.h"
 #include "ServerAgent.h"
-#include <json/json.h>
+#include "Json.h"
 
 /*
  * Interface: ServerAgent
@@ -54,7 +55,7 @@ static Json _lua_to_json(lua_State *l, int idx)
 
 		// XXX handle arrays
 
-		Json object(Json::objectValue);
+		Json object;
 
 		lua_pushnil(l);
 		while (lua_next(l, data)) {
@@ -83,27 +84,27 @@ static void _json_to_lua(lua_State *l, const Json &data)
 	LUA_DEBUG_START(l);
 
 	switch (data.type()) {
-	case Json::nullValue:
+	case Json::value_t::null:
 		lua_pushnil(l);
 		break;
 
-	case Json::intValue:
-	case Json::uintValue:
-	case Json::realValue:
-		lua_pushnumber(l, data.asDouble());
+	case Json::value_t::number_integer:
+	case Json::value_t::number_unsigned:
+	case Json::value_t::number_float:
+		lua_pushnumber(l, double(data));
 		break;
 
-	case Json::stringValue: {
-		const std::string &str(data.asString());
+	case Json::value_t::string: {
+		const std::string &str(data);
 		lua_pushlstring(l, str.c_str(), str.size());
 		break;
 	}
 
-	case Json::booleanValue:
-		lua_pushboolean(l, data.asBool());
+	case Json::value_t::boolean:
+		lua_pushboolean(l, bool(data));
 		break;
 
-	case Json::arrayValue: {
+	case Json::value_t::array: {
 		lua_newtable(l);
 		for (int i = 0; i < int(data.size()); i++) {
 			lua_pushinteger(l, i + 1);
@@ -113,10 +114,10 @@ static void _json_to_lua(lua_State *l, const Json &data)
 		break;
 	}
 
-	case Json::objectValue: {
+	case Json::value_t::object: {
 		lua_newtable(l);
 		for (Json::const_iterator i = data.begin(); i != data.end(); ++i) {
-			const std::string &key(i.key().asString());
+			const std::string &key(i.key());
 			lua_pushlstring(l, key.c_str(), key.size());
 			_json_to_lua(l, *i);
 			lua_rawset(l, -3);

@@ -1,8 +1,10 @@
 #include "buildopts.h"
 
 #include "GameState.h"
+
 #include "MainMenuState.h"
 #include "TombstoneState.h"
+#include "QuitState.h"
 
 #include "DeathView.h"
 #include "DebugInfo.h"
@@ -19,6 +21,7 @@
 #include "Player.h"
 #include "ShipCpanel.h"
 #include "Space.h"
+#include "VideoRecorder.h"
 #include "WorldView.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
@@ -27,6 +30,10 @@
 #include "sound/AmbientSounds.h"
 #include "sound/SoundMusic.h"
 #include "sphere/BaseSphere.h"
+
+#if ENABLE_SERVER_AGENT
+#include "ServerAgent.h"
+#endif
 
 #include "PiGui.h"
 
@@ -94,7 +101,12 @@ namespace MainState_ {
 
 		assert(GameLocator::getGame());
 
-		GameStateStatic::DestroyGame();
+		InputLocator::getInput()->TerminateGame();
+
+		InGameViewsLocator::NewInGameViews(nullptr);
+
+		delete GameLocator::getGame();
+		GameLocator::provideGame(nullptr);
 
 		Lua::manager->CollectGarbage();
 	}
@@ -111,7 +123,7 @@ namespace MainState_ {
 			return new MainMenuState();
 		} else if (ret == MainState::QUITTING) {
 			delete this;
-			return new QuittingState();
+			return new QuitState();
 		}
 		return this;
 	}
@@ -120,7 +132,7 @@ namespace MainState_ {
 	{
 		double time_player_died = 0;
 #if WITH_DEVKEYS
-		if (m_debugInfo)  m_debugInfo->NewCycle();
+		if (m_statelessVars.debugInfo)  m_statelessVars.debugInfo->NewCycle();
 #endif
 
 		int MAX_PHYSICS_TICKS = GameConfSingleton::getInstance().Int("MaxPhysicsCyclesPerRender");
@@ -129,7 +141,7 @@ namespace MainState_ {
 
 		double currentTime = 0.001 * double(SDL_GetTicks());
 		double accumulator = GameLocator::getGame()->GetTimeStep();
-		m_gameTickAlpha = 0;
+		m_statelessVars.gameTickAlpha = 0;
 
 #ifdef PIONEER_PROFILER
 		Profiler::reset();
@@ -144,10 +156,10 @@ namespace MainState_ {
 
 			const uint32_t newTicks = SDL_GetTicks();
 			double newTime = 0.001 * double(newTicks);
-			m_frameTime = newTime - currentTime;
-			if (m_frameTime > 0.25) m_frameTime = 0.25;
+			m_statelessVars.frameTime = newTime - currentTime;
+			if (m_statelessVars.frameTime > 0.25) m_statelessVars.frameTime = 0.25;
 			currentTime = newTime;
-			accumulator += m_frameTime * GameLocator::getGame()->GetTimeAccelRate();
+			accumulator += m_statelessVars.frameTime * GameLocator::getGame()->GetTimeAccelRate();
 
 			const float step = GameLocator::getGame()->GetTimeStep();
 			if (step > 0.0f) {
@@ -169,12 +181,12 @@ namespace MainState_ {
 				// TODO: Investigate the real needs of these lines...
 				int pstate = GameLocator::getGame()->GetPlayer()->GetFlightState();
 				if (pstate == Ship::DOCKED || pstate == Ship::DOCKING || pstate == Ship::UNDOCKING)
-					m_gameTickAlpha = 1.0;
+					m_statelessVars.gameTickAlpha = 1.0;
 				else
-					m_gameTickAlpha = accumulator / step;
+					m_statelessVars.gameTickAlpha = accumulator / step;
 
 #if WITH_DEVKEYS
-				if (m_debugInfo)  m_debugInfo->IncreasePhys(phys_ticks);
+				if (m_statelessVars.debugInfo)  m_statelessVars.debugInfo->IncreasePhys(phys_ticks);
 #endif
 			} else {
 				// paused
@@ -182,7 +194,7 @@ namespace MainState_ {
 				BaseSphere::UpdateAllBaseSphereDerivatives();
 			}
 #if WITH_DEVKEYS
-			if (m_debugInfo)  m_debugInfo->IncreaseFrame();
+			if (m_statelessVars.debugInfo)  m_statelessVars.debugInfo->IncreaseFrame();
 #endif
 
 			// did the player die?
@@ -208,12 +220,12 @@ namespace MainState_ {
 			/* Calculate position for this rendered frame (interpolated between two physics ticks */
 			// XXX should this be here? what is this anyway?
 			for (Body *b : GameLocator::getGame()->GetSpace()->GetBodies()) {
-				b->UpdateInterpTransform(m_gameTickAlpha);
+				b->UpdateInterpTransform(m_statelessVars.gameTickAlpha);
 			}
 
-			Frame::GetRootFrame()->UpdateInterpTransform(m_gameTickAlpha);
+			Frame::GetRootFrame()->UpdateInterpTransform(m_statelessVars.gameTickAlpha);
 
-			InGameViewsLocator::getInGameViews()->UpdateView(m_frameTime);
+			InGameViewsLocator::getInGameViews()->UpdateView(m_statelessVars.frameTime);
 			InGameViewsLocator::getInGameViews()->Draw3DView();
 
 			// hide cursor for ship control. Do this before imgui runs, to prevent the mouse pointer from jumping
@@ -256,15 +268,14 @@ namespace MainState_ {
 				if (active) {
 					PiGuiFrameHelper pifh(Pi::pigui.Get(), RendererLocator::getRenderer()->GetSDLWindow(), InGameViewsLocator::getInGameViews()->ShouldDrawGui());
 
-					InGameViewsLocator::getInGameViews()->DrawUI(m_frameTime);
-					Pi::pigui->Render(m_frameTime, "GAME");
+					InGameViewsLocator::getInGameViews()->DrawUI(m_statelessVars.frameTime);
+					Pi::pigui->Render(m_statelessVars.frameTime, "GAME");
 #if WITH_DEVKEYS
-					if (m_debugInfo)  {
-						m_debugInfo->Update();
-						m_debugInfo->Print();
+					if (m_statelessVars.debugInfo)  {
+						m_statelessVars.debugInfo->Update();
+						m_statelessVars.debugInfo->Print();
 					}
 #endif
-					Pi::pigui->EndFrame();
 				}
 				InGameViewsLocator::getInGameViews()->GetWorldView()->EndCameraFrame();
 			}
@@ -297,17 +308,17 @@ namespace MainState_ {
 
 #ifdef PIONEER_PROFILER
 			const uint32_t profTicks = SDL_GetTicks();
-			if (Pi::doProfileOne || (Pi::doProfileSlow && (profTicks - newTicks) > 100)) { // slow: < ~10fps
+			if (m_statelessVars.doProfileOne || (m_statelessVars.doProfileSlow && (profTicks - newTicks) > 100)) { // slow: < ~10fps
 				Output("dumping profile data\n");
-				Profiler::dumphtml(Pi::profilerPath.c_str());
-				Pi::doProfileOne = false;
+				Profiler::dumphtml(m_statelessVars.profilerPath.c_str());
+				m_statelessVars.doProfileOne = false;
 			}
 #endif // PIONEER_PROFILER
 
-			if (Pi::isRecordingVideo && (Pi::ffmpegFile != nullptr)) {
+			if (m_statelessVars.videoRecorder) {
 				Graphics::ScreendumpState sd;
 				RendererLocator::getRenderer()->Screendump(sd);
-				fwrite(sd.pixels.get(), sizeof(uint32_t) * RendererLocator::getRenderer()->GetWindowWidth() * RendererLocator::getRenderer()->GetWindowHeight(), 1, Pi::ffmpegFile);
+				m_statelessVars.videoRecorder->NewFrame(sd.pixels.get(), sizeof(uint32_t) * RendererLocator::getRenderer()->GetWindowWidth() * RendererLocator::getRenderer()->GetWindowHeight());
 			}
 
 #ifdef PIONEER_PROFILER

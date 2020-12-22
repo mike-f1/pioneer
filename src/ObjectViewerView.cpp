@@ -41,6 +41,8 @@ constexpr const float LIGHT_START_ANGLE = M_PI / 4.0;
 constexpr const float MOVEMENT_SPEED = 0.5;
 constexpr const float WHEEL_SENSITIVITY = .03f; // Should be a variable in user settings.
 
+std::unique_ptr<InputFrame> ObjectViewerView::m_inputFrame;
+
 ObjectViewerView::ObjectViewerView() :
 	UIView(),
 	m_debugFlags(SceneGraph::DebugFlags::NONE),
@@ -68,12 +70,11 @@ ObjectViewerView::ObjectViewerView() :
 	cameraContext->SetCameraFrame(Frame::GetRootFrameId());
 	cameraContext->SetCameraPosition(vector3d(0.0));
 	cameraContext->SetCameraOrient(matrix3x3d::Identity());
-
-	RegisterInputBindings();
 }
 
 ObjectViewerView::~ObjectViewerView()
 {
+	m_inputFrame->RemoveCallbacks();
 }
 
 void ObjectViewerView::RegisterInputBindings()
@@ -97,6 +98,11 @@ void ObjectViewerView::RegisterInputBindings()
 
 	m_objectViewerBindings.rotateLightLeft = m_inputFrame->AddActionBinding("RotateLightLeft", groupVMC, ActionBinding(SDLK_r));
 	m_objectViewerBindings.rotateLightRight = m_inputFrame->AddActionBinding("RotateLightRight", groupVMC, ActionBinding(SDLK_f));
+}
+
+void ObjectViewerView::AttachBindingCallback()
+{
+	using namespace std::placeholders;
 }
 
 void ObjectViewerView::OnSwitchTo()

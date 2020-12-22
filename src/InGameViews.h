@@ -75,8 +75,9 @@ public:
 
 	void DrawUI(const float frameTime);
 
+	static void RegisterInputBindings();
+	void AttachBindingCallback();
 private:
-	void RegisterInputBindings();
 
 	View *m_currentView;
 	ViewType m_currentViewType;
@@ -99,7 +100,7 @@ private:
 	std::unique_ptr<ObjectViewerView> m_objectViewerView;
 #endif
 
-	struct BaseBinding {
+	inline static struct BaseBinding {
 		ActionId toggleHudMode;
 		ActionId increaseTimeAcceleration;
 		ActionId decreaseTimeAcceleration;
@@ -110,7 +111,7 @@ private:
 		ActionId setTimeAccel10000x;
 	} m_viewBindings;
 
-	std::unique_ptr<InputFrame> m_inputFrame;
+	static std::unique_ptr<InputFrame> m_inputFrame;
 };
 
 #endif // INGAMEVIEWS_H

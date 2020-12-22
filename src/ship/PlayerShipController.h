@@ -56,15 +56,16 @@ public:
 	void SetNavTarget(Body *const target, bool setSpeedTo = false);
 	void SetSetSpeedTarget(Body *const target);
 
+	static void RegisterInputBindings();
+	void AttachBindingCallback();
 private:
-	void RegisterInputBindings();
 
 	void ToggleRotationDamping(bool down);
 	void ToggleUC(bool down);
 	void TakeOff(bool down);
 	void ToggleSetSpeedMode(bool down);
 
-	struct InputBinding {
+	inline static struct InputBinding {
 		// Weapons
 		ActionId targetObject;
 		ActionId primaryFire;
@@ -93,7 +94,7 @@ private:
 		ActionId toggleSetSpeed;
 	} m_inputBindings;
 
-	std::unique_ptr<InputFrame> m_inputFrame;
+	static std::unique_ptr<InputFrame> m_inputFrame;
 
 	bool IsAnyAngularThrusterKeyDown();
 	bool IsAnyLinearThrusterKeyDown();

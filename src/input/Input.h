@@ -27,6 +27,10 @@ public:
 	void InitGame();
 	void TerminateGame();
 
+	// Calling functions which initializes static InputFrame at Init time
+	// NOTE: Can't be merged  in ctor due to InputFrames calling InputLocator
+	void InitializeInputBindings(std::vector<std::function<void(void)>> &bindings_registerer);
+
 	BindingPage &GetBindingPage(const std::string &id) { return m_bindingPages[id]; }
 	const std::map<std::string, BindingPage> &GetBindingPages() { return m_bindingPages; };
 

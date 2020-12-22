@@ -48,6 +48,9 @@ constexpr float ZOOM_SPEED = 25;
 constexpr float WHEEL_SENSITIVITY = .03f; // Should be a variable in user settings.
 constexpr float ROTATION_SPEED_FACTOR = 0.3f;
 
+std::unique_ptr<InputFrame> SectorView::m_inputFrame;
+std::unique_ptr<InputFrame> SectorView::m_sectorFrame;
+
 SectorView::SectorView(const SystemPath &path, RefCountedPtr<Galaxy> galaxy, unsigned int cacheRadius) :
 	UIView(),
 	m_galaxy(galaxy),
@@ -128,7 +131,6 @@ SectorView::SectorView(const Json &jsonObj, RefCountedPtr<Galaxy> galaxy, unsign
 void SectorView::RegisterInputBindings()
 {
 	using namespace KeyBindings;
-	using namespace std::placeholders;
 
 	m_inputFrame = std::make_unique<InputFrame>("GeneralPanRotateZoom");
 
@@ -148,15 +150,21 @@ void SectorView::RegisterInputBindings()
 	auto &groupMisc = page2.GetBindingGroup("Miscellaneous");
 
 	m_sectorBindings.mapLockHyperspaceTarget = m_sectorFrame->AddActionBinding("BindMapLockHyperspaceTarget", groupMisc, ActionBinding(SDLK_SPACE));
-	m_sectorFrame->AddCallbackFunction("BindMapLockHyperspaceTarget", std::bind(&SectorView::OnMapLockHyperspaceToggle, this, _1));
 
 	m_sectorBindings.mapToggleSelectionFollowView = m_sectorFrame->AddActionBinding("BindMapToggleSelectionFollowView", groupMisc, ActionBinding(SDLK_RETURN, SDLK_KP_ENTER));
-	m_sectorFrame->AddCallbackFunction("BindMapToggleSelectionFollowView", std::bind(&SectorView::OnToggleSelectionFollowView, this, _1));
 
 	m_sectorBindings.mapWarpToCurrent = m_sectorFrame->AddActionBinding("BindMapWarpToCurrent", groupMisc, ActionBinding(SDLK_c));
 	m_sectorBindings.mapWarpToSelected = m_sectorFrame->AddActionBinding("BindMapWarpToSelection", groupMisc, ActionBinding(SDLK_g));
 	m_sectorBindings.mapWarpToHyperspaceTarget = m_sectorFrame->AddActionBinding("BindMapWarpToHyperspaceTarget", groupMisc, ActionBinding(SDLK_h));
 	m_sectorBindings.mapViewReset = m_sectorFrame->AddActionBinding("BindMapViewReset", groupMisc, ActionBinding(SDLK_t));
+}
+
+void SectorView::AttachBindingCallback()
+{
+	using namespace std::placeholders;
+
+	m_sectorFrame->AddCallbackFunction("BindMapLockHyperspaceTarget", std::bind(&SectorView::OnMapLockHyperspaceToggle, this, _1));
+	m_sectorFrame->AddCallbackFunction("BindMapToggleSelectionFollowView", std::bind(&SectorView::OnToggleSelectionFollowView, this, _1));
 }
 
 void SectorView::InitDefaults()
@@ -209,11 +217,12 @@ void SectorView::InitObject(unsigned int cacheRadius)
     size_t filled = m_galaxy->FillSectorCache(m_sectorCache, m_current, cacheRadius);
     Output("SectorView cache pre-filled with %lu entries\n", filled);
 
-	RegisterInputBindings();
+	AttachBindingCallback();
 }
 
 SectorView::~SectorView()
 {
+	m_sectorFrame->RemoveCallbacks();
 }
 
 void SectorView::SaveToJson(Json &jsonObj)

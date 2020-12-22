@@ -5,10 +5,10 @@
 
 namespace MainState_ {
 
-	class GameState: public PiState {
+	class GameState final: public PiState {
 	public:
 		GameState();
-		~GameState();
+		virtual ~GameState();
 
 		PiState *Update() override final;
 
@@ -20,5 +20,6 @@ namespace MainState_ {
 		bool m_doingMouseGrab;
 	};
 
-} // namespace MainState
+} // namespace MainState_
+
 #endif // PISTATE_H

@@ -30,7 +30,6 @@ class BindingContainer : public RefCounted
 	BindingContainer(const std::string &name);
 	~BindingContainer();
 
-public:
 	const std::string &GetName() { return m_name; };
 
 	ActionId AddActionBinding(std::string &id, BindingGroup &group, KeyBindings::ActionBinding binding);
@@ -43,7 +42,9 @@ public:
 	void AddCallbackFunction(const std::string &id, LuaRef &fun);
 	void SetBTrait(const std::string &id, const KeyBindings::BehaviourMod &bm);
 
-private:
+	void RemoveCallbacks();
+
+//private:
 	KeyBindings::InputResponse ProcessSDLEvent(const SDL_Event &event);
 
 	std::string m_name;

@@ -38,6 +38,8 @@ static const Color radarPlayerMissileColour = Color(243, 237, 29);
 static const Color radarCargoColour = Color(166, 166, 166);
 static const Color radarCloudColour = Color(128, 128, 255);
 
+std::unique_ptr<InputFrame> RadarWidget::m_inputFrame;
+
 RadarWidget::RadarWidget()
 {
 	m_mode = RadarMode::MODE_AUTO;
@@ -80,13 +82,12 @@ void RadarWidget::InitObject()
 	m_renderState = RendererLocator::getRenderer()->CreateRenderState(rsd);
 
 	GenerateRingsAndSpokes();
-	RegisterInputBindings();
+	AttachBindingCallback();
 }
 
 void RadarWidget::RegisterInputBindings()
 {
 	using namespace KeyBindings;
-	using namespace std::placeholders;
 
 	m_inputFrame = std::make_unique<InputFrame>("RadarWidget");
 
@@ -94,7 +95,6 @@ void RadarWidget::RegisterInputBindings()
 	BindingGroup &group = page.GetBindingGroup("Miscellaneous");
 
 	m_radarWidgetBindings.toggleScanMode = m_inputFrame->AddActionBinding("BindToggleScanMode", group, ActionBinding(SDLK_SLASH));
-	m_inputFrame->AddCallbackFunction("BindToggleScanMode", std::bind(&RadarWidget::ToggleMode, this, _1));
 
 	m_radarWidgetBindings.changeScanRange = m_inputFrame->AddAxisBinding("BindChangeScanRange", group, AxisBinding(SDLK_RIGHTBRACKET, SDLK_LEFTBRACKET));
 
@@ -104,8 +104,17 @@ void RadarWidget::RegisterInputBindings()
 	m_inputFrame->SetActive(true);
 }
 
+void RadarWidget::AttachBindingCallback()
+{
+	using namespace KeyBindings;
+	using namespace std::placeholders;
+
+	m_inputFrame->AddCallbackFunction("BindToggleScanMode", std::bind(&RadarWidget::ToggleMode, this, _1));
+}
+
 RadarWidget::~RadarWidget()
 {
+	m_inputFrame->RemoveCallbacks();
 }
 
 void RadarWidget::GetSizeRequested(float size[2])

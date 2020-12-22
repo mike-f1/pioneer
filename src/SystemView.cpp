@@ -47,6 +47,8 @@ constexpr float WHEEL_SENSITIVITY = .1f; // Should be a variable in user setting
 constexpr double DEFAULT_VIEW_DISTANCE = 10.0;
 constexpr float ROTATION_SPEED_FACTOR = 30;
 
+std::unique_ptr<InputFrame> SystemView::m_inputFrame;
+
 SystemView::SystemView() :
 	UIView(),
 	m_unexplored(true),
@@ -265,18 +267,18 @@ SystemView::SystemView() :
 	m_orbitVts.reset(new vector3f[N_VERTICES_MAX]);
 	m_orbitColors.reset(new Color[N_VERTICES_MAX]);
 
-	RegisterInputBindings();
+	AttachBindingCallback();
 }
 
 SystemView::~SystemView()
 {
 	m_contacts.clear();
+	m_inputFrame->RemoveCallbacks();
 }
 
 void SystemView::RegisterInputBindings()
 {
 	using namespace KeyBindings;
-	using namespace std::placeholders;
 
 	m_inputFrame = std::make_unique<InputFrame>("GeneralPanRotateZoom");
 
@@ -284,6 +286,12 @@ void SystemView::RegisterInputBindings()
 
 	m_systemViewBindings.mapViewRotateLeftRight = m_inputFrame->GetAxisBinding("BindMapViewRotateLeftRight");
 	m_systemViewBindings.mapViewRotateUpDown = m_inputFrame->GetAxisBinding("BindMapViewRotateUpDown");
+}
+
+void SystemView::AttachBindingCallback()
+{
+	using namespace KeyBindings;
+	using namespace std::placeholders;
 }
 
 void SystemView::OnSwitchTo()

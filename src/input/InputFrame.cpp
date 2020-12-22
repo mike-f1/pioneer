@@ -95,6 +95,11 @@ float InputFrame::GetValue(AxisId id)
 	return m_bindingContainer->m_axes.at(id).binding_ptr->GetValue();
 }
 
+void InputFrame::RemoveCallbacks()
+{
+	m_bindingContainer->RemoveCallbacks();
+}
+
 KeyBindings::InputResponse InputFrame::ProcessSDLEvent(const SDL_Event &event)
 {
 	if (!m_active) return KeyBindings::InputResponse::NOMATCH;

@@ -8,9 +8,12 @@
 #include "graphics/Renderer.h"
 
 #include "GameState.h"
+#include "QuitState.h"
 
 #include <SDL_timer.h>
 #include <SDL_events.h>
+
+#include "Pi.h"
 
 namespace MainState_ {
 
@@ -30,11 +33,12 @@ namespace MainState_ {
 
 	PiState *MainMenuState::Update()
 	{
-		m_frameTime = 0.001f * (SDL_GetTicks() - m_last_time);
+		m_statelessVars.frameTime = 0.001f * (SDL_GetTicks() - m_last_time);
 		m_last_time = SDL_GetTicks();
 
+		CutSceneLoop(m_statelessVars.frameTime, m_cutScene.get());
 		MainState current = MainState::MAIN_MENU;
-		CutSceneLoop(current, m_frameTime, m_cutScene.get());
+		Pi::HandleRequests(current);
 		if (GameLocator::getGame() != nullptr) {
 			delete this;
 			return new GameState();
@@ -42,7 +46,7 @@ namespace MainState_ {
 		if (current == MainState::MAIN_MENU) return this;
 		else if (current == MainState::QUITTING) {
 			delete this;
-			return new QuittingState();
+			return new QuitState();
 		}
 		return this;
 	}

@@ -13,6 +13,8 @@
 #include "libs/utils.h"
 #include "profiler/Profiler.h"
 
+#include <stdexcept>
+
 std::string speedModifier = "SpeedModifier";
 
 Input::Input() :
@@ -42,8 +44,21 @@ void Input::InitGame()
 	m_mouseMotion.fill(0);
 
 	if (m_joystick) m_joystick->InitGame();
+}
 
-	// create a shared InputFrame for standard movement:
+void Input::TerminateGame()
+{
+	Output("Input::TerminateGame()\n");
+	m_generalPanRotateZoom.reset();
+	PurgeBindingContainers();
+}
+
+void Input::InitializeInputBindings(std::vector<std::function<void(void)>> &bindings_registerer)
+{
+	static bool initialized = false;
+	if (initialized) throw std::logic_error {"InitializeInputBindings should be called only once!"};
+	// create a shared InputFrame for standard movement and initialize it
+	// after Input ctor has been called due to InputFrame needs
 	using namespace KeyBindings;
 	using namespace std::placeholders;
 
@@ -62,13 +77,9 @@ void Input::InitGame()
 	m_generalPanRotateZoom->AddAxisBinding("BindMapViewRotateUpDown", group, AxisBinding(SDLK_DOWN, SDLK_UP));
 
 	m_generalPanRotateZoom->LockInsertion();
-}
 
-void Input::TerminateGame()
-{
-	Output("Input::TerminateGame()\n");
-	m_generalPanRotateZoom.reset();
-	PurgeBindingContainers();
+	std::for_each(begin(bindings_registerer), end(bindings_registerer), [](auto &fun) { fun(); });
+	initialized = true;
 }
 
 void Input::RegisterInputBindings()

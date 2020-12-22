@@ -19,22 +19,25 @@ namespace {
 	static const float WHEEL_SENSITIVITY = .05f; // Should be a variable in user settings.
 } // namespace
 
+std::unique_ptr<InputFrame> ShipViewController::m_inputFrame;
+std::unique_ptr<InputFrame> ShipViewController::m_shipViewFrame;
+
 ShipViewController::ShipViewController(WorldView *v) :
 	InteractionController(v),
 	m_camType(CAM_INTERNAL),
 	headtracker_input_priority(false)
 {
-	RegisterInputBindings();
+	AttachBindingCallback();
 }
 
 ShipViewController::~ShipViewController()
 {
+	m_inputFrame->RemoveCallbacks();
 }
 
 void ShipViewController::RegisterInputBindings()
 {
 	using namespace KeyBindings;
-	using namespace std::placeholders;
 
 	m_shipViewFrame = std::make_unique<InputFrame>("GeneralPanRotateZoom");
 
@@ -60,6 +63,12 @@ void ShipViewController::RegisterInputBindings()
 	m_inputBindings.bottomCamera = m_inputFrame->AddActionBinding("BindBottomCamera", group, ActionBinding(SDLK_KP_3));
 
 	m_inputBindings.resetCamera = m_inputFrame->AddActionBinding("BindResetCamera", group, ActionBinding(SDLK_HOME));
+}
+
+void ShipViewController::AttachBindingCallback()
+{
+	using namespace std::placeholders;
+
 	m_inputFrame->AddCallbackFunction("BindResetCamera", std::bind(&ShipViewController::OnCamReset, this, _1));
 }
 

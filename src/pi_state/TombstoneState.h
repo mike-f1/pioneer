@@ -13,7 +13,7 @@ namespace MainState_ {
 	class TombstoneState: public PiState {
 	public:
 		TombstoneState();
-		~TombstoneState();
+		virtual ~TombstoneState();
 
 		PiState *Update() override final;
 
@@ -23,5 +23,6 @@ namespace MainState_ {
 		uint32_t m_last_time;
 	};
 
-} // namespace MainState
+} // namespace MainState_
+
 #endif // TOMBSTONE_STATE_H

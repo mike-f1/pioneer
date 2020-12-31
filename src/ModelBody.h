@@ -35,7 +35,7 @@ public:
 	virtual ~ModelBody();
 	void SetPosition(const vector3d &p) override;
 	void SetOrient(const matrix3x3d &r) override;
-	virtual void SetFrame(FrameId fId) override;
+	void SetFrame(FrameId fId) override;
 	// Colliding: geoms are checked against collision space
 	void SetColliding(bool colliding);
 	bool IsColliding() const { return m_colliding; }
@@ -54,10 +54,10 @@ public:
 
 	void RenderModel(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform, const bool setLighting = true);
 
-	virtual void TimeStepUpdate(const float timeStep) override;
+	void TimeStepUpdate(const float timeStep) override;
 
 protected:
-	virtual void SaveToJson(Json &jsonObj, Space *space) override;
+	Json SaveToJson(Space *space) override;
 
 	void SetLighting(const Camera *camera, std::vector<Graphics::Light> &oldLights, Color &oldAmbient);
 	void ResetLighting(const std::vector<Graphics::Light> &oldLights, const Color &oldAmbient);

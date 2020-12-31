@@ -163,9 +163,9 @@ Projectile::~Projectile()
 {
 }
 
-void Projectile::SaveToJson(Json &jsonObj, Space *space)
+Json Projectile::SaveToJson(Space *space)
 {
-	Body::SaveToJson(jsonObj, space);
+	Json jsonObj = Body::SaveToJson(space);
 
 	Json projectileObj({}); // Create JSON object to contain projectile data.
 
@@ -181,6 +181,7 @@ void Projectile::SaveToJson(Json &jsonObj, Space *space)
 	projectileObj["index_for_body"] = space->GetIndexForBody(m_parent);
 
 	jsonObj["projectile"] = projectileObj; // Add projectile object to supplied object.
+	return jsonObj;
 }
 
 void Projectile::PostLoadFixup(Space *space)

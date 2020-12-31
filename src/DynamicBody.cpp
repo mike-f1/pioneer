@@ -10,7 +10,6 @@
 #include "Json.h"
 #include "Orbit.h"
 #include "Planet.h"
-#include "Space.h"
 #include "collider/CollisionContact.h"
 #include "galaxy/SystemBody.h"
 #include "libs/gameconsts.h"
@@ -78,9 +77,9 @@ DynamicBody::DynamicBody(const Json &jsonObj, Space *space) :
 	m_decelerating = false;
 }
 
-void DynamicBody::SaveToJson(Json &jsonObj, Space *space)
+Json DynamicBody::SaveToJson(Space *space)
 {
-	ModelBody::SaveToJson(jsonObj, space);
+	Json jsonObj = ModelBody::SaveToJson(space);
 
 	Json dynamicBodyObj = Json::object(); // Create JSON object to contain dynamic body data.
 
@@ -94,6 +93,7 @@ void DynamicBody::SaveToJson(Json &jsonObj, Space *space)
 	dynamicBodyObj["is_moving"] = m_isMoving;
 
 	jsonObj["dynamic_body"] = dynamicBodyObj; // Add dynamic body object to supplied object.
+	return jsonObj;
 }
 
 void DynamicBody::PostLoadFixup(Space *space)

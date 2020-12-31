@@ -5,6 +5,7 @@
 #define _BODY_H
 
 #include "FrameId.h"
+#include "JsonFwd.h"
 #include "Object.h"
 #include "PropertiedObject.h"
 #include "libs/matrix3x3.h"
@@ -28,8 +29,8 @@ public:
 	Body();
 	Body(const Json &jsonObj, Space *space);
 	virtual ~Body();
-	void ToJson(Json &jsonObj, Space *space);
-	static Body *FromJson(const Json &jsonObj, Space *space);
+
+	virtual Json SaveToJson(Space *space);
 	virtual void PostLoadFixup(Space *space){};
 
 	virtual void SetPosition(const vector3d &p) { m_pos = p; }
@@ -121,7 +122,6 @@ public:
 	virtual void AddFeature(Feature f) { m_features[f] = true; };
 
 protected:
-	virtual void SaveToJson(Json &jsonObj, Space *space);
 	unsigned int m_flags;
 
 	// Interpolated draw orientation-position

@@ -22,7 +22,7 @@
 using namespace Graphics;
 
 /** How long does a hyperspace cloud last for? 2 Days? */
-#define HYPERCLOUD_DURATION (60.0 * 60.0 * 24.0 * 2.0)
+constexpr float HYPERCLOUD_DURATION = (60.0 * 60.0 * 24.0 * 2.0);
 
 HyperspaceCloud::HyperspaceCloud(Ship *s, double dueDate, bool isArrival) :
 	m_isBeingKilled(false)
@@ -54,10 +54,11 @@ HyperspaceCloud::HyperspaceCloud(const Json &jsonObj, Space *space) :
 		m_ship = nullptr;
 		if (hyperspaceCloudObj["ship"].is_object()) {
 			Json shipObj = hyperspaceCloudObj["ship"];
-			m_ship = static_cast<Ship *>(Body::FromJson(shipObj, space));
+			m_ship = new Ship(shipObj, space);
 		}
 		InitGraphics();
 	} catch (Json::type_error &) {
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 		throw SavedGameCorruptException();
 	}
 }
@@ -73,23 +74,22 @@ void HyperspaceCloud::SetIsArrival(bool isArrival)
 	SetLabel(isArrival ? Lang::HYPERSPACE_ARRIVAL_CLOUD : Lang::HYPERSPACE_DEPARTURE_CLOUD);
 }
 
-void HyperspaceCloud::SaveToJson(Json &jsonObj, Space *space)
+Json HyperspaceCloud::SaveToJson(Space *space)
 {
-	Body::SaveToJson(jsonObj, space);
+	Json jsonObj = Body::SaveToJson(space);
 
-	Json hyperspaceCloudObj = Json::object(); // Create JSON object to contain hyperspace cloud data.
+	Json hyperspaceCloudObj;
 
 	hyperspaceCloudObj["vel"] = m_vel;
 	hyperspaceCloudObj["birth_date"] = m_birthdate;
 	hyperspaceCloudObj["due"] = m_due;
 	hyperspaceCloudObj["is_arrival"] = m_isArrival;
 	if (m_ship) {
-		Json shipObj = Json::object(); // Create JSON object to contain ship data.
-		m_ship->ToJson(shipObj, space);
-		hyperspaceCloudObj["ship"] = shipObj; // Add ship object to hyperpace cloud object.
+		hyperspaceCloudObj["ship"] = m_ship->SaveToJson(space); // Add ship object to hyperpace cloud object.
 	}
 
 	jsonObj["hyperspace_cloud"] = hyperspaceCloudObj; // Add hyperspace cloud object to supplied object.
+	return jsonObj;
 }
 
 void HyperspaceCloud::PostLoadFixup(Space *space)

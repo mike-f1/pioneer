@@ -8,23 +8,25 @@
 #include "LuaRef.h"
 #include <string>
 
-class CargoBody : public DynamicBody {
+class CargoBody final: public DynamicBody {
 public:
 	OBJDEF(CargoBody, DynamicBody, CARGOBODY);
 	CargoBody() = delete;
 	CargoBody(const LuaRef &cargo, float selfdestructTimer = 86400.0f); // default to 24 h lifetime
 	CargoBody(const Json &jsonObj, Space *space);
+
+	Json SaveToJson(Space *space) override;
+
 	LuaRef GetCargoType() const { return m_cargo; }
-	virtual void SetLabel(const std::string &label) override;
-	virtual void Render(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform) override;
-	virtual void TimeStepUpdate(const float timeStep) override;
-	virtual bool OnCollision(Object *o, uint32_t flags, double relVel) override;
-	virtual bool OnDamage(Object *attacker, float kgDamage, const CollisionContact &contactData) override;
+	void SetLabel(const std::string &label) override;
+	void Render(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform) override;
+	void TimeStepUpdate(const float timeStep) override;
+	bool OnCollision(Object *o, uint32_t flags, double relVel) override;
+	bool OnDamage(Object *attacker, float kgDamage, const CollisionContact &contactData) override;
 
 	~CargoBody(){};
 
 protected:
-	virtual void SaveToJson(Json &jsonObj, Space *space) override;
 
 private:
 	void Init();

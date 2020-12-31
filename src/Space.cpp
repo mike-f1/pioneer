@@ -5,6 +5,7 @@
 
 #include "Background.h"
 #include "Body.h"
+#include "CargoBody.h"
 #include "CityOnPlanet.h"
 #include "Frame.h"
 #include "Game.h"
@@ -15,15 +16,17 @@
 #include "Json.h"
 #include "Lang.h"
 #include "LuaEvent.h"
-#include "libs/MathUtil.h"
+#include "Missile.h"
 #include "Planet.h"
 #include "Player.h"
+#include "Projectile.h"
 #include "Random.h"
 #include "RandomSingleton.h"
 #include "SpaceStation.h"
 #include "Star.h"
 #include "collider/CollisionContact.h"
 #include "galaxy/StarSystem.h"
+#include "libs/MathUtil.h"
 #include <algorithm>
 #include <functional>
 
@@ -125,8 +128,53 @@ Space::Space(RefCountedPtr<StarSystem> starsystem, const Json &jsonObj, double a
 
 	try {
 		Json bodyArray = spaceObj["bodies"].get<Json::array_t>();
-		for (uint32_t i = 0; i < bodyArray.size(); i++)
-			m_bodies.push_back(Body::FromJson(bodyArray[i], this));
+		for (uint32_t i = 0; i < bodyArray.size(); i++) {
+			Body *body = nullptr;
+			const Json bodyArrayEl = bodyArray[i];
+			const Json &jsonObj = bodyArrayEl["body_data"];
+			if (!bodyArrayEl["body_type"].is_number_integer()) throw SavedGameCorruptException();
+			Object::Type type = Object::Type(bodyArrayEl["body_type"]);
+			switch (type) {
+			case Object::STAR:
+				body = new Star(jsonObj, this);
+			break;
+			case Object::PLANET:
+				body = new Planet(jsonObj, this);
+			break;
+			case Object::SPACESTATION:
+				body = new SpaceStation(jsonObj, this);
+			break;
+			case Object::SHIP: {
+				Ship *s = new Ship(jsonObj, this);
+				// Here because of comments in Ship.cpp on following function
+				s->UpdateLuaStats();
+				body = static_cast<Body *>(s);
+			}
+			break;
+			case Object::PLAYER: {
+				Player *p = new Player(jsonObj, this);
+				// Read comments in Ship.cpp on following function
+				p->UpdateLuaStats();
+				body = static_cast<Body *>(p);
+			}
+			break;
+			case Object::MISSILE:
+				body = new Missile(jsonObj, this);
+			break;
+			case Object::PROJECTILE:
+				body = new Projectile(jsonObj, this);
+			break;
+			case Object::CARGOBODY:
+				body = new CargoBody(jsonObj, this);
+			break;
+			case Object::HYPERSPACECLOUD:
+				body = new HyperspaceCloud(jsonObj, this);
+			break;
+			default:
+				assert(0);
+			}
+		m_bodies.push_back(body);
+		}
 	} catch (Json::type_error &) {
 		throw SavedGameCorruptException();
 	}
@@ -149,7 +197,6 @@ Space::~Space()
 	Frame::DeleteFrames();
 }
 
-
 void Space::ToJson(Json &jsonObj)
 {
 	PROFILE_SCOPED()
@@ -165,7 +212,9 @@ void Space::ToJson(Json &jsonObj)
 	Json bodyArray = Json::array(); // Create JSON array to contain body data.
 	for (Body *b : m_bodies) {
 		Json bodyArrayEl({}); // Create JSON object to contain body.
-		b->ToJson(bodyArrayEl, this);
+		bodyArrayEl["body_type"] = int(b->GetType());
+		bodyArrayEl["body_data"] = b->SaveToJson(this);
+
 		bodyArray.push_back(bodyArrayEl); // Append body object to array.
 	}
 	spaceObj["bodies"] = bodyArray; // Add body array to space object.
@@ -229,13 +278,14 @@ void Space::AddSystemBodyToIndex(SystemBody *sbody)
 void Space::RebuildBodyIndex()
 {
 	m_bodyIndex.clear();
+	m_bodyIndex.reserve(m_bodies.size());
 	m_bodyIndex.push_back(nullptr);
 
 	for (Body *b : m_bodies) {
 		m_bodyIndex.push_back(b);
 		// also index ships inside clouds
-		// XXX we should not have to know about this. move indexing grunt work
-		// down into the bodies?
+		// XXX we should not have to know about this, but LuaSerializer
+		// will crash if HyperCloud aren't indexed.
 		if (b->IsType(Object::HYPERSPACECLOUD)) {
 			Ship *s = static_cast<HyperspaceCloud *>(b)->GetShip();
 			if (s) m_bodyIndex.push_back(s);

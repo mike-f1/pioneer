@@ -60,7 +60,9 @@ public:
 	Ship(const ShipType::Id &shipId);
 	virtual ~Ship();
 
-	virtual void SetFrame(FrameId fId) override;
+	Json SaveToJson(Space *space) override;
+
+	void SetFrame(FrameId fId) override;
 
 	void SetController(ShipController *c); //deletes existing
 	ShipController *GetController() const { return m_controller; }
@@ -74,7 +76,7 @@ public:
 
 	virtual void SetLandedOn(Planet *p, float latitude, float longitude);
 
-	virtual void Render(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform) override;
+	void Render(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform) override;
 
 	inline void ClearThrusterState()
 	{
@@ -120,7 +122,7 @@ public:
 		HYPERSPACE, // in hyperspace
 	};
 
-	vector3d CalcAtmosphericForce() const override;
+	virtual vector3d CalcAtmosphericForce() const;
 	// vector3d CalcAtmoPassiveControl() const;
 	vector3d CalcAtmoTorque() const;
 
@@ -230,8 +232,6 @@ public:
 	double GetLandingPosOffset() const { return m_landingMinOffset; }
 
 protected:
-	virtual void SaveToJson(Json &jsonObj, Space *space) override;
-
 	bool AITimeStep(float timeStep); // Called by controller. Returns true if complete
 
 	virtual void SetAlertState(AlertState as);

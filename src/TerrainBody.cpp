@@ -38,15 +38,16 @@ void TerrainBody::InitTerrainBody()
 	m_maxFeatureHeight = (m_baseSphere->GetMaxFeatureHeight() + 1.0) * SystemBodyWrapper::GetSystemBodyRadius();
 }
 
-void TerrainBody::SaveToJson(Json &jsonObj, Space *space)
+Json TerrainBody::SaveToJson(Space *space)
 {
-	Body::SaveToJson(jsonObj, space);
+	Json jsonObj = Body::SaveToJson(space);
 
 	Json terrainBodyObj({}); // Create JSON object to contain terrain body data.
 
 	terrainBodyObj["index_for_system_body"] = space->GetIndexForSystemBody(SystemBodyWrapper::GetSystemBody());
 
 	jsonObj["terrain_body"] = terrainBodyObj; // Add terrain body object to supplied object.
+	return jsonObj;
 }
 
 TerrainBody::TerrainBody(const Json &jsonObj, Space *space) :

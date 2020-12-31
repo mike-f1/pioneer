@@ -138,7 +138,7 @@ Game::Game(const Json &jsonObj, unsigned int cacheRadius) :
 		starSystem = StarSystem::FromJson(m_galaxy, jsonObj["star_system"]);
 
 		// space, all the bodies and things
-		m_space.reset(new Space(starSystem, jsonObj, m_time));
+		m_space = std::make_unique<Space>(starSystem, jsonObj, m_time);
 
 		unsigned int player = jsonObj["player"];
 		m_player.reset(static_cast<Player *>(m_space->GetBodyByIndex(player)));
@@ -148,7 +148,7 @@ Game::Game(const Json &jsonObj, unsigned int cacheRadius) :
 		// hyperspace clouds being brought over from the previous system
 		Json hyperspaceCloudArray = jsonObj["hyperspace_clouds"].get<Json::array_t>();
 		for (uint32_t i = 0; i < hyperspaceCloudArray.size(); i++) {
-			m_hyperspaceClouds.push_back(static_cast<HyperspaceCloud *>(Body::FromJson(hyperspaceCloudArray[i], 0)));
+			m_hyperspaceClouds.push_back(new HyperspaceCloud(hyperspaceCloudArray[i], nullptr));
 		}
 	} catch (Json::type_error &) {
 		throw SavedGameCorruptException();
@@ -237,8 +237,7 @@ void Game::ToJson(Json &jsonObj)
 	// hyperspace clouds being brought over from the previous system
 	Json hyperspaceCloudArray = Json::array(); // Create JSON array to contain hyperspace cloud data.
 	for (std::list<HyperspaceCloud *>::const_iterator i = m_hyperspaceClouds.begin(); i != m_hyperspaceClouds.end(); ++i) {
-		Json hyperspaceCloudArrayEl = Json::object(); // Create JSON object to contain hyperspace cloud.
-		(*i)->ToJson(hyperspaceCloudArrayEl, m_space.get());
+		Json hyperspaceCloudArrayEl = (*i)->SaveToJson(m_space.get());
 		hyperspaceCloudArray.push_back(hyperspaceCloudArrayEl); // Append hyperspace cloud object to array.
 	}
 	jsonObj["hyperspace_clouds"] = hyperspaceCloudArray; // Add hyperspace cloud array to supplied object.
@@ -578,9 +577,7 @@ void Game::SwitchToNormalSpace()
 				// travelling to the system as a whole, so just dump them on
 				// the cloud - we can't do any better in this case
 				ship->SetPosition(cloud->GetPosition());
-			}
-
-			else {
+			} else {
 				// on their way to a body. they're already in-system so we
 				// want to simulate some travel to their destination. we
 				// naively assume full accel for half the distance, flip and

@@ -27,7 +27,7 @@ namespace SceneGraph {
 	class Animation;
 }
 
-class SpaceStation : public ModelBody {
+class SpaceStation final: public ModelBody {
 public:
 	OBJDEF(SpaceStation, ModelBody, SPACESTATION);
 	static void Init();
@@ -36,6 +36,8 @@ public:
 	// Should point to SystemBody in Pi::currentSystem
 	SpaceStation(const SystemBody *);
 	SpaceStation(const Json &jsonObj, Space *space);
+
+	Json SaveToJson(Space *space) override;
 
 	virtual ~SpaceStation();
 	virtual vector3d GetAngVelocity() const { return vector3d(0, m_type->AngVel(), 0); }
@@ -75,7 +77,6 @@ public:
 	virtual void UpdateInterpTransform(double alpha) override;
 
 protected:
-	virtual void SaveToJson(Json &jsonObj, Space *space) override;
 
 private:
 	void DockingUpdate(const double timeStep);

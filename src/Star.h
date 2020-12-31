@@ -16,7 +16,7 @@ namespace Graphics {
 	class VertexBuffer;
 } // namespace Graphics
 
-class Star : public TerrainBody {
+class Star final: public TerrainBody {
 public:
 	OBJDEF(Star, TerrainBody, STAR);
 	Star() = delete;
@@ -24,7 +24,7 @@ public:
 	Star(const Json &jsonObj, Space *space);
 	virtual ~Star();
 
-	virtual void Render(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform) override;
+	void Render(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform) override;
 
 protected:
 	void InitStar();

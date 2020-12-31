@@ -102,9 +102,9 @@ void SpaceStation::Init()
 	SpaceStationType::Init();
 }
 
-void SpaceStation::SaveToJson(Json &jsonObj, Space *space)
+Json SpaceStation::SaveToJson(Space *space)
 {
-	ModelBody::SaveToJson(jsonObj, space);
+	Json jsonObj = ModelBody::SaveToJson(space);
 
 	Json spaceStationObj({}); // Create JSON object to contain space station data.
 
@@ -143,6 +143,7 @@ void SpaceStation::SaveToJson(Json &jsonObj, Space *space)
 	m_navLights->SaveToJson(spaceStationObj);
 
 	jsonObj["space_station"] = spaceStationObj; // Add space station object to supplied object.
+	return jsonObj;
 }
 
 void SpaceStation::PostLoadFixup(Space *space)

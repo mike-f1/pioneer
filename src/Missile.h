@@ -9,20 +9,24 @@
 
 class AICommand;
 
-class Missile : public DynamicBody {
+class Missile final: public DynamicBody {
 public:
 	OBJDEF(Missile, DynamicBody, MISSILE);
 	Missile() = delete;
 	Missile(const ShipType::Id &type, Body *owner, int power = -1);
 	Missile(const Json &jsonObj, Space *space);
 	virtual ~Missile();
+
+	Json SaveToJson(Space *space) override;
+
 	void StaticUpdate(const float timeStep) override;
 	void TimeStepUpdate(const float timeStep) override;
-	virtual bool OnCollision(Object *o, uint32_t flags, double relVel) override;
-	virtual bool OnDamage(Object *attacker, float kgDamage, const CollisionContact &contactData) override;
-	virtual void NotifyRemoved(const Body *const removedBody) override;
-	virtual void PostLoadFixup(Space *space) override;
-	virtual void Render(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform) override;
+	bool OnCollision(Object *o, uint32_t flags, double relVel) override;
+	bool OnDamage(Object *attacker, float kgDamage, const CollisionContact &contactData) override;
+	void NotifyRemoved(const Body *const removedBody) override;
+	void PostLoadFixup(Space *space) override;
+	void Render(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform) override;
+
 	void ECMAttack(int power_val);
 	Body *GetOwner() const { return m_owner; }
 	bool IsArmed() const { return m_armed; }
@@ -31,7 +35,6 @@ public:
 	void AIKamikaze(Body *target);
 
 protected:
-	virtual void SaveToJson(Json &jsonObj, Space *space) override;
 
 private:
 	void Explode();

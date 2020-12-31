@@ -15,7 +15,6 @@
 #include "Space.h"
 #include "collider/CollisionContact.h"
 
-
 Missile::Missile(const ShipType::Id &shipId, Body *owner, int power)
 {
 	AddFeature(Feature::PROPULSION); // add component propulsion
@@ -75,9 +74,9 @@ Missile::Missile(const Json &jsonObj, Space *space) :
 	GetPropulsion()->Init(this, GetModel(), m_type->fuelTankMass, m_type->effectiveExhaustVelocity, m_type->linThrust, m_type->angThrust);
 }
 
-void Missile::SaveToJson(Json &jsonObj, Space *space)
+Json Missile::SaveToJson(Space *space)
 {
-	DynamicBody::SaveToJson(jsonObj, space);
+	Json jsonObj = DynamicBody::SaveToJson(space);
 	GetPropulsion()->SaveToJson(jsonObj, space);
 	Json missileObj = Json::object(); // Create JSON object to contain missile data.
 
@@ -90,6 +89,7 @@ void Missile::SaveToJson(Json &jsonObj, Space *space)
 	missileObj["ship_type_id"] = m_type->id;
 
 	jsonObj["missile"] = missileObj; // Add missile object to supplied object.
+	return jsonObj;
 }
 
 void Missile::PostLoadFixup(Space *space)

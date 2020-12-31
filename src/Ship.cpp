@@ -210,6 +210,7 @@ Ship::Ship(const Json &jsonObj, Space *space) :
 		m_shipName = shipObj["name"];
 		Properties().Set("shipName", m_shipName);
 	} catch (Json::type_error &) {
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 		throw SavedGameCorruptException();
 	}
 }
@@ -271,11 +272,11 @@ void Ship::PostLoadFixup(Space *space)
 	m_controller->PostLoadFixup(space);
 }
 
-void Ship::SaveToJson(Json &jsonObj, Space *space)
+Json Ship::SaveToJson(Space *space)
 {
-	DynamicBody::SaveToJson(jsonObj, space);
+	Json jsonObj = DynamicBody::SaveToJson(space);
 
-	Json shipObj({}); // Create JSON object to contain ship data.
+	Json shipObj;
 
 	FixedGuns::SaveToJson(shipObj, space);
 	GetPropulsion()->SaveToJson(shipObj, space);
@@ -316,6 +317,7 @@ void Ship::SaveToJson(Json &jsonObj, Space *space)
 	shipObj["name"] = m_shipName;
 
 	jsonObj["ship"] = shipObj; // Add ship object to supplied object.
+	return jsonObj;
 }
 
 void Ship::InitEquipSet()

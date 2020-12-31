@@ -100,9 +100,9 @@ ModelBody::~ModelBody()
 	DeleteGeoms();
 }
 
-void ModelBody::SaveToJson(Json &jsonObj, Space *space)
+Json ModelBody::SaveToJson(Space *space)
 {
-	Body::SaveToJson(jsonObj, space);
+	Json jsonObj = Body::SaveToJson(space);
 
 	Json modelBodyObj = Json::object(); // Create JSON object to contain model body data.
 
@@ -113,6 +113,7 @@ void ModelBody::SaveToJson(Json &jsonObj, Space *space)
 	m_shields->SaveToJson(modelBodyObj);
 
 	jsonObj["model_body"] = modelBodyObj; // Add model body object to supplied object.
+	return jsonObj;
 }
 
 void ModelBody::SetStatic(bool isStatic)

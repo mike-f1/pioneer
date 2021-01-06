@@ -141,7 +141,7 @@ Ship::Ship(const Json &jsonObj, Space *space) :
 		// or else UpdateGunsStats will use MountGun()
 		// BUT must be *after* setting model
 		FixedGuns::GetGunsTags(GetModel());
-		FixedGuns::LoadFromJson(shipObj, space);
+		FixedGuns::LoadFromJson(shipObj["guns"]);
 
 		GetPropulsion()->SetFuelTankMass(GetShipType()->fuelTankMass);
 		m_stats.fuel_tank_mass_left = GetPropulsion()->FuelTankMassLeft();
@@ -278,7 +278,7 @@ Json Ship::SaveToJson(Space *space)
 
 	Json shipObj;
 
-	FixedGuns::SaveToJson(shipObj, space);
+	shipObj["guns"] = FixedGuns::SaveToJson();
 	GetPropulsion()->SaveToJson(shipObj, space);
 
 	m_skin.SaveToJson(shipObj);

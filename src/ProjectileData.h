@@ -29,14 +29,14 @@ struct ProjectileData {
 	ProjectileData(const Json &jsonObj)
 	{
 		try {
-		lifespan = jsonObj["life_span"];
-		damage = jsonObj["base_dam"];
-		length = jsonObj["length"];
-		width = jsonObj["width"];
-		speed = jsonObj["speed"];
-		color = jsonObj["color"];
-		mining = jsonObj["mining"];
-		beam = jsonObj["is_beam"];
+			lifespan = jsonObj["life_span"];
+			damage = jsonObj["base_dam"];
+			length = jsonObj["length"];
+			width = jsonObj["width"];
+			speed = jsonObj["speed"];
+			color = jsonObj["color"];
+			mining = jsonObj["mining"];
+			beam = jsonObj["is_beam"];
 		} catch (Json::type_error &) {
 			Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 			throw SavedGameCorruptException();

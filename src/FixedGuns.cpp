@@ -11,6 +11,8 @@
 #include "libs/StringF.h"
 #include "scenegraph/Model.h"
 
+#include <stdexcept>
+
 FixedGuns::FixedGuns(Body* b) :
 	m_cooler_boost(1.0)
 {
@@ -21,7 +23,7 @@ FixedGuns::~FixedGuns()
 {
 }
 
-void FixedGuns::SaveToJson(Json &jsonObj, Space *space)
+Json FixedGuns::SaveToJson()
 {
 	Json gunArray = Json::array(); // Create JSON array to contain gun data.
 
@@ -36,27 +38,21 @@ void FixedGuns::SaveToJson(Json &jsonObj, Space *space)
 		gunArrayEl["next_firing"] = m_guns[i].next_firing_barrels;
 		gunArrayEl["mount_name"] = m_mounts[m_guns[i].mount_id].name; // <- Save the name of hardpoint (mount)
 		// Save "GunData":
-		gunArrayEl["gd_name"] = m_guns[i].gun_data.gun_name;
-		gunArrayEl["gd_sound"] = m_guns[i].gun_data.sound;
-		gunArrayEl["gd_barrels"] = m_guns[i].gun_data.barrels;
-		gunArrayEl["gd_recharge"] = m_guns[i].gun_data.recharge;
-		gunArrayEl["gd_cool_rate"] = m_guns[i].gun_data.temp_cool_rate;
-		gunArrayEl["gd_heat_rate"] = m_guns[i].gun_data.temp_heat_rate;
-		// Save "ProjectileData":
-		gunArrayEl["proj_data"] = m_guns[i].gun_data.projData.SaveToJson();
+		gunArrayEl["gun_data"] = m_guns[i].gun_data.SaveToJson();
 
 		gunArray.push_back(gunArrayEl); // Append gun object to array.
 	}
-	jsonObj["guns"] = gunArray; // Add gun array to ship object.
+	return gunArray; // Add gun array to ship object.
 }
 
-void FixedGuns::LoadFromJson(const Json &jsonObj, Space *space)
+void FixedGuns::LoadFromJson(const Json &jsonObj)
 {
-	//Json projectileObj = jsonObj["projectile"];
-	Json gunArray = jsonObj["guns"];
-
-	m_guns.reserve(gunArray.size());
 	try {
+		if (!jsonObj.is_array()) throw SavedGameCorruptException();
+		const Json &gunArray = jsonObj;
+
+		m_guns.reserve(gunArray.size());
+
 		for (unsigned int i = 0; i < gunArray.size(); i++) {
 			Json gunArrayEl = gunArray[i];
 			// Load status data:
@@ -69,24 +65,15 @@ void FixedGuns::LoadFromJson(const Json &jsonObj, Space *space)
 			std::string mount_name = gunArrayEl["mount_name"];
 			int mount_id = -1;
 			for (unsigned j = 0; j < m_mounts.size(); j++) {
-				if (m_mounts[i].name == mount_name.substr(0,14)) {
+				if (m_mounts[j].name == mount_name.substr(0,14)) {
 					mount_id = j;
 					break;
 				}
 			}
 			if (mount_id < 0) throw SavedGameCorruptException();
 			// Load "GunData" for this gun:
-			std::string name = gunArrayEl["gd_name"];
-			std::string sound = gunArrayEl["gd_sound"];
-			int barrels = gunArrayEl["gd_barrels"];
-			float recharge = gunArrayEl["gd_recharge"];
-			float temp_cool_rate = gunArrayEl["gd_cool_rate"];
-			float temp_heat_rate = gunArrayEl["gd_heat_rate"];
-			// Load "ProjectileData" for this gun:
-			ProjectileData pd(gunArrayEl["proj_data"]);
-
-			// Initialize "data" of gun status
-			GunStatus gs(mount_id, name, sound, recharge, temp_heat_rate, temp_cool_rate, barrels, pd);
+			GunData gd(gunArrayEl["gun_data"]);
+			GunStatus gs(mount_id, gd);
 
 			// Set the gun status
 			gs.is_firing = is_firing;
@@ -95,8 +82,6 @@ void FixedGuns::LoadFromJson(const Json &jsonObj, Space *space)
 			gs.temperature_stat = temperature_stat;
 			gs.contemporary_barrels = contemporary_barrels;
 			gs.next_firing_barrels = next_firing;
-			int max_barrels = std::min(int(m_mounts[mount_id].locs.size()), barrels);
-			gs.fire_modes = CalculateFireModes(max_barrels);
 
 			gs.UpdateFireModes(m_mounts[mount_id]);
 
@@ -119,7 +104,6 @@ void FixedGuns::GetGunsTags(SceneGraph::Model *m)
 
 bool FixedGuns::MountGun(MountId num, const std::string &name, const std::string &sound, float recharge, float heatrate, float coolrate, int barrels, const ProjectileData &pd)
 {
-	//printf("FixedGuns::MountGun '%s' in '%s',num: %i (Mounts %ld, guns %ld)\n", name.c_str(), m_mounts[num].name.c_str(), num, long(m_mounts.size()), long(m_guns.size()));
 	// Check mount (num) is valid
 	if (unsigned(num) >= m_mounts.size()) {
 		Output("Attempt to mount a gun in %u, which is out of bounds\n", num);
@@ -151,7 +135,6 @@ bool FixedGuns::MountGun(MountId num, const std::string &name, const std::string
 
 bool FixedGuns::UnMountGun(MountId num)
 {
-	//printf("FixedGuns::UnMountGun %i\n", num);
 	// Check mount (num) is valid
 	if (m_mounts.empty() || (num >= m_mounts.size())) {
 		Output("Mount identifier (%i) is out of bounds (max is %lu) in 'UnMountGun'\n", num, m_mounts.size());
@@ -180,7 +163,6 @@ bool FixedGuns::UnMountGun(MountId num)
 
 bool FixedGuns::SwapGuns(MountId mount_a, MountId mount_b)
 {
-	//printf("SwapGuns(MountId a, MountId b) of %i with %i\n", mount_a, mount_b);
 	if (unsigned(mount_a) >= m_mounts.size() || unsigned(mount_b) >= m_mounts.size()) {
 		Output("A 'MountId' is out of bounds\n");
 	}
@@ -215,9 +197,9 @@ bool FixedGuns::SwapGuns(MountId mount_a, MountId mount_b)
 	return true;
 }
 
-void FixedGuns::SetGunsFiringState(GunDir dir, int s)
+void FixedGuns::SetGunsFiringState(GunDir dir, bool fire)
 {
-	std::for_each(begin(m_guns), end(m_guns), [&](GunStatus &gs) { if (m_mounts[gs.mount_id].dir == dir ) gs.is_firing = s;});
+	std::for_each(begin(m_guns), end(m_guns), [&](GunStatus &gs) { if (m_mounts[gs.mount_id].dir == dir ) gs.is_firing = fire;});
 }
 
 bool FixedGuns::Fire(GunId num, Body *shooter)
@@ -235,7 +217,7 @@ bool FixedGuns::Fire(GunId num, Body *shooter)
 
 	const Mount &mount = m_mounts[gun.mount_id];
 
-	for (int iBarrel : GetFiringBarrels(gun.gun_data.barrels, gun.contemporary_barrels, gun.next_firing_barrels)) {
+	for (int iBarrel : gun.GetFiringBarrelsAndAdvance()) {
 		// (0,0,-1) => Front ; (0,0,1) => Rear
 		const vector3d front_rear = (mount.dir == GunDir::GUN_FRONT ? vector3d(0., 0., -1.) : vector3d(0., 0., 1.));
 		const vector3d dir = (shooter->GetOrient() * front_rear);
@@ -255,21 +237,19 @@ bool FixedGuns::Fire(GunId num, Body *shooter)
 
 bool FixedGuns::UpdateGuns(float timeStep, Body *shooter)
 {
-	for (unsigned i = 0; i < m_guns.size(); i++) {
+	float coolingRate = m_cooler_boost * timeStep;
+	std::for_each(begin(m_guns), end(m_guns), [&timeStep, &coolingRate](GunStatus &gun) {
+		gun.temperature_stat -= gun.gun_data.temp_cool_rate * coolingRate;
 
-		float rateCooling = m_guns[i].gun_data.temp_cool_rate;
-		rateCooling *= m_cooler_boost;
-		m_guns[i].temperature_stat -= rateCooling * timeStep;
+		if (gun.temperature_stat < 0.0f)
+			gun.temperature_stat = 0;
+		else if (gun.temperature_stat > 1.0f)
+			gun.is_firing = false;
 
-		if (m_guns[i].temperature_stat < 0.0f)
-			m_guns[i].temperature_stat = 0;
-		else if (m_guns[i].temperature_stat > 1.0f)
-			m_guns[i].is_firing = false;
-
-		m_guns[i].recharge_stat -= timeStep;
-		if (m_guns[i].recharge_stat < 0.0f)
-			m_guns[i].recharge_stat = 0;
-	}
+		gun.recharge_stat -= timeStep;
+		if (gun.recharge_stat < 0.0f)
+			gun.recharge_stat = 0;
+	});
 
 	bool fire = false;
 
@@ -282,20 +262,14 @@ bool FixedGuns::UpdateGuns(float timeStep, Body *shooter)
 			if (IsBeam(i)) {
 				float vl, vr;
 				Sound::CalculateStereo(shooter, 1.0f, &vl, &vr);
-				m_guns[i].sound.Play(m_guns[i].gun_data.sound.c_str(), vl, vr, Sound::OP_REPEAT);
+				if (!m_guns[i].sound.IsPlaying()) {
+					m_guns[i].sound.Play(m_guns[i].gun_data.sound.c_str(), vl, vr, Sound::OP_REPEAT);
+				} else {
+					// update volume
+					m_guns[i].sound.SetVolume(vl, vr);
+				}
 			} else {
 				Sound::BodyMakeNoise(shooter, m_guns[i].gun_data.sound.c_str(), 1.0f);
-			}
-		}
-
-		if (res && IsBeam(i)) {
-			float vl, vr;
-			Sound::CalculateStereo(shooter, 1.0f, &vl, &vr);
-			if (!m_guns[i].sound.IsPlaying()) {
-				m_guns[i].sound.Play(m_guns[i].gun_data.sound.c_str(), vl, vr, Sound::OP_REPEAT);
-			} else {
-				// update volume
-				m_guns[i].sound.SetVolume(vl, vr);
 			}
 		} else if (!IsFiring(i) && m_guns[i].sound.IsPlaying()) {
 			m_guns[i].sound.Stop();
@@ -306,14 +280,14 @@ bool FixedGuns::UpdateGuns(float timeStep, Body *shooter)
 
 MountId FixedGuns::FindFirstEmptyMount() const
 {
-	std::vector<unsigned> free = FindEmptyMounts();
+	std::vector<MountId> free = FindEmptyMounts();
 	if (free.empty()) return -1;
 	else return free[0];
 }
 
 std::vector<MountId> FixedGuns::FindEmptyMounts() const
 {
-	std::vector<unsigned> occupied;
+	std::vector<MountId> occupied;
 
 	if (GetFreeMountsSize() == 0) return occupied;
 
@@ -326,7 +300,7 @@ std::vector<MountId> FixedGuns::FindEmptyMounts() const
 
 	std::sort(begin(occupied), end(occupied));
 
-	std::vector<unsigned> free;
+	std::vector<MountId> free;
 	free.reserve(m_mounts.size() - occupied.size());
 
 	for (unsigned mount = 0; mount < m_mounts.size(); mount++) {
@@ -360,7 +334,6 @@ int FixedGuns::GetMountBarrels(MountId num) const
 
 MountId FixedGuns::FindMountOfGun(const std::string &name) const
 {
-	//printf("FixedGuns::FindMountOfGun for '%s'\n", name.c_str());
 	std::vector<GunStatus>::const_iterator found = std::find_if(begin(m_guns), end(m_guns), [&name](const GunStatus &gs)
 	{
 		if (gs.gun_data.gun_name == name) {
@@ -451,15 +424,12 @@ void FixedGuns::CycleFireModeForGun(GunId num)
 		std::vector<int> &fire_modes = m_guns[num].fire_modes;
 		std::vector<int>::iterator it = std::find(begin(fire_modes), end(fire_modes), m_guns[num].contemporary_barrels);
 
-		if (it == fire_modes.end()) {
-			printf("What?! In FixedGuns::CycleFireModeForGun seems actual fire mode don't exist...\n");
-			abort();
-		}
+		if (it == fire_modes.end()) throw std::runtime_error {"What?! In FixedGuns::CycleFireModeForGun seems actual fire mode don't exist...\n"};
+
 		++it;
 		if (it == fire_modes.end())
 			m_guns[num].contemporary_barrels = 1;
 		else m_guns[num].contemporary_barrels = (*it);
-		//printf("FixedGuns::CycleFireModeForGun %i, set to %i\n", num, m_guns[num].contemporary_barrels);
 	} else {
 		Output("Given gun identifier (%i) is out of bounds (max is %lu)\n", num, m_guns.size());
 		return;
@@ -476,10 +446,9 @@ GunDir FixedGuns::IsFront(GunId num) const
 
 bool FixedGuns::IsFiring() const
 {
-	bool gunstate = false;
 	for (unsigned j = 0; j < m_guns.size(); j++)
-		gunstate |= m_guns[j].is_firing;
-	return gunstate;
+		if (m_guns[j].is_firing) return true;
+	return false;
 }
 
 bool FixedGuns::IsFiring(GunId num) const
@@ -509,20 +478,42 @@ const std::string &FixedGuns::GetGunName(GunId idx) const
 		return empty_str;
 }
 
-std::vector<int> FixedGuns::GetFiringBarrels(int max_barrels, int contemporary_barrels, int &actual_barrel)
+FixedGuns::GunData::GunData(const Json &jsonObj)
 {
-	std::vector<int> cont;
-	cont.reserve(contemporary_barrels);
-
-	for (int i = actual_barrel; i < contemporary_barrels + actual_barrel; i++)
-		cont.push_back(i);
-
-	actual_barrel += contemporary_barrels;
-	if (actual_barrel >= max_barrels) actual_barrel = 0;
-	return cont;
+	try {
+		gun_name = jsonObj["gd_name"];
+		sound = jsonObj["gd_sound"];
+		barrels = jsonObj["gd_barrels"];
+		recharge = jsonObj["gd_recharge"];
+		temp_cool_rate = jsonObj["gd_cool_rate"];
+		temp_heat_rate = jsonObj["gd_heat_rate"];
+		// Load "ProjectileData" for this gun:
+		projData = ProjectileData(jsonObj["proj_data"]);
+	} catch (Json::type_error &) {
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
+		throw SavedGameCorruptException();
+	}
 }
 
-std::vector<int> FixedGuns::CalculateFireModes(int b)
+Json FixedGuns::GunData::SaveToJson()
+{
+	Json jsonObj;
+	jsonObj["gd_name"] = gun_name;
+	jsonObj["gd_sound"] = sound;
+	jsonObj["gd_barrels"] = barrels;
+	jsonObj["gd_recharge"] = recharge;
+	jsonObj["gd_cool_rate"] = temp_cool_rate;
+	jsonObj["gd_heat_rate"] = temp_heat_rate;
+	// Save "ProjectileData" for this gun:
+	jsonObj["proj_data"] = projData.SaveToJson();
+	return jsonObj;
+}
+
+/* Given a number will return their factors,
+ / which in turn are the number of barrels
+ / which can be fired simoultaneusly
+*/
+std::vector<int> calculateFireModes(int b)
 {
 	std::vector<int> fire_modes;
 	fire_modes.reserve(b / 2);
@@ -537,8 +528,20 @@ std::vector<int> FixedGuns::CalculateFireModes(int b)
 void FixedGuns::GunStatus::UpdateFireModes(const Mount &mount)
 {
 	int max_barrels = std::min(gun_data.barrels, unsigned(mount.locs.size()));
-	//printf("UpdateFireModes to %i (%u & %lu)\n", max_barrels, gun_data.barrels, mount.locs.size());
-	fire_modes = FixedGuns::CalculateFireModes(max_barrels);
+	fire_modes = calculateFireModes(max_barrels);
 	contemporary_barrels = 1;
 	next_firing_barrels = 1;
+}
+
+const std::vector<int> &FixedGuns::GunStatus::GetFiringBarrelsAndAdvance()
+{
+	m_cont.reserve(contemporary_barrels);
+	m_cont.clear();
+
+	for (int i = next_firing_barrels; i < contemporary_barrels + next_firing_barrels; i++)
+		m_cont.push_back(i);
+
+	next_firing_barrels += contemporary_barrels;
+	if (next_firing_barrels >= gun_data.barrels) next_firing_barrels = 0;
+	return m_cont;
 }

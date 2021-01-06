@@ -112,7 +112,7 @@ local function shipStats()
 
 	for i=1,(Game.player:GetUsedMountsNumber() + Game.player:GetFreeMountsNumber()) do
 		if Game.player:MountIsFront(i - 1) then
-			table.insert(accum, 
+			table.insert(accum,
 				{"",  i..": "..Game.player:MountBarrelNum(i - 1).." "..l.BARRELS}
 			)
 		end
@@ -131,7 +131,7 @@ local function shipStats()
 
 	table.insert(accum, false)
 	table.insert(accum, { l.MISSILE_MOUNTS..":",            shipDef.equipSlotCapacity.missile})
-	table.insert(accum,	
+	table.insert(accum,
 		{ l.ATMOSPHERIC_SHIELDING..":",     shipDef.equipSlotCapacity.atmo_shield > 0 and l.YES or l.NO }
 	)
 	table.insert(accum, { l.SCOOP_MOUNTS..":",              shipDef.equipSlotCapacity.scoop})
@@ -180,11 +180,10 @@ local function equipmentList()
 
 	for i=1,(Game.player:GetUsedMountsNumber() + Game.player:GetFreeMountsNumber()) do
 		local gunId = player:GetGunOnMount(i - 1)
-		if gunId >= 0 then
+		if gunId then
 			ui.text(lec[player:GetGunName(gunId)]..", "..l.BARRELS..": "..player:GetNumBarrels(gunId).." ("..l.MOUNTED_ON..": "..i..")")
 			if ui.isItemHovered() and ui.isMouseClicked(0) then
 				current_mount = i
-				print("OpenPopup for 'current_mount'= "..current_mount)
 				ui.openPopup("##select_mount")
 			end
 		end

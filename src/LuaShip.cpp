@@ -1428,7 +1428,9 @@ static int l_ship_get_gun_on_mount(lua_State *l)
 {
 	Ship *s = LuaObject<Ship>::CheckFromLua(1);
 	int num = luaL_checknumber(l, 2);
-	LuaPush(l, s->FindGunOnMount(num));
+	int gun = s->FindGunOnMount(num);
+	if (gun < 0) lua_pushnil(l);
+	else lua_pushinteger(l, gun);
 	return 1;
 }
 

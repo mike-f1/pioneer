@@ -11,14 +11,13 @@
 #include "scenegraph/Mount.h"
 
 class Body;
-class Space;
 
 namespace SceneGraph {
 	class Model;
 }
 
-typedef unsigned GunId;
-typedef unsigned MountId;
+typedef int GunId;
+typedef int MountId;
 
 /*
 	TODO1:
@@ -40,8 +39,8 @@ public:
 	FixedGuns(Body *b);
 	~FixedGuns();
 
-	void SaveToJson(Json &jsonObj, Space *space);
-	void LoadFromJson(const Json &jsonObj, Space *space);
+	Json SaveToJson();
+	void LoadFromJson(const Json &jsonObj);
 
 	/* Reset&copy Mounts from a model
 	*/
@@ -63,10 +62,10 @@ public:
 	/* Set guns firing in the given direction
 	 / when "s" is not false
 	*/
-	void SetGunsFiringState(GunDir dir, int s);
+	void SetGunsFiringState(GunDir dir, bool fire);
 
 	// Return value is 'true' whenever a new projectile is fired
-	bool UpdateGuns(float timeStep, Body *shooter);
+	bool UpdateGuns(const float timeStep, Body *shooter);
 
 	unsigned GetMountsSize() const { return m_mounts.size(); };
 	unsigned GetMountedGunsNum() const { return m_guns.size(); }
@@ -129,21 +128,6 @@ private:
 	*/
 	bool Fire(GunId num, Body *shooter);
 
-	/* Get a list of barrels which can fire
-	 / given the fire mode
-	 / Eg: if barrels are 4 and fire mode ask
-	 / for 2 barrels simoultaneously firing,
-	 / return (1,2) and (3,4) given actual_barrel
-	 / which is incremented.
-	*/
-	static std::vector<int> GetFiringBarrels(int max_barrels, int contemporary_barrels, int &actual_barrel);
-
-	/* Given a number will return their factors,
-	 / which in turn are the number of barrels
-	 / which can be fired simoultaneusly
-	*/
-	static std::vector<int> CalculateFireModes(int num_barrels);
-
 	// Structure holding data of a single (maybe with multiple barrel) 'mounted' gun.
 	struct GunData {
 		GunData() = delete;
@@ -163,7 +147,10 @@ private:
 			temp_cool_rate(gd.temp_cool_rate),
 			temp_heat_rate(gd.temp_heat_rate),
 			barrels(gd.barrels),
-			projData(gd.projData) {}
+			projData(gd.projData)
+		{}
+		GunData(const Json &jsonObj);
+		Json SaveToJson();
 		std::string gun_name;
 		std::string sound;
 		float recharge;
@@ -185,7 +172,7 @@ private:
 			contemporary_barrels(1),
 			next_firing_barrels(1),
 			gun_data(n, s, r, h, c, b, pd)
-			{}
+		{}
 		GunStatus(const GunStatus& gs) : // Copy ctor
 			mount_id(gs.mount_id),
 			is_firing(gs.is_firing),
@@ -195,7 +182,18 @@ private:
 			contemporary_barrels(gs.contemporary_barrels),
 			next_firing_barrels(gs.next_firing_barrels),
 			fire_modes(gs.fire_modes),
-			gun_data(gs.gun_data) {}
+			gun_data(gs.gun_data)
+		{}
+		GunStatus(MountId m_id, const GunData &gd) : // "Fast" ctor for creation
+			mount_id(m_id),
+			is_firing(false),
+			is_active(true),
+			recharge_stat(gd.recharge),
+			temperature_stat(0.0f),
+			contemporary_barrels(1),
+			next_firing_barrels(1),
+			gun_data(gd)
+		{}
 		MountId mount_id; // <- store the mount sequential number
 					  //    or, if equal to -1, the fact that
 					  // this gun is "invalid": it should have
@@ -211,7 +209,20 @@ private:
 		Sound::Event sound;
 		std::vector<int> fire_modes;
 		GunData gun_data;
+		/* Calculate number of allowable firemodes,
+		 / and set the first. Should be called whenever
+		 / guns are mounted or swapped
+		*/
 		void UpdateFireModes(const Mount &mount);
+
+		/* Get a list of barrels which can fire given the fire mode
+		 / Eg: if barrels are 4 and fire mode ask for 2 barrels simoultaneously firing,
+		 / return (1,2) and (3,4) given actual_barrel which is incremented.
+		*/
+		const std::vector<int> &GetFiringBarrelsAndAdvance();
+
+	private:
+		std::vector<int> m_cont;
 	};
 
 	// Vector with mounts (data coming from models)

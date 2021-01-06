@@ -5,10 +5,10 @@
 #define _TERRAIN_H
 
 #include "FracDef.h"
-#include "../Random.h"
-#include "../RefCounted.h"
-#include "../vector3.h"
-#include "../galaxy/SystemPath.h"
+#include "Random.h"
+#include "libs/RefCounted.h"
+#include "libs/vector3.h"
+#include "galaxy/SystemPath.h"
 
 #include <memory>
 #include <string>
@@ -39,7 +39,7 @@ public:
 	void SetFracDef(const unsigned int index, const double featureHeightMeters, const double featureWidthMeters, const double smallestOctaveMeters = 20.0);
 	inline const fracdef_t &GetFracDef(const unsigned int index) const
 	{
-		assert(index >= 0 && index < MAX_FRACDEFS);
+		assert(index < MAX_FRACDEFS);
 		return m_fracdef[index];
 	}
 
@@ -51,7 +51,7 @@ public:
 
 	double GetMaxHeight() const { return m_maxHeight; }
 
-	Uint32 GetSurfaceEffects() const { return m_surfaceEffects; }
+	uint32_t GetSurfaceEffects() const { return m_surfaceEffects; }
 
 	double BiCubicInterpolation(const vector3d &p) const;
 
@@ -66,14 +66,14 @@ private:
 protected:
 	Terrain(const SystemBody *body);
 
-	Uint32 m_seed;
+	uint32_t m_seed;
 	Random m_rand;
 
 	double m_sealevel; // 0 - no water, 1 - 100% coverage
 	double m_icyness; // 0 - 1 (0% to 100% cover)
 	double m_volcanic;
 
-	Uint32 m_surfaceEffects;
+	uint32_t m_surfaceEffects;
 
 	// heightmap stuff
 	// XXX unify heightmap types
@@ -107,7 +107,7 @@ protected:
 
 	/* XXX you probably shouldn't increase this. If you are
 	   using more than 10 then things will be slow as hell */
-	static const Uint32 MAX_FRACDEFS = 10;
+	static const uint32_t MAX_FRACDEFS = 10;
 	fracdef_t m_fracdef[MAX_FRACDEFS];
 
 	struct MinBodyData {

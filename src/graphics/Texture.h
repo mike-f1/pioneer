@@ -4,38 +4,38 @@
 #ifndef _TEXTURE_H
 #define _TEXTURE_H
 
-#include "RefCounted.h"
-#include "vector2.h"
+#include "libs/RefCounted.h"
+#include "libs/vector2.h"
 
 namespace Graphics {
 
-	enum TextureFormat {
-		TEXTURE_NONE,
+	enum class TextureFormat {
+		NONE,
 
-		TEXTURE_RGBA_8888,
-		TEXTURE_RGB_888,
+		RGBA_8888,
+		RGB_888,
 
 		//luminance/intensity formats are deprecated in opengl 3+
 		//so we might remove them someday
-		TEXTURE_LUMINANCE_ALPHA_88, //luminance value put into R,G,B components; separate alpha value
-		TEXTURE_INTENSITY_8, //intensity value put into RGBA components
+		LUMINANCE_ALPHA_88, //luminance value put into R,G,B components; separate alpha value
+		INTENSITY_8, //intensity value put into RGBA components
 
-		TEXTURE_DXT1, // data is expected to be pre-compressed
-		TEXTURE_DXT5,
+		DXT1, // data is expected to be pre-compressed
+		DXT5,
 
-		TEXTURE_DEPTH //precision chosen by renderer
+		DEPTH //precision chosen by renderer
 	};
 
-	enum TextureSampleMode {
+	enum class TextureSampleMode {
 		LINEAR_CLAMP,
 		NEAREST_CLAMP,
 		LINEAR_REPEAT,
 		NEAREST_REPEAT
 	};
 
-	enum TextureType {
-		TEXTURE_2D,
-		TEXTURE_CUBE_MAP
+	enum class TextureType {
+		T_2D,
+		T_CUBE_MAP
 	};
 
 	struct TextureCubeData {
@@ -50,15 +50,15 @@ namespace Graphics {
 	class TextureDescriptor {
 	public:
 		TextureDescriptor() :
-			format(TEXTURE_RGBA_8888),
+			format(TextureFormat::RGBA_8888),
 			dataSize(1.0f),
 			texSize(1.0f),
-			sampleMode(LINEAR_CLAMP),
+			sampleMode(TextureSampleMode::LINEAR_CLAMP),
 			generateMipmaps(false),
 			allowCompression(true),
 			useAnisotropicFiltering(true),
 			numberOfMipMaps(0),
-			type(TEXTURE_2D)
+			type(TextureType::T_2D)
 		{}
 
 		TextureDescriptor(TextureFormat _format, const vector2f &_dataSize, TextureSampleMode _sampleMode, bool _generateMipmaps, bool _allowCompression, bool _useAnisotropicFiltering, unsigned int _numberOfMipMaps, TextureType _textureType) :

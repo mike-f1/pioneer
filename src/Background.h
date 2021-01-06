@@ -4,10 +4,10 @@
 #ifndef _BACKGROUND_H
 #define _BACKGROUND_H
 
-#include "RefCounted.h"
 #include "Color.h"
-#include "matrix4x4.h"
-#include "vector3.h"
+#include "libs/RefCounted.h"
+#include "libs/matrix4x4.h"
+#include "libs/vector3.h"
 #include <memory>
 
 class Random;
@@ -30,6 +30,9 @@ namespace Graphics {
 namespace Background {
 	class BackgroundElement {
 	public:
+		BackgroundElement();
+		~BackgroundElement();
+
 		void SetIntensity(float intensity);
 
 	protected:
@@ -58,13 +61,14 @@ namespace Background {
 		std::unique_ptr<Graphics::VertexBuffer> m_vertexBuffer;
 		RefCountedPtr<Graphics::Texture> m_cubemap;
 
-		Uint32 m_numCubemaps;
+		uint32_t m_numCubemaps;
 	};
 
 	class Starfield : public BackgroundElement {
 	public:
 		//does not Fill the starfield
 		Starfield(Random &rand, float amount);
+		~Starfield();
 		void Draw(Graphics::RenderState *);
 		//create or recreate the starfield
 		void Fill(Random &rand, float amount);
@@ -100,10 +104,11 @@ namespace Background {
 		};
 
 		Container(Random &rand, float amountOfBackgroundStars);
+		~Container();
 		void Draw(const matrix4x4d &transform);
 
 		void SetIntensity(float intensity);
-		void SetDrawFlags(const Uint32 flags);
+		void SetDrawFlags(const uint32_t flags);
 
 	private:
 		void Refresh(Random &rand, float amountOfBackgroundStars);
@@ -111,7 +116,7 @@ namespace Background {
 		MilkyWay m_milkyWay;
 		Starfield m_starField;
 		UniverseBox m_universeBox;
-		Uint32 m_drawFlags;
+		uint32_t m_drawFlags;
 		Graphics::RenderState *m_renderState;
 	};
 

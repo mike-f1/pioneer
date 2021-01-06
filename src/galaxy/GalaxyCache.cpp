@@ -8,7 +8,7 @@
 #include "Sector.h"
 #include "StarSystem.h"
 #include "Pi.h"
-#include "utils.h"
+#include "libs/stringUtils.h"
 #include <utility>
 
 //#define DEBUG_CACHE
@@ -153,10 +153,8 @@ RefCountedPtr<T> GalaxyObjectCache<T, CompareT>::Slave::GetCached(const SystemPa
 	if (m_master) {
 		auto inserted = m_cache.insert(std::make_pair(path, m_master->GetCached(path)));
 		return inserted.first->second;
-	} else {
-		return RefCountedPtr<T>();
 	}
-	Output("Something wrong here...\n");
+	return RefCountedPtr<T>();
 }
 
 template <typename T, typename CompareT>
@@ -205,7 +203,7 @@ GalaxyObjectCache<Sector, SystemPath::LessSectorOnly>::PathVector GalaxyObjectCa
 			// compare with the start of the current system
 			if (strncasecmp(pattern.c_str(), ss->GetName().c_str(), pattern.size()) == 0
 				// look for the pattern term somewhere within the current system
-				|| pi_strcasestr(ss->GetName().c_str(), pattern.c_str())) {
+				|| stringUtils::pi_strcasestr(ss->GetName().c_str(), pattern.c_str())) {
 				SystemPath match((*i).first);
 				match.systemIndex = systemIndex;
 				result.push_back(match);
@@ -214,7 +212,7 @@ GalaxyObjectCache<Sector, SystemPath::LessSectorOnly>::PathVector GalaxyObjectCa
 			for (const std::string &other_name : ss->GetOtherNames()) {
 				if (strncasecmp(pattern.c_str(), other_name.c_str(), pattern.size()) == 0
 					// look for the pattern term somewhere within the current system
-					|| pi_strcasestr(other_name.c_str(), pattern.c_str())) {
+					|| stringUtils::pi_strcasestr(other_name.c_str(), pattern.c_str())) {
 					SystemPath match((*i).first);
 					match.systemIndex = systemIndex;
 					result.push_back(match);
@@ -295,7 +293,7 @@ void GalaxyObjectCache<T, CompareT>::Slave::FillCache(const typename GalaxyObjec
 	}
 
 	// catch the last loop in case it's got some entries (could be less than the spread width)
-	if (current_paths) {
+	if (!current_paths->empty()) {
 		vec_paths.push_back(std::move(current_paths));
 	}
 

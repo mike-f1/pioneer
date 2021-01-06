@@ -5,7 +5,10 @@
 #define _COLLMESH_H
 
 #include "Aabb.h"
-#include "RefCounted.h"
+#include "libs/RefCounted.h"
+
+#include <vector>
+#include <algorithm>
 
 class GeomTree;
 
@@ -19,7 +22,7 @@ namespace Serializer {
 class CollMesh : public RefCounted {
 public:
 	CollMesh() :
-		m_geomTree(0),
+		m_geomTree(nullptr),
 		m_totalTris(0)
 	{}
 	virtual ~CollMesh();
@@ -34,9 +37,9 @@ public:
 	}
 
 	const std::vector<vector3f> &GetGeomTreeVertices() const;
-	const Uint32 *GetGeomTreeIndices() const;
-	const unsigned int *GetGeomTreeTriFlags() const;
-	unsigned int GetGeomTreeNumTris() const;
+	const std::vector<uint32_t> &GetGeomTreeIndices() const;
+	const std::vector<unsigned> &GetGeomTreeTriFlags() const;
+	unsigned GetGeomTreeNumTris() const;
 
 	inline GeomTree *GetGeomTree() const { return m_geomTree; }
 

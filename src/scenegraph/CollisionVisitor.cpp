@@ -3,14 +3,18 @@
 
 #include "CollisionVisitor.h"
 
+#include "CollMesh.h"
 #include "CollisionGeometry.h"
 #include "Group.h"
 #include "MatrixTransform.h"
 #include "StaticGeometry.h"
 #include "collider/GeomTree.h"
 
+#include "profiler/Profiler.h"
+
 namespace SceneGraph {
 	CollisionVisitor::CollisionVisitor() :
+		m_boundingRadius(0.),
 		m_properData(false),
 		m_totalTris(0)
 	{
@@ -63,7 +67,7 @@ namespace SceneGraph {
 			m_collMesh->GetAabb().Update(pos.x, pos.y, pos.z);
 		}
 
-		for (vector<Uint32>::const_iterator it = cg.GetIndices().begin(); it != cg.GetIndices().end(); ++it)
+		for (vector<uint32_t>::const_iterator it = cg.GetIndices().begin(); it != cg.GetIndices().end(); ++it)
 			m_indices.push_back(*it + idxOffset);
 
 		//at least some of the geoms should be default collision
@@ -83,7 +87,7 @@ namespace SceneGraph {
 		const int numIndices = cg.GetIndices().size();
 		const int numTris = numIndices / 3;
 		std::vector<vector3f> vertices(numVertices);
-		Uint32 *indices = new Uint32[numIndices];
+		uint32_t *indices = new uint32_t[numIndices];
 		unsigned int *triFlags = new unsigned int[numTris];
 
 		for (int i = 0; i < numVertices; i++)
@@ -112,7 +116,7 @@ namespace SceneGraph {
 	{
 		PROFILE_SCOPED()
 		std::vector<vector3f> &vts = m_vertices;
-		std::vector<Uint32> &ind = m_indices;
+		std::vector<uint32_t> &ind = m_indices;
 		const int offs = vts.size();
 
 		const vector3f min(bb.min.x, bb.min.y, bb.min.z);
@@ -188,8 +192,8 @@ namespace SceneGraph {
 		const size_t numIndices = m_indices.size();
 		const size_t numTris = numIndices / 3;
 		std::vector<vector3f> vertices(numVertices);
-		Uint32 *indices = new Uint32[numIndices];
-		Uint32 *triFlags = new Uint32[numTris];
+		uint32_t *indices = new uint32_t[numIndices];
+		uint32_t *triFlags = new uint32_t[numTris];
 
 		m_totalTris += numTris;
 

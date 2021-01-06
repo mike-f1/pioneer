@@ -3,28 +3,35 @@
 
 #pragma once
 
-#include "Input.h"
-#include "InputFrame.h"
 #include "ShipController.h"
 
-namespace KeyBindings {
-	struct ActionBinding;
-	struct AxisBinding;
-} // namespace KeyBindings
+#include "input/InputFwd.h"
+#include "libs/vector3.h"
+
+#include <array>
+
+class InputFrame;
+
+constexpr int WEAPON_CONFIG_SLOTS = 4;
 
 // autopilot AI + input
 class PlayerShipController : public ShipController {
 public:
 	PlayerShipController();
 	~PlayerShipController();
-	static void RegisterInputBindings();
-	Type GetType() override { return PLAYER; }
+
+	ControllerType GetType() override { return ControllerType::PLAYER; }
+
 	void SaveToJson(Json &jsonObj, Space *s) override;
 	void LoadFromJson(const Json &jsonObj) override;
 	void PostLoadFixup(Space *s) override;
+
 	void StaticUpdate(float timeStep) override;
+
+	void SetInputActive(bool active);
+
 	// Poll controls, set thruster states, gun states and target velocity
-	void PollControls(float timeStep, const bool force_rotation_damping, int *mouseMotion);
+	void PollControls(float timeStep, const bool force_rotation_damping);
 	bool IsMouseActive() const { return m_mouseActive; }
 	void SetDisableMouseFacing(bool disabled) { m_disableMouseFacing = disabled; }
 	double GetSetSpeed() const override { return m_setSpeed; }
@@ -38,9 +45,7 @@ public:
 
 	bool GetRotationDamping() const { return m_rotationDamping; }
 	void SetRotationDamping(bool enabled);
-	void ToggleRotationDamping();
-	void FireMissile();
-	void ToggleSetSpeedMode();
+	void FireMissile(bool down);
 
 	//targeting
 	//XXX AI should utilize one or more of these
@@ -51,46 +56,52 @@ public:
 	void SetNavTarget(Body *const target, bool setSpeedTo = false);
 	void SetSetSpeedTarget(Body *const target);
 
+	static void RegisterInputBindings();
+	void AttachBindingCallback();
 private:
-	static struct InputBinding : public InputFrame {
-		// We create a local alias for ease of typing these bindings.
-		using AxisBinding = KeyBindings::AxisBinding;
-		using ActionBinding = KeyBindings::ActionBinding;
 
+	void ToggleRotationDamping(bool down);
+	void ToggleUC(bool down);
+	void TakeOff(bool down);
+	void ToggleSetSpeedMode(bool down);
+
+	inline static struct InputBinding {
 		// Weapons
-		ActionBinding *targetObject;
-		ActionBinding *primaryFire;
-		ActionBinding *secondaryFire;
+		ActionId targetObject;
+		ActionId primaryFire;
+		ActionId secondaryFire;
+
+		std::array<ActionId , WEAPON_CONFIG_SLOTS> weaponConfigRecall;
+		std::array<ActionId , WEAPON_CONFIG_SLOTS> weaponConfigStore;
 
 		// Flight
-		AxisBinding *pitch;
-		AxisBinding *yaw;
-		AxisBinding *roll;
-		ActionBinding *killRot;
-		ActionBinding *toggleRotationDamping;
+		AxisId pitch;
+		AxisId yaw;
+		AxisId roll;
+		ActionId killRot;
+		ActionId toggleRotationDamping;
 
 		// Manual Control
-		AxisBinding *thrustForward;
-		AxisBinding *thrustUp;
-		AxisBinding *thrustLeft;
-		ActionBinding *thrustLowPower;
+		AxisId thrustForward;
+		AxisId thrustUp;
+		AxisId thrustLeft;
+		ActionId thrustLowPower;
+		ActionId toggleUC;
+		ActionId takeOff;
 
 		// Speed Control
-		AxisBinding *speedControl;
-		ActionBinding *toggleSetSpeed;
-	} InputBindings;
+		AxisId speedControl;
+		ActionId toggleSetSpeed;
+	} m_inputBindings;
 
-	// FIXME: separate the propusion controller from the input system, pass in wanted velocity correction directly.
-	friend class Propulsion;
+	static std::unique_ptr<InputFrame> m_inputFrame;
 
 	bool IsAnyAngularThrusterKeyDown();
 	bool IsAnyLinearThrusterKeyDown();
-	//do a variety of checks to see if input is allowed
-	void CheckControlsLock();
+
 	Body *m_combatTarget;
 	Body *m_navTarget;
 	Body *m_setSpeedTarget;
-	bool m_controlsLocked;
 	bool m_invertMouse; // used for rear view, *not* for invert Y-axis option (which is Pi::input.IsMouseYInvert)
 	bool m_mouseActive;
 	bool m_disableMouseFacing;
@@ -107,7 +118,5 @@ private:
 	int m_setSpeedTargetIndex;
 	vector3d m_mouseDir;
 
-	sigc::connection m_connRotationDampingToggleKey;
-	sigc::connection m_fireMissileKey;
-	sigc::connection m_setSpeedMode;
+	std::array<std::vector<int>, WEAPON_CONFIG_SLOTS> m_gunStatuses;
 };

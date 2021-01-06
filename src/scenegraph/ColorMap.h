@@ -6,11 +6,14 @@
 /*
  * Color look-up texture generator for newmodel pattern system
  */
-#include "graphics/Texture.h"
-#include "libs.h"
-#include <SDL_stdinc.h>
+
+#include <cstdint>
+#include <vector>
+#include "Color.h"
+#include "libs/RefCounted.h"
 
 namespace Graphics {
+	class Texture;
 	class Renderer;
 }
 
@@ -24,7 +27,7 @@ namespace SceneGraph {
 		void SetSmooth(bool);
 
 	private:
-		void AddColor(int width, const Color &c, std::vector<Uint8> &out);
+		void AddColor(int width, const Color &c, std::vector<uint8_t> &out);
 
 		bool m_smooth;
 		RefCountedPtr<Graphics::Texture> m_texture;

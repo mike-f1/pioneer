@@ -7,8 +7,8 @@
 #include "LuaManager.h"
 #include "LuaObject.h"
 #include "LuaUtils.h"
-#include "StringF.h"
-#include "utils.h"
+#include "libs/stringUtils.h"
+#include "libs/StringF.h"
 #include <math.h>
 
 /*
@@ -47,7 +47,7 @@
 static int l_format_date(lua_State *l)
 {
 	double t = luaL_checknumber(l, 1);
-	lua_pushstring(l, format_date(t).c_str());
+	lua_pushstring(l, stringUtils::format_date(t).c_str());
 	return 1;
 }
 
@@ -77,7 +77,7 @@ static int l_format_date(lua_State *l)
 static int l_format_distance(lua_State *l)
 {
 	double t = luaL_checknumber(l, 1);
-	lua_pushstring(l, format_distance(t).c_str());
+	lua_pushstring(l, stringUtils::format_distance(t).c_str());
 	return 1;
 }
 
@@ -107,7 +107,7 @@ static int l_format_distance(lua_State *l)
 static int l_format_speed(lua_State *l)
 {
 	double t = luaL_checknumber(l, 1);
-	lua_pushstring(l, format_speed(t).c_str());
+	lua_pushstring(l, stringUtils::format_speed(t).c_str());
 	return 1;
 }
 
@@ -146,9 +146,9 @@ static int l_format_money(lua_State *l)
 	modf(t * 100.0, &intpart);
 	if (lua_isboolean(l, 2)) {
 		bool show_cents = lua_toboolean(l, 2);
-		lua_pushstring(l, format_money(intpart, show_cents).c_str());
+		lua_pushstring(l, stringUtils::format_money(intpart, show_cents).c_str());
 	} else
-		lua_pushstring(l, format_money(intpart).c_str());
+		lua_pushstring(l, stringUtils::format_money(intpart).c_str());
 
 	return 1;
 }
@@ -172,21 +172,21 @@ static int l_format_mass_tonnes(lua_State *l)
 static int l_format_duration(lua_State *l)
 {
 	double seconds = luaL_checknumber(l, 1);
-	lua_pushstring(l, format_duration(seconds).c_str());
+	lua_pushstring(l, stringUtils::format_duration(seconds).c_str());
 	return 1;
 }
 
 static int l_format_latitude(lua_State *l)
 {
 	double lat = luaL_checknumber(l, 1);
-	lua_pushstring(l, format_latitude(lat).c_str());
+	lua_pushstring(l, stringUtils::format_latitude(lat).c_str());
 	return 1;
 }
 
 static int l_format_longitude(lua_State *l)
 {
 	double longi = luaL_checknumber(l, 1);
-	lua_pushstring(l, format_longitude(longi).c_str());
+	lua_pushstring(l, stringUtils::format_longitude(longi).c_str());
 	return 1;
 }
 

@@ -6,9 +6,11 @@
 #include "Material.h"
 #include "OS.h"
 #include "Renderer.h"
-#include "StringF.h"
+#include "libs/StringF.h"
 #include <iterator>
 #include <sstream>
+
+#include <SDL_video.h>
 
 namespace Graphics {
 
@@ -116,7 +118,7 @@ namespace Graphics {
 		initted = true;
 
 		MaterialDescriptor desc;
-		desc.effect = EFFECT_VTXCOLOR;
+		desc.effect = EffectType::VTXCOLOR;
 		desc.vertexColors = true;
 		vtxColorMaterial = renderer->CreateMaterial(desc);
 		vtxColorMaterial->IncRefCount();

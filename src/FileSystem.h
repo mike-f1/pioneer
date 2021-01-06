@@ -4,10 +4,9 @@
 #ifndef _FILESYSTEM_H
 #define _FILESYSTEM_H
 
-#include "ByteRange.h"
 #include "DateTime.h"
-#include "RefCounted.h"
-#include "StringRange.h"
+#include "libs/ByteRange.h"
+#include "libs/RefCounted.h"
 #include <deque>
 #include <memory>
 #include <string>
@@ -22,6 +21,8 @@
  *   - Determine the path of the application's installed files.
  *   - Determine a sensible path for application configuration files.
  */
+
+struct StringRange;
 
 namespace FileSystem {
 
@@ -153,7 +154,7 @@ namespace FileSystem {
 			assert(m_info.IsFile());
 			return m_data;
 		}
-		StringRange AsStringRange() const { return StringRange(m_data, m_size); }
+		StringRange AsStringRange() const;
 		ByteRange AsByteRange() const { return ByteRange(m_data, m_size); }
 
 	protected:
@@ -161,7 +162,7 @@ namespace FileSystem {
 			m_info(info),
 			m_data(data),
 			m_size(size) {}
-		FileData(const FileInfo &info) :
+		explicit FileData(const FileInfo &info) :
 			m_info(info),
 			m_data(0),
 			m_size(0) {}
@@ -209,9 +210,9 @@ namespace FileSystem {
 		explicit FileSourceFS(const std::string &root, bool trusted = false);
 		~FileSourceFS();
 
-		virtual FileInfo Lookup(const std::string &path);
-		virtual RefCountedPtr<FileData> ReadFile(const std::string &path);
-		virtual bool ReadDirectory(const std::string &path, std::vector<FileInfo> &output);
+		virtual FileInfo Lookup(const std::string &path) override;
+		virtual RefCountedPtr<FileData> ReadFile(const std::string &path) override;
+		virtual bool ReadDirectory(const std::string &path, std::vector<FileInfo> &output) override;
 
 		bool MakeDirectory(const std::string &path);
 
@@ -237,10 +238,10 @@ namespace FileSystem {
 		void AppendSource(FileSource *fs);
 		void RemoveSource(FileSource *fs);
 
-		virtual FileInfo Lookup(const std::string &path);
+		virtual FileInfo Lookup(const std::string &path) override;
 		std::vector<FileInfo> LookupAll(const std::string &path);
-		virtual RefCountedPtr<FileData> ReadFile(const std::string &path);
-		virtual bool ReadDirectory(const std::string &path, std::vector<FileInfo> &output);
+		virtual RefCountedPtr<FileData> ReadFile(const std::string &path) override;
+		virtual bool ReadDirectory(const std::string &path, std::vector<FileInfo> &output) override;
 
 	private:
 		std::vector<FileSource *> m_sources;

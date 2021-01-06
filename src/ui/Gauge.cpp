@@ -2,8 +2,10 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "Gauge.h"
+
 #include "Context.h"
 #include "Skin.h"
+#include "libs/utils.h"
 
 namespace UI {
 

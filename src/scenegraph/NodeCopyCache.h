@@ -4,7 +4,7 @@
 #ifndef SCENEGRAPH_NODECOPYCACHE_H
 #define SCENEGRAPH_NODECOPYCACHE_H
 
-#include "RefCounted.h"
+#include "libs/RefCounted.h"
 #include <map>
 
 namespace SceneGraph {

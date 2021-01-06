@@ -237,12 +237,7 @@ local function displayHyperJumpPlanner()
 		map_selected_path = Engine.GetSectorMapSelectedSystemPath()
 		hyperjump_route = Engine.SectorMapGetRoute()
 		route_jumps = Engine.SectorMapGetRouteSize()
-		if ui.isKeyReleased(ui.keys.tab) then
-			hideHyperJumpPlaner = not hideHyperJumpPlaner;
-		end
-		if not hideHyperJumpPlaner then
-			showHyperJumpPlannerWindow()
-		end
+		showHyperJumpPlannerWindow()
 	end
 end -- displayHyperJumpPlanner
 

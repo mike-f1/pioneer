@@ -1,8 +1,14 @@
 {
-"model" : "orbital_station_2-2k",
-"type" : "orbital",
-"angular_velocity" : 0.062,
-"parking_distance" : 3000.0,
-"parking_gap_size" : 500.0,
-"pad_offset" : 150
+   "model" : "orbital_station_2-2k",
+   "type" : "orbital",
+   "angular_velocity" : 0.062,
+   "parking_distance" : 3000.0,
+   "parking_gap_size" : 500.0,
+   "pad_offset" : 150,
+   "central_cylinder" : {
+      "diameter" : 130.0,
+      "min" : -150,
+      "max" : 150,
+      "dock" : 1
+	}
 }

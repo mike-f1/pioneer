@@ -3,17 +3,17 @@
 
 #include "DynamicBody.h"
 
+#include "CollMesh.h"
 #include "FixedGuns.h"
 #include "Frame.h"
 #include "GameSaveError.h"
 #include "Json.h"
 #include "Orbit.h"
 #include "Planet.h"
-#include "Space.h"
 #include "collider/CollisionContact.h"
 #include "galaxy/SystemBody.h"
+#include "libs/gameconsts.h"
 #include "ship/Propulsion.h"
-#include "gameconsts.h"
 
 static const float KINETIC_ENERGY_MULT = 0.00001f;
 const double DynamicBody::DEFAULT_DRAG_COEFF = 0.1; // 'smooth sphere'
@@ -69,6 +69,7 @@ DynamicBody::DynamicBody(const Json &jsonObj, Space *space) :
 		m_angInertia = dynamicBodyObj["ang_inertia"];
 		m_isMoving = dynamicBodyObj["is_moving"];
 	} catch (Json::type_error &) {
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 		throw SavedGameCorruptException();
 	}
 
@@ -76,9 +77,9 @@ DynamicBody::DynamicBody(const Json &jsonObj, Space *space) :
 	m_decelerating = false;
 }
 
-void DynamicBody::SaveToJson(Json &jsonObj, Space *space)
+Json DynamicBody::SaveToJson(Space *space)
 {
-	ModelBody::SaveToJson(jsonObj, space);
+	Json jsonObj = ModelBody::SaveToJson(space);
 
 	Json dynamicBodyObj = Json::object(); // Create JSON object to contain dynamic body data.
 
@@ -92,6 +93,7 @@ void DynamicBody::SaveToJson(Json &jsonObj, Space *space)
 	dynamicBodyObj["is_moving"] = m_isMoving;
 
 	jsonObj["dynamic_body"] = dynamicBodyObj; // Add dynamic body object to supplied object.
+	return jsonObj;
 }
 
 void DynamicBody::PostLoadFixup(Space *space)
@@ -317,7 +319,7 @@ void DynamicBody::SetAngVelocity(const vector3d &v)
 	m_angVel = v;
 }
 
-bool DynamicBody::OnCollision(Object *o, Uint32 flags, double relVel)
+bool DynamicBody::OnCollision(Object *o, uint32_t flags, double relVel)
 {
 	// don't bother doing collision damage from a missile that will now explode, or may have already
 	// also avoids an occasional race condition where destruction event of this could be queued twice

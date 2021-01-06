@@ -3,12 +3,13 @@
 
 #include "ModelViewer.h"
 
+#include "CollMesh.h"
 #include "FileSystem.h"
 #include "GameConfig.h"
 #include "GameSaveError.h"
 #include "ModManager.h"
 #include "OS.h"
-#include "StringF.h"
+#include "PngWriter.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/Drawables.h"
@@ -17,10 +18,16 @@
 #include "graphics/TextureBuilder.h"
 #include "graphics/VertexArray.h"
 #include "graphics/opengl/RendererGL.h"
+#include "libs/stringUtils.h"
+#include "libs/StringF.h"
 #include "scenegraph/Animation.h"
 #include "scenegraph/BinaryConverter.h"
 #include "scenegraph/DumpVisitor.h"
 #include "scenegraph/FindNodeVisitor.h"
+#include "scenegraph/Loader.h"
+#include "scenegraph/MatrixTransform.h"
+#include "scenegraph/Model.h"
+#include "scenegraph/ModelNode.h"
 #include "scenegraph/ModelSkin.h"
 #include <sstream>
 
@@ -82,7 +89,7 @@ namespace {
 			const std::string &fpath = info.GetPath();
 
 			//check it's the expected type
-			if (info.IsFile() && ends_with_ci(fpath, ".dds")) {
+			if (info.IsFile() && stringUtils::ends_with_ci(fpath, ".dds")) {
 				list.push_back(info.GetName().substr(0, info.GetName().size() - 4));
 			}
 		}
@@ -333,11 +340,11 @@ void ModelViewer::HitImpl()
 			SceneGraph::StaticGeometry::Mesh &mesh = sg->GetMeshAt(0);
 
 			// Please don't do this in game, no speed guarantee
-			const Uint32 posOffs = mesh.vertexBuffer->GetDesc().GetOffset(Graphics::ATTRIB_POSITION);
-			const Uint32 stride = mesh.vertexBuffer->GetDesc().stride;
-			const Uint32 vtxIdx = m_rng.Int32() % mesh.vertexBuffer->GetSize();
+			const uint32_t posOffs = mesh.vertexBuffer->GetDesc().GetOffset(Graphics::ATTRIB_POSITION);
+			const uint32_t stride = mesh.vertexBuffer->GetDesc().stride;
+			const uint32_t vtxIdx = m_rng.Int32() % mesh.vertexBuffer->GetSize();
 
-			const Uint8 *vtxPtr = mesh.vertexBuffer->Map<Uint8>(Graphics::BUFFER_MAP_READ);
+			const uint8_t *vtxPtr = mesh.vertexBuffer->Map<uint8_t>(Graphics::BUFFER_MAP_READ);
 			const vector3f pos = *reinterpret_cast<const vector3f *>(vtxPtr + vtxIdx * stride + posOffs);
 			mesh.vertexBuffer->Unmap();
 			m_shields->AddHit(vector3d(pos));
@@ -534,11 +541,11 @@ void ModelViewer::DrawModel(const matrix4x4f &mv)
 	m_model->UpdateAnimations();
 
 	m_model->SetDebugFlags(
-		(m_options.showAabb ? SceneGraph::Model::DEBUG_BBOX : 0x0) |
-		(m_options.showCollMesh ? SceneGraph::Model::DEBUG_COLLMESH : 0x0) |
-		(m_options.showTags ? SceneGraph::Model::DEBUG_TAGS : 0x0) |
-		(m_options.showDockingLocators ? SceneGraph::Model::DEBUG_DOCKING : 0x0) |
-		(m_options.wireframe ? SceneGraph::Model::DEBUG_WIREFRAME : 0x0));
+		(m_options.showAabb ? SceneGraph::DebugFlags::BBOX : SceneGraph::DebugFlags::NONE) |
+		(m_options.showCollMesh ? SceneGraph::DebugFlags::COLLMESH : SceneGraph::DebugFlags::NONE) |
+		(m_options.showTags ? SceneGraph::DebugFlags::TAGS : SceneGraph::DebugFlags::NONE) |
+		(m_options.showDockingLocators ? SceneGraph::DebugFlags::DOCKING : SceneGraph::DebugFlags::NONE) |
+		(m_options.wireframe ? SceneGraph::DebugFlags::WIREFRAME : SceneGraph::DebugFlags::NONE));
 
 	m_model->Render(mv);
 	m_navLights->Render();
@@ -648,14 +655,13 @@ void ModelViewer::MainLoop()
 
 void ModelViewer::OnAnimChanged(unsigned int, const std::string &name)
 {
-	m_currentAnimation = 0;
+	m_currentAnimation = nullptr;
 	// Find the animation matching the name (could also store the anims in a map
 	// when the animationSelector is filled)
 	if (!name.empty()) {
-		const std::vector<SceneGraph::Animation *> &anims = m_model->GetAnimations();
-		for (std::vector<SceneGraph::Animation *>::const_iterator anim = anims.begin(); anim != anims.end(); ++anim) {
-			if ((*anim)->GetName() == name)
-				m_currentAnimation = (*anim);
+		for (SceneGraph::Animation &anim : m_model->GetAnimations()) {
+			if (anim.GetName() == name)
+				m_currentAnimation = &anim;
 		}
 	}
 	if (m_currentAnimation)
@@ -859,9 +865,9 @@ static void collect_models(std::vector<std::string> &list)
 
 		//check it's the expected type
 		if (info.IsFile()) {
-			if (ends_with_ci(fpath, ".model"))
+			if (stringUtils::ends_with_ci(fpath, ".model"))
 				list.push_back(info.GetName().substr(0, info.GetName().size() - 6));
-			else if (ends_with_ci(fpath, ".sgm"))
+			else if (stringUtils::ends_with_ci(fpath, ".sgm"))
 				list.push_back(info.GetName());
 		}
 	}
@@ -902,7 +908,7 @@ void ModelViewer::Screenshot()
 	strftime(buf, sizeof(buf), "modelviewer-%Y%m%d-%H%M%S.png", _tm);
 	Graphics::ScreendumpState sd;
 	RendererLocator::getRenderer()->Screendump(sd);
-	write_screenshot(sd, buf);
+	PngWriter::write_screenshot(sd, buf);
 	AddLog(stringf("Screenshot %0 saved", buf));
 }
 
@@ -945,7 +951,7 @@ void ModelViewer::SetModel(const std::string &filename)
 	ClearModel();
 
 	try {
-		if (ends_with_ci(filename, ".sgm")) {
+		if (stringUtils::ends_with_ci(filename, ".sgm")) {
 			//binary loader expects extension-less name. Might want to change this.
 			m_modelName = filename.substr(0, filename.size() - 4);
 			SceneGraph::BinaryConverter bc;
@@ -1219,12 +1225,12 @@ void ModelViewer::UpdateAnimList()
 {
 	animSelector->Clear();
 	if (m_model) {
-		const std::vector<SceneGraph::Animation *> &anims = m_model->GetAnimations();
+		const std::vector<SceneGraph::Animation> &anims = m_model->GetAnimations();
 		for (unsigned int i = 0; i < anims.size(); i++) {
-			animSelector->AddOption(anims[i]->GetName());
+			animSelector->AddOption(anims[i].GetName());
 		}
 		if (anims.size())
-			animSelector->SetSelectedOption(anims[0]->GetName());
+			animSelector->SetSelectedOption(anims[0].GetName());
 	}
 	animSelector->Layout();
 	OnAnimChanged(0, animSelector->GetSelectedOption());

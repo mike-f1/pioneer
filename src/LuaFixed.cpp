@@ -2,14 +2,14 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "LuaFixed.h"
+
 #include "LuaUtils.h"
-#include "libs.h"
 
 static int l_fixed_new(lua_State *L)
 {
 	LUA_DEBUG_START(L);
-	Sint64 num = static_cast<Sint64>(luaL_checknumber(L, 1));
-	Sint64 denom = static_cast<Sint64>(luaL_checknumber(L, 2)); // use checknumber for >32-bit precision
+	int64_t num = static_cast<int64_t>(luaL_checknumber(L, 1));
+	int64_t denom = static_cast<int64_t>(luaL_checknumber(L, 2)); // use checknumber for >32-bit precision
 	if (!denom)
 		return luaL_error(L, "cannot construct a fixed-point value with a zero denominator");
 	LuaFixed::PushToLua(L, fixed(num, denom));

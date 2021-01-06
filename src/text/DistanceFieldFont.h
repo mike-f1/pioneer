@@ -22,8 +22,11 @@
  * char id=32 x=253.875 y=0 width=2 height=2.125 xoffset=-1 yoffset=30.875 xadvance=16 page=0 chnl=15
  * (etc)
  */
-#include "StringRange.h"
-#include "libs.h"
+#include "libs/StringRange.h"
+#include "libs/RefCounted.h"
+#include "libs/vector2.h"
+#include <string>
+#include <map>
 
 namespace Graphics {
 	class Texture;
@@ -48,7 +51,7 @@ namespace Text {
 			float xAdvance; //how much the cursor should be moved after a character
 		};
 		Graphics::Texture *m_texture;
-		std::map<Uint32, Glyph> m_glyphs;
+		std::map<uint32_t, Glyph> m_glyphs;
 		vector2f m_sheetSize;
 		float m_lineHeight;
 		float m_fontSize; //32 etc. Glyph size/advance will be scaled to 1/fontSize.

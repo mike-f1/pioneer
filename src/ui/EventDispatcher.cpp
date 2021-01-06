@@ -2,14 +2,18 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "EventDispatcher.h"
+
 #include "Container.h"
 #include "Widget.h"
+#include "libs/utils.h"
 #include "text/TextSupport.h"
 #include <climits>
 
+#include "profiler/Profiler.h"
+
 namespace UI {
 
-	static inline MouseButtonEvent::ButtonType MouseButtonFromSDLButton(Uint8 sdlButton)
+	static inline MouseButtonEvent::ButtonType MouseButtonFromSDLButton(uint8_t sdlButton)
 	{
 		return sdlButton == SDL_BUTTON_LEFT ? MouseButtonEvent::BUTTON_LEFT :
 											  sdlButton == SDL_BUTTON_MIDDLE ? MouseButtonEvent::BUTTON_MIDDLE :
@@ -18,6 +22,7 @@ namespace UI {
 
 	bool EventDispatcher::DispatchSDLEvent(const SDL_Event &event)
 	{
+		PROFILE_SCOPED()
 		switch (event.type) {
 		case SDL_KEYDOWN:
 			return Dispatch(KeyboardEvent(KeyboardEvent::KEY_DOWN, KeySym(event.key.keysym.sym, SDL_Keymod(event.key.keysym.mod)), event.key.repeat));
@@ -26,7 +31,7 @@ namespace UI {
 			return Dispatch(KeyboardEvent(KeyboardEvent::KEY_UP, KeySym(event.key.keysym.sym, SDL_Keymod(event.key.keysym.mod)), event.key.repeat));
 
 		case SDL_TEXTINPUT:
-			Uint32 unicode;
+			uint32_t unicode;
 			Text::utf8_decode_char(&unicode, event.text.text);
 			return Dispatch(TextInputEvent(unicode));
 
@@ -89,7 +94,7 @@ namespace UI {
 				// can't just compare though, because the mods won't
 				// match. so we make a new keysym with a new mod that
 				// includes both of the type of key
-				Uint32 mod = Uint32(keyEvent.keysym.mod);
+				uint32_t mod = uint32_t(keyEvent.keysym.mod);
 				if (mod & KMOD_SHIFT) mod |= KMOD_SHIFT;
 				if (mod & KMOD_CTRL) mod |= KMOD_CTRL;
 				if (mod & KMOD_ALT) mod |= KMOD_ALT;

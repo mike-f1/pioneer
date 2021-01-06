@@ -4,7 +4,7 @@
 #ifndef _COLLISION_CONTACT_H
 #define _COLLISION_CONTACT_H
 
-#include "vector3.h"
+#include "libs/vector3.h"
 
 struct CollisionContact {
 	// position and normal are in world (or rather, CollisionSpace) coordinates
@@ -16,7 +16,7 @@ struct CollisionContact {
 	int triIdx;
 	void *userData1, *userData2;
 	int geomFlag;
-	
+
 	// default ctor
 	CollisionContact() :
 		depth(0),
@@ -28,10 +28,21 @@ struct CollisionContact {
 		geomFlag(0)
 	{}
 
+	CollisionContact(const vector3d &position_, const vector3d &normal_, double deep, int triIdx_, void *u1, void *u2, int gf_) :
+		pos(position_),
+		normal(normal_),
+		depth(deep),
+		distance(0),
+		timestep(0.),
+		triIdx(triIdx_),
+		userData1(u1),
+		userData2(u2),
+		geomFlag(gf_)
+	{}
 	// ctor for collision with terrain
-	CollisionContact(const vector3d &position, const vector3d &normal, double deep, double dt, void *u1, void *u2) :
-		pos(position),
-		normal(normal),
+	CollisionContact(const vector3d &position_, const vector3d &normal_, double deep, double dt, void *u1, void *u2) :
+		pos(position_),
+		normal(normal_),
 		depth(deep),
 		distance(0),
 		timestep(dt),

@@ -4,9 +4,9 @@
 #ifndef _SPEEDLINES_H
 #define _SPEEDLINES_H
 
-#include "RefCounted.h"
-#include "matrix4x4.h"
-#include "vector3.h"
+#include "libs/RefCounted.h"
+#include "libs/matrix4x4.h"
+#include "libs/vector3.h"
 #include <memory>
 #include <vector>
 
@@ -40,7 +40,7 @@ private:
 	static float SPACING;
 	static float MAX_VEL;
 
-	void CreateVertexBuffer(const Uint32 size);
+	void CreateVertexBuffer(const uint32_t size);
 
 	Ship *m_ship;
 

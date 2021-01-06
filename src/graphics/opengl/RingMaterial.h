@@ -9,6 +9,7 @@
 #include "MaterialGL.h"
 #include "OpenGLLibs.h"
 #include "Program.h"
+
 namespace Graphics {
 
 	namespace OGL {

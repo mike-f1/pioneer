@@ -9,7 +9,7 @@
 #include "Json.h"
 #include "SectorGenerator.h"
 #include "StarSystemGenerator.h"
-#include "utils.h"
+#include "libs/utils.h"
 
 static const GalaxyGenerator::Version LAST_VERSION_LEGACY = 1;
 
@@ -175,7 +175,7 @@ GalaxyGenerator *GalaxyGenerator::AddStarSystemStage(StarSystemGeneratorStage *s
 
 RefCountedPtr<Sector> GalaxyGenerator::GenerateSector(RefCountedPtr<Galaxy> galaxy, const SystemPath &path, SectorCache *cache)
 {
-	const Uint32 _init[4] = { Uint32(path.sectorX), Uint32(path.sectorY), Uint32(path.sectorZ), UNIVERSE_SEED };
+	const uint32_t _init[4] = { uint32_t(path.sectorX), uint32_t(path.sectorY), uint32_t(path.sectorZ), UNIVERSE_SEED };
 	Random rng(_init, 4);
 	SectorConfig config;
 	RefCountedPtr<Sector> sector(new Sector(galaxy, path, cache));
@@ -188,10 +188,10 @@ RefCountedPtr<Sector> GalaxyGenerator::GenerateSector(RefCountedPtr<Galaxy> gala
 RefCountedPtr<StarSystem> GalaxyGenerator::GenerateStarSystem(RefCountedPtr<Galaxy> galaxy, const SystemPath &path, StarSystemCache *cache)
 {
 	RefCountedPtr<const Sector> sec = galaxy->GetSector(path);
-	assert(path.systemIndex >= 0 && path.systemIndex < sec->m_systems.size());
+	assert(path.systemIndex < sec->m_systems.size());
 	const Sector::System &sys = sec->m_systems[path.systemIndex];
-	Uint32 seed = sys.GetSeed();
-	Uint32 _init[6] = { path.systemIndex, Uint32(path.sectorX), Uint32(path.sectorY), Uint32(path.sectorZ), UNIVERSE_SEED, Uint32(seed) };
+	uint32_t seed = sys.GetSeed();
+	uint32_t _init[6] = { path.systemIndex, uint32_t(path.sectorX), uint32_t(path.sectorY), uint32_t(path.sectorZ), UNIVERSE_SEED, uint32_t(seed) };
 	Random rng(_init, 6);
 	StarSystemConfig config;
 	RefCountedPtr<StarSystem> system(new StarSystem(path, galaxy, cache));

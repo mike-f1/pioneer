@@ -2,11 +2,12 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "DistanceFieldFont.h"
+
 #include "FileSystem.h"
-#include "StringRange.h"
 #include "graphics/Texture.h"
 #include "graphics/VertexArray.h"
-#include "utils.h"
+#include "libs/StringRange.h"
+#include "libs/stringUtils.h"
 #include <iostream>
 #include <sstream>
 
@@ -30,11 +31,11 @@ namespace Text {
 			if (doingCharacters) {
 				ParseChar(line);
 			} else {
-				if (starts_with(line.begin, "info")) //contains font size
+				if (stringUtils::starts_with(line.begin, "info")) //contains font size
 					ParseInfo(line);
-				else if (starts_with(line.begin, "common ")) //contains UV sheet w/h
+				else if (stringUtils::starts_with(line.begin, "common ")) //contains UV sheet w/h
 					ParseCommon(line);
-				else if (starts_with(line.begin, "chars ")) //after this, file should be all characters
+				else if (stringUtils::starts_with(line.begin, "chars ")) //after this, file should be all characters
 					doingCharacters = true;
 			}
 		}
@@ -54,8 +55,8 @@ namespace Text {
 				cursor.y--;
 				cursor.x = 0;
 			} else {
-				Uint32 chr = Uint32(text.at(i));
-				std::map<Uint32, Glyph>::const_iterator it = m_glyphs.find(chr);
+				uint32_t chr = uint32_t(text.at(i));
+				std::map<uint32_t, Glyph>::const_iterator it = m_glyphs.find(chr);
 				if (it != m_glyphs.end()) {
 					const Glyph &glyph = it->second;
 					AddGlyph(va, cursor + glyph.offset, glyph, bounds);
@@ -131,7 +132,7 @@ namespace Text {
 		std::stringstream ss(r.ToString());
 		std::string token;
 
-		Uint32 id = 0;
+		uint32_t id = 0;
 		double x = 0.0;
 		double y = 0.0;
 		double uSize = 0.0;
@@ -146,7 +147,7 @@ namespace Text {
 
 			//only care about some values
 			if (pair.first == "id")
-				id = get_value<Uint32>(pair.second);
+				id = get_value<uint32_t>(pair.second);
 			else if (pair.first == "x")
 				x = get_value<double>(pair.second);
 			else if (pair.first == "y")

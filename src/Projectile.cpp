@@ -22,6 +22,7 @@
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/RenderState.h"
+#include "graphics/Texture.h"
 #include "graphics/TextureBuilder.h"
 #include "graphics/VertexArray.h"
 
@@ -153,7 +154,7 @@ Projectile::Projectile(const Json &jsonObj, Space *space) :
 		m_color = projectileObj["color"];
 		m_parentIndex = projectileObj["index_for_body"];
 	} catch (Json::type_error &) {
-		Output("Loading error in '%s'\n", __func__);
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 		throw SavedGameCorruptException();
 	}
 }
@@ -162,9 +163,9 @@ Projectile::~Projectile()
 {
 }
 
-void Projectile::SaveToJson(Json &jsonObj, Space *space)
+Json Projectile::SaveToJson(Space *space)
 {
-	Body::SaveToJson(jsonObj, space);
+	Json jsonObj = Body::SaveToJson(space);
 
 	Json projectileObj({}); // Create JSON object to contain projectile data.
 
@@ -180,6 +181,7 @@ void Projectile::SaveToJson(Json &jsonObj, Space *space)
 	projectileObj["index_for_body"] = space->GetIndexForBody(m_parent);
 
 	jsonObj["projectile"] = projectileObj; // Add projectile object to supplied object.
+	return jsonObj;
 }
 
 void Projectile::PostLoadFixup(Space *space)
@@ -223,11 +225,10 @@ double Projectile::GetRadius() const
 void Projectile::StaticUpdate(const float timeStep)
 {
 	PROFILE_SCOPED()
-	CollisionContact c;
 	// Collision spaces don't store velocity, so dirvel-only is still wrong but less awful than dirvel+basevel
 	vector3d vel = m_dirVel * timeStep;
 	Frame *frame = Frame::GetFrame(GetFrame());
-	frame->GetCollisionSpace()->TraceRay(GetPosition(), vel.Normalized(), vel.Length(), &c);
+	CollisionContact c = frame->GetCollisionSpace()->TraceRay(GetPosition(), vel.Normalized(), vel.Length());
 
 	if (c.userData1) {
 		Object *o = static_cast<Object *>(c.userData1);

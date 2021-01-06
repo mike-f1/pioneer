@@ -8,12 +8,11 @@
 #include <cassert>
 #include <deque>
 #include <set>
-#include <string>
 #include <vector>
 
-#include "utils.h"
+#include "libs/utils.h"
 
-static const Uint32 MAX_THREADS = 64;
+static const uint32_t MAX_THREADS = 64;
 
 class JobClient;
 class JobQueue;
@@ -129,7 +128,7 @@ public:
 	// call from the main loop. this will call OnFinish for any finished jobs,
 	// and then delete all finished and cancelled jobs. returns the number of
 	// finished jobs (not cancelled)
-	virtual Uint32 FinishJobs() = 0;
+	virtual uint32_t FinishJobs() = 0;
 };
 
 // the queue management class. create one from the main thread, and feed your
@@ -138,7 +137,7 @@ class AsyncJobQueue : public JobQueue {
 public:
 	// numRunners is the number of jobs to run in parallel. right now its the
 	// same as the number of threads, but there's no reason that it has to be
-	AsyncJobQueue(Uint32 numRunners);
+	AsyncJobQueue(uint32_t numRunners);
 	virtual ~AsyncJobQueue();
 
 	// call from the main thread to add a job to the queue. the job should be
@@ -160,7 +159,7 @@ public:
 	// call from the main loop. this will call OnFinish for any finished jobs,
 	// and then delete all finished and cancelled jobs. returns the number of
 	// finished jobs (not cancelled)
-	virtual Uint32 FinishJobs() override;
+	virtual uint32_t FinishJobs() override;
 
 private:
 	// a runner wraps a single thread, and calls into the queue when its ready for
@@ -228,9 +227,9 @@ public:
 	// call from the main loop. this will call OnFinish for any finished jobs,
 	// and then delete all finished and cancelled jobs. returns the number of
 	// finished jobs (not cancelled)
-	virtual Uint32 FinishJobs() override;
+	virtual uint32_t FinishJobs() override;
 
-	Uint32 RunJobs(Uint32 count = 1);
+	uint32_t RunJobs(uint32_t count = 1);
 
 private:
 	std::deque<Job *> m_queue;
@@ -262,13 +261,13 @@ public:
 	JobSet(const JobSet &) = delete;
 	JobSet &operator=(const JobSet &other) = delete;
 
-	virtual void Order(Job *job)
+	virtual void Order(Job *job) override
 	{
 		auto x = m_jobs.insert(m_queue->Queue(job, this));
 		if (x.second) Output("Job already queued\n");
 		assert(x.second);
 	}
-	virtual void RemoveJob(Job::Handle *handle) { m_jobs.erase(*handle); }
+	virtual void RemoveJob(Job::Handle *handle) override { m_jobs.erase(*handle); }
 
 	bool IsEmpty() const { return m_jobs.empty(); }
 

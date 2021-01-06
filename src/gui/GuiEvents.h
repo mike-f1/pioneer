@@ -4,10 +4,12 @@
 #ifndef _GUIEVENTS_H
 #define _GUIEVENTS_H
 
+#include <cstdint>
+
 namespace Gui {
 	struct MouseButtonEvent {
-		Uint8 isdown;
-		Uint8 button;
+		uint8_t isdown;
+		uint8_t button;
 		float x, y; // widget coords
 		float screenX, screenY; // screen coords
 		enum {

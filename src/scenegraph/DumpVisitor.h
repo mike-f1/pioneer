@@ -2,6 +2,10 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "NodeVisitor.h"
+
+#include <string>
+#include <vector>
+
 /*
  * Print the graph structure to console
  * Collect statistics
@@ -25,14 +29,14 @@ namespace SceneGraph {
 			unsigned int collTriCount;
 		};
 
-		DumpVisitor(const Model *m);
+		explicit DumpVisitor(const Model *m);
 
 		std::string GetModelStatistics();
 
-		virtual void ApplyNode(Node &);
-		virtual void ApplyGroup(Group &);
-		virtual void ApplyLOD(LOD &);
-		virtual void ApplyStaticGeometry(StaticGeometry &);
+		virtual void ApplyNode(Node &) override;
+		virtual void ApplyGroup(Group &) override;
+		virtual void ApplyLOD(LOD &) override;
+		virtual void ApplyStaticGeometry(StaticGeometry &) override;
 
 	private:
 		void PutIndent() const;

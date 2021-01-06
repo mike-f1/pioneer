@@ -3,10 +3,10 @@
 
 #include "ModelSpinner.h"
 #include "Game.h"
-#include "Pi.h"
 #include "Shields.h"
 #include "Ship.h"
 #include "scenegraph/Model.h"
+#include "pi_states/PiState.h"
 
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
@@ -22,7 +22,7 @@ namespace GameUI {
 		m_rotY(DEG2RAD(180.0)),
 		m_rightMouseButton(false)
 	{
-		m_model.reset(model->MakeInstance());
+		m_model = model->MakeInstance();
 		m_skin.Apply(m_model.get());
 		m_model->SetPattern(pattern);
 		m_shields.reset(new Shields(model));
@@ -45,7 +45,7 @@ namespace GameUI {
 	void ModelSpinner::Update()
 	{
 		if (!(m_rightMouseButton && IsMouseActive()))
-			m_rotY += Pi::GetFrameTime();
+			m_rotY += MainState_::PiState::GetFrameTime();
 
 		if (m_model) {
 			m_shields->SetEnabled(false);

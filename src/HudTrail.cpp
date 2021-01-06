@@ -10,15 +10,14 @@
 #include "graphics/RendererLocator.h"
 
 const float UPDATE_INTERVAL = 0.1f;
-const Uint16 MAX_POINTS = 100;
+const uint16_t MAX_POINTS = 100;
 
 HudTrail::HudTrail(Body *b, const Color &c) :
 	m_body(b),
+	m_currentFrame(b->GetFrame()),
 	m_updateTime(0.f),
 	m_color(c)
 {
-	m_currentFrame = b->GetFrame();
-
 	Graphics::RenderStateDesc rsd;
 	rsd.blendMode = Graphics::BLEND_ALPHA_ONE;
 	rsd.depthWrite = false;
@@ -74,7 +73,7 @@ void HudTrail::Render()
 			tvts.push_back(-vector3f(curpos - m_trailPoints[i]));
 			alpha -= decrement;
 			colors.push_back(tcolor);
-			colors.back().a = Uint8(alpha * 255);
+			colors.back().a = uint8_t(alpha * 255);
 		}
 
 		RendererLocator::getRenderer()->SetTransform(m_transform);

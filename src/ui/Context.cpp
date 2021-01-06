@@ -2,13 +2,16 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "Context.h"
+
 #include "FileSystem.h"
 #include "Lua.h"
+#include "libs/utils.h"
 #include "text/FontConfig.h"
 #include <typeinfo>
 
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
+#include "graphics/Texture.h"
 
 namespace UI {
 

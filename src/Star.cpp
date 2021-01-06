@@ -3,6 +3,7 @@
 
 #include "Star.h"
 
+#include "Random.h"
 #include "graphics/RenderState.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"

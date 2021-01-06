@@ -6,8 +6,8 @@
 #include "DateTime.h"
 #include "FileSystem.h"
 #include "Game.h"
-#include "GameState.h"
 #include "GameConfSingleton.h"
+#include "GameState.h"
 #include "GameLocator.h"
 #include "GameSaveError.h"
 #include "InGameViews.h"
@@ -20,10 +20,9 @@
 #include "Player.h"
 #include "ShipCpanel.h"
 #include "Space.h"
-#include "StringF.h"
 #include "WorldView.h"
 #include "galaxy/StarSystem.h"
-
+#include "libs/StringF.h"
 
 /*
  * Interface: Game
@@ -72,7 +71,7 @@ static int l_game_start_game(lua_State *l)
 			time(&now);
 			start_time = difftime(now, 946684799); // <--- Friday, 31 December 1999 23:59:59 GMT+00:00 as UNIX epoch time in seconds
 		}
-		GameState::MakeNewGame(*path, start_time);
+		GameStateStatic::MakeNewGame(*path, start_time);
 	} catch (InvalidGameStartLocation &e) {
 		luaL_error(l, "invalid starting location for game: %s", e.error.c_str());
 	}
@@ -104,7 +103,7 @@ static int l_game_savegame_stats(lua_State *l)
 	std::string filename = LuaPull<std::string>(l, 1);
 
 	try {
-		Json rootNode = GameState::LoadGameToJson(filename);
+		Json rootNode = GameStateStatic::LoadGameToJson(filename);
 
 		LuaTable t(l, 0, 3);
 
@@ -172,7 +171,7 @@ static int l_game_load_game(lua_State *l)
 	const std::string filename(luaL_checkstring(l, 1));
 
 	try {
-		GameState::LoadGame(filename);
+		GameStateStatic::LoadGame(filename);
 	} catch (SavedGameCorruptException) {
 		luaL_error(l, Lang::GAME_LOAD_CORRUPT);
 	} catch (SavedGameWrongVersionException) {
@@ -213,7 +212,7 @@ static int l_game_can_load_game(lua_State *l)
 {
 	const std::string filename(luaL_checkstring(l, 1));
 
-	bool success = GameState::CanLoadGame(filename);
+	bool success = GameStateStatic::CanLoadGame(filename);
 	lua_pushboolean(l, success);
 
 	return 1;
@@ -253,7 +252,7 @@ static int l_game_save_game(lua_State *l)
 	const std::string path = FileSystem::JoinPathBelow(GameConfSingleton::GetSaveDir(), filename);
 
 	try {
-		GameState::SaveGame(filename);
+		GameStateStatic::SaveGame(filename);
 		lua_pushlstring(l, path.c_str(), path.size());
 		return 1;
 	} catch (CannotSaveInHyperspace) {

@@ -2,14 +2,13 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "Lang.h"
+
 #include "FileSystem.h"
 #include "JsonUtils.h"
-#include "StringRange.h"
-#include "libs.h"
-#include "text/TextSupport.h"
-#include "utils.h"
+#include "libs/utils.h"
+#include "libs/stringUtils.h"
+#include "libs/libs.h"
 #include <map>
-#include <set>
 
 namespace Lang {
 
@@ -120,7 +119,7 @@ namespace Lang {
 		for (FileSystem::FileEnumerator files(FileSystem::gameDataFiles, "lang/" + resourceName); !files.Finished(); files.Next()) {
 			assert(files.Current().IsFile());
 			const std::string &path = files.Current().GetPath();
-			if (ends_with_ci(path, ".json")) {
+			if (stringUtils::ends_with_ci(path, ".json")) {
 				const std::string name = files.Current().GetName();
 				languages.push_back(name.substr(0, name.size() - 5));
 			}

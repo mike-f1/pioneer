@@ -2,11 +2,14 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "TextEntry.h"
+
 #include "Context.h"
+#include "graphics/RendererLocator.h"
+#include "libs/utils.h"
 #include "text/TextSupport.h"
 #include "text/TextureFont.h"
 
-#include "graphics/RendererLocator.h"
+#include <SDL_clipboard.h>
 
 namespace UI {
 
@@ -90,7 +93,7 @@ namespace UI {
 	{
 		bool atEnd = m_label->GetText().size() == m_cursor;
 		m_label->SetText(text);
-		m_cursor = atEnd ? Uint32(text.size()) : Clamp(m_cursor, Uint32(0), Uint32(text.size()));
+		m_cursor = atEnd ? uint32_t(text.size()) : Clamp(m_cursor, uint32_t(0), uint32_t(text.size()));
 		GetContext()->RequestLayout();
 		return this;
 	}
@@ -118,7 +121,7 @@ namespace UI {
 			break;
 
 		case SDLK_END:
-			m_cursor = static_cast<Uint32>(text.size());
+			m_cursor = static_cast<uint32_t>(text.size());
 			break;
 
 		case SDLK_BACKSPACE:
@@ -160,7 +163,7 @@ namespace UI {
 				case SDLK_w: {
 					size_t pos = text.find_last_not_of(' ', m_cursor);
 					if (pos != std::string::npos) pos = text.find_last_of(' ', pos);
-					m_cursor = static_cast<Uint32>(pos != std::string::npos ? pos + 1 : 0);
+					m_cursor = static_cast<uint32_t>(pos != std::string::npos ? pos + 1 : 0);
 					text.erase(m_cursor);
 					m_label->SetText(text);
 					onChange.emit(text);
@@ -173,7 +176,7 @@ namespace UI {
 						size_t len = strlen(paste); // XXX strlen not utf8-aware
 						text.insert(m_cursor, paste, len);
 						m_label->SetText(text);
-						m_cursor += static_cast<Uint32>(len);
+						m_cursor += static_cast<uint32_t>(len);
 						SDL_free(paste);
 					}
 				}

@@ -5,8 +5,8 @@
 #define _WORLDVIEW_H
 
 #include "UIView.h"
-#include "gui/GuiWidget.h"
 #include "ship/ShipViewController.h"
+#include "graphics/Drawables.h"
 
 class Body;
 class Camera;
@@ -14,28 +14,11 @@ class SpeedLines;
 class NavTunnelWidget;
 class Game;
 
-enum VelIconType {
-	V_PROGRADE,
-	V_RETROGRADE,
-	V_BURN
-};
-
-enum PlaneType {
+enum class PlaneType {
 	NONE,
 	ROTATIONAL,
 	PARENT
 };
-
-namespace Gui {
-	class TexturedQuad;
-	class VBox;
-}
-
-namespace KeyBindings {
-	struct ActionBinding;
-	struct AxisBinding;
-	struct WheelBinding;
-}
 
 namespace UI {
 	class Widget;
@@ -51,18 +34,17 @@ namespace Graphics {
 
 class WorldView : public UIView {
 public:
-	static void RegisterInputBindings();
 	friend class NavTunnelWidget;
 	WorldView(Game *game);
 	WorldView(const Json &jsonObj, Game *game);
 	virtual ~WorldView();
-	virtual void ShowAll();
+	virtual void ShowAll() override;
 	virtual void Update(const float frameTime) override;
 	virtual void Draw3D() override;
-	virtual void Draw();
+	virtual void Draw() override;
 	virtual void DrawUI(const float frameTime) override;
 
-	virtual void SaveToJson(Json &jsonObj);
+	virtual void SaveToJson(Json &jsonObj) override;
 
 	RefCountedPtr<CameraContext> GetCameraContext() const { return m_cameraContext; }
 
@@ -70,7 +52,15 @@ public:
 
 	int GetActiveWeapon() const;
 
-	std::tuple<double, double, double> CalculateHeadingPitchRoll(enum PlaneType);
+	/*
+	  heading range: 0 - 359 deg
+	  heading  0 - north
+	  heading 90 - east
+	  pitch range: -90 - +90 deg
+	  pitch  0 - level with surface
+	  pitch 90 - up
+	*/
+	vector3d CalculateHeadingPitchRoll(enum PlaneType);
 
 	vector3d WorldSpaceToScreenSpace(const Body *body) const;
 	vector3d WorldSpaceToScreenSpace(const vector3d &position) const;
@@ -81,9 +71,6 @@ public:
 
 	void BeginCameraFrame() { m_cameraContext->BeginFrame(); };
 	void EndCameraFrame() { m_cameraContext->EndFrame(); };
-
-	bool ShouldShowLabels() { return m_labelsOn; }
-	bool DrawGui() { return m_guiOn; };
 
 protected:
 	virtual void BuildUI(UI::Single *container) override;
@@ -119,24 +106,12 @@ private:
 	void DrawCombatTargetIndicator(const Indicator &target, const Indicator &lead, const Color &c);
 	void DrawEdgeMarker(const Indicator &marker, const Color &c);
 
-	void OnToggleLabels();
-
 	void OnPlayerChangeTarget();
-	/// Handler for "requestTimeAccelerationInc" event
-	void OnRequestTimeAccelInc();
-	/// Handler for "requestTimeAccelerationDec" event
-	void OnRequestTimeAccelDec();
 
-	NavTunnelWidget *m_navTunnel;
+	std::unique_ptr<NavTunnelWidget> m_navTunnel;
 	std::unique_ptr<SpeedLines> m_speedLines;
 
-	bool m_labelsOn;
-	bool m_guiOn;
-
 	sigc::connection m_onPlayerChangeTargetCon;
-	sigc::connection m_onToggleHudModeCon;
-	sigc::connection m_onIncTimeAccelCon;
-	sigc::connection m_onDecTimeAccelCon;
 
 	RefCountedPtr<CameraContext> m_cameraContext;
 	std::unique_ptr<Camera> m_camera;
@@ -148,30 +123,16 @@ private:
 
 	Graphics::Drawables::Line3D m_edgeMarker;
 	Graphics::Drawables::Lines m_indicator;
-
-	static class BaseBinding : public InputFrame {
-	public:
-		using Action = KeyBindings::ActionBinding;
-		using Axis =  KeyBindings::AxisBinding;
-
-		Action *toggleHudMode;
-		Action *increaseTimeAcceleration;
-		Action *decreaseTimeAcceleration;
-
-		virtual void RegisterBindings();
-	} BaseBindings;
-
 };
 
-class NavTunnelWidget : public Gui::Widget {
+class NavTunnelWidget  {
 public:
 	NavTunnelWidget(WorldView *worldView, Graphics::RenderState *);
 	virtual void Draw();
-	virtual void GetSizeRequested(float size[2]);
-	void DrawTargetGuideSquare(const vector2f &pos, const float size, const Color &c);
 
 private:
-	void CreateVertexBuffer(const Uint32 size);
+	void DrawTargetGuideSquare(const vector2f &pos, const float size, const Color &c);
+	void CreateVertexBuffer(const uint32_t size);
 
 	WorldView *m_worldView;
 	Graphics::RenderState *m_renderState;

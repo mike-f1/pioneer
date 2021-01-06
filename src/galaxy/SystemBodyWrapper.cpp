@@ -2,7 +2,7 @@
 
 #include "AtmosphereParameters.h"
 #include "SystemBody.h"
-#include "utils.h"
+#include "libs/utils.h"
 
 SystemBodyWrapper::SystemBodyWrapper(const SystemBody *sb) :
 	m_sbody(sb)
@@ -60,7 +60,7 @@ const SystemPath &SystemBodyWrapper::GetSystemBodyPath() const
 	return m_sbody->GetPath();
 }
 
-Uint32 SystemBodyWrapper::GetSystemBodySeed() const
+uint32_t SystemBodyWrapper::GetSystemBodySeed() const
 {
 	return m_sbody->GetSeed();
 }

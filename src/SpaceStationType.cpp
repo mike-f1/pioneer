@@ -2,13 +2,15 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "SpaceStationType.h"
+
 #include "FileSystem.h"
 #include "Json.h"
-#include "MathUtil.h"
 #include "ModelCache.h"
 #include "OS.h"
 #include "Ship.h"
-#include "StringF.h"
+#include "libs/MathUtil.h"
+#include "libs/StringF.h"
+#include "libs/stringUtils.h"
 #include "scenegraph/MatrixTransform.h"
 #include "scenegraph/Model.h"
 
@@ -19,6 +21,13 @@ struct StationTypeLoadError {};
 
 std::vector<SpaceStationType> SpaceStationType::surfaceTypes;
 std::vector<SpaceStationType> SpaceStationType::orbitalTypes;
+
+void JsonToVectorNoString(vector3f *pVec, const Json &jsonObj)
+{
+	pVec->x = jsonObj[0];
+	pVec->y = jsonObj[1];
+	pVec->z = jsonObj[2];
+}
 
 SpaceStationType::SpaceStationType(const std::string &id_, const std::string &path_) :
 	id(id_),
@@ -57,6 +66,56 @@ SpaceStationType::SpaceStationType(const std::string &id_, const std::string &pa
 	parkingGapSize = data.value("parking_gap_size", 0.0f);
 
 	padOffset = data.value("pad_offset", 150.f);
+
+	for (Json::iterator cc = data["central_cylinder"].begin(); cc != data["central_cylinder"].end(); ++cc) {
+		const std::string parameter = cc.key();
+		m_cylinder.is_valid = true;
+		if (parameter == "diameter") {
+			m_cylinder.diameter = data["central_cylinder"].value("diameter", std::numeric_limits<float>::min());
+		}
+		if (parameter == "min") {
+			m_cylinder.min = data["central_cylinder"].value("min", std::numeric_limits<float>::max());
+		}
+		if (parameter == "max") {
+			m_cylinder.max = data["central_cylinder"].value("max", std::numeric_limits<float>::min());
+		}
+		if (parameter == "dock") {
+			m_cylinder.dock = (data["central_cylinder"].value("dock", -10.0) > 0.0);
+		}
+	}
+	if (m_cylinder.is_valid) {
+		if (m_cylinder.max < m_cylinder.min) {
+			m_cylinder.is_valid = false;
+		}
+		if (m_cylinder.diameter < 0.0) {
+			m_cylinder.is_valid = false;
+		}
+	}
+
+	for (Json::iterator boxes = data["boxes"].begin(); boxes != data["boxes"].end(); ++boxes) {
+		const std::string parameter = boxes.key();
+		bool bmin = false;
+		bool bmax = false;
+		vector3f min, max;
+		bool dock = false;
+		for (Json::iterator box = boxes.value().begin(); box != boxes.value().end(); ++box) {
+			const std::string par_name = box.key();
+			if (par_name == "min") {
+				JsonToVectorNoString(&min, box.value());
+				bmin = true;
+			}
+			if (par_name == "max") {
+				JsonToVectorNoString(&max, box.value());
+				bmax = true;
+			}
+			if (par_name == "dock") {
+				dock = (box.value() > 0.0);
+			}
+		}
+		if (bmin && bmax) {
+			m_boxes.push_back({min, max, dock});
+		}
+	}
 
 	model = ModelCache::FindModel(modelName, /* allowPlaceholder = */ false);
 	if (!model) {
@@ -241,26 +300,26 @@ void SpaceStationType::OnSetupComplete()
 
 	// insanity
 	for (PortPathMap::const_iterator pIt = m_portPaths.begin(), pItEnd = m_portPaths.end(); pIt != pItEnd; ++pIt) {
-		if (Uint32(numDockingStages - 1) < pIt->second.m_docking.size()) {
+		if (uint32_t(numDockingStages - 1) < pIt->second.m_docking.size()) {
 			Error(
 				"(%s): numDockingStages (%d) vs number of docking stages (" SIZET_FMT ")\n"
 				"Must have at least the same number of entries as the number of docking stages "
 				"PLUS the docking timeout at the start of the array.",
 				modelName.c_str(), (numDockingStages - 1), pIt->second.m_docking.size());
 
-		} else if (Uint32(numDockingStages - 1) != pIt->second.m_docking.size()) {
+		} else if (uint32_t(numDockingStages - 1) != pIt->second.m_docking.size()) {
 			Warning(
 				"(%s): numDockingStages (%d) vs number of docking stages (" SIZET_FMT ")\n",
 				modelName.c_str(), (numDockingStages - 1), pIt->second.m_docking.size());
 		}
 
-		if (0 != pIt->second.m_leaving.size() && Uint32(numUndockStages) < pIt->second.m_leaving.size()) {
+		if (0 != pIt->second.m_leaving.size() && uint32_t(numUndockStages) < pIt->second.m_leaving.size()) {
 			Error(
 				"(%s): numUndockStages (%d) vs number of leaving stages (" SIZET_FMT ")\n"
 				"Must have at least the same number of entries as the number of leaving stages.",
 				modelName.c_str(), (numDockingStages - 1), pIt->second.m_docking.size());
 
-		} else if (0 != pIt->second.m_leaving.size() && Uint32(numUndockStages) != pIt->second.m_leaving.size()) {
+		} else if (0 != pIt->second.m_leaving.size() && uint32_t(numUndockStages) != pIt->second.m_leaving.size()) {
 			Warning(
 				"(%s): numUndockStages (%d) vs number of leaving stages (" SIZET_FMT ")\n",
 				modelName.c_str(), numUndockStages, pIt->second.m_leaving.size());
@@ -388,6 +447,16 @@ bool SpaceStationType::GetDockAnimPositionOrient(const unsigned int port, int st
 	return gotOrient;
 }
 
+const SpaceStationType::cylinder_t &SpaceStationType::GetCentralCylinder() const
+{
+	return m_cylinder;
+}
+
+const std::vector<SpaceStationType::box_t> &SpaceStationType::GetBoxes() const
+{
+	return m_boxes;
+}
+
 /*static*/
 void SpaceStationType::Init()
 {
@@ -401,7 +470,7 @@ void SpaceStationType::Init()
 	namespace fs = FileSystem;
 	for (fs::FileEnumerator files(fs::gameDataFiles, "stations", 0); !files.Finished(); files.Next()) {
 		const fs::FileInfo &info = files.Current();
-		if (ends_with_ci(info.GetPath(), ".json")) {
+		if (stringUtils::ends_with_ci(info.GetPath(), ".json")) {
 			const std::string id(info.GetName().substr(0, info.GetName().size() - 5));
 			try {
 				SpaceStationType st = SpaceStationType(id, info.GetPath());

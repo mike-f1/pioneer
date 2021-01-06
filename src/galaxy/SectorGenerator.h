@@ -4,11 +4,11 @@
 #ifndef SECTORGENERATOR_H
 #define SECTORGENERATOR_H
 
+#include "ExplorationState.h"
 #include "GalaxyGenerator.h"
 #include "Random.h"
-#include "RefCounted.h"
 #include "Sector.h"
-#include "ExplorationState.h"
+#include "libs/RefCounted.h"
 
 class SectorCustomSystemsGenerator : public SectorGeneratorStage {
 public:
@@ -51,7 +51,7 @@ private:
 	// Low 5 bits (bits 0..4) -> Day.
 	// Middle 4 bits (bits 5..8) -> Month.
 	// High bits (bits 9..) -> Year.
-	std::map<SystemPath, Sint32> m_exploredSystems;
+	std::map<SystemPath, int32_t> m_exploredSystems;
 };
 
 #endif

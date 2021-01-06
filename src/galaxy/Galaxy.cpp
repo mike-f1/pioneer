@@ -8,7 +8,9 @@
 #include "GameSaveError.h"
 #include "Json.h"
 #include "Sector.h"
-#include "utils.h"
+#include "libs/utils.h"
+
+#include <SDL_image.h>
 
 //#define DEBUG_CACHE
 
@@ -61,7 +63,7 @@ void Galaxy::Init()
 	{
 		Profiler::Timer timer;
 		timer.Start();
-		Uint32 totalVal = 0;
+		uint32_t totalVal = 0;
 		const static int s_count = 64;
 		for( int sx=-s_count; sx<s_count; sx++ ) {
 			for( int sy=-s_count; sy<s_count; sy++ ) {
@@ -86,11 +88,11 @@ void Galaxy::FlushCaches()
 	assert(m_sectorCache.IsEmpty());
 }
 
-void Galaxy::Dump(FILE *file, Sint32 centerX, Sint32 centerY, Sint32 centerZ, Sint32 radius)
+void Galaxy::Dump(FILE *file, int32_t centerX, int32_t centerY, int32_t centerZ, int32_t radius)
 {
-	for (Sint32 sx = centerX - radius; sx <= centerX + radius; ++sx) {
-		for (Sint32 sy = centerY - radius; sy <= centerY + radius; ++sy) {
-			for (Sint32 sz = centerZ - radius; sz <= centerZ + radius; ++sz) {
+	for (int32_t sx = centerX - radius; sx <= centerX + radius; ++sx) {
+		for (int32_t sy = centerY - radius; sy <= centerY + radius; ++sy) {
+			for (int32_t sz = centerZ - radius; sz <= centerZ + radius; ++sz) {
 				RefCountedPtr<const Sector> sector = GetSector(SystemPath(sx, sy, sz));
 				sector->Dump(file);
 			}
@@ -122,7 +124,7 @@ typedef std::chrono::high_resolution_clock Clock;
 // Based on Michael answer to the below problem, then expanded on purpose
 // https://stackoverflow.com/questions/398299/looping-in-a-spiral
 // NOTE: when return falue of passed-in function is true then it early outs
-static bool spiral_gen(const int inner, const int turns, const int layer, std::function<bool(SystemPath &)> fun)
+static bool spiral_gen(const int inner, const int turns, const int layer, const std::function<bool(SystemPath &)> &fun)
 {
 	const int outer = inner + turns;
 	const int start = (inner * 2 + 1) * (inner * 2 + 1);
@@ -141,7 +143,7 @@ static bool spiral_gen(const int inner, const int turns, const int layer, std::f
 	return false;
 }
 
-static void spiral_3d(const int radius, std::function<bool(SystemPath &)> fun)
+static void spiral_3d(const int radius, const std::function<bool(SystemPath &)> &fun)
 {
 	// Build center:
 	SystemPath s(0, 0, 0);
@@ -326,7 +328,7 @@ DensityMapGalaxy::DensityMapGalaxy(RefCountedPtr<GalaxyGenerator> galaxyGenerato
 }
 
 static const float one_over_256(1.0f / 256.0f);
-Uint8 DensityMapGalaxy::GetSectorDensity(const int sx, const int sy, const int sz) const
+uint8_t DensityMapGalaxy::GetSectorDensity(const int sx, const int sy, const int sz) const
 {
 	// -1.0 to 1.0 then limited to 0.0 to 1.0
 	const float offset_x = (((sx * Sector::SIZE + SOL_OFFSET_X) / GALAXY_RADIUS) + 1.0f) * 0.5f;
@@ -343,5 +345,5 @@ Uint8 DensityMapGalaxy::GetSectorDensity(const int sx, const int sy, const int s
 	// reduce density somewhat to match real (gliese) density
 	val *= 0.5f;
 
-	return Uint8(val);
+	return uint8_t(val);
 }

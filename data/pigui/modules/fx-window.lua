@@ -10,6 +10,50 @@ local lui = Lang.GetResource("ui-core");
 local utils = import("utils")
 local Event = import("Event")
 
+local Iframes = import("InputFrames")
+
+local ifr = Iframes.CreateOrUse("luaInputF")
+
+local showInfo = false
+ifr:AddAction("ShowInfo", "General", "ViewsControls", "Key1073741884Mod0", function(isUp)
+		if isUp then showInfo = true end
+	end)
+
+local showSpaceStation = false
+ifr:AddAction("ShowSpaceStation", "General", "ViewsControls", "Key1073741885Mod0", function(isUp)
+		if isUp then showSpaceStation = true end
+	end)
+
+local showWorldView = false
+ifr:AddAction("ShowWorldView", "General", "ViewsControls", "Key1073741882Mod0", function(isUp)
+		if isUp then showWorldView = true end
+	end)
+
+local switchMapWorld = false
+ifr:AddAction("SwitchMapWorldView", "General", "ViewsControls", "Key1073741883Mod0", function(isUp)
+		if isUp then switchMapWorld = true end
+	end)
+
+local switchSectorView = false
+ifr:AddAction("SwitchToSectorView", "General", "ViewsControls", "Key1073741886Mod0", function(isUp)
+		if isUp then switchSectorView = true end
+	end)
+
+local switchSystemView = false
+ifr:AddAction("SwitchToSystemView", "General", "ViewsControls", "Key1073741887Mod0", function(isUp)
+		if isUp then switchSystemView = true end
+	end)
+
+local switchSystemInfoView = false
+ifr:AddAction("SwitchToSystemInfoView", "General", "ViewsControls", "Key1073741888Mod0", function(isUp)
+		if isUp then switchSystemInfoView = true end
+	end)
+
+local switchGalaxyView = false
+ifr:AddAction("SwitchToGalaxyView", "General", "ViewsControls", "Key1073741889Mod0", function(isUp)
+		if isUp then switchGalaxyView = true end
+	end)
+
 local player = nil
 local colors = ui.theme.colors
 local icons = ui.theme.icons
@@ -30,21 +74,22 @@ local cam_tooltip = { ["internal"] = lui.HUD_BUTTON_INTERNAL_VIEW, ["external"] 
 local function button_world(current_view)
 	ui.sameLine()
 	if current_view ~= "world" then
-		if mainMenuButton(icons.view_internal, false, lui.HUD_BUTTON_SWITCH_TO_WORLD_VIEW) or (ui.noModifierHeld() and ui.isKeyReleased(ui.keys.f1)) then
+		if mainMenuButton(icons.view_internal, false, lui.HUD_BUTTON_SWITCH_TO_WORLD_VIEW) or showWorldView then
 			Game.SetView("world")
 			ui.playBoinkNoise()
 		end
 	else
 		local camtype = Game.GetWorldCamType()
-		if mainMenuButton(icons["view_" .. camtype], true, cam_tooltip[camtype]) or (ui.noModifierHeld() and ui.isKeyReleased(ui.keys.f1)) then
+		if mainMenuButton(icons["view_" .. camtype], true, cam_tooltip[camtype]) or showWorldView then
 			Game.SetWorldCamType(next_cam_type[camtype])
 			ui.playBoinkNoise()
 		end
-		if (ui.altHeld() and ui.isKeyReleased(ui.keys.f1)) then
+		if (ui.altHeld() and showWorldView) then
 			Game.SetWorldCamType("flyby")
 			ui.playBoinkNoise()
 		end
 	end
+	showWorldView = false
 end
 
 local current_map_view = "sector"
@@ -53,7 +98,9 @@ local function buttons_map(current_view)
 
 	ui.sameLine()
 	local active = current_view == "sector"
-	if mainMenuButton(icons.sector_map, active, active and lui.HUD_BUTTON_SWITCH_TO_WORLD_VIEW or lui.HUD_BUTTON_SWITCH_TO_SECTOR_MAP) or (onmap and ui.noModifierHeld() and ui.isKeyReleased(ui.keys.f5)) then
+	if mainMenuButton(icons.sector_map, active, active and lui.HUD_BUTTON_SWITCH_TO_WORLD_VIEW or lui.HUD_BUTTON_SWITCH_TO_SECTOR_MAP) or switchSectorView then
+		switchSectorView = false
+		ui.playBoinkNoise()
 		if active then
 			Game.SetView("world")
 		else
@@ -64,7 +111,9 @@ local function buttons_map(current_view)
 
 	ui.sameLine()
 	active = current_view == "system"
-	if mainMenuButton(icons.system_map, active, active and lui.HUD_BUTTON_SWITCH_TO_WORLD_VIEW or lui.HUD_BUTTON_SWITCH_TO_SYSTEM_MAP) or (onmap and ui.noModifierHeld() and ui.isKeyReleased(ui.keys.f6)) then
+	if mainMenuButton(icons.system_map, active, active and lui.HUD_BUTTON_SWITCH_TO_WORLD_VIEW or lui.HUD_BUTTON_SWITCH_TO_SYSTEM_MAP) or switchSystemView then
+		switchSystemView = false
+		ui.playBoinkNoise()
 		if active then
 			Game.SetView("world")
 		else
@@ -75,7 +124,9 @@ local function buttons_map(current_view)
 
 	ui.sameLine()
 	active = current_view == "system_info"
-	if mainMenuButton(icons.system_overview, active, active and lui.HUD_BUTTON_SWITCH_TO_WORLD_VIEW or lui.HUD_BUTTON_SWITCH_TO_SYSTEM_OVERVIEW) or (onmap and ui.noModifierHeld() and ui.isKeyReleased(ui.keys.f7)) then
+	if mainMenuButton(icons.system_overview, active, active and lui.HUD_BUTTON_SWITCH_TO_WORLD_VIEW or lui.HUD_BUTTON_SWITCH_TO_SYSTEM_OVERVIEW) or switchSystemInfoView then
+		switchSystemInfoView = false
+		ui.playBoinkNoise()
 		if active then
 			ui.systemInfoViewNextPage()
 		else
@@ -86,7 +137,9 @@ local function buttons_map(current_view)
 	if onmap then
 		ui.sameLine()
 		active = current_view == "galaxy"
-		if mainMenuButton(icons.galaxy_map, active, active and lui.HUD_BUTTON_SWITCH_TO_WORLD_VIEW or lui.HUD_BUTTON_SWITCH_TO_GALAXY_MAP) or (onmap and ui.noModifierHeld() and ui.isKeyReleased(ui.keys.f8)) then
+		if mainMenuButton(icons.galaxy_map, active, active and lui.HUD_BUTTON_SWITCH_TO_WORLD_VIEW or lui.HUD_BUTTON_SWITCH_TO_GALAXY_MAP) or switchGalaxyView then
+			switchGalaxyView = false
+			ui.playBoinkNoise()
 			if active then
 				Game.SetView("world")
 			else
@@ -95,7 +148,9 @@ local function buttons_map(current_view)
 			end
 		end
 	end
-	if ui.noModifierHeld() and ui.isKeyReleased(ui.keys.f2) then
+	if switchMapWorld then
+		switchMapWorld = false
+		ui.playBoinkNoise()
 		if onmap then
 			Game.SetView("world")
 		else
@@ -106,7 +161,9 @@ end
 
 local function button_info(current_view)
 	ui.sameLine()
-	if (mainMenuButton(icons.personal_info, current_view == "info", lui.HUD_BUTTON_SHOW_PERSONAL_INFO) or (ui.noModifierHeld() and ui.isKeyReleased(ui.keys.f3))) then
+	if (mainMenuButton(icons.personal_info, current_view == "info", lui.HUD_BUTTON_SHOW_PERSONAL_INFO) or showInfo) then
+		showInfo = false
+		ui.playBoinkNoise()
 		if current_view ~= "info" then
 			Game.SetView("info")
 		else
@@ -117,8 +174,10 @@ end
 
 local function button_comms(current_view)
 	ui.sameLine()
-	if mainMenuButton(icons.comms, current_view == "space_station", lui.HUD_BUTTON_SHOW_COMMS) or (ui.noModifierHeld() and ui.isKeyReleased(ui.keys.f4)) then
+	if mainMenuButton(icons.comms, current_view == "space_station", lui.HUD_BUTTON_SHOW_COMMS) or showSpaceStation then
+		showSpaceStation = false
 		if player:IsDocked() then
+			ui.playBoinkNoise()
 			if current_view == "space_station" then
 				Game.SetView("world")
 			else

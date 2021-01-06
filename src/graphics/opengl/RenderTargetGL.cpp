@@ -2,6 +2,7 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "RenderTargetGL.h"
+
 #include "TextureGL.h"
 
 namespace Graphics {
@@ -55,7 +56,7 @@ namespace Graphics {
 			return m_depthTexture.Get();
 		}
 
-		void RenderTarget::SetCubeFaceTexture(const Uint32 face, Texture *t)
+		void RenderTarget::SetCubeFaceTexture(const uint32_t face, Texture *t)
 		{
 			const bool bound = m_active;
 			if (!bound) Bind();

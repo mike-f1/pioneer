@@ -7,6 +7,7 @@
 #include "Color.h"
 #include "galaxy/StarSystem.h"
 #include "galaxy/SystemPath.h"
+#include "graphics/Drawables.h"
 
 #include "UIView.h"
 #include "gui/GuiImageRadioButton.h"
@@ -35,15 +36,15 @@ public:
 	void NextPage();
 
 protected:
-	virtual void OnSwitchTo();
+	virtual void OnSwitchTo() override;
 
 private:
 	class BodyIcon : public Gui::ImageRadioButton {
 	public:
 		BodyIcon(const char *img);
-		virtual void Draw();
-		virtual void OnActivate();
-		bool HasStarport() { return m_hasStarport; }
+		virtual void Draw() override;
+		virtual void OnActivate() override;
+		bool HasStarport() const { return m_hasStarport; }
 		void SetHasStarport() { m_hasStarport = true; }
 		void SetSelectColor(const Color &color) { m_selectColor = color; }
 
@@ -61,7 +62,7 @@ private:
 		REFRESH_ALL
 	};
 
-	RefreshType NeedsRefresh();
+	RefreshType NeedsRefresh() const;
 	void SystemChanged(const SystemPath &path);
 	void UpdateEconomyTab();
 	void OnBodyViewed(SystemBody *b);
@@ -83,7 +84,7 @@ private:
 	SystemPath m_selectedBodyPath;
 	RefreshType m_refresh;
 	//map is not enough to associate icons as each tab has their own. First element is the body index of SystemPath (names are not unique)
-	std::vector<std::pair<Uint32, BodyIcon *>> m_bodyIcons;
+	std::vector<std::pair<uint32_t, BodyIcon *>> m_bodyIcons;
 	bool m_unexplored;
 	bool m_hasTradeComputer;
 };

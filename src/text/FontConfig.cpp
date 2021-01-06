@@ -2,9 +2,10 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "FontConfig.h"
+
 #include "FileSystem.h"
 #include "JsonUtils.h"
-#include "utils.h"
+#include "libs/utils.h"
 
 namespace Text {
 
@@ -32,7 +33,7 @@ namespace Text {
 				m_faces.push_back(Face(fontFile, pixelWidth, pixelHeight, advanceXAdjustment, 0x000000, 0x1fffff));
 			else {
 				for (auto &j : ranges) {
-					Uint32 rangeMin = 0x000000, rangeMax = 0x1fffff;
+					uint32_t rangeMin = 0x000000, rangeMax = 0x1fffff;
 					const std::string rangeMinStr = j[0].is_string() ? j[0] : "0x000000";
 					const std::string rangeMaxStr = j[1].is_string() ? j[1] : "0x1fffff";
 					sscanf(rangeMinStr.c_str(), "%x", &rangeMin);
@@ -43,7 +44,7 @@ namespace Text {
 		}
 	}
 
-	const FontConfig::Face &FontConfig::GetFaceForCodePoint(Uint32 cp)
+	const FontConfig::Face &FontConfig::GetFaceForCodePoint(uint32_t cp)
 	{
 		// XXX naive. map and custom comparator would be better
 		auto best = m_faces.end();

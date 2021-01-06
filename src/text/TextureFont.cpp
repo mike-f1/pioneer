@@ -5,13 +5,15 @@
 
 #include "FileSystem.h"
 #include "TextSupport.h"
+#include "graphics/Material.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/RenderState.h"
+#include "graphics/Texture.h"
 #include "graphics/VertexArray.h"
 #include "graphics/VertexBuffer.h"
-#include "libs.h"
-#include "utils.h"
+#include "libs/utils.h"
+#include "libs/vector3.h"
 
 #ifdef __clang__
 #pragma clang diagnostic push
@@ -28,11 +30,13 @@
 #undef FT_FILE // defined by FreeType, conflicts with a symbol name from FileSystem
 
 #include <algorithm>
+#include <string>
+#include <SDL_timer.h>
 
 namespace {
 	static const int ATLAS_SIZE = 1024;
 	static double CACHE_EVICTION_TIME = 0.25;
-}; // namespace
+} // namespace
 
 namespace Text {
 
@@ -80,7 +84,7 @@ namespace Text {
 				h += GetHeight();
 				i++;
 			} else {
-				Uint32 chr;
+				uint32_t chr;
 				int n = utf8_decode_char(&chr, &str[i]);
 				if (n == 0)
 					break;
@@ -91,7 +95,7 @@ namespace Text {
 				line_width += glyph.advX;
 
 				if (str[i]) {
-					Uint32 chr2;
+					uint32_t chr2;
 					n = utf8_decode_char(&chr2, &str[i]);
 					assert(n);
 					line_width += GetKern(glyph, GetGlyph(chr2));
@@ -109,10 +113,10 @@ namespace Text {
 
 		float x = 0.0f, y = GetHeight();
 		int i = 0;
-		Uint32 chr;
+		uint32_t chr;
 		int len = utf8_decode_char(&chr, &str[i]);
 		while (str[i] && (i < charIndex)) {
-			Uint32 nextChar;
+			uint32_t nextChar;
 			i += len;
 			len = utf8_decode_char(&nextChar, &str[i]);
 			assert(!str[i] || len); // assert valid encoding
@@ -151,12 +155,12 @@ namespace Text {
 		// chr1: the Unicode value of the character being tested
 		// chr2: the Unicode value of the next character
 
-		Uint32 chr2 = '\n'; // pretend we've just had a new line
+		uint32_t chr2 = '\n'; // pretend we've just had a new line
 		float bottom = 0.0f, x = 0.0f;
 		int i2 = 0, charBytes = 0;
 		do {
 			int i1 = i2;
-			Uint32 chr1 = chr2;
+			uint32_t chr1 = chr2;
 
 			// read the next character
 			i2 += charBytes;
@@ -221,7 +225,7 @@ namespace Text {
 				py += GetHeight();
 				i++;
 			} else {
-				Uint32 chr;
+				uint32_t chr;
 				int n = utf8_decode_char(&chr, &str[i]);
 				if (n <= 0)
 					break;
@@ -231,7 +235,7 @@ namespace Text {
 				AddGlyphGeometry(va, glyph, roundf(px), py, premult_color);
 
 				if (str[i]) {
-					Uint32 chr2;
+					uint32_t chr2;
 					n = utf8_decode_char(&chr2, &str[i]);
 					if (n <= 0)
 						break;
@@ -265,7 +269,7 @@ namespace Text {
 		int i = 0;
 		while (str[i]) {
 			if (str[i] == '#') {
-				Uint32 hexcol;
+				uint32_t hexcol;
 				if (sscanf(&str[i], "#%3x", &hexcol) == 1) {
 					c.r = float((hexcol & 0xf00) >> 4);
 					c.g = float((hexcol & 0xf0));
@@ -284,7 +288,7 @@ namespace Text {
 				py += GetHeight();
 				i++;
 			} else {
-				Uint32 chr;
+				uint32_t chr;
 				int n = utf8_decode_char(&chr, &str[i]);
 				if (n <= 0)
 					break;
@@ -295,7 +299,7 @@ namespace Text {
 
 				// XXX kerning doesn't skip markup
 				if (str[i]) {
-					Uint32 chr2;
+					uint32_t chr2;
 					n = utf8_decode_char(&chr2, &str[i]);
 					if (n <= 0)
 						break;
@@ -378,10 +382,10 @@ namespace Text {
 		m_vbTextCache[str] = std::make_pair(lastAccessTime, RefCountedPtr<Graphics::VertexBuffer>(pVB));
 	}
 
-	Uint32 TextureFont::CleanVertexBufferCache()
+	uint32_t TextureFont::CleanVertexBufferCache()
 	{
 		// update the last access time
-		Uint32 numDeleted = 0;
+		uint32_t numDeleted = 0;
 		const double currentTime = 0.001 * double(SDL_GetTicks());
 		for (auto it : m_vbTextCache) {
 			if ((currentTime - it.second.first) > CACHE_EVICTION_TIME) {
@@ -392,7 +396,7 @@ namespace Text {
 		return numDeleted;
 	}
 
-	const TextureFont::Glyph &TextureFont::GetGlyph(Uint32 chr)
+	const TextureFont::Glyph &TextureFont::GetGlyph(uint32_t chr)
 	{
 		auto i = m_glyphs.find(chr);
 		if (i != m_glyphs.end())
@@ -402,7 +406,17 @@ namespace Text {
 		return m_glyphs[chr];
 	}
 
-	TextureFont::Glyph TextureFont::BakeGlyph(Uint32 chr)
+	RefCountedPtr<Graphics::Texture> TextureFont::GetTexture() const
+	{
+		return m_texture;
+	}
+
+	Graphics::Material *TextureFont::GetMaterial() const
+	{
+		return m_mat.get();
+	}
+
+	TextureFont::Glyph TextureFont::BakeGlyph(uint32_t chr)
 	{
 		int err;
 		Glyph glyph;
@@ -610,7 +624,7 @@ namespace Text {
 
 		RendererLocator::getRenderer()->CheckRenderErrors(__FUNCTION__, __LINE__);
 
-		m_texFormat = m_config.IsOutline() ? Graphics::TEXTURE_LUMINANCE_ALPHA_88 : Graphics::TEXTURE_INTENSITY_8;
+		m_texFormat = m_config.IsOutline() ? Graphics::TextureFormat::LUMINANCE_ALPHA_88 : Graphics::TextureFormat::INTENSITY_8;
 		m_bpp = m_config.IsOutline() ? 2 : 1;
 
 		RendererLocator::getRenderer()->CheckRenderErrors(__FUNCTION__, __LINE__);
@@ -621,11 +635,11 @@ namespace Text {
 		m_renderState = RendererLocator::getRenderer()->CreateRenderState(rsd);
 
 		Graphics::MaterialDescriptor desc;
-		desc.effect = Graphics::EFFECT_UI;
+		desc.effect = Graphics::EffectType::UI;
 		desc.vertexColors = true; //to allow per-character colors
 		desc.textures = 1;
 		m_mat.reset(RendererLocator::getRenderer()->CreateMaterial(desc));
-		Graphics::TextureDescriptor textureDescriptor(m_texFormat, vector2f(ATLAS_SIZE), Graphics::NEAREST_CLAMP, false, false, false, 0, Graphics::TEXTURE_2D);
+		Graphics::TextureDescriptor textureDescriptor(m_texFormat, vector2f(ATLAS_SIZE), Graphics::TextureSampleMode::NEAREST_CLAMP, false, false, false, 0, Graphics::TextureType::T_2D);
 		m_texture.Reset(RendererLocator::getRenderer()->CreateTexture(textureDescriptor));
 		{
 			const size_t sz = m_bpp * ATLAS_SIZE * ATLAS_SIZE;

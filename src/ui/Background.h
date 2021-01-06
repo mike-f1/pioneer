@@ -16,7 +16,7 @@ namespace UI {
 
 	protected:
 		friend class Context;
-		Background(Context *context) :
+		explicit Background(Context *context) :
 			Single(context) {}
 	};
 

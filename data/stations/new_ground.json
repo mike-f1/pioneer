@@ -3,5 +3,17 @@
    "type" : "surface",
    "parking_distance" : 5000,
    "parking_gap_size" : 2000,
-   "pad_offset" : 150
+   "pad_offset" : 150,
+   "boxes" : {
+      "a" : {
+         "min" : [-210, 75, -400],
+         "max" : [-90, 110, 400],
+         "dock": -1
+      },
+      "b" : {
+         "min" : [90, 75, -400],
+         "max" : [210, 110, 400],
+         "dock": -1
+      }
+   }
 }

@@ -2,9 +2,8 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "ShieldMaterial.h"
+
 #include "RendererGL.h"
-#include "Shields.h"
-#include "StringF.h"
 #include "TextureGL.h"
 #include "graphics/Graphics.h"
 #include "graphics/Material.h"
@@ -33,12 +32,12 @@ namespace Graphics {
 			shieldCooldown.Init("shieldCooldown", m_program);
 
 			char whatsInAName[256];
-			for (Sint32 i = 0; i < MAX_SHIELD_HITS; i++) {
-				sprintf(whatsInAName, "hitPos[%d]", i);
+			for (uint32_t i = 0; i < MAX_SHIELD_HITS; i++) {
+				sprintf(whatsInAName, "hitPos[%ud]", i);
 				hitPos[i].Init(whatsInAName, m_program);
 			}
-			for (Sint32 i = 0; i < MAX_SHIELD_HITS; i++) {
-				sprintf(whatsInAName, "radii[%d]", i);
+			for (uint32_t i = 0; i < MAX_SHIELD_HITS; i++) {
+				sprintf(whatsInAName, "radii[%ud]", i);
 				radii[i].Init(whatsInAName, m_program);
 			}
 			numHits.Init("numHits", m_program);
@@ -61,10 +60,10 @@ namespace Graphics {
 				const ShieldRenderParameters srp = *static_cast<ShieldRenderParameters *>(this->specialParameter0);
 				p->shieldStrength.Set(srp.strength);
 				p->shieldCooldown.Set(srp.coolDown);
-				for (Sint32 i = 0; i < srp.numHits && i < MAX_SHIELD_HITS; i++) {
+				for (uint32_t i = 0; i < srp.numHits && i < MAX_SHIELD_HITS; i++) {
 					p->hitPos[i].Set(srp.hitPos[i]);
 				}
-				for (Sint32 i = 0; i < srp.numHits && i < MAX_SHIELD_HITS; i++) {
+				for (uint32_t i = 0; i < srp.numHits && i < MAX_SHIELD_HITS; i++) {
 					p->radii[i].Set(srp.radii[i]);
 				}
 				p->numHits.Set(int(std::min(srp.numHits, MAX_SHIELD_HITS)));

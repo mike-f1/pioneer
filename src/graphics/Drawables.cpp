@@ -3,9 +3,15 @@
 
 #include "Drawables.h"
 
-#include "graphics/RenderState.h"
+#include "Material.h"
+#include "Renderer.h"
+#include "RenderState.h"
 #include "Texture.h"
 #include "TextureBuilder.h"
+#include "VertexArray.h"
+#include "VertexBuffer.h"
+
+#include "libs/utils.h"
 
 namespace Graphics {
 
@@ -44,6 +50,9 @@ namespace Graphics {
 			}
 			SetupVertexBuffer(vertices, renderer);
 		}
+
+		Circle::~Circle()
+		{}
 
 		void Circle::Draw(Renderer *renderer)
 		{
@@ -109,6 +118,9 @@ namespace Graphics {
 			SetupVertexBuffer(vertices, r);
 		}
 
+		Disk::~Disk()
+		{}
+
 		void Disk::Draw(Renderer *r)
 		{
 			PROFILE_SCOPED()
@@ -156,6 +168,9 @@ namespace Graphics {
 			m_vertexBuffer = (b.m_vertexBuffer);
 			(*m_va.get()) = (*b.m_va.get());
 		}
+
+		Line3D::~Line3D()
+		{}
 
 		void Line3D::SetStart(const vector3f &s)
 		{
@@ -206,7 +221,7 @@ namespace Graphics {
 			// glLineWidth(1.f);
 		}
 
-		void Line3D::CreateVertexBuffer(Graphics::Renderer *r, const Uint32 size)
+		void Line3D::CreateVertexBuffer(Graphics::Renderer *r, const uint32_t size)
 		{
 			PROFILE_SCOPED()
 			Graphics::MaterialDescriptor desc;
@@ -238,7 +253,10 @@ namespace Graphics {
 			// XXX bug in Radeon drivers will cause crash in glLineWidth if width >= 3
 		}
 
-		void Lines::SetData(const Uint32 vertCount, const vector3f *vertices, const Color &color)
+		Lines::~Lines()
+		{}
+
+		void Lines::SetData(const uint32_t vertCount, const vector3f *vertices, const Color &color)
 		{
 			PROFILE_SCOPED()
 			assert(vertices);
@@ -254,12 +272,12 @@ namespace Graphics {
 
 			// populate the VertexArray
 			m_va->Clear();
-			for (Uint32 i = 0; i < vertCount; i++) {
+			for (uint32_t i = 0; i < vertCount; i++) {
 				m_va->Add(vertices[i], color);
 			}
 		}
 
-		void Lines::SetData(const Uint32 vertCount, const vector3f *vertices, const Color *colors)
+		void Lines::SetData(const uint32_t vertCount, const vector3f *vertices, const Color *colors)
 		{
 			PROFILE_SCOPED()
 			assert(vertices);
@@ -275,7 +293,7 @@ namespace Graphics {
 
 			// populate the VertexArray
 			m_va->Clear();
-			for (Uint32 i = 0; i < vertCount; i++) {
+			for (uint32_t i = 0; i < vertCount; i++) {
 				m_va->Add(vertices[i], colors[i]);
 			}
 		}
@@ -300,7 +318,7 @@ namespace Graphics {
 			// glLineWidth(1.f);
 		}
 
-		void Lines::CreateVertexBuffer(Graphics::Renderer *r, const Uint32 size)
+		void Lines::CreateVertexBuffer(Graphics::Renderer *r, const uint32_t size)
 		{
 			PROFILE_SCOPED()
 			Graphics::MaterialDescriptor desc;
@@ -322,6 +340,9 @@ namespace Graphics {
 			m_refreshVertexBuffer(true)
 		{
 		}
+
+		PointSprites::~PointSprites()
+		{}
 
 		void PointSprites::SetData(const int count, const vector3f *positions, const Color *colours, const float *sizes, Graphics::Material *pMaterial)
 		{
@@ -358,7 +379,7 @@ namespace Graphics {
 			r->DrawBuffer(m_vertexBuffer.Get(), rs, m_material.Get(), Graphics::POINTS);
 		}
 
-		void PointSprites::CreateVertexBuffer(Graphics::Renderer *r, const Uint32 size)
+		void PointSprites::CreateVertexBuffer(Graphics::Renderer *r, const uint32_t size)
 		{
 			PROFILE_SCOPED()
 			Graphics::VertexBufferDesc vbd;
@@ -379,6 +400,9 @@ namespace Graphics {
 		{
 			PROFILE_SCOPED()
 		}
+
+		Points::~Points()
+		{}
 
 		void Points::SetData(Renderer *r, const int count, const vector3f *positions, const matrix4x4f &trans, const Color &color, const float size)
 		{
@@ -485,7 +509,7 @@ namespace Graphics {
 			r->DrawBuffer(m_vertexBuffer.Get(), rs, m_material.Get(), Graphics::TRIANGLES);
 		}
 
-		void Points::CreateVertexBuffer(Graphics::Renderer *r, const Uint32 size)
+		void Points::CreateVertexBuffer(Graphics::Renderer *r, const uint32_t size)
 		{
 			PROFILE_SCOPED()
 			Graphics::MaterialDescriptor desc;
@@ -503,6 +527,101 @@ namespace Graphics {
 		}
 		//------------------------------------------------------------
 
+		std::unique_ptr<IndexBuffer> Box3D::s_indexBuffer;
+
+		void Box3D::PrepareIndexes(Renderer *renderer)
+		{
+			std::vector<unsigned> pl_short;
+			pl_short.reserve(36);
+			// upper faces:
+			pl_short.insert(end(pl_short), {0, 2, 1, 0, 3, 2});
+			// below faces:
+			pl_short.insert(end(pl_short), {4, 5, 6, 4, 6, 7});
+			// front faces:
+			pl_short.insert(end(pl_short), {0, 1, 5, 0, 5, 4});
+			// left faces:
+			pl_short.insert(end(pl_short), {0, 4, 3, 7, 3, 4});
+			// right faces:
+			pl_short.insert(end(pl_short), {1, 2, 5, 2, 6, 5});
+			// back faces:
+			pl_short.insert(end(pl_short), {2, 3, 6, 3, 7, 6});
+			//create buffer & copy
+			s_indexBuffer.reset(renderer->CreateIndexBuffer(pl_short.size(), Graphics::BUFFER_USAGE_STATIC));
+			uint32_t *idxPtr = s_indexBuffer->Map(Graphics::BUFFER_MAP_WRITE);
+			for (uint32_t j = 0; j < pl_short.size(); j++) {
+				idxPtr[j] = pl_short[j];
+			}
+			s_indexBuffer->Unmap();
+		}
+
+		constexpr unsigned numBoxVertices = 8;
+
+		void Box3D::Init(Renderer *renderer, RefCountedPtr<Material> material, Graphics::RenderState *state)
+		{
+			if (!s_indexBuffer) PrepareIndexes(renderer);
+			m_material = material;
+			m_renderState = state;
+			// Create vertex descriptor
+			Graphics::VertexBufferDesc vbd;
+			vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
+			vbd.attrib[0].format = Graphics::ATTRIB_FORMAT_FLOAT3;
+			vbd.numVertices = numBoxVertices;
+			vbd.usage = Graphics::BUFFER_USAGE_STATIC;
+			m_vertexBuffer.reset(renderer->CreateVertexBuffer(vbd));
+		}
+
+		Box3D::Box3D(Renderer *renderer, RefCountedPtr<Material> material, Graphics::RenderState *state, const vector3f &dim)
+		{
+			Init(renderer, material, state);
+
+			VertexArray vts(Graphics::ATTRIB_POSITION, numBoxVertices);
+
+			vts.Add(vector3f(-dim.x, -dim.y, dim.z) * 0.5);
+			vts.Add(vector3f(-dim.x, dim.y, dim.z) * 0.5);
+			vts.Add(vector3f(dim.x, dim.y, dim.z) * 0.5);
+			vts.Add(vector3f(dim.x, -dim.y, dim.z) * 0.5);
+
+			vts.Add(vector3f(-dim.x, -dim.y, -dim.z) * 0.5);
+			vts.Add(vector3f(-dim.x, dim.y, -dim.z) * 0.5);
+			vts.Add(vector3f(dim.x, dim.y, -dim.z) * 0.5);
+			vts.Add(vector3f(dim.x, -dim.y, -dim.z) * 0.5);
+
+			m_vertexBuffer->Populate(vts);
+		}
+
+		Box3D::Box3D(Renderer *renderer, RefCountedPtr<Material> material, Graphics::RenderState *state, const vector3f &min, const vector3f &max)
+		{
+			Init(renderer, material, state);
+
+			VertexArray vts(Graphics::ATTRIB_POSITION, numBoxVertices);
+
+			vts.Add(vector3f(min.x, min.y, max.z));
+			vts.Add(vector3f(min.x, max.y, max.z));
+			vts.Add(vector3f(max.x, max.y, max.z));
+			vts.Add(vector3f(max.x, min.y, max.z));
+
+			vts.Add(vector3f(min.x, min.y, min.z));
+			vts.Add(vector3f(min.x, max.y, min.z));
+			vts.Add(vector3f(max.x, max.y, min.z));
+			vts.Add(vector3f(max.x, min.y, min.z));
+
+			m_vertexBuffer->Populate(vts);
+		}
+
+		Box3D::Box3D(Box3D &&other) noexcept:
+			m_vertexBuffer(std::move(other.m_vertexBuffer)),
+			m_material(other.m_material),
+			m_renderState(other.m_renderState)
+		{}
+
+		Box3D::~Box3D()
+		{}
+
+		void Box3D::Draw(Renderer *r) const
+		{
+			r->DrawBufferIndexed(m_vertexBuffer.get(), s_indexBuffer.get(), m_renderState, m_material.Get());
+		}
+
 		static const float ICOSX = 0.525731112119133f;
 		static const float ICOSZ = 0.850650808352039f;
 
@@ -519,7 +638,7 @@ namespace Graphics {
 			{ 6, 1, 10 }, { 9, 0, 11 }, { 9, 11, 2 }, { 9, 2, 5 }, { 7, 2, 11 }
 		};
 
-		Sphere3D::Sphere3D(Renderer *renderer, RefCountedPtr<Material> mat, Graphics::RenderState *state, int subdivs, float scale, const Uint32 attribs)
+		Sphere3D::Sphere3D(Renderer *renderer, RefCountedPtr<Material> mat, Graphics::RenderState *state, int subdivs, float scale, const uint32_t attribs)
 		{
 			PROFILE_SCOPED()
 			assert(attribs & ATTRIB_POSITION);
@@ -534,7 +653,7 @@ namespace Graphics {
 
 			//reserve some data - ATTRIB_POSITION | ATTRIB_NORMAL | ATTRIB_UV0
 			VertexArray vts(attribs, (subdivs * subdivs) * 20 * 3);
-			std::vector<Uint32> indices;
+			std::vector<uint32_t> indices;
 
 			//initial vertices
 			int vi[12];
@@ -556,7 +675,7 @@ namespace Graphics {
 
 			//Create vtx & index buffers and copy data
 			VertexBufferDesc vbd;
-			Uint32 attIdx = 0;
+			uint32_t attIdx = 0;
 			vbd.attrib[attIdx].semantic = ATTRIB_POSITION;
 			vbd.attrib[attIdx].format = ATTRIB_FORMAT_FLOAT3;
 			++attIdx;
@@ -576,7 +695,7 @@ namespace Graphics {
 			m_vertexBuffer->Populate(vts);
 
 			m_indexBuffer.reset(renderer->CreateIndexBuffer(indices.size(), BUFFER_USAGE_STATIC));
-			Uint32 *idxPtr = m_indexBuffer->Map(Graphics::BUFFER_MAP_WRITE);
+			uint32_t *idxPtr = m_indexBuffer->Map(Graphics::BUFFER_MAP_WRITE);
 			for (auto it : indices) {
 				*idxPtr = it;
 				idxPtr++;
@@ -584,11 +703,16 @@ namespace Graphics {
 			m_indexBuffer->Unmap();
 		}
 
+		Sphere3D::~Sphere3D()
+		{}
+
 		void Sphere3D::Draw(Renderer *r)
 		{
 			PROFILE_SCOPED()
 			r->DrawBufferIndexed(m_vertexBuffer.get(), m_indexBuffer.get(), m_renderState, m_material.Get());
 		}
+
+		RefCountedPtr<Material> Sphere3D::GetMaterial() const { return m_material; }
 
 		int Sphere3D::AddVertex(VertexArray &vts, const vector3f &v, const vector3f &n)
 		{
@@ -604,7 +728,7 @@ namespace Graphics {
 			return vts.GetNumVerts() - 1;
 		}
 
-		void Sphere3D::AddTriangle(std::vector<Uint32> &indices, int i1, int i2, int i3)
+		void Sphere3D::AddTriangle(std::vector<uint32_t> &indices, int i1, int i2, int i3)
 		{
 			PROFILE_SCOPED()
 			indices.push_back(i1);
@@ -612,7 +736,7 @@ namespace Graphics {
 			indices.push_back(i3);
 		}
 
-		void Sphere3D::Subdivide(VertexArray &vts, std::vector<Uint32> &indices,
+		void Sphere3D::Subdivide(VertexArray &vts, std::vector<uint32_t> &indices,
 			const matrix4x4f &trans, const vector3f &v1, const vector3f &v2, const vector3f &v3,
 			const int i1, const int i2, const int i3, int depth)
 		{
@@ -649,7 +773,7 @@ namespace Graphics {
 
 			VertexArray vertices(ATTRIB_POSITION | ATTRIB_UV0);
 			Graphics::MaterialDescriptor desc;
-			desc.effect = Graphics::EFFECT_DEFAULT;
+			desc.effect = Graphics::EffectType::DEFAULT;
 			desc.textures = 1;
 			desc.lighting = false;
 			desc.vertexColors = false;
@@ -722,7 +846,7 @@ namespace Graphics {
 			//Create vtx & index buffers and copy data
 			VertexBufferDesc vbd;
 
-			Uint32 attribIdx = 0;
+			uint32_t attribIdx = 0;
 			assert(va.HasAttrib(ATTRIB_POSITION));
 			vbd.attrib[attribIdx].semantic = ATTRIB_POSITION;
 			vbd.attrib[attribIdx].format = ATTRIB_FORMAT_FLOAT3;
@@ -754,6 +878,9 @@ namespace Graphics {
 			m_vertexBuffer.Reset(r->CreateVertexBuffer(vbd));
 			m_vertexBuffer->Populate(va);
 		}
+
+		TexturedQuad::~TexturedQuad()
+		{}
 
 		void TexturedQuad::Draw(Graphics::Renderer *r)
 		{
@@ -799,6 +926,9 @@ namespace Graphics {
 			m_vertexBuffer->Populate(bgArr);
 		}
 
+		Rect::~Rect()
+		{}
+
 		void Rect::Update(const vector2f &pos, const vector2f &size, const Color &c)
 		{
 			using namespace Graphics;
@@ -840,6 +970,9 @@ namespace Graphics {
 
 			Update(size, rad, c);
 		}
+
+		RoundEdgedRect::~RoundEdgedRect()
+		{}
 
 		void RoundEdgedRect::Update(const vector2f &size, float rad, const Color &c)
 		{

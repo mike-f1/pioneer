@@ -7,7 +7,7 @@
 
 Random RandomSingleton::m_random;
 
-void RandomSingleton::Init(const Uint32 seed)
+void RandomSingleton::Init(const uint32_t seed)
 {
 	m_random.IncRefCount(); // so nothing tries to free it
 	m_random.seed(seed);

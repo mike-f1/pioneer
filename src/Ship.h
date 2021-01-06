@@ -60,7 +60,9 @@ public:
 	Ship(const ShipType::Id &shipId);
 	virtual ~Ship();
 
-	virtual void SetFrame(FrameId fId) override;
+	Json SaveToJson(Space *space) override;
+
+	void SetFrame(FrameId fId) override;
 
 	void SetController(ShipController *c); //deletes existing
 	ShipController *GetController() const { return m_controller; }
@@ -74,7 +76,7 @@ public:
 
 	virtual void SetLandedOn(Planet *p, float latitude, float longitude);
 
-	virtual void Render(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform) override;
+	void Render(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform) override;
 
 	inline void ClearThrusterState()
 	{
@@ -93,6 +95,9 @@ public:
 	void SetGunsState(GunDir dir, int state);
 
 	void UpdateMass();
+
+	// TODO: it seems that wheels status interface should be improved,
+	// isn't easier to change a "direction" which means "move to {down|up}"
 	virtual bool SetWheelState(bool down); // returns success of state change, NOT state itself
 	void Blastoff();
 	bool Undock();
@@ -104,7 +109,7 @@ public:
 	bool IsDecelerating() const { return m_decelerating; }
 
 	virtual void NotifyRemoved(const Body *const removedBody) override;
-	virtual bool OnCollision(Object *o, Uint32 flags, double relVel) override;
+	virtual bool OnCollision(Object *o, uint32_t flags, double relVel) override;
 	virtual bool OnDamage(Object *attacker, float kgDamage, const CollisionContact &contactData) override;
 
 	enum FlightState { // <enum scope='Ship' name=ShipFlightState public>
@@ -117,7 +122,7 @@ public:
 		HYPERSPACE, // in hyperspace
 	};
 
-	vector3d CalcAtmosphericForce() const override;
+	virtual vector3d CalcAtmosphericForce() const;
 	// vector3d CalcAtmoPassiveControl() const;
 	vector3d CalcAtmoTorque() const;
 
@@ -185,8 +190,6 @@ public:
 	void AIOrbit(Body *target, double alt); // Note: defined in Ship-AI.cpp
 	void AIHoldPosition(); // Note: defined in Ship-AI.cpp
 
-	void AIBodyDeleted(const Body *const body){}; // Note: defined in Ship-AI.cpp // todo: signals
-
 	const AICommand *GetAICommand() const { return m_curAICmd; }
 
 	virtual void PostLoadFixup(Space *space) override;
@@ -223,14 +226,12 @@ public:
 
 	Sensors *GetSensors() const { return m_sensors.get(); }
 
-	Uint8 GetRelations(Body *other) const; //0=hostile, 50=neutral, 100=ally
-	void SetRelations(Body *other, Uint8 percent);
+	uint8_t GetRelations(Body *other) const; //0=hostile, 50=neutral, 100=ally
+	void SetRelations(Body *other, uint8_t percent);
 
 	double GetLandingPosOffset() const { return m_landingMinOffset; }
 
 protected:
-	virtual void SaveToJson(Json &jsonObj, Space *space) override;
-
 	bool AITimeStep(float timeStep); // Called by controller. Returns true if complete
 
 	virtual void SetAlertState(AlertState as);
@@ -305,7 +306,7 @@ private:
 	static HeatGradientParameters_t s_heatGradientParams;
 
 	std::unique_ptr<Sensors> m_sensors;
-	std::unordered_map<Body *, Uint8> m_relationsMap;
+	std::unordered_map<Body *, uint8_t> m_relationsMap;
 
 	std::string m_shipName;
 

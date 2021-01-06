@@ -7,11 +7,11 @@
 #include "Color.h"
 #include "FrameId.h"
 #include "Json.h"
-#include "Quaternion.h"
-#include "RefCounted.h"
-#include "matrix3x3.h"
-#include "matrix4x4.h"
-#include "vector3.h"
+#include "libs/RefCounted.h"
+#include "libs/matrix3x3.h"
+#include "libs/matrix4x4.h"
+#include "libs/quaternion.h"
+#include "libs/vector3.h"
 
 namespace FileSystem {
 	class FileSource;
@@ -33,8 +33,8 @@ namespace JsonUtils {
 // To-JSON functions. These are called explicitly, and are passed a reference to the object to fill.
 void VectorToJson(Json &jsonObj, const vector3f &vec);
 void VectorToJson(Json &jsonObj, const vector3d &vec);
-void QuaternionToJson(Json &jsonObj, const Quaternionf &quat);
-void QuaternionToJson(Json &jsonObj, const Quaterniond &quat);
+void QuaternionToJson(Json &jsonObj, const quaternionf &quat);
+void QuaternionToJson(Json &jsonObj, const quaterniond &quat);
 void MatrixToJson(Json &jsonObj, const matrix3x3f &mat);
 void MatrixToJson(Json &jsonObj, const matrix3x3d &mat);
 void MatrixToJson(Json &jsonObj, const matrix4x4f &mat);
@@ -47,7 +47,7 @@ void BinStrToJson(Json &jsonObj, const std::string &str);
 template <typename T>
 void to_json(Json &obj, const vector3<T> &vec) { VectorToJson(obj, vec); }
 template <typename T>
-void to_json(Json &obj, const Quaternion<T> &vec) { QuaternionToJson(obj, vec); }
+void to_json(Json &obj, const quaternion<T> &vec) { QuaternionToJson(obj, vec); }
 template <typename T>
 void to_json(Json &obj, const matrix3x3<T> &mat) { MatrixToJson(obj, mat); }
 template <typename T>
@@ -59,8 +59,8 @@ inline void to_json(Json &obj, const FrameId &t) { obj = t.id(); }
 // Parse JSON functions. These functions will throw Json::type_error if passed an invalid type.
 void JsonToVector(vector3f *vec, const Json &jsonObj);
 void JsonToVector(vector3d *vec, const Json &jsonObj);
-void JsonToQuaternion(Quaternionf *pQuat, const Json &jsonObj);
-void JsonToQuaternion(Quaterniond *pQuat, const Json &jsonObj);
+void JsonToQuaternion(quaternionf *pQuat, const Json &jsonObj);
+void JsonToQuaternion(quaterniond *pQuat, const Json &jsonObj);
 void JsonToMatrix(matrix3x3f *pMat, const Json &jsonObj);
 void JsonToMatrix(matrix3x3d *pMat, const Json &jsonObj);
 void JsonToMatrix(matrix4x4f *pMat, const Json &jsonObj);
@@ -72,7 +72,7 @@ std::string JsonToBinStr(const Json &jsonObj);
 template <typename T>
 void from_json(const Json &obj, vector3<T> &vec) { JsonToVector(&vec, obj); }
 template <typename T>
-void from_json(const Json &obj, Quaternion<T> &vec) { JsonToQuaternion(&vec, obj); }
+void from_json(const Json &obj, quaternion<T> &vec) { JsonToQuaternion(&vec, obj); }
 template <typename T>
 void from_json(const Json &obj, matrix3x3<T> &vec) { JsonToMatrix(&vec, obj); }
 template <typename T>

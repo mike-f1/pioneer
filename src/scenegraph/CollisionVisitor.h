@@ -7,9 +7,16 @@
  * Creates a new collision mesh from CollisionGeometry nodes
  * or the nodes' AABB, when no CGeoms found.
  */
-#include "CollMesh.h"
 #include "NodeVisitor.h"
-#include "libs.h"
+
+#include "libs/RefCounted.h"
+#include "libs/matrix4x4.h"
+#include "libs/vector3.h"
+#include <cstdint>
+#include <vector>
+
+class Aabb;
+class CollMesh;
 
 namespace SceneGraph {
 	class Group;
@@ -38,10 +45,10 @@ namespace SceneGraph {
 
 		//temporary arrays for static geometry
 		std::vector<vector3f> m_vertices;
-		std::vector<Uint32> m_indices;
-		std::vector<Uint32> m_flags;
+		std::vector<uint32_t> m_indices;
+		std::vector<uint32_t> m_flags;
 
-		Uint32 m_totalTris;
+		uint32_t m_totalTris;
 	};
 } // namespace SceneGraph
 #endif

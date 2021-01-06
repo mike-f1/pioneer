@@ -5,7 +5,6 @@
 
 #include "Background.h"
 #include "RandomSingleton.h"
-#include "graphics/Drawables.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 
@@ -21,9 +20,9 @@ Intro::~Intro()
 {
 }
 
-void Intro::Draw(float _time)
+void Intro::Draw(float time)
 {
-	m_duration += _time;
+	m_duration += time;
 
 	Graphics::Renderer::StateTicket ticket(RendererLocator::getRenderer());
 

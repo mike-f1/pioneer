@@ -4,11 +4,11 @@
 #include "GeoSphereMaterial.h"
 
 #include "Camera.h"
-#include "BaseSphere.h"
+#include "sphere/BaseSphere.h"
 #include "RendererGL.h"
-#include "StringF.h"
 #include "TextureGL.h"
 #include "graphics/Graphics.h"
+#include "libs/StringF.h"
 #include <sstream>
 
 namespace Graphics {
@@ -53,9 +53,9 @@ namespace Graphics {
 
 		Program *GeoSphereSurfaceMaterial::CreateProgram(const MaterialDescriptor &desc)
 		{
-			assert((desc.effect == EFFECT_GEOSPHERE_TERRAIN) ||
-				(desc.effect == EFFECT_GEOSPHERE_TERRAIN_WITH_LAVA) ||
-				(desc.effect == EFFECT_GEOSPHERE_TERRAIN_WITH_WATER));
+			assert((desc.effect == EffectType::GEOSPHERE_TERRAIN) ||
+				(desc.effect == EffectType::GEOSPHERE_TERRAIN_WITH_LAVA) ||
+				(desc.effect == EffectType::GEOSPHERE_TERRAIN_WITH_WATER));
 			assert(desc.dirLights < 5);
 			std::stringstream ss;
 			ss << stringf("#define NUM_LIGHTS %0{u}\n", desc.dirLights);
@@ -65,9 +65,9 @@ namespace Graphics {
 			}
 			if (desc.quality & HAS_ATMOSPHERE)
 				ss << "#define ATMOSPHERE\n";
-			if (desc.effect == EFFECT_GEOSPHERE_TERRAIN_WITH_LAVA)
+			if (desc.effect == EffectType::GEOSPHERE_TERRAIN_WITH_LAVA)
 				ss << "#define TERRAIN_WITH_LAVA\n";
-			if (desc.effect == EFFECT_GEOSPHERE_TERRAIN_WITH_WATER)
+			if (desc.effect == EffectType::GEOSPHERE_TERRAIN_WITH_WATER)
 				ss << "#define TERRAIN_WITH_WATER\n";
 			if (desc.quality & HAS_ECLIPSES)
 				ss << "#define ECLIPSE\n";
@@ -128,7 +128,7 @@ namespace Graphics {
 			}
 
 			//Light uniform parameters
-			for (Uint32 i = 0; i < m_renderer->GetNumLights(); i++) {
+			for (uint32_t i = 0; i < m_renderer->GetNumLights(); i++) {
 				const Light &Light = m_renderer->GetLight(i);
 				p->lights[i].diffuse.Set(Light.GetDiffuse());
 				p->lights[i].specular.Set(Light.GetSpecular());
@@ -169,7 +169,7 @@ namespace Graphics {
 			// std::vector<Camera::Shadow>::const_iterator it = params.shadows.begin(), itEnd = params.shadows.end();
 			//request a new shadow variation
 			if (m_curNumShadows != params.shadows.size()) {
-				m_curNumShadows = std::min(Uint32(params.shadows.size()), 4U);
+				m_curNumShadows = std::min(uint32_t(params.shadows.size()), 4U);
 				if (m_programs[m_curNumShadows] == nullptr) {
 					m_descriptor.numShadows = m_curNumShadows; //hax - so that GetOrCreateProgram will create a NEW shader instead of reusing the existing one
 					m_programs[m_curNumShadows] = m_renderer->GetOrCreateProgram(this);
@@ -185,7 +185,7 @@ namespace Graphics {
 
 		Program *GeoSphereSkyMaterial::CreateProgram(const MaterialDescriptor &desc)
 		{
-			assert(desc.effect == EFFECT_GEOSPHERE_SKY);
+			assert(desc.effect == EffectType::GEOSPHERE_SKY);
 			assert(desc.dirLights > 0 && desc.dirLights < 5);
 			std::stringstream ss;
 			ss << stringf("#define NUM_LIGHTS %0{u}\n", desc.dirLights);
@@ -210,7 +210,7 @@ namespace Graphics {
 
 		Program *GeoSphereStarMaterial::CreateProgram(const MaterialDescriptor &desc)
 		{
-			assert((desc.effect == EFFECT_GEOSPHERE_STAR));
+			assert((desc.effect == EffectType::GEOSPHERE_STAR));
 			assert(desc.dirLights < 5);
 			std::stringstream ss;
 			ss << stringf("#define NUM_LIGHTS %0{u}\n", desc.dirLights);

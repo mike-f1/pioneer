@@ -4,25 +4,19 @@
 #pragma once
 
 #include "CameraController.h"
-#include "InputFrame.h"
 #include "InteractionController.h"
-#include "utils.h"
+#include "input/InputFwd.h"
+#include "libs/utils.h"
 
+#include <sigc++/sigc++.h>
+
+class InputFrame;
 class Ship;
-
-namespace KeyBindings {
-	struct ActionBinding;
-	struct AxisBinding;
-	struct WheelBinding;
-}
 
 class ShipViewController : public InteractionController {
 	friend class WorldView;
 public:
-	ShipViewController(WorldView *v) :
-		InteractionController(v),
-		m_camType(CAM_INTERNAL),
-		headtracker_input_priority(false) {}
+	ShipViewController(WorldView *v);
 
 	~ShipViewController();
 
@@ -49,50 +43,44 @@ public:
 	// Here temporarely because of initialization order
 	void SetCamType(Ship *ship, enum CamType c);
 
-	static struct InputBinding : public InputFrame {
-		using Action = KeyBindings::ActionBinding;
-		using Axis = KeyBindings::AxisBinding;
-		using Wheel = KeyBindings::WheelBinding;
-
-		Axis *cameraYaw;
-		Axis *cameraPitch;
-		Axis *cameraRoll;
-		Axis *cameraZoom;
-
-		Axis *lookYaw;
-		Axis *lookPitch;
-
-		Action *frontCamera;
-		Action *rearCamera;
-		Action *leftCamera;
-		Action *rightCamera;
-		Action *topCamera;
-		Action *bottomCamera;
-
-		Action *cycleCameraMode;
-		Action *resetCamera;
-
-		Wheel *mouseWheel;
-
-		virtual void RegisterBindings();
-	} InputBindings;
+	static void RegisterInputBindings();
+	void AttachBindingCallback();
 
 private:
 	void ChangeInternalCameraMode(InternalCameraController::Mode m);
 
-	void OnCamReset();
-	void OnMouseWheel(bool up);
+	void OnCamReset(bool down);
 
 	enum CamType m_camType;
-
-	sigc::connection m_onResetCam;
-	sigc::connection m_onMouseWheelCon;
 
 	std::unique_ptr<InternalCameraController> m_internalCameraController;
 	std::unique_ptr<ExternalCameraController> m_externalCameraController;
 	std::unique_ptr<SiderealCameraController> m_siderealCameraController;
 	std::unique_ptr<FlyByCameraController> m_flybyCameraController;
 	CameraController *m_activeCameraController; //one of the above
+
+	inline static struct InputBinding {
+		AxisId cameraYaw;
+		AxisId cameraPitch;
+		AxisId cameraRoll;
+		AxisId cameraZoom;
+
+		AxisId lookYaw;
+		AxisId lookPitch;
+
+		ActionId frontCamera;
+		ActionId rearCamera;
+		ActionId leftCamera;
+		ActionId rightCamera;
+		ActionId topCamera;
+		ActionId bottomCamera;
+
+		ActionId cycleCameraMode;
+		ActionId resetCamera;
+	} m_inputBindings;
+
+	static std::unique_ptr<InputFrame> m_inputFrame;
+	static std::unique_ptr<InputFrame> m_shipViewFrame;
 
 	bool headtracker_input_priority;
 };

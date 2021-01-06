@@ -1,7 +1,7 @@
 #ifndef TRANSFERPLANNER_H
 #define TRANSFERPLANNER_H
 
-#include "vector3.h"
+#include "libs/vector3.h"
 #include <string>
 
 enum BurnDirection {

@@ -3,13 +3,14 @@
 
 #include "DumpVisitor.h"
 
+#include "CollMesh.h"
 #include "Group.h"
 #include "LOD.h"
 #include "Model.h"
 #include "Node.h"
 #include "StaticGeometry.h"
 #include "graphics/VertexBuffer.h"
-#include "utils.h"
+#include "libs/utils.h"
 #include <iostream>
 #include <sstream>
 

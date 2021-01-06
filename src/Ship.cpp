@@ -31,14 +31,17 @@
 #include "ShipAICmd.h"
 #include "Space.h"
 #include "SpaceStation.h"
-#include "StringF.h"
+#include "libs/StringF.h"
 #include "WorldView.h"
 #include "collider/CollisionContact.h"
 #include "galaxy/StarSystem.h"
+#include "graphics/Material.h"
+#include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/TextureBuilder.h"
 #include "scenegraph/Animation.h"
 #include "scenegraph/MatrixTransform.h"
+#include "scenegraph/Model.h"
 #include "ship/PlayerShipController.h"
 
 static const float TONS_HULL_PER_SHIELD = 10.f;
@@ -138,7 +141,7 @@ Ship::Ship(const Json &jsonObj, Space *space) :
 		// or else UpdateGunsStats will use MountGun()
 		// BUT must be *after* setting model
 		FixedGuns::GetGunsTags(GetModel());
-		FixedGuns::LoadFromJson(shipObj, space);
+		FixedGuns::LoadFromJson(shipObj["guns"]);
 
 		GetPropulsion()->SetFuelTankMass(GetShipType()->fuelTankMass);
 		m_stats.fuel_tank_mass_left = GetPropulsion()->FuelTankMassLeft();
@@ -195,8 +198,8 @@ Ship::Ship(const Json &jsonObj, Space *space) :
 		lua_pop(l, 2);
 
 		m_controller = 0;
-		const ShipController::Type ctype = shipObj["controller_type"];
-		if (ctype == ShipController::PLAYER)
+		const ShipController::ControllerType ctype = shipObj["controller_type"];
+		if (ctype == ShipController::ControllerType::PLAYER)
 			SetController(new PlayerShipController());
 		else
 			SetController(new ShipController());
@@ -207,6 +210,7 @@ Ship::Ship(const Json &jsonObj, Space *space) :
 		m_shipName = shipObj["name"];
 		Properties().Set("shipName", m_shipName);
 	} catch (Json::type_error &) {
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 		throw SavedGameCorruptException();
 	}
 }
@@ -268,13 +272,13 @@ void Ship::PostLoadFixup(Space *space)
 	m_controller->PostLoadFixup(space);
 }
 
-void Ship::SaveToJson(Json &jsonObj, Space *space)
+Json Ship::SaveToJson(Space *space)
 {
-	DynamicBody::SaveToJson(jsonObj, space);
+	Json jsonObj = DynamicBody::SaveToJson(space);
 
-	Json shipObj({}); // Create JSON object to contain ship data.
+	Json shipObj;
 
-	FixedGuns::SaveToJson(shipObj, space);
+	shipObj["guns"] = FixedGuns::SaveToJson();
 	GetPropulsion()->SaveToJson(shipObj, space);
 
 	m_skin.SaveToJson(shipObj);
@@ -313,6 +317,7 @@ void Ship::SaveToJson(Json &jsonObj, Space *space)
 	shipObj["name"] = m_shipName;
 
 	jsonObj["ship"] = shipObj; // Add ship object to supplied object.
+	return jsonObj;
 }
 
 void Ship::InitEquipSet()
@@ -341,8 +346,8 @@ void Ship::InitMaterials()
 {
 	SceneGraph::Model *pModel = GetModel();
 	assert(pModel);
-	const Uint32 numMats = pModel->GetNumMaterials();
-	for (Uint32 m = 0; m < numMats; m++) {
+	const uint32_t numMats = pModel->GetNumMaterials();
+	for (uint32_t m = 0; m < numMats; m++) {
 		RefCountedPtr<Graphics::Material> mat = pModel->GetMaterialByIndex(m);
 		mat->heatGradient = Graphics::TextureBuilder::Decal("textures/heat_gradient.dds").GetOrCreateTexture(RendererLocator::getRenderer(), "model");
 		mat->specialParameter0 = &s_heatGradientParams;
@@ -451,15 +456,15 @@ vector3d Ship::CalcAtmoTorque() const
 	double m_aeroStabilityMultiplier = GetShipType()->atmoStability;
 
 	vector3d forward = GetOrient().VectorZ();
-	vector3d m_vel = GetVelocity().NormalizedSafe();
-	vector3d m_torqueDir = -m_vel.Cross(-forward); // <--- This is correct
+	vector3d vel = GetVelocity().NormalizedSafe();
+	vector3d torqueDir = -vel.Cross(-forward); // <--- This is correct
 
 	// TODO: evaluate this function and properly implement based upon ship cross-section.
 	double m_drag = CalcAtmosphericDrag(GetVelocity().LengthSqr(), m_topCrossSec, DEFAULT_DRAG_COEFF);
 	vector3d fAtmoTorque = vector3d(0.0);
 
 	if (GetVelocity().Length() > 100) { //don't apply torque at minimal speeds
-		fAtmoTorque = m_drag * m_torqueDir * ((m_topCrossSec + m_sideCrossSec) / (m_frontCrossSec * 4)) * 0.3 * m_aeroStabilityMultiplier * GameLocator::getGame()->GetInvTimeAccelRate();
+		fAtmoTorque = m_drag * torqueDir * ((m_topCrossSec + m_sideCrossSec) / (m_frontCrossSec * 4)) * 0.3 * m_aeroStabilityMultiplier * GameLocator::getGame()->GetInvTimeAccelRate();
 	}
 
 	return fAtmoTorque;
@@ -522,7 +527,7 @@ bool Ship::OnDamage(Object *attacker, float kgDamage, const CollisionContact &co
 	return true;
 }
 
-bool Ship::OnCollision(Object *b, Uint32 flags, double relVel)
+bool Ship::OnCollision(Object *b, uint32_t flags, double relVel)
 {
 	// Collision with SpaceStation docking surface is
 	// completely handled by SpaceStations, you only
@@ -1087,7 +1092,7 @@ void Ship::UpdateAlertState()
 			if (GetPositionRelTo(ship).LengthSqr() < ALERT_DISTANCE * ALERT_DISTANCE) {
 				ship_is_near = true;
 
-				Uint32 gunstate = FixedGuns::IsFiring();
+				uint32_t gunstate = FixedGuns::IsFiring();
 				if (gunstate) {
 					ship_is_firing = true;
 					break;
@@ -1152,11 +1157,12 @@ void Ship::UpdateFuel(const float timeStep)
 	Properties().Set("fuel", GetFuel() * 100); // XXX to match SetFuelPercent
 
 	if (GetPropulsion()->IsFuelStateChanged())
-		LuaEvent::Queue("onShipFuelChanged", this, EnumStrings::GetString("PropulsionFuelStatus", GetPropulsion()->GetFuelState()));
+		LuaEvent::Queue("onShipFuelChanged", this, EnumStrings::GetString("PropulsionFuelStatus", static_cast<std::underlying_type<Propulsion::FuelState>::type>(GetPropulsion()->GetFuelState())));
 }
 
 void Ship::StaticUpdate(const float timeStep)
 {
+	PROFILE_SCOPED()
 	// do player sounds before dead check, so they also turn off
 	if (IsType(Object::PLAYER)) DoThrusterSounds();
 
@@ -1545,7 +1551,7 @@ void Ship::SetPattern(const unsigned int num)
 	GetModel()->SetPattern(num);
 }
 
-Uint8 Ship::GetRelations(Body *other) const
+uint8_t Ship::GetRelations(Body *other) const
 {
 	auto it = m_relationsMap.find(other);
 	if (it != m_relationsMap.end())
@@ -1554,7 +1560,7 @@ Uint8 Ship::GetRelations(Body *other) const
 	return 50;
 }
 
-void Ship::SetRelations(Body *other, Uint8 percent)
+void Ship::SetRelations(Body *other, uint8_t percent)
 {
 	m_relationsMap[other] = percent;
 	if (m_sensors.get()) m_sensors->UpdateIFF(other);

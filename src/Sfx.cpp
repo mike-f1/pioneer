@@ -13,14 +13,14 @@
 #include "ModelBody.h"
 #include "Random.h"
 #include "RandomSingleton.h"
-#include "StringF.h"
-#include "graphics/Drawables.h"
 #include "graphics/Graphics.h"
 #include "graphics/Material.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/RenderState.h"
+#include "graphics/Texture.h"
 #include "graphics/TextureBuilder.h"
+#include "libs/StringF.h"
 
 using namespace Graphics;
 
@@ -32,7 +32,7 @@ namespace {
 		const float pixrad = Clamp(Graphics::GetScreenHeight() / trans.Length(), 0.1f, 50.0f);
 		return (size * Graphics::GetFovFactor()) * pixrad;
 	}
-}; // namespace
+} // namespace
 
 std::unique_ptr<Graphics::Material> SfxManager::damageParticle;
 std::unique_ptr<Graphics::Material> SfxManager::ecmParticle;
@@ -43,14 +43,20 @@ Graphics::RenderState *SfxManager::additiveAlphaState = nullptr;
 Graphics::RenderState *SfxManager::alphaOneState = nullptr;
 SfxManager::MaterialData SfxManager::m_materialData[TYPE_NONE];
 
+SfxManager::MaterialData::MaterialData() :
+	effect(Graphics::EffectType::BILLBOARD),
+	num_textures(1),
+	num_imgs_wide(1),
+	coord_downscale(1.0f)
+{}
+
 Sfx::Sfx(const vector3d &pos, const vector3d &vel, const float speed, const SFX_TYPE type) :
 	m_pos(pos),
 	m_vel(vel),
 	m_age(0.0f),
 	m_speed(speed),
 	m_type(type)
-{
-}
+{}
 
 Sfx::Sfx(const Json &jsonObj)
 {
@@ -64,15 +70,6 @@ Sfx::Sfx(const Json &jsonObj)
 	} catch (Json::type_error &) {
 		throw SavedGameCorruptException();
 	}
-}
-
-Sfx::Sfx(const Sfx &b) :
-	m_pos(b.m_pos),
-	m_vel(b.m_vel),
-	m_age(b.m_age),
-	m_speed(b.m_speed),
-	m_type(b.m_type)
-{
 }
 
 void Sfx::SaveToJson(Json &jsonObj)
@@ -159,8 +156,7 @@ void SfxManager::FromJson(const Json &jsonObj, FrameId fId)
 
 	if (sfxArray.size()) f->m_sfx.reset(new SfxManager);
 	for (unsigned int i = 0; i < sfxArray.size(); ++i) {
-		Sfx inst(sfxArray[i]);
-		f->m_sfx->AddInstance(inst);
+		f->m_sfx->AddInstance(sfxArray[i]["sfx"]["type"], sfxArray[i]);
 	}
 }
 
@@ -181,8 +177,7 @@ void SfxManager::Add(const Body *b, SFX_TYPE t)
 	SfxManager *sfxman = AllocSfxInFrame(b->GetFrame());
 	if (!sfxman) return;
 	vector3d vel(b->GetVelocity() + 200.0 * vector3d(RandomSingleton::getInstance().Double() - 0.5, RandomSingleton::getInstance().Double() - 0.5, RandomSingleton::getInstance().Double() - 0.5));
-	Sfx sfx(b->GetPosition(), vel, 200, t);
-	sfxman->AddInstance(sfx);
+	sfxman->AddInstance(t, b->GetPosition(), vel, 200, t);
 }
 
 void SfxManager::AddExplosion(Body *b)
@@ -195,8 +190,7 @@ void SfxManager::AddExplosion(Body *b)
 		ModelBody *mb = static_cast<ModelBody *>(b);
 		speed = mb->GetAabb().radius * 8.0;
 	}
-	Sfx sfx(b->GetPosition(), b->GetVelocity(), speed, TYPE_EXPLOSION);
-	sfxman->AddInstance(sfx);
+	sfxman->AddInstance(TYPE_EXPLOSION, b->GetPosition(), b->GetVelocity(), speed, TYPE_EXPLOSION);
 }
 
 void SfxManager::AddThrustSmoke(const Body *b, const float speed, const vector3d &adjustpos)
@@ -204,8 +198,7 @@ void SfxManager::AddThrustSmoke(const Body *b, const float speed, const vector3d
 	SfxManager *sfxman = AllocSfxInFrame(b->GetFrame());
 	if (!sfxman) return;
 
-	Sfx sfx(b->GetPosition() + adjustpos, vector3d(0, 0, 0), speed, TYPE_SMOKE);
-	sfxman->AddInstance(sfx);
+	sfxman->AddInstance(TYPE_SMOKE, b->GetPosition() + adjustpos, vector3d(0, 0, 0), speed, TYPE_SMOKE);
 }
 
 void SfxManager::TimeStepAll(const float timeStep, FrameId fId)
@@ -236,7 +229,7 @@ void SfxManager::Cleanup()
 		if (!numInstances)
 			continue;
 
-		for (Sint64 i = Sint64(numInstances - 1); i >= 0; i--) {
+		for (int64_t i = int64_t(numInstances - 1); i >= 0; i--) {
 			Sfx &inst(GetInstanceByIndex(SFX_TYPE(t), i));
 			if (inst.m_type == TYPE_NONE) {
 				m_instances[t].erase(m_instances[t].begin() + i);
@@ -310,9 +303,9 @@ void SfxManager::RenderAll(FrameId fId, FrameId camFrameId)
 
 vector2f SfxManager::CalculateOffset(const enum SFX_TYPE type, const Sfx &inst)
 {
-	if (m_materialData[type].effect == Graphics::EFFECT_BILLBOARD_ATLAS) {
+	if (m_materialData[type].effect == Graphics::EffectType::BILLBOARD_ATLAS) {
 		const int spriteframe = inst.AgeBlend() * (m_materialData[type].num_textures - 1);
-		const Sint32 numImgsWide = m_materialData[type].num_imgs_wide;
+		const int32_t numImgsWide = m_materialData[type].num_imgs_wide;
 		const int u = (spriteframe % numImgsWide); // % is the "modulo operator", the remainder of i / width;
 		const int v = (spriteframe / numImgsWide); // where "/" is an integer division
 		return vector2f(
@@ -348,7 +341,7 @@ bool SfxManager::SplitMaterialData(const std::string &spec, MaterialData &output
 		// extract the fragment and remember it
 		switch (i) {
 		case eEFFECT:
-			output.effect = (spec.substr(start, (end == std::string::npos) ? std::string::npos : end - start) == "billboard") ? Graphics::EFFECT_BILLBOARD : Graphics::EFFECT_BILLBOARD_ATLAS;
+			output.effect = (spec.substr(start, (end == std::string::npos) ? std::string::npos : end - start) == "billboard") ? Graphics::EffectType::BILLBOARD : Graphics::EffectType::BILLBOARD_ATLAS;
 			break;
 		case eNUM_IMGS_WIDE:
 			output.num_imgs_wide = atoi(spec.substr(start, (end == std::string::npos) ? std::string::npos : end - start).c_str());
@@ -399,7 +392,7 @@ void SfxManager::Init()
 	desc.textures = 1;
 
 	// ECM effect is different, not managed by Sfx at all, should it be factored out?
-	desc.effect = Graphics::EFFECT_BILLBOARD;
+	desc.effect = Graphics::EffectType::BILLBOARD;
 	ecmParticle.reset(RendererLocator::getRenderer()->CreateMaterial(desc));
 	ecmParticle->texture0 = Graphics::TextureBuilder::Billboard("textures/ecm.png").GetOrCreateTexture(RendererLocator::getRenderer(), "billboard");
 
@@ -411,19 +404,19 @@ void SfxManager::Init()
 	desc.effect = m_materialData[TYPE_DAMAGE].effect;
 	damageParticle.reset(RendererLocator::getRenderer()->CreateMaterial(desc));
 	damageParticle->texture0 = Graphics::TextureBuilder::Billboard(cfg.String("damageFile")).GetOrCreateTexture(RendererLocator::getRenderer(), "billboard");
-	if (desc.effect == Graphics::EFFECT_BILLBOARD_ATLAS)
+	if (desc.effect == Graphics::EffectType::BILLBOARD_ATLAS)
 		damageParticle->specialParameter0 = &m_materialData[TYPE_DAMAGE].coord_downscale;
 
 	desc.effect = m_materialData[TYPE_SMOKE].effect;
 	smokeParticle.reset(RendererLocator::getRenderer()->CreateMaterial(desc));
 	smokeParticle->texture0 = Graphics::TextureBuilder::Billboard(cfg.String("smokeFile")).GetOrCreateTexture(RendererLocator::getRenderer(), "billboard");
-	if (desc.effect == Graphics::EFFECT_BILLBOARD_ATLAS)
+	if (desc.effect == Graphics::EffectType::BILLBOARD_ATLAS)
 		smokeParticle->specialParameter0 = &m_materialData[TYPE_SMOKE].coord_downscale;
 
 	desc.effect = m_materialData[TYPE_EXPLOSION].effect;
 	explosionParticle.reset(RendererLocator::getRenderer()->CreateMaterial(desc));
 	explosionParticle->texture0 = Graphics::TextureBuilder::Billboard(cfg.String("explosionFile")).GetOrCreateTexture(RendererLocator::getRenderer(), "billboard");
-	if (desc.effect == Graphics::EFFECT_BILLBOARD_ATLAS)
+	if (desc.effect == Graphics::EffectType::BILLBOARD_ATLAS)
 		explosionParticle->specialParameter0 = &m_materialData[TYPE_EXPLOSION].coord_downscale;
 }
 

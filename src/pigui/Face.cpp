@@ -5,16 +5,20 @@
 
 #include "FileSystem.h"
 #include "SDLWrappers.h"
+#include "graphics/Material.h"
 #include "graphics/Drawables.h"
+#include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/Texture.h"
 #include "graphics/TextureBuilder.h"
+
+#include "profiler/Profiler.h"
 
 namespace PiGUI {
 
 	RefCountedPtr<Graphics::Material> Face::s_material;
 
-	Face::Face(FaceParts::FaceDescriptor &face, Uint32 seed)
+	Face::Face(FaceParts::FaceDescriptor &face, uint32_t seed)
 	{
 		PROFILE_SCOPED()
 		if (!seed) seed = time(0);
@@ -26,7 +30,7 @@ namespace PiGUI {
 		FaceParts::PickFaceParts(face, m_seed);
 		FaceParts::BuildFaceImage(faceim.Get(), face);
 
-		m_texture.Reset(Graphics::TextureBuilder(faceim, Graphics::LINEAR_CLAMP, true, true).GetOrCreateTexture(RendererLocator::getRenderer(), std::string("face")));
+		m_texture.Reset(Graphics::TextureBuilder(faceim, Graphics::TextureSampleMode::LINEAR_CLAMP, true, true).GetOrCreateTexture(RendererLocator::getRenderer(), std::string("face")));
 
 		if (!s_material) {
 			Graphics::MaterialDescriptor matDesc;
@@ -38,7 +42,7 @@ namespace PiGUI {
 	Face::~Face()
 	{}
 
-	Uint32 Face::GetTextureId()
+	uint32_t Face::GetTextureId()
 	{
 		return m_texture->GetTextureID();
 	}

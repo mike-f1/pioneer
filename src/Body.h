@@ -5,10 +5,12 @@
 #define _BODY_H
 
 #include "FrameId.h"
+#include "JsonFwd.h"
 #include "Object.h"
 #include "PropertiedObject.h"
-#include "matrix3x3.h"
-#include "vector3.h"
+#include "libs/matrix3x3.h"
+#include "libs/matrix4x4.h"
+#include "libs/vector3.h"
 #include <string>
 
 class Space;
@@ -27,15 +29,15 @@ public:
 	Body();
 	Body(const Json &jsonObj, Space *space);
 	virtual ~Body();
-	void ToJson(Json &jsonObj, Space *space);
-	static Body *FromJson(const Json &jsonObj, Space *space);
+
+	virtual Json SaveToJson(Space *space);
 	virtual void PostLoadFixup(Space *space){};
 
 	virtual void SetPosition(const vector3d &p) { m_pos = p; }
 	vector3d GetPosition() const { return m_pos; }
 	virtual void SetOrient(const matrix3x3d &r) { m_orient = r; }
 	const matrix3x3d &GetOrient() const { return m_orient; }
-	virtual void SetVelocity(const vector3d &v) { assert(0); }
+	virtual void SetVelocity(const vector3d &) { assert(0); }
 	virtual vector3d GetVelocity() const { return vector3d(0.0); }
 
 	void SetPhysRadius(double r) { m_physRadius = r; }
@@ -49,7 +51,7 @@ public:
 	}
 
 	// return true if to do collision response and apply damage
-	virtual bool OnCollision(Object *o, Uint32 flags, double relVel) { return false; }
+	virtual bool OnCollision(Object *o, uint32_t flags, double relVel) { return false; }
 	// Attacker may be null
 	virtual bool OnDamage(Object *attacker, float kgDamage, const CollisionContact &contactData) { return false; }
 	// Override to clear any pointers you hold to the body
@@ -120,7 +122,6 @@ public:
 	virtual void AddFeature(Feature f) { m_features[f] = true; };
 
 protected:
-	virtual void SaveToJson(Json &jsonObj, Space *space);
 	unsigned int m_flags;
 
 	// Interpolated draw orientation-position

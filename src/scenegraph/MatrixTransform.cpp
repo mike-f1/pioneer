@@ -2,11 +2,15 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "MatrixTransform.h"
+
 #include "BaseLoader.h"
 #include "NodeCopyCache.h"
 #include "NodeVisitor.h"
 #include "Serializer.h"
 #include "graphics/Renderer.h"
+
+#include "profiler/Profiler.h"
+
 namespace SceneGraph {
 
 	MatrixTransform::MatrixTransform(const matrix4x4f &m) :
@@ -60,14 +64,14 @@ namespace SceneGraph {
 	void MatrixTransform::Save(NodeDatabase &db)
 	{
 		Group::Save(db);
-		for (Uint32 i = 0; i < 16; i++)
+		for (uint32_t i = 0; i < 16; i++)
 			db.wr->Float(m_transform[i]);
 	}
 
 	MatrixTransform *MatrixTransform::Load(NodeDatabase &db)
 	{
 		matrix4x4f matrix;
-		for (Uint32 i = 0; i < 16; i++)
+		for (uint32_t i = 0; i < 16; i++)
 			matrix[i] = db.rd->Float();
 		MatrixTransform *mt = new MatrixTransform(matrix);
 		return mt;

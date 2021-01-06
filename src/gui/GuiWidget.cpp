@@ -3,9 +3,9 @@
 
 #include "Gui.h"
 
-#include "vector2.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
+#include "libs/vector2.h"
 
 namespace Gui {
 

@@ -5,6 +5,7 @@
 
 #include "Background.h"
 #include "Body.h"
+#include "CargoBody.h"
 #include "CityOnPlanet.h"
 #include "Frame.h"
 #include "Game.h"
@@ -15,16 +16,17 @@
 #include "Json.h"
 #include "Lang.h"
 #include "LuaEvent.h"
-#include "MathUtil.h"
+#include "Missile.h"
 #include "Planet.h"
 #include "Player.h"
+#include "Projectile.h"
 #include "Random.h"
 #include "RandomSingleton.h"
 #include "SpaceStation.h"
 #include "Star.h"
 #include "collider/CollisionContact.h"
 #include "galaxy/StarSystem.h"
-#include "graphics/Drawables.h" // W**??? It seems there some problem with unique_ptr at line 65...
+#include "libs/MathUtil.h"
 #include <algorithm>
 #include <functional>
 
@@ -87,7 +89,7 @@ Space::Space(double total_time, float time_step, RefCountedPtr<StarSystem> stars
 	m_processingFinalizationQueue(false)
 #endif
 {
-	Uint32 _init[5] = { path.systemIndex, Uint32(path.sectorX), Uint32(path.sectorY), Uint32(path.sectorZ), UNIVERSE_SEED };
+	uint32_t _init[5] = { path.systemIndex, uint32_t(path.sectorX), uint32_t(path.sectorY), uint32_t(path.sectorZ), UNIVERSE_SEED };
 	Random rand(_init, 5);
 	m_background.reset(new Background::Container(rand, GameConfSingleton::GetAmountBackgroundStars()));
 
@@ -113,7 +115,7 @@ Space::Space(RefCountedPtr<StarSystem> starsystem, const Json &jsonObj, double a
 	Json spaceObj = jsonObj["space"];
 
 	const SystemPath &path = m_starSystem->GetPath();
-	Uint32 _init[5] = { path.systemIndex, Uint32(path.sectorX), Uint32(path.sectorY), Uint32(path.sectorZ), UNIVERSE_SEED };
+	uint32_t _init[5] = { path.systemIndex, uint32_t(path.sectorX), uint32_t(path.sectorY), uint32_t(path.sectorZ), UNIVERSE_SEED };
 	Random rand(_init, 5);
 	m_background.reset(new Background::Container(rand, GameConfSingleton::GetAmountBackgroundStars()));
 
@@ -126,8 +128,53 @@ Space::Space(RefCountedPtr<StarSystem> starsystem, const Json &jsonObj, double a
 
 	try {
 		Json bodyArray = spaceObj["bodies"].get<Json::array_t>();
-		for (Uint32 i = 0; i < bodyArray.size(); i++)
-			m_bodies.push_back(Body::FromJson(bodyArray[i], this));
+		for (uint32_t i = 0; i < bodyArray.size(); i++) {
+			Body *body = nullptr;
+			const Json bodyArrayEl = bodyArray[i];
+			const Json &jsonObj = bodyArrayEl["body_data"];
+			if (!bodyArrayEl["body_type"].is_number_integer()) throw SavedGameCorruptException();
+			Object::Type type = Object::Type(bodyArrayEl["body_type"]);
+			switch (type) {
+			case Object::STAR:
+				body = new Star(jsonObj, this);
+			break;
+			case Object::PLANET:
+				body = new Planet(jsonObj, this);
+			break;
+			case Object::SPACESTATION:
+				body = new SpaceStation(jsonObj, this);
+			break;
+			case Object::SHIP: {
+				Ship *s = new Ship(jsonObj, this);
+				// Here because of comments in Ship.cpp on following function
+				s->UpdateLuaStats();
+				body = static_cast<Body *>(s);
+			}
+			break;
+			case Object::PLAYER: {
+				Player *p = new Player(jsonObj, this);
+				// Read comments in Ship.cpp on following function
+				p->UpdateLuaStats();
+				body = static_cast<Body *>(p);
+			}
+			break;
+			case Object::MISSILE:
+				body = new Missile(jsonObj, this);
+			break;
+			case Object::PROJECTILE:
+				body = new Projectile(jsonObj, this);
+			break;
+			case Object::CARGOBODY:
+				body = new CargoBody(jsonObj, this);
+			break;
+			case Object::HYPERSPACECLOUD:
+				body = new HyperspaceCloud(jsonObj, this);
+			break;
+			default:
+				assert(0);
+			}
+		m_bodies.push_back(body);
+		}
 	} catch (Json::type_error &) {
 		throw SavedGameCorruptException();
 	}
@@ -150,7 +197,6 @@ Space::~Space()
 	Frame::DeleteFrames();
 }
 
-
 void Space::ToJson(Json &jsonObj)
 {
 	PROFILE_SCOPED()
@@ -166,7 +212,9 @@ void Space::ToJson(Json &jsonObj)
 	Json bodyArray = Json::array(); // Create JSON array to contain body data.
 	for (Body *b : m_bodies) {
 		Json bodyArrayEl({}); // Create JSON object to contain body.
-		b->ToJson(bodyArrayEl, this);
+		bodyArrayEl["body_type"] = int(b->GetType());
+		bodyArrayEl["body_data"] = b->SaveToJson(this);
+
 		bodyArray.push_back(bodyArrayEl); // Append body object to array.
 	}
 	spaceObj["bodies"] = bodyArray; // Add body array to space object.
@@ -177,7 +225,7 @@ void Space::ToJson(Json &jsonObj)
 void Space::RefreshBackground()
 {
 	const SystemPath &path = m_starSystem->GetPath();
-	Uint32 _init[5] = { path.systemIndex, Uint32(path.sectorX), Uint32(path.sectorY), Uint32(path.sectorZ), UNIVERSE_SEED };
+	uint32_t _init[5] = { path.systemIndex, uint32_t(path.sectorX), uint32_t(path.sectorY), uint32_t(path.sectorZ), UNIVERSE_SEED };
 	Random rand(_init, 5);
 	m_background.reset(new Background::Container(rand, GameConfSingleton::GetAmountBackgroundStars()));
 }
@@ -187,56 +235,57 @@ RefCountedPtr<StarSystem> Space::GetStarSystem() const
 	return m_starSystem;
 }
 
-Body *Space::GetBodyByIndex(Uint32 idx) const
+Body *Space::GetBodyByIndex(uint32_t idx) const
 {
 	assert(m_bodyIndexValid);
 	assert(m_bodyIndex.size() > idx);
 	return m_bodyIndex[idx];
 }
 
-SystemBody *Space::GetSystemBodyByIndex(Uint32 idx) const
+SystemBody *Space::GetSystemBodyByIndex(uint32_t idx) const
 {
 	assert(m_sbodyIndexValid);
 	assert(m_sbodyIndex.size() > idx);
 	return m_sbodyIndex[idx];
 }
 
-Uint32 Space::GetIndexForBody(const Body *body) const
+uint32_t Space::GetIndexForBody(const Body *body) const
 {
 	assert(m_bodyIndexValid);
-	for (Uint32 i = 0; i < m_bodyIndex.size(); i++)
+	for (uint32_t i = 0; i < m_bodyIndex.size(); i++)
 		if (m_bodyIndex[i] == body) return i;
 	assert(0);
-	return Uint32(-1);
+	return uint32_t(-1);
 }
 
-Uint32 Space::GetIndexForSystemBody(const SystemBody *sbody) const
+uint32_t Space::GetIndexForSystemBody(const SystemBody *sbody) const
 {
 	assert(m_sbodyIndexValid);
-	for (Uint32 i = 0; i < m_sbodyIndex.size(); i++)
+	for (uint32_t i = 0; i < m_sbodyIndex.size(); i++)
 		if (m_sbodyIndex[i] == sbody) return i;
 	assert(0);
-	return Uint32(-1);
+	return uint32_t(-1);
 }
 
 void Space::AddSystemBodyToIndex(SystemBody *sbody)
 {
 	assert(sbody);
 	m_sbodyIndex.push_back(sbody);
-	for (Uint32 i = 0; i < sbody->GetNumChildren(); i++)
+	for (uint32_t i = 0; i < sbody->GetNumChildren(); i++)
 		AddSystemBodyToIndex(sbody->GetChildren()[i]);
 }
 
 void Space::RebuildBodyIndex()
 {
 	m_bodyIndex.clear();
+	m_bodyIndex.reserve(m_bodies.size());
 	m_bodyIndex.push_back(nullptr);
 
 	for (Body *b : m_bodies) {
 		m_bodyIndex.push_back(b);
 		// also index ships inside clouds
-		// XXX we should not have to know about this. move indexing grunt work
-		// down into the bodies?
+		// XXX we should not have to know about this, but LuaSerializer
+		// will crash if HyperCloud aren't indexed.
 		if (b->IsType(Object::HYPERSPACECLOUD)) {
 			Ship *s = static_cast<HyperspaceCloud *>(b)->GetShip();
 			if (s) m_bodyIndex.push_back(s);
@@ -300,10 +349,10 @@ void Space::GetRandomOrbitFromDirection(const SystemPath &source, const SystemPa
 	Body *primary = 0;
 	if (dest.IsBodyPath()) {
 		assert(dest.bodyIndex < m_starSystem->GetNumBodies());
-		primary = FindBodyForPath(&dest);
+		primary = FindBodyForPath(dest);
 		while (primary && primary->GetSystemBody()->GetSuperType() != GalaxyEnums::BodySuperType::SUPERTYPE_STAR) {
 			SystemBody *parent = primary->GetSystemBody()->GetParent();
-			primary = parent ? FindBodyForPath(&parent->GetPath()) : nullptr;
+			primary = parent ? FindBodyForPath(parent->GetPath()) : nullptr;
 		}
 	}
 	if (!primary) {
@@ -359,7 +408,7 @@ Body *Space::FindNearestTo(const Body *b, Object::Type t) const
 	return nearest;
 }
 
-Body *Space::FindBodyForPath(const SystemPath *path) const
+Body *Space::FindBodyForPath(const SystemPath &path) const
 {
 	// it is a bit dumb that currentSystem is not part of Space...
 	SystemBody *body = m_starSystem->GetBodyByPath(path);
@@ -636,143 +685,149 @@ void Space::GenBody(const double at_time, SystemBody *sbody, FrameId fId, std::v
 	}
 }
 
-static bool OnCollision(Object *o1, Object *o2, CollisionContact *c, double relativeVel)
+static bool OnCollision(Object *o1, Object *o2, const CollisionContact &c, double relativeVel)
 {
 	Body *pb1 = static_cast<Body *>(o1);
 	Body *pb2 = static_cast<Body *>(o2);
 	/* Not always a Body (could be CityOnPlanet, which is a nasty exception I should eradicate) */
 	if (o1->IsType(Object::BODY)) {
-		if (pb1 && !pb1->OnCollision(o2, c->geomFlag, relativeVel)) return false;
+		if (pb1 && !pb1->OnCollision(o2, c.geomFlag, relativeVel)) return false;
 	}
 	if (o2->IsType(Object::BODY)) {
-		if (pb2 && !pb2->OnCollision(o1, c->geomFlag, relativeVel)) return false;
+		if (pb2 && !pb2->OnCollision(o1, c.geomFlag, relativeVel)) return false;
 	}
 	return true;
 }
 
-static void hitCallback(CollisionContact *c)
+static void hitCallback(const CollisionContactVector &ccv)
 {
-	//Output("OUCH! %x (depth %f)\n", SDL_GetTicks(), c->depth);
+	PROFILE_SCOPED()
 
-	Object *po1 = static_cast<Object *>(c->userData1);
-	Object *po2 = static_cast<Object *>(c->userData2);
+	for (const CollisionContact &c : ccv) {
+		//Output("OUCH! %x (depth %f)\n", SDL_GetTicks(), c->depth);
 
-	const bool po1_isDynBody = po1->IsType(Object::DYNAMICBODY);
-	const bool po2_isDynBody = po2->IsType(Object::DYNAMICBODY);
-	// collision response
-	assert(po1_isDynBody || po2_isDynBody);
+		Object *po1 = static_cast<Object *>(c.userData1);
+		Object *po2 = static_cast<Object *>(c.userData2);
 
-	// Bounce factor
-	const double coeff_rest = 0.35;
-	// Allow stop due to friction
-	const double coeff_slide = 0.700;
+		const bool po1_isDynBody = po1->IsType(Object::DYNAMICBODY);
+		const bool po2_isDynBody = po2->IsType(Object::DYNAMICBODY);
+		// collision response
+		assert(po1_isDynBody || po2_isDynBody);
 
-	if (po1_isDynBody && po2_isDynBody) {
-		DynamicBody *b1 = static_cast<DynamicBody *>(po1);
-		DynamicBody *b2 = static_cast<DynamicBody *>(po2);
-		const vector3d linVel1 = b1->GetVelocity();
-		const vector3d linVel2 = b2->GetVelocity();
-		const vector3d angVel1 = b1->GetAngVelocity();
-		const vector3d angVel2 = b2->GetAngVelocity();
+		// Bounce factor
+		const double coeff_rest = 0.35;
+		// Allow stop due to friction
+		const double coeff_slide = 0.700;
 
-		const double invMass1 = 1.0 / b1->GetMass();
-		const double invMass2 = 1.0 / b2->GetMass();
-		const vector3d hitPos1 = c->pos - b1->GetPosition();
-		const vector3d hitPos2 = c->pos - b2->GetPosition();
-		const vector3d hitVel1 = linVel1 + angVel1.Cross(hitPos1);
-		const vector3d hitVel2 = linVel2 + angVel2.Cross(hitPos2);
-		const double relVel = (hitVel1 - hitVel2).Dot(c->normal);
-		// moving away so no collision
-		if (relVel > 0) return;
-		if (!OnCollision(po1, po2, c, -relVel)) return;
-		const double invAngInert1 = 1.0 / b1->GetAngularInertia();
-		const double invAngInert2 = 1.0 / b2->GetAngularInertia();
-		const double numerator = -(1.0 + coeff_rest) * relVel;
-		const double term1 = invMass1;
-		const double term2 = invMass2;
-		const double term3 = c->normal.Dot((hitPos1.Cross(c->normal) * invAngInert1).Cross(hitPos1));
-		const double term4 = c->normal.Dot((hitPos2.Cross(c->normal) * invAngInert2).Cross(hitPos2));
+		if (po1_isDynBody && po2_isDynBody) {
+			DynamicBody *b1 = static_cast<DynamicBody *>(po1);
+			DynamicBody *b2 = static_cast<DynamicBody *>(po2);
+			const vector3d linVel1 = b1->GetVelocity();
+			const vector3d linVel2 = b2->GetVelocity();
+			const vector3d angVel1 = b1->GetAngVelocity();
+			const vector3d angVel2 = b2->GetAngVelocity();
 
-		const double j = numerator / (term1 + term2 + term3 + term4);
-		const vector3d force = j * c->normal;
+			const double invMass1 = 1.0 / b1->GetMass();
+			const double invMass2 = 1.0 / b2->GetMass();
+			const vector3d hitPos1 = c.pos - b1->GetPosition();
+			const vector3d hitPos2 = c.pos - b2->GetPosition();
+			const vector3d hitVel1 = linVel1 + angVel1.Cross(hitPos1);
+			const vector3d hitVel2 = linVel2 + angVel2.Cross(hitPos2);
+			const double relVel = (hitVel1 - hitVel2).Dot(c.normal);
+			// moving away so no collision
+			if (relVel > 0) return;
+			if (!OnCollision(po1, po2, c, -relVel)) return;
+			const double invAngInert1 = 1.0 / b1->GetAngularInertia();
+			const double invAngInert2 = 1.0 / b2->GetAngularInertia();
+			const double numerator = -(1.0 + coeff_rest) * relVel;
+			const double term1 = invMass1;
+			const double term2 = invMass2;
+			const double term3 = c.normal.Dot((hitPos1.Cross(c.normal) * invAngInert1).Cross(hitPos1));
+			const double term4 = c.normal.Dot((hitPos2.Cross(c.normal) * invAngInert2).Cross(hitPos2));
 
-		b1->SetVelocity(linVel1 * (1 - coeff_slide * c->timestep) + force * invMass1);
-		b1->SetAngVelocity(angVel1 + hitPos1.Cross(force) * invAngInert1);
-		b2->SetVelocity(linVel2 * (1 - coeff_slide * c->timestep) - force * invMass2);
-		b2->SetAngVelocity(angVel2 - hitPos2.Cross(force) * invAngInert2);
-	} else {
-		// one body is static
-		vector3d hitNormal;
-		DynamicBody *mover;
+			const double j = numerator / (term1 + term2 + term3 + term4);
+			const vector3d force = j * c.normal;
 
-		if (po1_isDynBody) {
-			mover = static_cast<DynamicBody *>(po1);
-			hitNormal = c->normal;
+			b1->SetVelocity(linVel1 * (1 - coeff_slide * c.timestep) + force * invMass1);
+			b1->SetAngVelocity(angVel1 + hitPos1.Cross(force) * invAngInert1);
+			b2->SetVelocity(linVel2 * (1 - coeff_slide * c.timestep) - force * invMass2);
+			b2->SetAngVelocity(angVel2 - hitPos2.Cross(force) * invAngInert2);
 		} else {
-			mover = static_cast<DynamicBody *>(po2);
-			hitNormal = -c->normal;
+			// one body is static
+			vector3d hitNormal;
+			DynamicBody *mover;
+
+			if (po1_isDynBody) {
+				mover = static_cast<DynamicBody *>(po1);
+				hitNormal = c.normal;
+			} else {
+				mover = static_cast<DynamicBody *>(po2);
+				hitNormal = -c.normal;
+			}
+
+			const vector3d linVel1 = mover->GetVelocity();
+			const vector3d angVel1 = mover->GetAngVelocity();
+
+			// step back
+			//		mover->UndoTimestep();
+
+			const double invMass1 = 1.0 / mover->GetMass();
+			const vector3d hitPos1 = c.pos - mover->GetPosition();
+			const vector3d hitVel1 = linVel1 + angVel1.Cross(hitPos1);
+			const double relVel = hitVel1.Dot(c.normal);
+			// moving away so no collision
+			if (relVel > 0) return;
+			if (!OnCollision(po1, po2, c, -relVel)) return;
+			const double invAngInert = 1.0 / mover->GetAngularInertia();
+			const double numerator = -(1.0 + coeff_rest) * relVel;
+			const double term1 = invMass1;
+			const double term3 = c.normal.Dot((hitPos1.Cross(c.normal) * invAngInert).Cross(hitPos1));
+
+			const double j = numerator / (term1 + term3);
+			const vector3d force = j * c.normal;
+
+			/*
+			   "Linear projection reduces the penetration of two
+			   objects by a small percentage, and this is performed
+			   after the impulse is applied"
+
+			   From:
+			   https://gamedevelopment.tutsplus.com/tutorials/how-to-create-a-custom-2d-physics-engine-the-basics-and-impulse-resolution--gamedev-6331
+
+			   Correction should never be more than c->depth (std::min) and never negative (std::max)
+			   NOTE: usually instead of 'c->timestep' you find a 'percent',
+			   but here we have a variable timestep and thus the upper limit,
+			   which is intended to trigger a collision in the subsequent frame.
+			   NOTE2: works (as intendend) at low timestep.
+			   Further improvement could be:
+					1) velocity should be projected relative to normal direction,
+					   so bouncing and friction may act on the "correct" components
+					   (though that a reason for fails and glitches are frames skipped
+					   because relVel is quitting before any further calculation)
+					2) with time accel at 10000x you end in space... probably in order
+					   for that to works correctly some deeper change should kick in
+			*/
+			constexpr float threshold = 0.005;
+
+			vector3d correction = std::min(std::max(c.depth - threshold, 0.0) * c.timestep, c.depth + threshold) * c.normal;
+
+			mover->SetPosition(mover->GetPosition() + correction);
+
+			const float reduction = std::max(1 - coeff_slide * c.timestep, 0.0);
+			vector3d final_vel = linVel1 * reduction + force * invMass1;
+			if (final_vel.LengthSqr() < 0.1) final_vel = vector3d(0.0);
+
+			mover->SetVelocity(final_vel);
+			mover->SetAngVelocity(angVel1 + hitPos1.Cross(force) * invAngInert);
 		}
-
-		const vector3d linVel1 = mover->GetVelocity();
-		const vector3d angVel1 = mover->GetAngVelocity();
-
-		// step back
-		//		mover->UndoTimestep();
-
-		const double invMass1 = 1.0 / mover->GetMass();
-		const vector3d hitPos1 = c->pos - mover->GetPosition();
-		const vector3d hitVel1 = linVel1 + angVel1.Cross(hitPos1);
-		const double relVel = hitVel1.Dot(c->normal);
-		// moving away so no collision
-		if (relVel > 0) return;
-		if (!OnCollision(po1, po2, c, -relVel)) return;
-		const double invAngInert = 1.0 / mover->GetAngularInertia();
-		const double numerator = -(1.0 + coeff_rest) * relVel;
-		const double term1 = invMass1;
-		const double term3 = c->normal.Dot((hitPos1.Cross(c->normal) * invAngInert).Cross(hitPos1));
-
-		const double j = numerator / (term1 + term3);
-		const vector3d force = j * c->normal;
-
-		/*
-		   "Linear projection reduces the penetration of two
-		   objects by a small percentage, and this is performed
-		   after the impulse is applied"
-
-		   From:
-		   https://gamedevelopment.tutsplus.com/tutorials/how-to-create-a-custom-2d-physics-engine-the-basics-and-impulse-resolution--gamedev-6331
-
-		   Correction should never be more than c->depth (std::min) and never negative (std::max)
-		   NOTE: usually instead of 'c->timestep' you find a 'percent',
-		   but here we have a variable timestep and thus the upper limit,
-		   which is intended to trigger a collision in the subsequent frame.
-		   NOTE2: works (as intendend) at low timestep.
-		   Further improvement could be:
-				1) velocity should be projected relative to normal direction,
-				   so bouncing and friction may act on the "correct" components
-				   (though that a reason for fails and glitches are frames skipped
-				   because relVel is quitting before any further calculation)
-				2) with time accel at 10000x you end in space... probably in order
-				   for that to works correctly some deeper change should kick in
-		*/
-		const float threshold = 0.005;
-
-		vector3d correction = std::min(std::max(c->depth - threshold, 0.0) * c->timestep, c->depth + threshold) * c->normal;
-
-		mover->SetPosition(mover->GetPosition() + correction);
-
-		const float reduction = std::max(1 - coeff_slide * c->timestep, 0.0);
-		vector3d final_vel = linVel1 * reduction + force * invMass1;
-		if (final_vel.LengthSqr() < 0.1) final_vel = vector3d(0.0);
-
-		mover->SetVelocity(final_vel);
-		mover->SetAngVelocity(angVel1 + hitPos1.Cross(force) * invAngInert);
 	}
 }
 
 // temporary one-point version
 static void CollideWithTerrain(Body *body, float timeStep)
 {
+	PROFILE_SCOPED()
+
 	if (!body->IsType(Object::DYNAMICBODY))
 		return;
 	DynamicBody *dynBody = static_cast<DynamicBody *>(body);
@@ -796,7 +851,9 @@ static void CollideWithTerrain(Body *body, float timeStep)
 		return;
 
 	CollisionContact c(body->GetPosition(), body->GetPosition().Normalized(), terrHeight - altitude, timeStep, static_cast<void *>(body), static_cast<void *>(f->GetBody()));
-	hitCallback(&c);
+	CollisionContactVector ccv;
+	ccv.push_back(c);
+	hitCallback(ccv);
 }
 
 void Space::TimeStep(float step, double total_time)
@@ -808,7 +865,8 @@ void Space::TimeStep(float step, double total_time)
 
 	m_bodyIndexValid = m_sbodyIndexValid = false;
 
-	Frame::CollideFrames(&hitCallback);
+	CollCallback hitCallbackFunctor = &hitCallback;
+	Frame::CollideFrames(hitCallbackFunctor);
 
 	for (Body *b : m_bodies)
 		CollideWithTerrain(b, step);

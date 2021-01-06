@@ -5,7 +5,10 @@
 #define UI_EVENT_H
 
 #include "Point.h"
-#include "libs.h"
+#include "libs/libs.h"
+
+#include <SDL_events.h>
+#include <SDL_keyboard.h>
 
 struct lua_State;
 
@@ -47,13 +50,13 @@ namespace UI {
 	};
 
 	struct KeySym {
-		KeySym(const SDL_Keycode &_sym, const SDL_Keymod _mod, const Uint32 _unicode) :
+		KeySym(const SDL_Keycode &_sym, const SDL_Keymod _mod, const uint32_t _unicode) :
 			sym(_sym),
 			mod(safe_mods(_mod)) {}
 		KeySym(const SDL_Keycode &_sym, const SDL_Keymod &_mod) :
 			sym(_sym),
 			mod(safe_mods(_mod)) {}
-		KeySym(const SDL_Keycode &_sym) :
+		explicit KeySym(const SDL_Keycode &_sym) :
 			sym(_sym),
 			mod(KMOD_NONE) {}
 		SDL_Keycode sym;
@@ -75,7 +78,7 @@ namespace UI {
 		// mask off stuff like caps/numlock
 		static SDL_Keymod safe_mods(const SDL_Keymod m)
 		{
-			return SDL_Keymod(Uint32(m) & (KMOD_CTRL | KMOD_SHIFT | KMOD_ALT | KMOD_GUI));
+			return SDL_Keymod(uint32_t(m) & (KMOD_CTRL | KMOD_SHIFT | KMOD_ALT | KMOD_GUI));
 		}
 	};
 
@@ -100,10 +103,10 @@ namespace UI {
 
 	class TextInputEvent : public Event {
 	public:
-		TextInputEvent(Uint32 _unicode) :
+		explicit TextInputEvent(uint32_t _unicode) :
 			Event(Event::TEXT_INPUT),
 			unicode(_unicode) {}
-		const Uint32 unicode;
+		const uint32_t unicode;
 
 		void ToLuaTable(lua_State *l) const;
 	};

@@ -12,36 +12,36 @@
 #include "Space.h"
 
 Sensors::RadarContact::RadarContact() :
-	body(0),
-	trail(0),
+	body(nullptr),
+	trail(nullptr),
 	distance(0.0),
-	iff(IFF_UNKNOWN),
+	iff(IFF::UNKNOWN),
 	fresh(true)
 {
 }
 
 Sensors::RadarContact::RadarContact(Body *b) :
 	body(b),
-	trail(0),
+	trail(nullptr),
 	distance(0.0),
-	iff(IFF_UNKNOWN),
+	iff(IFF::UNKNOWN),
 	fresh(true)
 {
 }
 
 Sensors::RadarContact::~RadarContact()
 {
-	body = 0;
+	body = nullptr;
 	delete trail;
 }
 
 Color Sensors::IFFColor(IFF iff)
 {
 	switch (iff) {
-	case IFF_NEUTRAL: return Color::BLUE;
-	case IFF_ALLY: return Color::GREEN;
-	case IFF_HOSTILE: return Color::RED;
-	case IFF_UNKNOWN:
+	case IFF::NEUTRAL: return Color::BLUE;
+	case IFF::ALLY: return Color::GREEN;
+	case IFF::HOSTILE: return Color::RED;
+	case IFF::UNKNOWN:
 	default:
 		return Color::GRAY;
 	}
@@ -85,14 +85,14 @@ Sensors::IFF Sensors::CheckIFF(Body *other)
 	PROFILE_SCOPED();
 	//complicated relationship check goes here
 	if (other->IsType(Object::SHIP)) {
-		Uint8 rel = m_owner->GetRelations(other);
+		uint8_t rel = m_owner->GetRelations(other);
 		if (rel == 0)
-			return IFF_HOSTILE;
+			return IFF::HOSTILE;
 		else if (rel == 100)
-			return IFF_ALLY;
-		return IFF_NEUTRAL;
+			return IFF::ALLY;
+		return IFF::NEUTRAL;
 	} else {
-		return IFF_UNKNOWN;
+		return IFF::UNKNOWN;
 	}
 }
 

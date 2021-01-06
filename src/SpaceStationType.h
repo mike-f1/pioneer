@@ -4,7 +4,14 @@
 #ifndef _SPACESTATIONTYPE_H
 #define _SPACESTATIONTYPE_H
 
-#include "libs.h"
+#include "Random.h"
+#include "libs/vector3.h"
+#include "libs/matrix4x4.h"
+#include <cstdint>
+#include <map>
+#include <string>
+#include <vector>
+
 
 //Space station definition, loaded from data/stations
 
@@ -15,12 +22,12 @@ namespace SceneGraph {
 
 class SpaceStationType {
 public:
-	typedef std::map<Uint32, matrix4x4f> TMapBayIDMat;
+	typedef std::map<uint32_t, matrix4x4f> TMapBayIDMat;
 	struct PortPath {
 		TMapBayIDMat m_docking;
 		TMapBayIDMat m_leaving;
 	};
-	typedef std::map<Uint32, PortPath> PortPathMap;
+	typedef std::map<uint32_t, PortPath> PortPathMap;
 
 	struct SPort {
 		static const int BAD_PORT_ID = -1;
@@ -45,6 +52,19 @@ public:
 		vector3d zaxis;
 	};
 
+	struct cylinder_t {
+		bool is_valid = false;
+		float diameter = std::numeric_limits<float>::min();
+		float min = std::numeric_limits<float>::max();
+		float max = std::numeric_limits<float>::min();
+		bool dock;
+	};
+
+	struct box_t {
+		vector3f min, max;
+		bool dock;
+	};
+
 private:
 	std::string id;
 	SceneGraph::Model *model;
@@ -64,6 +84,9 @@ private:
 
 	static std::vector<SpaceStationType> surfaceTypes;
 	static std::vector<SpaceStationType> orbitalTypes;
+
+	cylinder_t m_cylinder;
+	std::vector<box_t> m_boxes;
 
 public:
 	SpaceStationType(const std::string &id, const std::string &path);
@@ -94,6 +117,9 @@ public:
 	float ParkingDistance() const { return parkingDistance; }
 	float ParkingGapSize() const { return parkingGapSize; }
 	const TPorts &Ports() const { return m_ports; }
+
+	const cylinder_t &GetCentralCylinder() const;
+	const std::vector<box_t> &GetBoxes() const;
 
 	static void Init();
 

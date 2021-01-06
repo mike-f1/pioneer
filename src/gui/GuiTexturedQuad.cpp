@@ -5,12 +5,25 @@
 #include "GuiScreen.h"
 #include "graphics/Material.h"
 #include "graphics/Renderer.h"
+#include "graphics/Texture.h"
 #include "graphics/VertexArray.h"
+#include "graphics/VertexBuffer.h"
 
 using namespace Graphics;
 
 namespace Gui {
 
+	TexturedQuad::TexturedQuad(Graphics::Texture *texture) :
+			m_texture(RefCountedPtr<Graphics::Texture>(texture))
+	{}
+
+	TexturedQuad::~TexturedQuad()
+	{}
+
+	void TexturedQuad::Draw(Graphics::Renderer *r, const vector2f &pos, const vector2f &size, const Color &tint)
+	{
+		Draw(r, pos, size, vector2f(0.0f), m_texture->GetDescriptor().texSize, tint);
+	}
 	void TexturedQuad::Draw(Graphics::Renderer *renderer, const vector2f &pos, const vector2f &size, const vector2f &texPos, const vector2f &texSize, const Color &tint)
 	{
 		PROFILE_SCOPED()
@@ -61,4 +74,8 @@ namespace Gui {
 		}
 	}
 
+	const Graphics::Texture *TexturedQuad::GetTexture() const
+	{
+		return m_texture.Get();
+	}
 } // namespace Gui

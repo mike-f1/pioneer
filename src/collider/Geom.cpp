@@ -8,9 +8,7 @@
 #include "CollisionSpace.h"
 #include "GeomTree.h"
 
-#include <float.h>
-
-static const unsigned int MAX_CONTACTS = 8;
+//#include <SDL_timer.h>
 
 Geom::Geom(const GeomTree *geomtree, const matrix4x4d &m, const vector3d &pos, void *data) :
 	m_orient(m),
@@ -50,23 +48,15 @@ void Geom::MoveTo(const matrix4x4d &m, const vector3d &pos)
 	m_invOrient = m_orient.Inverse();
 }
 
-void Geom::CollideSphere(Sphere &sphere, void (*callback)(CollisionContact *)) const
+void Geom::CollideSphere(Sphere &sphere, CollisionContactVector &accum) const
 {
 	PROFILE_SCOPED()
 	/* if the geom is actually within the sphere, create a contact so
 	 * that we can't fall into spheres forever and ever */
 	vector3d v = GetPosition() - sphere.pos;
-	CollisionContact contact;
 	const double len = v.Length();
 	if (len < sphere.radius) {
-		contact.pos = GetPosition();
-		contact.normal = (1.0 / len) * v;
-		contact.depth = sphere.radius - len;
-		contact.triIdx = 0;
-		contact.userData1 = this->m_data;
-		contact.userData2 = sphere.userData;
-		contact.geomFlag = 0;
-		callback(&contact);
+		accum.emplace_back(GetPosition(), (1.0 / len) * v, sphere.radius - len, 0, this->m_data, sphere.userData, 0x0);
 		return;
 	}
 }
@@ -75,43 +65,118 @@ void Geom::CollideSphere(Sphere &sphere, void (*callback)(CollisionContact *)) c
  * This geom has moved, causing a possible collision with geom b.
  * Collide meshes to see.
  */
-void Geom::Collide(Geom *b, void (*callback)(CollisionContact *)) const
+void Geom::Collide(Geom *b, CollisionContactVector &accum) const
 {
 	PROFILE_SCOPED()
 	int max_contacts = MAX_CONTACTS;
-	matrix4x4d transTo;
+
 	//unsigned int t = SDL_GetTicks();
+
 	/* Collide this geom's edges against tri-mesh of geom b */
-	transTo = b->m_invOrient * m_orient;
-	this->CollideEdgesWithTrisOf(max_contacts, b, transTo, callback);
+	matrix4x4d transTo = b->m_invOrient * m_orient;
+	this->CollideEdgesWithTrisOf(max_contacts, b, transTo, accum);
 
 	/* Collide b's edges against this geom's tri-mesh */
 	if (max_contacts > 0) {
 		transTo = m_invOrient * b->m_orient;
-		b->CollideEdgesWithTrisOf(max_contacts, this, transTo, callback);
+		b->CollideEdgesWithTrisOf(max_contacts, this, transTo, accum);
 	}
+	//t = SDL_GetTicks() - t;
+	//int numEdges = GetGeomTree()->GetNumEdges() + b->GetGeomTree()->GetNumEdges();
+	//Output("%d 'rays' in %dms (%f rps)\n", numEdges, t, 1000.0*numEdges / (double)t);
+}
 
-	//	t = SDL_GetTicks() - t;
-	//	int numEdges = GetGeomTree()->GetNumEdges() + b->GetGeomTree()->GetNumEdges();
-	//	Output("%d 'rays' in %dms (%f rps)\n", numEdges, t, 1000.0*numEdges / (double)t);
+void Geom::SetCentralCylinder(std::unique_ptr<CSG_CentralCylinder> centralCylinder) {
+	if ((centralCylinder == nullptr) ||
+		(centralCylinder->m_diameter < 0.0) ||
+		(centralCylinder->m_minH > centralCylinder->m_maxH)) {
+		m_centralCylinder.reset();
+		assert(0 && "Cylinder data aren't valid");
+		return;
+	}
+	m_centralCylinder = std::move(centralCylinder);
+}
+
+void Geom::AddBox(std::unique_ptr<CSG_Box> box)
+{
+	m_Boxes.push_back(*std::move(box));
+}
+
+bool Geom::CheckCollisionCylinder(Geom* b, CollisionContactVector &accum)
+{
+	PROFILE_SCOPED();
+	// NOTE: below check is inside this function to avoid cluttering of interface,
+	// but it could be made faster having a dedicated inlined function
+	if (!m_centralCylinder) return false;
+
+	float max_dist = (m_centralCylinder->m_diameter / 2.0) - b->GetGeomTree()->GetRadius();
+	// TODO: In order to ease math, pick radius instead of AAbb of the geom,
+	// indeed that AAbb should be rotated and rebuilt
+	const vector3f pos2 = vector3f((b->GetPosition() - GetPosition()) * GetTransform());
+	// cylinder rotation axis is in y direction (see spacestations)
+	const vector2f pos2xy(pos2.x, pos2.z);
+	float dist_sqr = pos2xy.LengthSqr();
+
+	if (dist_sqr < (max_dist * max_dist) &&
+		(pos2.y < m_centralCylinder->m_maxH) &&
+		(pos2.y > m_centralCylinder->m_minH)) {
+			if (m_centralCylinder->m_shouldTriggerDocking) {
+				accum.emplace_back(GetPosition(), vector3d(0.0), 0.1, 0, this->m_data, b->m_data, 0x10);
+			}
+			return true;
+	}
+	return false;
+}
+
+bool Geom::CheckBoxes(Geom* b, CollisionContactVector &accum)
+{
+	PROFILE_SCOPED();
+	// NOTE: below check is inside this function to avoid cluttering of interface,
+	// but it could be made faster having a dedicated inlined function
+	if (m_Boxes.empty()) return false;
+
+	const vector3f p = vector3f((b->GetPosition() - GetPosition()) * GetTransform());
+	// TODO: In order to ease math, pick radius instead of AAbb of the geom,
+	// indeed that AAbb should be rotated and rebuilt
+	const float radius = b->GetGeomTree()->GetRadius();
+	for (auto &box : m_Boxes) {
+		bool collide = ((p.x >= box.m_min.x + radius) && (p.x <= box.m_max.x - radius) &&
+			(p.y >= box.m_min.y + radius) && (p.y <= box.m_max.y - radius) &&
+			(p.z >= box.m_min.z + radius) && (p.z <= box.m_max.z - radius));
+
+		if (collide) {
+			if (box.m_shouldTriggerDocking) {
+				accum.emplace_back(GetPosition(), vector3d(0.0), 0.1, 0, this->m_data, b->m_data, 0x10);
+			}
+			return true;
+		}
+	}
+	return false;
 }
 
 static bool rotatedAabbIsectsNormalOne(Aabb &a, const matrix4x4d &transA, Aabb &b)
 {
 	PROFILE_SCOPED()
 	Aabb arot;
-	vector3d p[8];
-	p[0] = transA * vector3d(a.min.x, a.min.y, a.min.z);
-	p[1] = transA * vector3d(a.min.x, a.min.y, a.max.z);
-	p[2] = transA * vector3d(a.min.x, a.max.y, a.min.z);
-	p[3] = transA * vector3d(a.min.x, a.max.y, a.max.z);
-	p[4] = transA * vector3d(a.max.x, a.min.y, a.min.z);
-	p[5] = transA * vector3d(a.max.x, a.min.y, a.max.z);
-	p[6] = transA * vector3d(a.max.x, a.max.y, a.min.z);
-	p[7] = transA * vector3d(a.max.x, a.max.y, a.max.z);
+	constexpr unsigned points_size = 8;
+	std::array<vector3d, points_size> p {
+		vector3d(a.min.x, a.min.y, a.min.z),
+		vector3d(a.min.x, a.min.y, a.max.z),
+		vector3d(a.min.x, a.max.y, a.min.z),
+		vector3d(a.min.x, a.max.y, a.max.z),
+		vector3d(a.max.x, a.min.y, a.min.z),
+		vector3d(a.max.x, a.min.y, a.max.z),
+		vector3d(a.max.x, a.max.y, a.min.z),
+		vector3d(a.max.x, a.max.y, a.max.z),
+	};
+
+	for (unsigned i = 0; i < points_size; i++)
+		p[i] = transA * p[i];
+
 	arot.min = arot.max = p[0];
-	for (int i = 1; i < 8; i++)
+	for (unsigned i = 1; i < points_size; i++)
 		arot.Update(p[i]);
+
 	return b.Intersects(arot);
 }
 
@@ -119,7 +184,7 @@ static bool rotatedAabbIsectsNormalOne(Aabb &a, const matrix4x4d &transA, Aabb &
  * Intersect this Geom's edge BVH tree with geom b's triangle BVH tree.
  * Generate collision contacts.
  */
-void Geom::CollideEdgesWithTrisOf(int &maxContacts, const Geom *b, const matrix4x4d &transTo, void (*callback)(CollisionContact *)) const
+void Geom::CollideEdgesWithTrisOf(int &maxContacts, const Geom *b, const matrix4x4d &transTo, CollisionContactVector &accum) const
 {
 	PROFILE_SCOPED()
 	struct stackobj {
@@ -141,7 +206,7 @@ void Geom::CollideEdgesWithTrisOf(int &maxContacts, const Geom *b, const matrix4
 		if (triNode->triIndicesStart || edgeNode->triIndicesStart) {
 			// reached triangle leaf node or edge leaf node.
 			// Intersect all edges under edgeNode with this leaf
-			CollideEdgesTris(maxContacts, edgeNode, transTo, b, triNode, callback);
+			CollideEdgesTris(maxContacts, edgeNode, transTo, b, triNode, accum);
 		} else {
 			BVHNode *left = triNode->kids[0];
 			BVHNode *right = triNode->kids[1];
@@ -181,13 +246,12 @@ void Geom::CollideEdgesWithTrisOf(int &maxContacts, const Geom *b, const matrix4
  * BVH of another geom (b), starting from btriNode.
  */
 void Geom::CollideEdgesTris(int &maxContacts, const BVHNode *edgeNode, const matrix4x4d &transToB,
-	const Geom *b, const BVHNode *btriNode, void (*callback)(CollisionContact *)) const
+	const Geom *b, const BVHNode *btriNode, CollisionContactVector &accum) const
 {
 	PROFILE_SCOPED()
 	if (maxContacts <= 0) return;
 	if (edgeNode->triIndicesStart) {
 		const GeomTree::Edge *edges = this->GetGeomTree()->GetEdges();
-		int numContacts = 0;
 		vector3f dir;
 		isect_t isect;
 		const std::vector<vector3f> &rVertices = GetGeomTree()->GetVertices();
@@ -208,28 +272,23 @@ void Geom::CollideEdgesTris(int &maxContacts, const BVHNode *edgeNode, const mat
 			b->GetGeomTree()->TraceRay(btriNode, _from, dir, &isect);
 
 			if (isect.triIdx == -1) continue;
-			numContacts++;
 			const double depth = edges[edgeNode->triIndicesStart[i]].len - isect.dist;
 			// in world coords
-			CollisionContact contact;
-			contact.pos = b->GetTransform() * (v1 + vector3d(&dir.x) * double(isect.dist));
-			vector3f n = b->m_geomtree->GetTriNormal(isect.triIdx);
-			contact.normal = vector3d(n.x, n.y, n.z);
-			contact.normal = b->GetTransform().ApplyRotationOnly(contact.normal);
-			contact.distance = isect.dist;
+			vector3d normal = vector3d(b->m_geomtree->GetTriNormal(isect.triIdx));
 
-			contact.depth = depth;
-			contact.triIdx = isect.triIdx;
-			contact.userData1 = m_data;
-			contact.userData2 = b->m_data;
-			// contact geomFlag is bitwise OR of triangle's and edge's flags
-			contact.geomFlag = b->m_geomtree->GetTriFlag(isect.triIdx) |
-				edges[edgeNode->triIndicesStart[i]].triFlag;
-			callback(&contact);
+			accum.emplace_back(b->GetTransform() * (v1 + vector3d(&dir.x) * double(isect.dist)),
+				b->GetTransform().ApplyRotationOnly(normal),
+				depth,
+				isect.triIdx,
+				this->m_data,
+				b->m_data,
+				// contact geomFlag is bitwise OR of triangle's and edge's flags
+				b->m_geomtree->GetTriFlag(isect.triIdx) | edges[edgeNode->triIndicesStart[i]].triFlag);
+			accum.back().distance = isect.dist;
 			if (--maxContacts <= 0) return;
 		}
 	} else {
-		CollideEdgesTris(maxContacts, edgeNode->kids[0], transToB, b, btriNode, callback);
-		CollideEdgesTris(maxContacts, edgeNode->kids[1], transToB, b, btriNode, callback);
+		CollideEdgesTris(maxContacts, edgeNode->kids[0], transToB, b, btriNode, accum);
+		CollideEdgesTris(maxContacts, edgeNode->kids[1], transToB, b, btriNode, accum);
 	}
 }

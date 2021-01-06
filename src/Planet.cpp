@@ -4,7 +4,7 @@
 #include "Planet.h"
 
 #include "Color.h"
-#include "gameconsts.h"
+#include "Random.h"
 #include "galaxy/AtmosphereParameters.h"
 #include "galaxy/RingStyle.h"
 #include "graphics/Material.h"
@@ -13,7 +13,11 @@
 #include "graphics/RendererLocator.h"
 #include "graphics/Texture.h"
 #include "graphics/VertexArray.h"
+#include "libs/gameconsts.h"
+
 #include "perlin.h"
+
+#include "profiler/Profiler.h"
 
 #ifdef _MSC_VER
 #include "win32/WinMath.h"
@@ -227,15 +231,15 @@ void Planet::GenerateRings()
 
 	const vector2f texSize(RING_TEXTURE_WIDTH, RING_TEXTURE_LENGTH);
 	const Graphics::TextureDescriptor texDesc(
-		Graphics::TEXTURE_RGBA_8888, texSize, Graphics::LINEAR_REPEAT, true, true, true, 0, Graphics::TEXTURE_2D);
+		Graphics::TextureFormat::RGBA_8888, texSize, Graphics::TextureSampleMode::LINEAR_REPEAT, true, true, true, 0, Graphics::TextureType::T_2D);
 
 	m_ringTexture.Reset(RendererLocator::getRenderer()->CreateTexture(texDesc));
 	m_ringTexture->Update(
 		static_cast<void *>(buf.get()), texSize,
-		Graphics::TEXTURE_RGBA_8888);
+		Graphics::TextureFormat::RGBA_8888);
 
 	Graphics::MaterialDescriptor desc;
-	desc.effect = Graphics::EFFECT_PLANETRING;
+	desc.effect = Graphics::EffectType::PLANETRING;
 	desc.lighting = true;
 	desc.textures = 1;
 	m_ringMaterial.reset(RendererLocator::getRenderer()->CreateMaterial(desc));

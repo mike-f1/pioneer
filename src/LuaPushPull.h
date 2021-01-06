@@ -21,7 +21,7 @@ inline void pi_lua_generic_push(lua_State *l, const std::string &value)
 }
 
 inline void pi_lua_generic_pull(lua_State *l, int index, bool &out) { out = lua_toboolean(l, index); }
-inline void pi_lua_generic_pull(lua_State *l, int index, int &out) { out = luaL_checkinteger(l, index); }
+inline void pi_lua_generic_pull(lua_State *l, int index, int &out) { out = int(luaL_checkinteger(l, index)); }
 inline void pi_lua_generic_pull(lua_State *l, int index, unsigned int &out) { out = luaL_checkunsigned(l, index); }
 inline void pi_lua_generic_pull(lua_State *l, int index, float &out) { out = luaL_checknumber(l, index); }
 inline void pi_lua_generic_pull(lua_State *l, int index, double &out) { out = luaL_checknumber(l, index); }
@@ -48,7 +48,7 @@ inline Type LuaPull(lua_State *l, int index)
 
 // Pull a value with an optional default.
 template <typename Type>
-inline Type LuaPull(lua_State *l, int index, Type defaultVal)
+inline Type LuaPull(lua_State *l, int index, const Type &defaultVal)
 {
 	Type value = defaultVal;
 	if (lua_gettop(l) >= index && !lua_isnil(l, index))

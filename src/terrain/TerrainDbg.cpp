@@ -5,7 +5,7 @@
 
 #include "GameConfig.h"
 #include "GameConfSingleton.h"
-#include "utils.h"
+#include "libs/utils.h"
 
 void Terrain::DebugDump() const
 {
@@ -20,7 +20,7 @@ void Terrain::DebugDump() const
 	Output("  Body: %s [%d,%d,%d,%u,%u]\n", m_minBody.m_name.c_str(), m_minBody.m_path.sectorX, m_minBody.m_path.sectorY, m_minBody.m_path.sectorZ, m_minBody.m_path.systemIndex, m_minBody.m_path.bodyIndex);
 	Output("  Aspect Ratio: %g\n", m_minBody.m_aspectRatio);
 	Output("  Fracdefs:\n");
-	for (int i = 0; i < 10; i++) {
+	for (uint8_t i = 0; i < 10; i++) {
 		Output("    %d: amp %f  freq %f  lac %f  oct %d\n", i, m_fracdef[i].amplitude, m_fracdef[i].frequency, m_fracdef[i].lacunarity, m_fracdef[i].octaves);
 	}
 }

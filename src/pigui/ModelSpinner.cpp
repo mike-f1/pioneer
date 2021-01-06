@@ -8,6 +8,7 @@
 #include "graphics/RenderTarget.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
+#include "graphics/Texture.h"
 #include "Shields.h"
 #include "scenegraph/Model.h"
 #include "scenegraph/ModelSkin.h"
@@ -17,8 +18,9 @@
 using namespace PiGUI;
 
 ModelSpinner::ModelSpinner() :
-	m_rot(vector2f(DEG2RAD(-15.0), DEG2RAD(180.0))),
-	m_pauseTime(0.)
+	m_needsResize(true),
+	m_pauseTime(0.),
+	m_rot(vector2f(DEG2RAD(-15.0), DEG2RAD(180.0)))
 {
 	Color lc(Color::WHITE);
 	m_light.SetDiffuse(lc);
@@ -39,8 +41,8 @@ void ModelSpinner::CreateRenderTarget()
 
 	Graphics::RenderTargetDesc rtDesc{
 		uint16_t(m_size.x), uint16_t(m_size.y),
-		Graphics::TextureFormat::TEXTURE_RGBA_8888,
-		Graphics::TextureFormat::TEXTURE_DEPTH, true
+		Graphics::TextureFormat::RGBA_8888,
+		Graphics::TextureFormat::DEPTH, true
 	};
 
 	m_renderTarget.reset(RendererLocator::getRenderer()->CreateRenderTarget(rtDesc));
@@ -51,7 +53,7 @@ void ModelSpinner::CreateRenderTarget()
 
 void ModelSpinner::SetModel(SceneGraph::Model *model, SceneGraph::ModelSkin *skin, unsigned int pattern)
 {
-	m_model.reset(model->MakeInstance());
+	m_model = model->MakeInstance();
 	if (skin) {
 		skin->Apply(m_model.get());
 	} else {

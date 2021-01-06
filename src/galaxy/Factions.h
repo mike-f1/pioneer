@@ -32,12 +32,12 @@ public:
 	void RegisterCustomSystem(CustomSystem *cs, const std::string &factionName);
 	void AddFaction(Faction *faction);
 
-	const Faction *GetFaction(const Uint32 index) const;
+	const Faction *GetFaction(const uint32_t index) const;
 	const Faction *GetFaction(const std::string &factionName) const;
 	const Faction *GetNearestClaimant(const Sector::System *sys) const;
 	bool IsHomeSystem(const SystemPath &sysPath) const;
 
-	const Uint32 GetNumFactions() const;
+	uint32_t GetNumFactions() const;
 
 	bool MayAssignFactions() const;
 
@@ -49,7 +49,7 @@ private:
 
 	private:
 		std::vector<const Faction *> octbox[2][2][2];
-		static const int BoxIndex(Sint32 sectorIndex) { return sectorIndex < 0 ? 0 : 1; };
+		static int BoxIndex(int32_t sectorIndex) { return sectorIndex < 0 ? 0 : 1; };
 		void PruneDuplicates(const int bx, const int by, const int bz);
 	};
 

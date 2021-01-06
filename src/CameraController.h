@@ -7,8 +7,8 @@
 #include "Camera.h"
 #include "JsonFwd.h"
 #include "Lang.h"
-#include "matrix4x4.h"
-#include "vector3.h"
+#include "libs/matrix4x4.h"
+#include "libs/vector3.h"
 
 class Ship;
 

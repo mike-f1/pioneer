@@ -6,11 +6,15 @@
 #endif
 
 #include "JsonUtils.h"
+
 #include "FileSystem.h"
 #include "GZipFormat.h"
 #include "base64/base64.hpp"
-#include "utils.h"
+#include "libs/utils.h"
+#include "libs/stringUtils.h"
 #include <cmath>
+
+#include "profiler/Profiler.h"
 
 extern "C" {
 #ifdef __GNUC__
@@ -24,23 +28,10 @@ extern "C" {
 }
 
 namespace {
-	uint32_t pack4char(const uint8_t a, const uint8_t b, const uint8_t c, const uint8_t d)
-	{
-		return ((a << 24) | (b << 16) | (c << 8) | d);
-	}
-
-	void unpack4char(const uint32_t packed, uint8_t &a, uint8_t &b, uint8_t &c, uint8_t &d)
-	{
-		a = ((packed >> 24) & 0xff);
-		b = ((packed >> 16) & 0xff);
-		c = ((packed >> 8) & 0xff);
-		d = (packed & 0xff);
-	}
-
 	static const vector3f zeroVector3f(0.0f);
 	static const vector3d zeroVector3d(0.0);
-	static const Quaternionf identityQuaternionf(1.0f, 0.0f, 0.0f, 0.0f);
-	static const Quaterniond identityQuaterniond(1.0, 0.0, 0.0, 0.0);
+	static const quaternionf identityQuaternionf(1.0f, 0.0f, 0.0f, 0.0f);
+	static const quaterniond identityQuaterniond(1.0, 0.0, 0.0, 0.0);
 } // namespace
 
 namespace JsonUtils {
@@ -119,7 +110,7 @@ void VectorToJson(Json &jsonObj, const vector3f &vec)
 		return; // don't store zero vector
 
 	char str[128];
-	Vector3fToStr(vec, str, 128);
+	stringUtils::Vector3fToStr(vec, str, 128);
 	jsonObj = str; // Add vector array to supplied object.
 #else
 	// Create JSON array to contain vector data.
@@ -134,7 +125,7 @@ void VectorToJson(Json &jsonObj, const vector3d &vec)
 	if (vec == zeroVector3d)
 		return; // don't store zero vector
 	char str[128];
-	Vector3dToStr(vec, str, 128);
+	stringUtils::Vector3dToStr(vec, str, 128);
 	jsonObj = str; // Add vector array to supplied object.
 #else
 	// Create JSON array to contain vector data.
@@ -142,19 +133,19 @@ void VectorToJson(Json &jsonObj, const vector3d &vec)
 #endif
 }
 
-void QuaternionToJson(Json &jsonObj, const Quaternionf &quat)
+void QuaternionToJson(Json &jsonObj, const quaternionf &quat)
 {
 	PROFILE_SCOPED()
 
-	if (memcmp(&quat, &identityQuaternionf, sizeof(Quaternionf)) == 0)
+	if (memcmp(&quat, &identityQuaternionf, sizeof(quaternionf)) == 0)
 		return;
 	jsonObj = Json::array({ quat.w, quat.x, quat.y, quat.z });
 }
 
-void QuaternionToJson(Json &jsonObj, const Quaterniond &quat)
+void QuaternionToJson(Json &jsonObj, const quaterniond &quat)
 {
 	PROFILE_SCOPED()
-	if (memcmp(&quat, &identityQuaterniond, sizeof(Quaterniond)) == 0)
+	if (memcmp(&quat, &identityQuaterniond, sizeof(quaterniond)) == 0)
 		return;
 
 	jsonObj = Json::array({ quat.w, quat.x, quat.y, quat.z });
@@ -166,7 +157,7 @@ void MatrixToJson(Json &jsonObj, const matrix3x3f &mat)
 #ifdef USE_STRING_VERSIONS
 	if (!memcmp(&matrix3x3fIdentity, &mat, sizeof(matrix3x3f))) return;
 	char str[512];
-	Matrix3x3fToStr(mat, str, 512);
+	stringUtils::Matrix3x3fToStr(mat, str, 512);
 	jsonObj = str;
 #else
 	jsonObj = Json::array({ mat[0], mat[1], mat[2],
@@ -181,7 +172,7 @@ void MatrixToJson(Json &jsonObj, const matrix3x3d &mat)
 #ifdef USE_STRING_VERSIONS
 	if (!memcmp(&matrix3x3dIdentity, &mat, sizeof(matrix3x3d))) return;
 	char str[512];
-	Matrix3x3dToStr(mat, str, 512);
+	stringUtils::Matrix3x3dToStr(mat, str, 512);
 	jsonObj = str;
 #else
 	jsonObj = Json::array({ mat[0], mat[1], mat[2],
@@ -196,7 +187,7 @@ void MatrixToJson(Json &jsonObj, const matrix4x4f &mat)
 #ifdef USE_STRING_VERSIONS
 	if (!memcmp(&matrix4x4fIdentity, &mat, sizeof(matrix4x4f))) return;
 	char str[512];
-	Matrix4x4fToStr(mat, str, 512);
+	stringUtils::Matrix4x4fToStr(mat, str, 512);
 	jsonObj = str;
 #else
 	jsonObj = Json::array({
@@ -226,7 +217,7 @@ void MatrixToJson(Json &jsonObj, const matrix4x4d &mat)
 #ifdef USE_STRING_VERSIONS
 	if (!memcmp(&matrix4x4dIdentity, &mat, sizeof(matrix4x4d))) return;
 	char str[512];
-	Matrix4x4dToStr(mat, str, 512);
+	stringUtils::Matrix4x4dToStr(mat, str, 512);
 	jsonObj = str;
 #else
 	jsonObj = Json::array({
@@ -300,7 +291,7 @@ void JsonToVector(vector3f *pVec, const Json &jsonObj)
 		return;
 	}
 	std::string vecStr = jsonObj;
-	StrToVector3f(vecStr.c_str(), *pVec);
+	stringUtils::StrToVector3f(vecStr.c_str(), *pVec);
 #else
 	pVec->x = jsonObj[0];
 	pVec->y = jsonObj[1];
@@ -317,7 +308,7 @@ void JsonToVector(vector3d *pVec, const Json &jsonObj)
 		return;
 	}
 	std::string vecStr = jsonObj;
-	StrToVector3d(vecStr.c_str(), *pVec);
+	stringUtils::StrToVector3d(vecStr.c_str(), *pVec);
 #else
 	pVec->x = jsonObj[0];
 	pVec->y = jsonObj[1];
@@ -325,7 +316,7 @@ void JsonToVector(vector3d *pVec, const Json &jsonObj)
 #endif
 }
 
-void JsonToQuaternion(Quaternionf *pQuat, const Json &jsonObj)
+void JsonToQuaternion(quaternionf *pQuat, const Json &jsonObj)
 {
 	PROFILE_SCOPED()
 	if (!jsonObj.is_array()) {
@@ -339,7 +330,7 @@ void JsonToQuaternion(Quaternionf *pQuat, const Json &jsonObj)
 	pQuat->z = jsonObj[3];
 }
 
-void JsonToQuaternion(Quaterniond *pQuat, const Json &jsonObj)
+void JsonToQuaternion(quaterniond *pQuat, const Json &jsonObj)
 {
 	PROFILE_SCOPED()
 	if (!jsonObj.is_array()) {
@@ -362,7 +353,7 @@ void JsonToMatrix(matrix3x3f *pMat, const Json &jsonObj)
 		return;
 	}
 	std::string matStr = jsonObj;
-	StrToMatrix3x3f(matStr.c_str(), *pMat);
+	stringUtils::StrToMatrix3x3f(matStr.c_str(), *pMat);
 #else
 	(*pMat)[0] = jsonObj[0];
 	(*pMat)[1] = jsonObj[1];
@@ -385,7 +376,7 @@ void JsonToMatrix(matrix3x3d *pMat, const Json &jsonObj)
 		return;
 	}
 	std::string matStr = jsonObj;
-	StrToMatrix3x3d(matStr.c_str(), *pMat);
+	stringUtils::StrToMatrix3x3d(matStr.c_str(), *pMat);
 #else
 	(*pMat)[0] = jsonObj[0];
 	(*pMat)[1] = jsonObj[1];
@@ -408,7 +399,7 @@ void JsonToMatrix(matrix4x4f *pMat, const Json &jsonObj)
 		return;
 	}
 	std::string matStr = jsonObj;
-	StrToMatrix4x4f(matStr.c_str(), *pMat);
+	stringUtils::StrToMatrix4x4f(matStr.c_str(), *pMat);
 #else
 	(*pMat)[0] = jsonObj[0];
 	(*pMat)[1] = jsonObj[1];
@@ -438,7 +429,7 @@ void JsonToMatrix(matrix4x4d *pMat, const Json &jsonObj)
 		return;
 	}
 	std::string matStr = jsonObj;
-	StrToMatrix4x4d(matStr.c_str(), *pMat);
+	stringUtils::StrToMatrix4x4d(matStr.c_str(), *pMat);
 #else
 	(*pMat)[0] = jsonObj[0];
 	(*pMat)[1] = jsonObj[1];

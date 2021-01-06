@@ -3,20 +3,19 @@
 
 #include "SystemView.h"
 
-#include "AnimationCurves.h"
 #include "Frame.h"
 #include "Game.h"
 #include "GameLocator.h"
 #include "GameLog.h"
 #include "InGameViews.h"
 #include "InGameViewsLocator.h"
+#include "input/InputFrame.h"
+#include "input/KeyBindings.h"
 #include "Lang.h"
 #include "LuaObject.h"
-#include "Pi.h"
 #include "Player.h"
 #include "SectorView.h"
 #include "Space.h"
-#include "StringF.h"
 #include "TransferPlanner.h"
 #include "galaxy/Galaxy.h"
 #include "galaxy/StarSystem.h"
@@ -24,6 +23,12 @@
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/TextureBuilder.h"
+#include "graphics/VertexArray.h"
+#include "graphics/VertexBuffer.h"
+#include "libs/AnimationCurves.h"
+#include "libs/StringF.h"
+#include "libs/stringUtils.h"
+#include "pi_states/PiState.h"
 
 #include "gui/GuiLabel.h"
 #include "gui/GuiLabelSet.h"
@@ -32,14 +37,17 @@
 
 using namespace Graphics;
 
-const double SystemView::PICK_OBJECT_RECT_SIZE = 12.0;
-const Uint16 SystemView::N_VERTICES_MAX = 100;
-static const float MIN_ZOOM = 1e-30f; // Just to avoid having 0
-static const float MAX_ZOOM = 1e30f;
-static const float ZOOM_IN_SPEED = 2;
-static const float ZOOM_OUT_SPEED = 1.f / ZOOM_IN_SPEED;
-static const float WHEEL_SENSITIVITY = .1f; // Should be a variable in user settings.
-static const double DEFAULT_VIEW_DISTANCE = 10.0;
+constexpr double SystemView::PICK_OBJECT_RECT_SIZE = 12.0;
+constexpr uint16_t SystemView::N_VERTICES_MAX = 100;
+constexpr float MIN_ZOOM = 1e-30f; // Just to avoid having 0
+constexpr float MAX_ZOOM = 1e20f;
+constexpr float ZOOM_IN_SPEED = 2.0f;
+constexpr float ZOOM_OUT_SPEED = 1.f / ZOOM_IN_SPEED;
+constexpr float WHEEL_SENSITIVITY = .1f; // Should be a variable in user settings.
+constexpr double DEFAULT_VIEW_DISTANCE = 10.0;
+constexpr float ROTATION_SPEED_FACTOR = 30;
+
+std::unique_ptr<InputFrame> SystemView::m_inputFrame;
 
 SystemView::SystemView() :
 	UIView(),
@@ -241,9 +249,6 @@ SystemView::SystemView() :
 	b->SetRenderDimensions(26, 17);
 	Add(b, time_controls_left + 121, time_controls_top);
 
-	m_onMouseWheelCon =
-		Pi::input.onMouseWheel.connect(sigc::mem_fun(this, &SystemView::MouseWheel));
-
 	Graphics::TextureBuilder b1 = Graphics::TextureBuilder::UI("icons/periapsis.png");
 	m_periapsisIcon.reset(new Gui::TexturedQuad(b1.GetOrCreateTexture(RendererLocator::getRenderer(), "ui")));
 	Graphics::TextureBuilder b2 = Graphics::TextureBuilder::UI("icons/apoapsis.png");
@@ -261,12 +266,44 @@ SystemView::SystemView() :
 
 	m_orbitVts.reset(new vector3f[N_VERTICES_MAX]);
 	m_orbitColors.reset(new Color[N_VERTICES_MAX]);
+
+	AttachBindingCallback();
 }
 
 SystemView::~SystemView()
 {
 	m_contacts.clear();
-	m_onMouseWheelCon.disconnect();
+	m_inputFrame->RemoveCallbacks();
+}
+
+void SystemView::RegisterInputBindings()
+{
+	using namespace KeyBindings;
+
+	m_inputFrame = std::make_unique<InputFrame>("GeneralPanRotateZoom");
+
+	m_systemViewBindings.mapViewZoom = m_inputFrame->GetAxisBinding("BindMapViewZoom");
+
+	m_systemViewBindings.mapViewRotateLeftRight = m_inputFrame->GetAxisBinding("BindMapViewRotateLeftRight");
+	m_systemViewBindings.mapViewRotateUpDown = m_inputFrame->GetAxisBinding("BindMapViewRotateUpDown");
+}
+
+void SystemView::AttachBindingCallback()
+{
+	using namespace KeyBindings;
+	using namespace std::placeholders;
+}
+
+void SystemView::OnSwitchTo()
+{
+	m_inputFrame->SetActive(true);
+	UIView::OnSwitchTo();
+}
+
+void SystemView::OnSwitchFrom()
+{
+	m_inputFrame->SetActive(false);
+	UIView::OnSwitchFrom();
 }
 
 void SystemView::OnClickAccel(float step)
@@ -362,10 +399,10 @@ void SystemView::PutOrbit(const Orbit *orbit, const vector3d &offset, const Colo
 		}
 	}
 
-	static const float startTrailPercent = 0.85;
-	static const float fadedColorParameter = 0.8;
+	constexpr float startTrailPercent = 0.85;
+	constexpr float fadedColorParameter = 0.8;
 
-	Uint16 fadingColors = 0;
+	uint16_t fadingColors = 0;
 	const double tMinust0 = m_time - GameLocator::getGame()->GetTime();
 	for (unsigned short i = 0; i < N_VERTICES_MAX; ++i) {
 		const double t = double(i) / double(N_VERTICES_MAX) * maxT;
@@ -380,9 +417,9 @@ void SystemView::PutOrbit(const Orbit *orbit, const vector3d &offset, const Colo
 
 	const Color fadedColor = color * fadedColorParameter;
 	std::fill_n(m_orbitColors.get(), num_vertices, fadedColor);
-	const Uint16 trailLength = num_vertices - fadingColors;
+	const uint16_t trailLength = num_vertices - fadingColors;
 
-	for (Uint16 currentColor = 0; currentColor < trailLength; ++currentColor) {
+	for (uint16_t currentColor = 0; currentColor < trailLength; ++currentColor) {
 		float scalingParameter = fadedColorParameter + static_cast<float>(currentColor) / trailLength * (1.f - fadedColorParameter);
 		m_orbitColors[currentColor + fadingColors] = color * scalingParameter;
 	}
@@ -441,12 +478,12 @@ void SystemView::OnClickObject(const SystemBody *b)
 
 	desc += std::string(Lang::RADIUS);
 	desc += ":\n";
-	data += format_distance(b->GetRadius()) + "\n";
+	data += stringUtils::format_distance(b->GetRadius()) + "\n";
 
 	if (b->GetParent()) {
 		desc += std::string(Lang::SEMI_MAJOR_AXIS);
 		desc += ":\n";
-		data += format_distance(b->GetOrbit().GetSemiMajorAxis()) + "\n";
+		data += stringUtils::format_distance(b->GetOrbit().GetSemiMajorAxis()) + "\n";
 
 		desc += std::string(Lang::ORBITAL_PERIOD);
 		desc += ":\n";
@@ -458,7 +495,7 @@ void SystemView::OnClickObject(const SystemBody *b)
 	// click on object (in same system) sets/unsets it as nav target
 	SystemPath path = m_system->GetPathOf(b);
 	if (GameLocator::getGame()->GetSpace()->GetStarSystem()->GetPath() == m_system->GetPath()) {
-		Body *body = GameLocator::getGame()->GetSpace()->FindBodyForPath(&path);
+		Body *body = GameLocator::getGame()->GetSpace()->FindBodyForPath(path);
 		if (body != 0) {
 			if (GameLocator::getGame()->GetPlayer()->GetNavTarget() == body) {
 				GameLocator::getGame()->GetPlayer()->SetNavTarget(body);
@@ -697,9 +734,9 @@ void SystemView::Draw3D()
 	if (m_realtime) {
 		m_time = GameLocator::getGame()->GetTime();
 	} else {
-		m_time += m_timeStep * Pi::GetFrameTime();
+		m_time += m_timeStep * MainState_::PiState::GetFrameTime();
 	}
-	std::string t = Lang::TIME_POINT + format_date(m_time);
+	std::string t = Lang::TIME_POINT + stringUtils::format_date(m_time);
 	m_timePoint->SetText(t);
 
 	if (!m_system) {
@@ -753,59 +790,71 @@ void SystemView::ResetPlanner()
 
 void SystemView::Update(const float frameTime)
 {
-	// XXX ugly hack checking for console here
-	if (!Pi::IsConsoleActive()) {
-		if (Pi::input.KeyState(SDLK_EQUALS) ||
-			m_zoomInButton->IsPressed())
-			m_zoomTo *= pow(ZOOM_IN_SPEED * Pi::input.GetMoveSpeedShiftModifier(), frameTime);
-		if (Pi::input.KeyState(SDLK_MINUS) ||
-			m_zoomOutButton->IsPressed())
-			m_zoomTo *= pow(ZOOM_OUT_SPEED / Pi::input.GetMoveSpeedShiftModifier(), frameTime);
-
-		// transfer planner buttons
-		if (m_plannerIncreaseStartTimeButton->IsPressed()) {
-			m_planner->AddStartTime(10.);
+	float speed = 0.0f;
+	const float speed_modifier = InputFWD::GetMoveSpeedShiftModifier();
+	if (m_inputFrame->IsActive(m_systemViewBindings.mapViewZoom)) {
+		speed = m_inputFrame->GetValue(m_systemViewBindings.mapViewZoom);
+		if (speed < 0.0f) {
+			m_zoomTo *= -speed * (((ZOOM_OUT_SPEED - 1) * WHEEL_SENSITIVITY + 1) / speed_modifier);
+		} else {
+			m_zoomTo *= +speed * (((ZOOM_IN_SPEED - 1) * WHEEL_SENSITIVITY + 1) * speed_modifier);
 		}
-		if (m_plannerDecreaseStartTimeButton->IsPressed()) {
-			m_planner->AddStartTime(-10.);
-		}
-		if (m_plannerAddProgradeVelButton->IsPressed()) {
-			m_planner->AddDv(PROGRADE, 10.0);
-		}
-		if (m_plannerAddRetrogradeVelButton->IsPressed()) {
-			m_planner->AddDv(PROGRADE, -10.0);
-		}
-		if (m_plannerAddNormalVelButton->IsPressed()) {
-			m_planner->AddDv(NORMAL, 10.0);
-		}
-		if (m_plannerAddAntiNormalVelButton->IsPressed()) {
-			m_planner->AddDv(NORMAL, -10.0);
-		}
-		if (m_plannerAddRadiallyInVelButton->IsPressed()) {
-			m_planner->AddDv(RADIAL, 10.0);
-		}
-		if (m_plannerAddRadiallyOutVelButton->IsPressed()) {
-			m_planner->AddDv(RADIAL, -10.0);
-		}
-		if (m_plannerResetStartTimeButton->IsPressed()) {
-			m_planner->ResetStartTime();
-		}
-		if (m_plannerZeroProgradeVelButton->IsPressed()) {
-			m_planner->ResetDv(PROGRADE);
-		}
-		if (m_plannerZeroNormalVelButton->IsPressed()) {
-			m_planner->ResetDv(NORMAL);
-		}
-		if (m_plannerZeroRadialVelButton->IsPressed()) {
-			m_planner->ResetDv(RADIAL);
-		}
-
-		m_plannerFactorText->SetText(m_planner->printFactor());
-		m_plannerStartTimeText->SetText(m_planner->printDeltaTime());
-		m_plannerProgradeDvText->SetText(m_planner->printDv(PROGRADE));
-		m_plannerNormalDvText->SetText(m_planner->printDv(NORMAL));
-		m_plannerRadialDvText->SetText(m_planner->printDv(RADIAL));
+	} else {
+		if (m_zoomInButton->IsPressed())
+			m_zoomTo *= pow(ZOOM_IN_SPEED * speed_modifier, frameTime);
+		if (m_zoomOutButton->IsPressed())
+			m_zoomTo *= pow(ZOOM_OUT_SPEED / speed_modifier, frameTime);
 	}
+	if (m_inputFrame->IsActive(m_systemViewBindings.mapViewRotateLeftRight)) {
+		m_rot_y_to += m_inputFrame->GetValue(m_systemViewBindings.mapViewRotateLeftRight) * speed_modifier * ROTATION_SPEED_FACTOR * frameTime;
+	}
+	if (m_inputFrame->IsActive(m_systemViewBindings.mapViewRotateUpDown)) {
+		m_rot_x_to -= m_inputFrame->GetValue(m_systemViewBindings.mapViewRotateUpDown) * speed_modifier * ROTATION_SPEED_FACTOR * frameTime;
+	}
+	// transfer planner buttons
+	if (m_plannerIncreaseStartTimeButton->IsPressed()) {
+		m_planner->AddStartTime(10.);
+	}
+	if (m_plannerDecreaseStartTimeButton->IsPressed()) {
+		m_planner->AddStartTime(-10.);
+	}
+	if (m_plannerAddProgradeVelButton->IsPressed()) {
+		m_planner->AddDv(PROGRADE, 10.0);
+	}
+	if (m_plannerAddRetrogradeVelButton->IsPressed()) {
+		m_planner->AddDv(PROGRADE, -10.0);
+	}
+	if (m_plannerAddNormalVelButton->IsPressed()) {
+		m_planner->AddDv(NORMAL, 10.0);
+	}
+	if (m_plannerAddAntiNormalVelButton->IsPressed()) {
+		m_planner->AddDv(NORMAL, -10.0);
+	}
+	if (m_plannerAddRadiallyInVelButton->IsPressed()) {
+		m_planner->AddDv(RADIAL, 10.0);
+	}
+	if (m_plannerAddRadiallyOutVelButton->IsPressed()) {
+		m_planner->AddDv(RADIAL, -10.0);
+	}
+	if (m_plannerResetStartTimeButton->IsPressed()) {
+		m_planner->ResetStartTime();
+	}
+	if (m_plannerZeroProgradeVelButton->IsPressed()) {
+		m_planner->ResetDv(PROGRADE);
+	}
+	if (m_plannerZeroNormalVelButton->IsPressed()) {
+		m_planner->ResetDv(NORMAL);
+	}
+	if (m_plannerZeroRadialVelButton->IsPressed()) {
+		m_planner->ResetDv(RADIAL);
+	}
+
+	m_plannerFactorText->SetText(m_planner->printFactor());
+	m_plannerStartTimeText->SetText(m_planner->printDeltaTime());
+	m_plannerProgradeDvText->SetText(m_planner->printDv(PROGRADE));
+	m_plannerNormalDvText->SetText(m_planner->printDv(NORMAL));
+	m_plannerRadialDvText->SetText(m_planner->printDv(RADIAL));
+
 	// TODO: add "true" lower/upper bounds to m_zoomTo / m_zoom
 	m_zoomTo = Clamp(m_zoomTo, MIN_ZOOM, MAX_ZOOM);
 	m_zoom = Clamp(m_zoom, MIN_ZOOM, MAX_ZOOM);
@@ -816,24 +865,13 @@ void SystemView::Update(const float frameTime)
 	AnimationCurves::Approach(m_rot_x, m_rot_x_to, frameTime);
 	AnimationCurves::Approach(m_rot_y, m_rot_y_to, frameTime);
 
-	if (Pi::input.MouseButtonState(SDL_BUTTON_RIGHT)) {
-		int motion[2];
-		Pi::input.GetMouseMotion(motion);
-		m_rot_x_to += motion[1] * 20 * frameTime;
-		m_rot_y_to += motion[0] * 20 * frameTime;
+	auto motion = InputFWD::GetMouseMotion(MouseMotionBehaviour::Rotate);
+	if (std::get<0>(motion)) {
+		m_rot_x_to += std::get<2>(motion) * ROTATION_SPEED_FACTOR * frameTime;
+		m_rot_y_to += std::get<1>(motion) * ROTATION_SPEED_FACTOR * frameTime;
 	}
 
 	UIView::Update(frameTime);
-}
-
-void SystemView::MouseWheel(bool up)
-{
-	if (InGameViewsLocator::getInGameViews()->IsSystemView()) {
-		if (!up)
-			m_zoomTo *= ((ZOOM_OUT_SPEED - 1) * WHEEL_SENSITIVITY + 1) / Pi::input.GetMoveSpeedShiftModifier();
-		else
-			m_zoomTo *= ((ZOOM_IN_SPEED - 1) * WHEEL_SENSITIVITY + 1) * Pi::input.GetMoveSpeedShiftModifier();
-	}
 }
 
 void SystemView::RefreshShips()

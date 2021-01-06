@@ -4,9 +4,9 @@
 #ifndef _BVHTREE_H
 #define _BVHTREE_H
 
-#include "../Aabb.h"
-#include "../utils.h"
-#include "../vector3.h"
+#include "Aabb.h"
+#include "libs/utils.h"
+#include "libs/vector3.h"
 #include <assert.h>
 #include <vector>
 

@@ -1,4 +1,8 @@
 {
+  "AXIS": {
+    "description": "...an axis...",
+    "message": "Axis"
+  },
   "BIND_AXIS_PITCH": {
     "description": "Descriptive name for the Pitch axis.",
     "message": "Pitch"
@@ -38,6 +42,10 @@
   "BIND_CAMERA_YAW": {
     "description": "Descriptive name for the Camera Yaw axis.",
     "message": "Camera Yaw"
+  },
+  "BIND_CHANGE_SCAN_RANGE": {
+    "description": "Descriptive name for change scan range axis.",
+    "message": "Change Radar Range"
   },
   "BIND_CYCLE_CAMERA_MODE": {
     "description": "Descriptive name for the CycleCameraMode action.",
@@ -83,45 +91,25 @@
     "description": "Descriptive name for the reset view action",
     "message": "Reset View"
   },
-  "BIND_MAP_VIEW_ROTATE_DOWN": {
-    "description": "Descriptive name for the rotate down view action",
-    "message": "Rotate Down View"
+  "BIND_MAP_VIEW_ROTATE_UP_DOWN": {
+    "description": "Descriptive name for the rotate up/down view axis",
+    "message": "Rotate Up/Down View"
   },
-  "BIND_MAP_VIEW_ROTATE_LEFT": {
-    "description": "Descriptive name for the rotate left view action",
-    "message": "Rotate Left View"
+  "BIND_MAP_VIEW_ROTATE_LEFT_RIGHT": {
+    "description": "Descriptive name for the rotate left/right view axis",
+    "message": "Rotate Left/Right View"
   },
-  "BIND_MAP_VIEW_ROTATE_RIGHT": {
-    "description": "Descriptive name for the rotate right view action",
-    "message": "Rotate Right View"
+  "BIND_MAP_VIEW_SHIFT_FORWARD_BACKWARD": {
+    "description": "Descriptive name for the move forward/backward view axis",
+    "message": "Shift Forward/Backward View"
   },
-  "BIND_MAP_VIEW_ROTATE_UP": {
-    "description": "Descriptive name for the rotate up view action",
-    "message": "Rotate Up View"
+  "BIND_MAP_VIEW_SHIFT_LEFT_RIGHT": {
+    "description": "Descriptive name for the move left/right view axis",
+    "message": "Shift Left/Right View"
   },
-  "BIND_MAP_VIEW_SHIFT_BACKWARD": {
-    "description": "Descriptive name for the move backward view action",
-    "message": "Shift Backward View"
-  },
-  "BIND_MAP_VIEW_SHIFT_DOWN": {
-    "description": "Descriptive name for the move down view action",
-    "message": "Shift Down View"
-  },
-  "BIND_MAP_VIEW_SHIFT_FORWARD": {
-    "description": "Descriptive name for the move forward view action",
-    "message": "Shift Forward View"
-  },
-  "BIND_MAP_VIEW_SHIFT_LEFT": {
-    "description": "Descriptive name for the move left view action",
-    "message": "Shift Left View"
-  },
-  "BIND_MAP_VIEW_SHIFT_RIGHT": {
-    "description": "Descriptive name for the move right view action",
-    "message": "Shift Right View"
-  },
-  "BIND_MAP_VIEW_SHIFT_UP": {
-    "description": "Descriptive name for the move up view action",
-    "message": "Shift Up View"
+  "BIND_MAP_VIEW_SHIFT_UP_DOWN": {
+    "description": "Descriptive name for the move up/down view axis",
+    "message": "Shift Up/Down View"
   },
   "BIND_MAP_WARP_TO_CURRENT": {
     "description": "Descriptive name for the move view to current system action",
@@ -135,17 +123,17 @@
     "description": "Descriptive name for the automatic move view to selection action",
     "message": "Automatic Warp to Selection"
   },
-  "BIND_MAP_VIEW_ZOOM_IN": {
-    "description": "Descriptive name for the zoom in view action",
-    "message": "Zoom In View"
-  },
-  "BIND_MAP_VIEW_ZOOM_OUT": {
-    "description": "Descriptive name for the zoom out view action",
-    "message": "Zoom Out View"
+  "BIND_MAP_VIEW_ZOOM": {
+    "description": "Descriptive name for the zoom in view axis",
+    "message": "Zoom View"
   },
   "BIND_PRIMARY_FIRE": {
     "description": "Descriptive name for the PrimaryFire action.",
     "message": "Primary Fire"
+  },
+  "BIND_QUICK_SAVE": {
+    "description": "Descriptive name for the quicksave action.",
+    "message": "Quick save"
   },
   "BIND_REAR_CAMERA": {
     "description": "Descriptive name for the RearCamera action.",
@@ -155,9 +143,17 @@
     "description": "Descriptive name for the ResetCamera action.",
     "message": "Reset Camera View to Default"
   },
+  "BIND_REQUEST_QUIT": {
+    "description": "Descriptive name for the quit-as-soon-as-possible action.",
+    "message": "Request Quit"
+  },
   "BIND_RIGHT_CAMERA": {
     "description": "Descriptive name for the RightCamera action.",
     "message": "Switch to Right Camera"
+  },
+  "BIND_SCREENSHOT": {
+    "description": "Descriptive name for taking screenshot action.",
+    "message": "Screenshot"
   },
   "BIND_SECONDARY_FIRE": {
     "description": "Descriptive name for the SecondaryFire action.",
@@ -166,6 +162,10 @@
   "BIND_SPEED_CONTROL": {
     "description": "Descriptive name for the SpeedControl axis.",
     "message": "Set Target Speed"
+  },
+  "BIND_TAKE_OFF": {
+    "description": "Descriptive name for blast-off or undock action.",
+    "message": "Take off"
   },
   "BIND_TARGET_OBJECT": {
     "description": "Descriptive name for the TargetObject action.",
@@ -183,9 +183,21 @@
     "description": "Descriptive name for the ToggleRotationDamping action.",
     "message": "Toggle Rotation Damping"
   },
+  "BIND_TOGGLE_SCAN_MODE": {
+    "description": "Descriptive name for the toggle auto range action.",
+    "message": "Toggle Radar Auto Range"
+  },
+  "BIND_TOGGLE_UC": {
+    "description": "Descriptive name for extract/retract under carriage action.",
+    "message": "Toggle Under Carriage"
+  },
   "BIND_TOGGLE_SET_SPEED": {
     "description": "Descriptive name for the ToggleSetSpeed action.",
     "message": "Toggle Speed Control Mode"
+  },
+  "BIND_TOGGLE_VIDEO_REC": {
+    "description": "Descriptive name for the toggle video recording action.",
+    "message": "Toggle Video Recording"
   },
   "BIND_TOP_CAMERA": {
     "description": "Descriptive name for the TopCamera action.",
@@ -195,6 +207,38 @@
     "description": "Descriptive name for the View Zoom axis",
     "message": "View Zoom"
   },
+  "BIND_WCRECALL_1": {
+    "description": "Descriptive name for the 'Recall weapon configuration 1' action",
+    "message": "Recall weapon configuration 1"
+  },
+  "BIND_WCRECALL_2": {
+    "description": "Descriptive name for the 'Recall weapon configuration 2' action",
+    "message": "Recall weapon configuration 2"
+  },
+  "BIND_WCRECALL_3": {
+    "description": "Descriptive name for the 'Recall weapon configuration 3' action",
+    "message": "Recall weapon configuration 3"
+  },
+  "BIND_WCRECALL_4": {
+    "description": "Descriptive name for the 'Recall weapon configuration 4' action",
+    "message": "Recall weapon configuration 4"
+  },
+  "BIND_WCSTORE_1": {
+    "description": "Descriptive name for the 'Store weapon configuration 1' action",
+    "message": "Store weapon configuration 1"
+  },
+  "BIND_WCSTORE_2": {
+    "description": "Descriptive name for the 'Store weapon configuration 2' action",
+    "message": "Store weapon configuration 2"
+  },
+  "BIND_WCSTORE_3": {
+    "description": "Descriptive name for the 'Store weapon configuration 3' action",
+    "message": "Store weapon configuration 3"
+  },
+  "BIND_WCSTORE_4": {
+    "description": "Descriptive name for the 'Store weapon configuration 4' action",
+    "message": "Store weapon configuration 4"
+  },
   "GROUP_GENERAL_VIEW_CONTROLS": {
     "description": "Header for the GeneralViewControls input group.",
     "message": "General View Controls"
@@ -202,6 +246,10 @@
   "GROUP_MANUAL_CONTROL": {
     "description": "Header for the ManualControl input group.",
     "message": "Manual Thrust Control"
+  },
+  "GROUP_GEN_VIEW_CONTROL": {
+    "description": "Header for the ViewMovement input group.",
+    "message": "General View Controls"
   },
   "GROUP_VIEW_MOVEMENT_CONTROLS": {
     "description": "Header for the ViewMovement input group.",
@@ -218,13 +266,29 @@
     "description": "Header for the SpeedControl input group.",
     "message": "Set-Speed Thrust Control"
   },
+  "GROUP_TIME_CONTROL": {
+    "description": "Header for the time controls input group.",
+    "message": "Time acceleration controls"
+  },
+  "GROUP_VIEWS_CONTROLS": {
+    "description": "Header for views control",
+    "message": "Views Controls"
+  },
   "GROUP_WEAPONS": {
     "description": "Header for the Weapons input group.",
     "message": "Weapons"
   },
+  "HYPERSPACE": {
+    "description": "Try hyperspace to",
+    "message": "Hyperspace"
+  },
   "PAGE_GENERAL": {
     "description": "Header for the General input page.",
     "message": "General Controls"
+  },
+  "PAGE_RADAR_VIEW": {
+    "description": "Header for the RadarControls input page.",
+    "message": "Radar - Controls"
   },
   "PAGE_SHIP_CONTROLS": {
     "description": "Header for the ShipControls input page.",
@@ -237,6 +301,70 @@
   "PAGE_SECTOR_VIEW": {
     "description": "Header for the SectorView input page.",
     "message": "Sector - View"
+  },
+  "PAGE_SYSTEM_VIEW": {
+    "description": "Header for the SystemView input page.",
+    "message": "System - View"
+  },
+  "SHOW_INFO": {
+    "description": "Binding to switch to personal info view",
+    "message": "Show personal info"
+  },
+  "SHOW_SPACE_STATION": {
+    "description": "Binding to switch to space station view",
+    "message": "Show space station view"
+  },
+  "SHOW_THURSTER_SL": {
+    "description": "Binding showing thruster power reduction",
+    "message": "Show thruster reducer"
+  },
+  "SHOW_WORLD_VIEW": {
+    "description": "Binding to switch to or change worldview mode",
+    "message": "Toggle or show WorldView"
+  },
+  "SPEED_MODIFIER": {
+    "description": "General modifier used to scroll/rotate/zoom faster",
+    "message": "Speed Modifier"
+  },
+  "SPEED_1X": {
+    "description": "General modifier to recall an accelerated time of 1x",
+    "message": "Speed at 1x"
+  },
+  "SPEED_10X": {
+    "description": "General modifier to recall an accelerated time of 10x",
+    "message": "Speed at 10x"
+  },
+  "SPEED_100X": {
+    "description": "General modifier to recall an accelerated time of 100x",
+    "message": "Speed at 100x"
+  },
+  "SPEED_1000X": {
+    "description": "General modifier to recall an accelerated time of 1000x",
+    "message": "Speed at 1000x"
+  },
+  "SPEED_10000X": {
+    "description": "General modifier to recall an accelerated time of 10000x",
+    "message": "Speed at 10000x"
+  },
+  "SWITCH_MAP_WORLD_VIEW": {
+    "description": "Toggle between map and worldview",
+    "message": "Toggle map/worldview"
+  },
+  "SWITCH_TO_GALAXY_VIEW": {
+    "description": "Toggle between galaxy and world view",
+    "message": "Switch to Galaxy view"
+  },
+  "SWITCH_TO_SECTOR_VIEW": {
+    "description": "Toggle between sector and world view",
+    "message": "Switch to Sector view"
+  },
+  "SWITCH_TO_SYSTEM_INFO_VIEW": {
+    "description": "Toggle between system info and world view",
+    "message": "Switch to SystemInfo view"
+  },
+  "SWITCH_TO_SYSTEM_VIEW": {
+    "description": "Toggle between system and world view",
+    "message": "Switch to System view"
   },
   "TEXT_ALT_BINDING": {
     "description": "",
@@ -269,5 +397,13 @@
   "TEXT_KEY_POSITIVE": {
     "description": "Indicates the positive half of a key-binding pair.",
     "message": "Positive:"
+  },
+  "TOGGLE_CONSOLE": {
+    "description": "Activate or deactivate Lua console",
+    "message": "Toggle Lua Console"
+  },
+  "WHEEL": {
+    "description": "Mouse wheel",
+    "message": "Wheel"
   }
 }

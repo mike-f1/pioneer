@@ -4,15 +4,24 @@
 #ifndef _LUACONSOLE_H
 #define _LUACONSOLE_H
 
+#include "input/InputFwd.h"
 #include "LuaManager.h"
-#include "RefCounted.h"
-#include "ui/Widget.h"
+#include "libs/RefCounted.h"
 #include <deque>
+#include <memory>
+#include <string>
+#include <vector>
+#include <SDL_keyboard.h>
+
+class InputFrame;
+class InputFrameStatusTicket;
 
 namespace UI {
 	class TextEntry;
 	class MultiLineText;
 	class Scroller;
+	class Widget;
+	class KeyboardEvent;
 } // namespace UI
 
 class LuaConsole {
@@ -20,8 +29,7 @@ public:
 	LuaConsole();
 	virtual ~LuaConsole();
 
-	void Toggle();
-
+	void Deactivate();
 	bool IsActive() const { return m_active; }
 	void AddOutput(const std::string &line);
 
@@ -33,6 +41,10 @@ public:
 	static void Register();
 
 private:
+	void RegisterInputBindings();
+
+	void OnToggle(bool down);
+
 	bool OnKeyDown(const UI::KeyboardEvent &event);
 	void OnChange(const std::string &text);
 	void OnEnter(const std::string &text);
@@ -70,6 +82,15 @@ private:
 	int m_debugSocket;
 	std::vector<int> m_debugConnections;
 #endif
+
+	struct ConsoleBinding {
+		ActionId toggleLuaConsole;
+
+	} m_consoleBindings;
+
+	std::unique_ptr<InputFrame> m_inputFrame;
+
+	std::unique_ptr<InputFrameStatusTicket> m_lockEnabled;
 };
 
 #endif /* _LUACONSOLE_H */

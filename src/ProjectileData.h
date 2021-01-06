@@ -3,8 +3,9 @@
 
 #include "Color.h"
 #include "Json.h"
+#include "JsonUtils.h"
 #include "GameSaveError.h"
-#include "utils.h"
+#include "libs/utils.h"
 
 struct ProjectileData {
 	ProjectileData() :
@@ -28,16 +29,16 @@ struct ProjectileData {
 	ProjectileData(const Json &jsonObj)
 	{
 		try {
-		lifespan = jsonObj["life_span"];
-		damage = jsonObj["base_dam"];
-		length = jsonObj["length"];
-		width = jsonObj["width"];
-		speed = jsonObj["speed"];
-		color = jsonObj["color"];
-		mining = jsonObj["mining"];
-		beam = jsonObj["is_beam"];
+			lifespan = jsonObj["life_span"];
+			damage = jsonObj["base_dam"];
+			length = jsonObj["length"];
+			width = jsonObj["width"];
+			speed = jsonObj["speed"];
+			color = jsonObj["color"];
+			mining = jsonObj["mining"];
+			beam = jsonObj["is_beam"];
 		} catch (Json::type_error &) {
-			Output("Got error loading '%s'\n", __func__);
+			Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 			throw SavedGameCorruptException();
 		}
 	}

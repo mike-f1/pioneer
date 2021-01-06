@@ -13,6 +13,7 @@ namespace Gui {
 	public:
 		Image(const char *filename);
 		Image(const char *filename, float renderWidth, float renderHeight);
+		~Image();
 		virtual void Draw();
 		virtual void GetSizeRequested(float size[2]);
 		void SetModulateColor(const Color &color) { m_color = color; }

@@ -8,10 +8,14 @@
  */
 
 #include "GuiWidget.h"
-#include "graphics/Drawables.h"
 #include <SDL_stdinc.h>
 #include <list>
 
+namespace Graphics {
+	namespace Drawables {
+		class Rect;
+	}
+}
 namespace Gui {
 	class Container : public Widget {
 	public:
@@ -23,7 +27,7 @@ namespace Gui {
 		void RemoveAllChildren();
 		void DeleteAllChildren();
 		void GetChildPosition(const Widget *child, float outPos[2]) const;
-		int GetNumChildren() { return static_cast<Uint32>(m_children.size()); }
+		int GetNumChildren() { return static_cast<uint32_t>(m_children.size()); }
 		virtual void Draw();
 		void ShowChildren();
 		void HideChildren();
@@ -50,7 +54,7 @@ namespace Gui {
 		struct widget_pos {
 			Widget *w;
 			float pos[2];
-			Uint32 flags;
+			uint32_t flags;
 		};
 		typedef std::list<widget_pos> WidgetList;
 

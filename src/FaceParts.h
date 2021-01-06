@@ -4,7 +4,7 @@
 #ifndef FACE_PARTS_H
 #define FACE_PARTS_H
 
-#include <SDL_stdinc.h>
+#include <cstdint>
 
 // FaceParts deals with:
 //   - Scanning the data/facegen/ directory and loading all the face part images
@@ -40,20 +40,20 @@ namespace FaceParts {
 	void Init();
 	void Uninit();
 
-	int NumSpecies();
-	int NumGenders(const int speciesIdx);
-	int NumRaces(const int speciesIdx);
+	unsigned NumSpecies();
+	unsigned NumGenders(const int speciesIdx);
+	unsigned NumRaces(const int speciesIdx);
 
-	int NumHeads(const int speciesIdx, const int raceIdx, const int genderIdx);
-	int NumEyes(const int speciesIdx, const int raceIdx, const int genderIdx);
-	int NumNoses(const int speciesIdx, const int raceIdx, const int genderIdx);
-	int NumMouths(const int speciesIdx, const int raceIdx, const int genderIdx);
-	int NumHairstyles(const int speciesIdx, const int raceIdx, const int genderIdx);
-	int NumClothes(const int speciesIdx, const int raceIdx, const int genderIdx);
-	int NumAccessories(const int speciesIdx, const int raceIdx, const int genderIdx);
-	int NumArmour(const int speciesIdx, const int raceIdx, const int genderIdx);
+	unsigned NumHeads(const int speciesIdx, const int raceIdx, const int genderIdx);
+	unsigned NumEyes(const int speciesIdx, const int raceIdx, const int genderIdx);
+	unsigned NumNoses(const int speciesIdx, const int raceIdx, const int genderIdx);
+	unsigned NumMouths(const int speciesIdx, const int raceIdx, const int genderIdx);
+	unsigned NumHairstyles(const int speciesIdx, const int raceIdx, const int genderIdx);
+	unsigned NumClothes(const int speciesIdx, const int raceIdx, const int genderIdx);
+	unsigned NumAccessories(const int speciesIdx, const int raceIdx, const int genderIdx);
+	unsigned NumArmour(const int speciesIdx, const int raceIdx, const int genderIdx);
 
-	void PickFaceParts(FaceDescriptor &inout_face, const Uint32 seed);
+	void PickFaceParts(FaceDescriptor &inout_face, const uint32_t seed);
 	void BuildFaceImage(SDL_Surface *faceIm, const FaceDescriptor &face);
 } // namespace FaceParts
 

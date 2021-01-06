@@ -36,7 +36,10 @@ namespace RandomColorGenerator {
 		int Lower;
 		int Upper;
 
-		Range() {}
+		Range() :
+			Lower(0),
+			Upper(0)
+		{}
 		Range(int lower, int upper)
 		{
 			Lower = lower;

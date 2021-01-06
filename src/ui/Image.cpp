@@ -3,8 +3,13 @@
 
 #include "Image.h"
 #include "Context.h"
-#include "graphics/TextureBuilder.h"
+#include "graphics/Drawables.h"
+#include "graphics/Material.h"
+#include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
+#include "graphics/Texture.h"
+#include "graphics/TextureBuilder.h"
+#include "graphics/VertexArray.h"
 
 namespace UI {
 
@@ -19,7 +24,7 @@ namespace UI {
 
 	} // namespace
 
-	Image::Image(Context *context, const std::string &filename, Uint32 sizeControlFlags) :
+	Image::Image(Context *context, const std::string &filename, uint32_t sizeControlFlags) :
 		Widget(context),
 		m_centre(0.0f, 0.0f),
 		m_scale(1.0f),
@@ -39,12 +44,15 @@ namespace UI {
 		SetSizeControlFlags(sizeControlFlags);
 	}
 
+	Image::~Image()
+	{}
+
 	Point Image::PreferredSize()
 	{
 		return m_initialSize;
 	}
 
-	Image *Image::SetHeightLines(Uint32 lines)
+	Image *Image::SetHeightLines(uint32_t lines)
 	{
 		m_needsRefresh = true;
 		const Text::TextureFont *font = GetContext()->GetFont(GetFont()).Get();

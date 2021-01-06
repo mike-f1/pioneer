@@ -4,9 +4,10 @@
 #ifndef ORBIT_H
 #define ORBIT_H
 
-#include "libs.h"
-#include "matrix3x3.h"
-#include "vector3.h"
+#include <cassert>
+
+#include "libs/matrix3x3.h"
+#include "libs/vector3.h"
 
 class Orbit {
 public:

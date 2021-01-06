@@ -39,7 +39,7 @@ namespace Graphics {
 
 		private:
 			Program *m_programs[5];
-			Uint32 m_curNumLights;
+			uint32_t m_curNumLights;
 		};
 	} // namespace OGL
 } // namespace Graphics

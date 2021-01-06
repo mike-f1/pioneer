@@ -17,6 +17,7 @@
 #include "graphics/Renderer.h"
 #include <stack>
 #include <unordered_map>
+#include <SDL_video.h>
 
 namespace Graphics {
 
@@ -46,7 +47,7 @@ namespace Graphics {
 	public:
 		static void RegisterRenderer();
 
-		RendererOGL(SDL_Window *window, const Graphics::Settings &vs, SDL_GLContext &glContext);
+		RendererOGL(SDL_Window *window, const Settings &vs, SDL_GLContext &glContext);
 		virtual ~RendererOGL() override final;
 
 		virtual const char *GetName() const override final { return "OpenGL 3.1, with extensions, renderer"; }
@@ -85,15 +86,15 @@ namespace Graphics {
 
 		virtual bool SetWireFrameMode(bool enabled) override final;
 
-		virtual bool SetLights(Uint32 numlights, const Light *l) override final;
-		virtual Uint32 GetNumLights() const override final { return m_numLights; }
+		virtual bool SetLights(uint32_t numlights, const Light *l) override final;
+		virtual uint32_t GetNumLights() const override final { return m_numLights; }
 		virtual bool SetAmbientColor(const Color &c) override final;
 
 		virtual bool SetScissor(bool enabled, const vector2f &pos = vector2f(0.0f), const vector2f &size = vector2f(0.0f)) override final;
 
 		virtual bool DrawTriangles(const VertexArray *vertices, RenderState *state, Material *material, PrimitiveType type = TRIANGLES) override final;
-		virtual bool DrawPointSprites(const Uint32 count, const vector3f *positions, RenderState *rs, Material *material, float size) override final;
-		virtual bool DrawPointSprites(const Uint32 count, const vector3f *positions, const vector2f *offsets, const float *sizes, RenderState *rs, Material *material) override final;
+		virtual bool DrawPointSprites(const uint32_t count, const vector3f *positions, RenderState *rs, Material *material, float size) override final;
+		virtual bool DrawPointSprites(const uint32_t count, const vector3f *positions, const vector2f *offsets, const float *sizes, RenderState *rs, Material *material) override final;
 		virtual bool DrawBuffer(VertexBuffer *, RenderState *, Material *, PrimitiveType) override final;
 		virtual bool DrawBufferIndexed(VertexBuffer *, IndexBuffer *, RenderState *, Material *, PrimitiveType) override final;
 		virtual bool DrawBufferInstanced(VertexBuffer *, RenderState *, Material *, InstanceBuffer *, PrimitiveType type = TRIANGLES) override final;
@@ -104,14 +105,14 @@ namespace Graphics {
 		virtual RenderState *CreateRenderState(const RenderStateDesc &) override final;
 		virtual RenderTarget *CreateRenderTarget(const RenderTargetDesc &) override final;
 		virtual VertexBuffer *CreateVertexBuffer(const VertexBufferDesc &) override final;
-		virtual IndexBuffer *CreateIndexBuffer(Uint32 size, BufferUsage) override final;
-		virtual InstanceBuffer *CreateInstanceBuffer(Uint32 size, BufferUsage) override final;
+		virtual IndexBuffer *CreateIndexBuffer(uint32_t size, BufferUsage) override final;
+		virtual InstanceBuffer *CreateInstanceBuffer(uint32_t size, BufferUsage) override final;
 
 		virtual bool ReloadShaders() override final;
 
 		virtual const matrix4x4f &GetCurrentModelView() const override final { return m_modelViewStack.top(); }
 		virtual const matrix4x4f &GetCurrentProjection() const override final { return m_projectionStack.top(); }
-		virtual void GetCurrentViewport(Sint32 *vp) const override final
+		virtual void GetCurrentViewport(int32_t *vp) const override final
 		{
 			const Viewport &cur = m_viewportStack.top();
 			vp[0] = cur.x;
@@ -129,14 +130,13 @@ namespace Graphics {
 		virtual void Scale(const float x, const float y, const float z) override final;
 
 		virtual bool Screendump(ScreendumpState &sd) override final;
-		virtual bool FrameGrab(ScreendumpState &sd) override final;
 
 	protected:
 		virtual void PushState() override final;
 		virtual void PopState() override final;
 
-		Uint32 m_numLights;
-		Uint32 m_numDirLights;
+		uint32_t m_numLights;
+		uint32_t m_numDirLights;
 		std::vector<GLuint> m_vertexAttribsSet;
 		float m_minZNear;
 		float m_maxZFar;
@@ -162,7 +162,7 @@ namespace Graphics {
 		friend class OGL::ShieldMaterial;
 		friend class OGL::BillboardMaterial;
 		std::vector<std::pair<MaterialDescriptor, OGL::Program *>> m_programs;
-		std::unordered_map<Uint32, OGL::RenderState *> m_renderStates;
+		std::unordered_map<uint32_t, OGL::RenderState *> m_renderStates;
 		float m_invLogZfarPlus1;
 		OGL::RenderTarget *m_activeRenderTarget;
 		RenderState *m_activeRenderState;
@@ -177,7 +177,7 @@ namespace Graphics {
 				y(0),
 				w(0),
 				h(0) {}
-			Sint32 x, y, w, h;
+			int32_t x, y, w, h;
 		};
 		std::stack<Viewport> m_viewportStack;
 

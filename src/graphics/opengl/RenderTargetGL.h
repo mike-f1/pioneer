@@ -10,14 +10,13 @@
  */
 #include "OpenGLLibs.h"
 #include "graphics/RenderTarget.h"
+#include "libs/RefCounted.h"
 
 namespace Graphics {
 
 	class RendererOGL;
 
 	namespace OGL {
-
-		class RenderTarget;
 
 		class RenderBuffer : public RefCounted {
 		public:
@@ -34,10 +33,10 @@ namespace Graphics {
 
 		class RenderTarget : public Graphics::RenderTarget {
 		public:
-			~RenderTarget();
-			virtual Texture *GetColorTexture() const;
-			virtual Texture *GetDepthTexture() const;
-			virtual void SetCubeFaceTexture(const Uint32 face, Texture *t) final;
+			~RenderTarget() final;
+			virtual Texture *GetColorTexture() const final;
+			virtual Texture *GetDepthTexture() const final;
+			virtual void SetCubeFaceTexture(const uint32_t face, Texture *t) final;
 			virtual void SetColorTexture(Texture *) final;
 			virtual void SetDepthTexture(Texture *) final;
 

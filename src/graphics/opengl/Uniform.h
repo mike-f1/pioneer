@@ -9,9 +9,9 @@
 #include "OpenGLLibs.h"
 
 #include "Color.h"
-#include "matrix3x3.h"
-#include "matrix4x4.h"
-#include "vector3.h"
+#include "libs/matrix3x3.h"
+#include "libs/matrix4x4.h"
+#include "libs/vector3.h"
 
 namespace Graphics {
 
@@ -23,6 +23,7 @@ namespace Graphics {
 			Uniform();
 			void Init(const char *name, GLuint program);
 			void Set(int);
+			void Set(unsigned);
 			void Set(float);
 			void Set(const vector3f &);
 			void Set(const vector3d &);

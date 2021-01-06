@@ -14,11 +14,11 @@ namespace Graphics {
 
 		class RenderTarget : public Graphics::RenderTarget {
 		public:
-			virtual Texture *GetColorTexture() const { return m_colorTexture.Get(); }
-			virtual Texture *GetDepthTexture() const { return m_depthTexture.Get(); }
-			virtual void SetCubeFaceTexture(const Uint32 face, Texture *t) final { m_colorTexture.Reset(t); }
-			virtual void SetColorTexture(Texture *t) { m_colorTexture.Reset(t); }
-			virtual void SetDepthTexture(Texture *t) { m_depthTexture.Reset(t); }
+			virtual Texture *GetColorTexture() const final { return m_colorTexture.Get(); }
+			virtual Texture *GetDepthTexture() const final { return m_depthTexture.Get(); }
+			virtual void SetCubeFaceTexture(const uint32_t face, Texture *t) final { m_colorTexture.Reset(t); }
+			virtual void SetColorTexture(Texture *t) final { m_colorTexture.Reset(t); }
+			virtual void SetDepthTexture(Texture *t) final { m_depthTexture.Reset(t); }
 
 		protected:
 			friend class Graphics::RendererDummy;

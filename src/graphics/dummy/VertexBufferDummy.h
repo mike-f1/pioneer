@@ -14,7 +14,7 @@ namespace Graphics {
 		public:
 			VertexBuffer(const VertexBufferDesc &d) :
 				Graphics::VertexBuffer(d),
-				m_buffer(new Uint8[m_desc.numVertices * m_desc.stride])
+				m_buffer(new uint8_t[m_desc.numVertices * m_desc.stride])
 			{}
 
 			// copies the contents of the VertexArray into the buffer
@@ -29,19 +29,19 @@ namespace Graphics {
 			virtual void Unmap() override final {}
 
 		protected:
-			virtual Uint8 *MapInternal(BufferMapMode) override final { return m_buffer.get(); }
+			virtual uint8_t *MapInternal(BufferMapMode) override final { return m_buffer.get(); }
 
 		private:
-			std::unique_ptr<Uint8[]> m_buffer;
+			std::unique_ptr<uint8_t[]> m_buffer;
 		};
 
 		class IndexBuffer : public Graphics::IndexBuffer {
 		public:
-			IndexBuffer(Uint32 size, BufferUsage bu) :
+			IndexBuffer(uint32_t size, BufferUsage bu) :
 				Graphics::IndexBuffer(size, bu),
-				m_buffer(new Uint32[size]){};
+				m_buffer(new uint32_t[size]){};
 
-			virtual Uint32 *Map(BufferMapMode) override final { return m_buffer.get(); }
+			virtual uint32_t *Map(BufferMapMode) override final { return m_buffer.get(); }
 			virtual void Unmap() override final {}
 
 			virtual void BufferData(const size_t, void *) override final {}
@@ -50,13 +50,13 @@ namespace Graphics {
 			virtual void Release() override final {}
 
 		private:
-			std::unique_ptr<Uint32[]> m_buffer;
+			std::unique_ptr<uint32_t[]> m_buffer;
 		};
 
 		// Instance buffer
 		class InstanceBuffer : public Graphics::InstanceBuffer {
 		public:
-			InstanceBuffer(Uint32 size, BufferUsage hint) :
+			InstanceBuffer(uint32_t size, BufferUsage hint) :
 				Graphics::InstanceBuffer(size, hint),
 				m_data(new matrix4x4f[size])
 			{}
@@ -64,7 +64,7 @@ namespace Graphics {
 			virtual matrix4x4f *Map(BufferMapMode) override final { return m_data.get(); }
 			virtual void Unmap() override final {}
 
-			Uint32 GetSize() const { return m_size; }
+			uint32_t GetSize() const { return m_size; }
 			BufferUsage GetUsage() const { return m_usage; }
 
 			virtual void Bind() override final {}

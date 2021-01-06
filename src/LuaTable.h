@@ -209,6 +209,7 @@ public:
 			CleanCache();
 			m_table = copy.m_table;
 			m_currentIndex = copy.m_currentIndex;
+			m_cache();
 		}
 
 		VecIter operator++()

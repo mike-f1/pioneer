@@ -5,6 +5,7 @@
 #define _PROJECTILE_H
 
 #include "Body.h"
+#include "Color.h"
 
 struct ProjectileData;
 
@@ -17,7 +18,7 @@ namespace Graphics {
 	class VertexArray;
 } // namespace Graphics
 
-class Projectile : public Body {
+class Projectile final: public Body {
 public:
 	OBJDEF(Projectile, Body, PROJECTILE);
 
@@ -27,17 +28,19 @@ public:
 	Projectile(Body *parent, const ProjectileData &prData, const vector3d &pos, const vector3d &baseVel, const vector3d &dirVel);
 	Projectile(const Json &jsonObj, Space *space);
 	virtual ~Projectile();
-	virtual void Render(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform) override final;
-	void TimeStepUpdate(const float timeStep) override final;
-	void StaticUpdate(const float timeStep) override final;
-	virtual void NotifyRemoved(const Body *const removedBody) override final;
-	virtual void UpdateInterpTransform(double alpha) override final;
-	virtual void PostLoadFixup(Space *space) override final;
+
+	Json SaveToJson(Space *space) override;
+
+	void Render(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform) override;
+	void TimeStepUpdate(const float timeStep) override;
+	void StaticUpdate(const float timeStep) override;
+	void NotifyRemoved(const Body *const removedBody) override;
+	void UpdateInterpTransform(double alpha) override;
+	void PostLoadFixup(Space *space) override;
 
 	static void FreeModel();
 
 protected:
-	virtual void SaveToJson(Json &jsonObj, Space *space) override final;
 
 private:
 	float GetDamage() const;

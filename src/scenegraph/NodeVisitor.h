@@ -9,7 +9,6 @@
  *
  * Start traversal with node->Accept(visitor)!
  */
-#include "libs.h"
 
 namespace SceneGraph {
 

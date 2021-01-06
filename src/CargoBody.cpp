@@ -40,13 +40,14 @@ CargoBody::CargoBody(const Json &jsonObj, Space *space) :
 		m_selfdestructTimer = cargoBodyObj["self_destruct_timer"];
 		m_hasSelfdestruct = cargoBodyObj["has_self_destruct"];
 	} catch (Json::type_error &) {
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 		throw SavedGameCorruptException();
 	}
 }
 
-void CargoBody::SaveToJson(Json &jsonObj, Space *space)
+Json CargoBody::SaveToJson(Space *space)
 {
-	DynamicBody::SaveToJson(jsonObj, space);
+	Json jsonObj = DynamicBody::SaveToJson(space);
 
 	Json cargoBodyObj = Json::object(); // Create JSON object to contain cargo body data.
 
@@ -56,6 +57,7 @@ void CargoBody::SaveToJson(Json &jsonObj, Space *space)
 	cargoBodyObj["has_self_destruct"] = m_hasSelfdestruct;
 
 	jsonObj["cargo_body"] = cargoBodyObj; // Add cargo body object to supplied object.
+	return jsonObj;
 }
 
 void CargoBody::Init()
@@ -110,7 +112,7 @@ bool CargoBody::OnDamage(Object *attacker, float kgDamage, const CollisionContac
 	return true;
 }
 
-bool CargoBody::OnCollision(Object *b, Uint32 flags, double relVel)
+bool CargoBody::OnCollision(Object *b, uint32_t flags, double relVel)
 {
 	// ignore collision if its about to be scooped
 	if (b->IsType(Object::SHIP)) {

@@ -2,6 +2,7 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "Uniform.h"
+
 #include "TextureGL.h"
 
 namespace Graphics {
@@ -21,6 +22,12 @@ namespace Graphics {
 		{
 			if (m_location != -1)
 				glUniform1i(m_location, i);
+		}
+
+		void Uniform::Set(unsigned i)
+		{
+			if (m_location != -1)
+				glUniform1ui(m_location, i);
 		}
 
 		void Uniform::Set(float f)

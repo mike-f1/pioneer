@@ -3,23 +3,25 @@
 
 #include "Model.h"
 
+#include "Animation.h"
 #include "CollisionVisitor.h"
+#include "CollMesh.h"
 #include "FindNodeVisitor.h"
+#include "Label3D.h"
+#include "MatrixTransform.h"
+#include "ModelDebug.h"
+#include "NodeCopyCache.h"
+#include "Thruster.h"
 #include "GameSaveError.h"
 #include "JsonUtils.h"
-#include "NodeCopyCache.h"
-#include "StringF.h"
-#include "Thruster.h"
-#include "graphics/Drawables.h"
-#include "graphics/RenderState.h"
+#include "collider/CSGDefinitions.h"
+#include "graphics/Material.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/TextureBuilder.h"
-#include "graphics/VertexArray.h"
-#include "scenegraph/Animation.h"
-#include "scenegraph/Label3D.h"
-#include "scenegraph/MatrixTransform.h"
-#include "utils.h"
+#include "libs/StringF.h"
+#include "libs/stringUtils.h"
+#include "libs/utils.h"
 
 namespace SceneGraph {
 
@@ -38,54 +40,54 @@ namespace SceneGraph {
 		m_name(name),
 		m_curPatternIndex(0),
 		m_curPattern(0),
-		m_debugFlags(0)
+		m_debugFlags(DebugFlags::NONE)
 	{
 		m_root.Reset(new Group());
 		m_root->SetName(name);
 		ClearDecals();
 	}
 
-	Model::Model(const Model &model) :
-		m_boundingRadius(model.m_boundingRadius),
-		m_materials(model.m_materials),
-		m_patterns(model.m_patterns),
-		m_collMesh(model.m_collMesh) //might have to make this per-instance at some point
+	Model::Model(const Model &other) :
+		m_boundingRadius(other.m_boundingRadius),
+		m_materials(other.m_materials),
+		m_patterns(other.m_patterns),
+		m_collMesh(other.m_collMesh) //might have to make this per-instance at some point
 		,
-		m_name(model.m_name),
-		m_curPatternIndex(model.m_curPatternIndex),
-		m_curPattern(model.m_curPattern),
-		m_debugFlags(0),
-		m_mounts(model.m_mounts)
+		m_name(other.m_name),
+		m_curPatternIndex(other.m_curPatternIndex),
+		m_curPattern(other.m_curPattern),
+		m_debugFlags(DebugFlags::NONE),
+		m_Boxes(other.m_Boxes),
+		m_mounts(other.m_mounts)
 	{
 		//selective copying of node structure
 		NodeCopyCache cache;
-		m_root.Reset(dynamic_cast<Group *>(model.m_root->Clone(&cache)));
+		m_root.Reset(dynamic_cast<Group *>(other.m_root->Clone(&cache)));
 
 		//materials are shared by meshes
 		for (unsigned int i = 0; i < MAX_DECAL_MATERIALS; i++)
-			m_decalMaterials[i] = model.m_decalMaterials[i];
+			m_decalMaterials[i] = other.m_decalMaterials[i];
 		ClearDecals();
 
 		//create unique color texture, if used
 		//patterns are shared
 		if (SupportsPatterns()) {
 			std::vector<Color> colors;
-			colors.push_back(Color::RED);
-			colors.push_back(Color::GREEN);
-			colors.push_back(Color::BLUE);
+			colors.reserve(3);
+			colors.insert(end(colors), {Color::RED, Color::GREEN, Color::BLUE});
 			SetColors(colors);
 			SetPattern(0);
 		}
 
 		//animations need to be copied and retargeted
-		for (AnimationContainer::const_iterator it = model.m_animations.begin(); it != model.m_animations.end(); ++it) {
-			const Animation *anim = *it;
-			m_animations.push_back(new Animation(*anim));
-			m_animations.back()->UpdateChannelTargets(m_root.Get());
-		}
+		m_animations.reserve(other.m_animations.size());
+		m_animations = other.m_animations;
+		std::for_each(begin(m_animations), end(m_animations), [this](Animation &anim) {
+			anim.UpdateChannelTargets(m_root.Get());
+		});
 
 		//m_tags needs to be updated
-		for (TagContainer::const_iterator it = model.m_tags.begin(); it != model.m_tags.end(); ++it) {
+		for (TagContainer::const_iterator it = other.m_tags.begin(); it != other.m_tags.end(); ++it) {
 			MatrixTransform *t = dynamic_cast<MatrixTransform *>(m_root->FindNode((*it)->GetName()));
 			assert(t != 0);
 			m_tags.push_back(t);
@@ -94,13 +96,11 @@ namespace SceneGraph {
 
 	Model::~Model()
 	{
-		while (!m_animations.empty())
-			delete m_animations.back(), m_animations.pop_back();
 	}
 
-	Model *Model::MakeInstance() const
+	std::unique_ptr<Model> Model::MakeInstance() const
 	{
-		Model *m = new Model(*this);
+		std::unique_ptr<Model> m(new Model(*this));
 		return m;
 	}
 
@@ -132,7 +132,7 @@ namespace SceneGraph {
 		params.boundingRadius = GetDrawClipRadius();
 
 		//render in two passes, if this is the top-level model
-		if (m_debugFlags & DEBUG_WIREFRAME)
+		if (to_bool(m_debugFlags & DebugFlags::WIREFRAME))
 			RendererLocator::getRenderer()->SetWireFrameMode(true);
 
 		if (params.nodemask & MASK_IGNORE) {
@@ -144,31 +144,13 @@ namespace SceneGraph {
 			m_root->Render(trans, &params);
 		}
 
-		if (!m_debugFlags)
-			return;
-
-		if (m_debugFlags & DEBUG_WIREFRAME)
+		if (to_bool(m_debugFlags & DebugFlags::WIREFRAME))
 			RendererLocator::getRenderer()->SetWireFrameMode(false);
 
-		if (m_debugFlags & DEBUG_BBOX) {
-			RendererLocator::getRenderer()->SetTransform(trans);
-			DrawAabb();
-		}
+		if (!to_bool(m_debugFlags))
+			return;
 
-		if (m_debugFlags & DEBUG_COLLMESH) {
-			RendererLocator::getRenderer()->SetTransform(trans);
-			DrawCollisionMesh();
-		}
-
-		if (m_debugFlags & DEBUG_TAGS) {
-			RendererLocator::getRenderer()->SetTransform(trans);
-			DrawAxisIndicators(m_tagPoints);
-		}
-
-		if (m_debugFlags & DEBUG_DOCKING) {
-			RendererLocator::getRenderer()->SetTransform(trans);
-			DrawAxisIndicators(m_dockingPoints);
-		}
+		m_modelDebug->Render(trans);
 	}
 
 	void Model::Render(const std::vector<matrix4x4f> &trans, const RenderData *rd)
@@ -198,7 +180,7 @@ namespace SceneGraph {
 		params.boundingRadius = GetDrawClipRadius();
 
 		//render in two passes, if this is the top-level model
-		if (m_debugFlags & DEBUG_WIREFRAME)
+		if (to_bool(m_debugFlags & DebugFlags::WIREFRAME))
 			RendererLocator::getRenderer()->SetWireFrameMode(true);
 
 		if (params.nodemask & MASK_IGNORE) {
@@ -209,121 +191,9 @@ namespace SceneGraph {
 			params.nodemask = NODE_TRANSPARENT;
 			m_root->Render(trans, &params);
 		}
-	}
 
-	void Model::CreateAabbVB()
-	{
-		PROFILE_SCOPED()
-		if (!m_collMesh) return;
-
-		const Aabb aabb = m_collMesh->GetAabb();
-
-		const vector3f verts[16] = {
-			vector3f(aabb.min.x, aabb.min.y, aabb.min.z),
-			vector3f(aabb.max.x, aabb.min.y, aabb.min.z),
-			vector3f(aabb.max.x, aabb.max.y, aabb.min.z),
-			vector3f(aabb.min.x, aabb.max.y, aabb.min.z),
-			vector3f(aabb.min.x, aabb.min.y, aabb.min.z),
-			vector3f(aabb.min.x, aabb.min.y, aabb.max.z),
-			vector3f(aabb.max.x, aabb.min.y, aabb.max.z),
-			vector3f(aabb.max.x, aabb.min.y, aabb.min.z),
-
-			vector3f(aabb.max.x, aabb.max.y, aabb.max.z),
-			vector3f(aabb.min.x, aabb.max.y, aabb.max.z),
-			vector3f(aabb.min.x, aabb.min.y, aabb.max.z),
-			vector3f(aabb.max.x, aabb.min.y, aabb.max.z),
-			vector3f(aabb.max.x, aabb.max.y, aabb.max.z),
-			vector3f(aabb.max.x, aabb.max.y, aabb.min.z),
-			vector3f(aabb.min.x, aabb.max.y, aabb.min.z),
-			vector3f(aabb.min.x, aabb.max.y, aabb.max.z),
-		};
-
-		if (!m_aabbVB.Valid()) {
-			Graphics::VertexArray va(Graphics::ATTRIB_POSITION, 28);
-			for (unsigned int i = 0; i < 7; i++) {
-				va.Add(verts[i]);
-				va.Add(verts[i + 1]);
-			}
-
-			for (unsigned int i = 8; i < 15; i++) {
-				va.Add(verts[i]);
-				va.Add(verts[i + 1]);
-			}
-
-			Graphics::MaterialDescriptor desc;
-			m_aabbMat.Reset(RendererLocator::getRenderer()->CreateMaterial(desc));
-			m_aabbMat->diffuse = Color::GREEN;
-
-			//create buffer and upload data
-			Graphics::VertexBufferDesc vbd;
-			vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
-			vbd.attrib[0].format = Graphics::ATTRIB_FORMAT_FLOAT3;
-			vbd.numVertices = va.GetNumVerts();
-			vbd.usage = Graphics::BUFFER_USAGE_STATIC;
-			m_aabbVB.Reset(RendererLocator::getRenderer()->CreateVertexBuffer(vbd));
-			m_aabbVB->Populate(va);
-		}
-
-		m_state = RendererLocator::getRenderer()->CreateRenderState(Graphics::RenderStateDesc());
-	}
-
-	void Model::DrawAabb()
-	{
-		if (!m_collMesh) return;
-
-		if (!m_aabbVB.Valid()) {
-			CreateAabbVB();
-		}
-
-		RendererLocator::getRenderer()->DrawBuffer(m_aabbVB.Get(), m_state, m_aabbMat.Get(), Graphics::LINE_SINGLE);
-	}
-
-	// Draw collision mesh as a wireframe overlay
-	void Model::DrawCollisionMesh()
-	{
-		PROFILE_SCOPED()
-		if (!m_collMesh) return;
-
-		if (!m_collisionMeshVB.Valid()) {
-			const std::vector<vector3f> &vertices = m_collMesh->GetGeomTreeVertices();
-			const Uint32 *indices = m_collMesh->GetGeomTreeIndices();
-			const unsigned int *triFlags = m_collMesh->GetGeomTreeTriFlags();
-			const unsigned int numIndices = m_collMesh->GetGeomTreeNumTris() * 3;
-
-			Graphics::VertexArray va(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE, numIndices * 3);
-			int trindex = -1;
-			for (unsigned int i = 0; i < numIndices; i++) {
-				if (i % 3 == 0)
-					trindex++;
-				const unsigned int flag = triFlags[trindex];
-				//show special geomflags in red
-				va.Add(vertices[indices[i]], flag > 0 ? Color::RED : Color::WHITE);
-			}
-
-			//create buffer and upload data
-			Graphics::VertexBufferDesc vbd;
-			vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
-			vbd.attrib[0].format = Graphics::ATTRIB_FORMAT_FLOAT3;
-			vbd.attrib[1].semantic = Graphics::ATTRIB_DIFFUSE;
-			vbd.attrib[1].format = Graphics::ATTRIB_FORMAT_UBYTE4;
-			vbd.numVertices = va.GetNumVerts();
-			vbd.usage = Graphics::BUFFER_USAGE_STATIC;
-			m_collisionMeshVB.Reset(RendererLocator::getRenderer()->CreateVertexBuffer(vbd));
-			m_collisionMeshVB->Populate(va);
-		}
-
-		//might want to add some offset
-		RendererLocator::getRenderer()->SetWireFrameMode(true);
-		Graphics::RenderStateDesc rsd;
-		rsd.cullMode = Graphics::CULL_NONE;
-		RendererLocator::getRenderer()->DrawBuffer(m_collisionMeshVB.Get(), RendererLocator::getRenderer()->CreateRenderState(rsd), Graphics::vtxColorMaterial);
-		RendererLocator::getRenderer()->SetWireFrameMode(false);
-	}
-
-	void Model::DrawAxisIndicators(std::vector<Graphics::Drawables::Line3D> &lines)
-	{
-		for (auto i = lines.begin(); i != lines.end(); ++i)
-			(*i).Draw(RendererLocator::getRenderer(), RendererLocator::getRenderer()->CreateRenderState(Graphics::RenderStateDesc()));
+		if (to_bool(m_debugFlags & DebugFlags::WIREFRAME))
+			RendererLocator::getRenderer()->SetWireFrameMode(false);
 	}
 
 	RefCountedPtr<CollMesh> Model::CreateCollisionMesh()
@@ -333,6 +203,21 @@ namespace SceneGraph {
 		m_collMesh = cv.CreateCollisionMesh();
 		m_boundingRadius = cv.GetBoundingRadius();
 		return m_collMesh;
+	}
+
+	RefCountedPtr<CollMesh> Model::GetCollisionMesh() const
+	{
+		return m_collMesh;
+	}
+
+	void Model::SetCollisionMesh(RefCountedPtr<CollMesh> collMesh)
+	{
+		m_collMesh.Reset(collMesh.Get());
+	}
+
+	RefCountedPtr<Group> Model::GetRoot()
+	{
+		return m_root;
 	}
 
 	RefCountedPtr<Graphics::Material> Model::GetMaterialByName(const std::string &name) const
@@ -349,13 +234,13 @@ namespace SceneGraph {
 		return m_materials.at(Clamp(i, 0, int(m_materials.size()) - 1)).second;
 	}
 
-	MatrixTransform *const Model::GetTagByIndex(const unsigned int i) const
+	const MatrixTransform *Model::GetTagByIndex(const unsigned int i) const
 	{
 		if (m_tags.empty() || i > m_tags.size() - 1) return 0;
 		return m_tags.at(i);
 	}
 
-	MatrixTransform *const Model::FindTagByName(const std::string &name) const
+	const MatrixTransform *Model::FindTagByName(const std::string &name) const
 	{
 		for (TagContainer::const_iterator it = m_tags.begin();
 			 it != m_tags.end();
@@ -372,7 +257,7 @@ namespace SceneGraph {
 			 it != m_tags.end();
 			 ++it) {
 			assert(!(*it)->GetName().empty()); //tags must have a name
-			if (starts_with((*it)->GetName(), name)) {
+			if (stringUtils::starts_with((*it)->GetName(), name)) {
 				outNameMTs.push_back((*it));
 			}
 		}
@@ -419,7 +304,7 @@ namespace SceneGraph {
 
 	std::vector<Mount> Model::GetGunTags() const {
 		std::vector<Mount> mounts = m_mounts;
-		return std::move(mounts);
+		return mounts;
 	}
 
 	void Model::ClearDecals()
@@ -457,19 +342,19 @@ namespace SceneGraph {
 		return false;
 	}
 
-	Animation *Model::FindAnimation(const std::string &name) const
+	Animation *Model::FindAnimation(const std::string &name)
 	{
-		for (AnimationContainer::const_iterator anim = m_animations.begin(); anim != m_animations.end(); ++anim) {
-			if ((*anim)->GetName() == name) return (*anim);
+		for (Animation &anim : m_animations) {
+			if (anim.GetName() == name) return &anim;
 		}
-		return 0;
+		return nullptr;
 	}
 
 	void Model::UpdateAnimations()
 	{
 		// XXX WIP. Assuming animations are controlled manually by SetProgress.
-		for (AnimationContainer::iterator anim = m_animations.begin(); anim != m_animations.end(); ++anim)
-			(*anim)->Interpolate();
+		for (Animation &anim : m_animations)
+			anim.Interpolate();
 	}
 
 	void Model::SetThrust(const vector3f &lin, const vector3f &ang)
@@ -559,7 +444,7 @@ namespace SceneGraph {
 
 		Json animationArray = Json::array(); // Create JSON array to contain animation data.
 		for (auto i : m_animations)
-			animationArray.push_back(i->GetProgress());
+			animationArray.push_back(i.GetProgress());
 		modelObj["animations"] = animationArray; // Add animation array to model object.
 
 		modelObj["cur_pattern_index"] = m_curPatternIndex;
@@ -596,11 +481,12 @@ namespace SceneGraph {
 			assert(m_animations.size() == animationArray.size());
 			unsigned int arrayIndex = 0;
 			for (auto i : m_animations)
-				i->SetProgress(animationArray[arrayIndex++]);
+				i.SetProgress(animationArray[arrayIndex++]);
 			UpdateAnimations();
 
 			SetPattern(modelObj["cur_pattern_index"]);
 		} catch (Json::type_error &) {
+			Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 			throw SavedGameCorruptException();
 		}
 	}
@@ -613,7 +499,7 @@ namespace SceneGraph {
 		}
 
 		//check decal materials
-		for (Uint32 i = 0; i < MAX_DECAL_MATERIALS; i++) {
+		for (uint32_t i = 0; i < MAX_DECAL_MATERIALS; i++) {
 			if (m_decalMaterials[i].Valid() && m_decalMaterials[i].Get() == mat)
 				return stringf("decal_%0{u}", i + 1);
 		}
@@ -621,57 +507,25 @@ namespace SceneGraph {
 		return "unknown";
 	}
 
-	void Model::AddAxisIndicators(const std::vector<MatrixTransform *> &mts, std::vector<Graphics::Drawables::Line3D> &lines)
-	{
-		for (std::vector<MatrixTransform *>::const_iterator i = mts.begin(); i != mts.end(); ++i) {
-			const matrix4x4f &trans = (*i)->GetTransform();
-			const vector3f pos = trans.GetTranslate();
-			const matrix3x3f &orient = trans.GetOrient();
-			const vector3f x = orient.VectorX().Normalized();
-			const vector3f y = orient.VectorY().Normalized();
-			const vector3f z = orient.VectorZ().Normalized();
-
-			Graphics::Drawables::Line3D lineX;
-			lineX.SetStart(pos);
-			lineX.SetEnd(pos + x);
-			lineX.SetColor(Color::RED);
-
-			Graphics::Drawables::Line3D lineY;
-			lineY.SetStart(pos);
-			lineY.SetEnd(pos + y);
-			lineY.SetColor(Color::GREEN);
-
-			Graphics::Drawables::Line3D lineZ;
-			lineZ.SetStart(pos);
-			lineZ.SetEnd(pos + z);
-			lineZ.SetColor(Color::BLUE);
-
-			lines.push_back(lineX);
-			lines.push_back(lineY);
-			lines.push_back(lineZ);
-		}
-	}
-
-	void Model::SetDebugFlags(Uint32 flags)
+	void Model::SetDebugFlags(DebugFlags flags)
 	{
 		m_debugFlags = flags;
-
-		if (m_debugFlags & SceneGraph::Model::DEBUG_TAGS && m_tagPoints.empty()) {
-			std::vector<MatrixTransform *> mts;
-			FindTagsByStartOfName("tag_", mts);
-			AddAxisIndicators(mts, m_tagPoints);
-		}
-
-		if (m_debugFlags & SceneGraph::Model::DEBUG_DOCKING && m_dockingPoints.empty()) {
-			std::vector<MatrixTransform *> mts;
-			FindTagsByStartOfName("entrance_", mts);
-			AddAxisIndicators(mts, m_dockingPoints);
-			FindTagsByStartOfName("loc_", mts);
-			AddAxisIndicators(mts, m_dockingPoints);
-			FindTagsByStartOfName("exit_", mts);
-			AddAxisIndicators(mts, m_dockingPoints);
+		if (to_bool(m_debugFlags & SceneGraph::DebugFlags::NONE)) {
+			m_modelDebug.reset();
+		} else {
+			if (!m_modelDebug) {
+				m_modelDebug.reset(new ModelDebug(this, m_debugFlags));
+			} else {
+				m_modelDebug->UpdateFlags(m_debugFlags);
+			}
 		}
 	}
 
-} // namespace SceneGraph
+	void Model::SetCentralCylinder(std::unique_ptr<CSG_CentralCylinder> centralcylinder) {
+		m_centralCylinder = std::move(centralcylinder);
+	}
 
+	void Model::AddBox(std::unique_ptr<CSG_Box> box) {
+		m_Boxes.push_back(*box.get());
+	}
+} // namespace SceneGraph

@@ -5,10 +5,10 @@
 #define GALAXYGENERATOR_H
 
 #include "Galaxy.h"
-#include "RefCounted.h"
 #include "Sector.h"
 #include "StarSystem.h"
 #include "SystemPath.h"
+#include "libs/RefCounted.h"
 #include <list>
 #include <string>
 
@@ -63,7 +63,7 @@ public:
 	};
 
 private:
-	GalaxyGenerator(const std::string &name, Version version = LAST_VERSION) :
+	explicit GalaxyGenerator(const std::string &name, Version version = LAST_VERSION) :
 		m_name(name),
 		m_version(version) {}
 

@@ -4,7 +4,6 @@
 #include "ShipCockpit.h"
 
 #include "CameraController.h"
-#include "Easing.h"
 #include "InGameViews.h"
 #include "InGameViewsLocator.h"
 #include "ModelCache.h"
@@ -12,8 +11,15 @@
 #include "WorldView.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
+#include "libs/Easing.h"
 
 static const char *DEFAULT_COCKPIT_NAME = "default_cockpit";
+
+static float calculateSignedForwardVelocity(const vector3d &normalized_forward, const vector3d &velocity)
+{
+	float velz_cos = velocity.Dot(normalized_forward);
+	return (velz_cos * normalized_forward).Length() * (velz_cos < 0.0 ? -1.0 : 1.0);
+}
 
 ShipCockpit::ShipCockpit(const std::string &modelName) :
 	m_shipDir(0.0),
@@ -81,7 +87,7 @@ void ShipCockpit::Update(const Player *player, float timeStep)
 	}
 
 	//---------------------------------------- Acceleration
-	float cur_vel = CalculateSignedForwardVelocity(-cur_dir, player->GetVelocity()); // Forward is -Z
+	float cur_vel = calculateSignedForwardVelocity(-cur_dir, player->GetVelocity()); // Forward is -Z
 	float gforce = Clamp(floorf(((fabs(cur_vel) - m_shipVel) / timeStep) / 9.8f), -COCKPIT_MAX_GFORCE, COCKPIT_MAX_GFORCE);
 	if (fabs(cur_vel) > 500000.0f || // Limit gforce measurement so we don't get astronomical fluctuations
 		fabs(gforce - m_gForce) > 100.0) { // Smooth out gforce one frame spikes, sometimes happens when hitting max speed due to the thrust limiters
@@ -210,11 +216,5 @@ void ShipCockpit::OnActivated(const Player *player)
 	m_yaw = player->GetOrient().VectorY().Normalized();
 	m_shipDir = m_dir;
 	m_shipYaw = m_yaw;
-	m_shipVel = CalculateSignedForwardVelocity(-m_shipDir, player->GetVelocity());
-}
-
-float ShipCockpit::CalculateSignedForwardVelocity(const vector3d &normalized_forward, const vector3d &velocity)
-{
-	float velz_cos = velocity.Dot(normalized_forward);
-	return (velz_cos * normalized_forward).Length() * (velz_cos < 0.0 ? -1.0 : 1.0);
+	m_shipVel = calculateSignedForwardVelocity(-m_shipDir, player->GetVelocity());
 }

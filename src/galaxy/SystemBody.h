@@ -5,13 +5,15 @@
 #define SYSTEMBODY_H
 
 #include "Color.h"
-#include "IterationProxy.h"
 #include "Orbit.h"
-#include "RefCounted.h"
 #include "galaxy/GalaxyEnums.h"
 #include "galaxy/RingStyle.h"
 #include "galaxy/SystemPath.h"
-#include "gameconsts.h"
+#include "libs/IterationProxy.h"
+#include "libs/RefCounted.h"
+#include "libs/gameconsts.h"
+
+#include <cstdint>
 
 class StarSystem;
 
@@ -35,7 +37,7 @@ public:
 	bool IsMoon() const;
 
 	bool HasChildren() const { return !m_children.empty(); }
-	Uint32 GetNumChildren() const { return static_cast<Uint32>(m_children.size()); }
+	uint32_t GetNumChildren() const { return static_cast<uint32_t>(m_children.size()); }
 	IterationProxy<std::vector<SystemBody *>> GetChildren() { return MakeIterationProxy(m_children); }
 	const IterationProxy<const std::vector<SystemBody *>> GetChildren() const { return MakeIterationProxy(m_children); }
 
@@ -114,7 +116,7 @@ public:
 	inline const std::string &GetHeightMapFilename() const { return m_heightMapFilename; }
 	unsigned int GetHeightMapFractal() const { return m_heightMapFractal; }
 
-	Uint32 GetSeed() const { return m_seed; }
+	uint32_t GetSeed() const { return m_seed; }
 
 	fixed GetMetallicityAsFixed() const { return m_metallicity; }
 	double GetMetallicity() const { return m_metallicity.ToDouble(); }
@@ -176,7 +178,7 @@ private:
 
 	SystemPath m_path;
 	Orbit m_orbit;
-	Uint32 m_seed; // Planet.cpp can use to generate terrain
+	uint32_t m_seed; // Planet.cpp can use to generate terrain
 	std::string m_name;
 	fixed m_radius; // in earth radii for planets, sol radii for stars. equatorial radius in case of bodies which are flattened at the poles
 	fixed m_aspectRatio; // ratio between equatorial and polar radius for bodies with eqatorial bulges

@@ -4,7 +4,7 @@
 #ifndef _GUIISELECTABLE_H
 #define _GUIISELECTABLE_H
 
-#include "libs.h"
+#include "libs/libs.h"
 
 namespace Gui {
 	class ISelectable {

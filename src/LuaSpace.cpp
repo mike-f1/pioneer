@@ -11,13 +11,13 @@
 #include "LuaObject.h"
 #include "LuaUtils.h"
 #include "LuaVector.h"
-#include "MathUtil.h"
 #include "Planet.h"
 #include "Ship.h"
 #include "Space.h"
 #include "SpaceStation.h"
 #include "galaxy/StarSystem.h"
 #include "galaxy/SystemBody.h"
+#include "libs/MathUtil.h"
 
 /*
  * Interface: Space
@@ -56,7 +56,7 @@ static Body *_maybe_wrap_ship_with_cloud(Ship *ship, SystemPath *path, double du
 	if (!path) return ship;
 
 	HyperspaceCloud *cloud = new HyperspaceCloud(ship, due, true);
-	ship->SetHyperspaceDest(path);
+	ship->SetHyperspaceDest(*path);
 	ship->SetFlightState(Ship::HYPERSPACE);
 
 	return cloud;
@@ -595,7 +595,7 @@ static int l_space_get_body(lua_State *l)
 	SystemPath path = GameLocator::getGame()->GetSpace()->GetStarSystem()->GetPath();
 	path.bodyIndex = id;
 
-	Body *b = GameLocator::getGame()->GetSpace()->FindBodyForPath(&path);
+	Body *b = GameLocator::getGame()->GetSpace()->FindBodyForPath(path);
 	if (!b) return 0;
 
 	LuaObject<Body>::PushToLua(b);

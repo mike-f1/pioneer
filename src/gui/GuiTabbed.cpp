@@ -3,7 +3,7 @@
 
 #include "GuiTabbed.h"
 #include "Gui.h"
-#include "libs.h"
+#include "libs/libs.h"
 
 #include "graphics/RendererLocator.h"
 

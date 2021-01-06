@@ -10,11 +10,11 @@
  */
 #include "MaterialGL.h"
 #include "Program.h"
+#include "graphics/ShieldRenderParameters.h"
 
 namespace Graphics {
 
 	namespace OGL {
-		static const Sint32 MAX_SHIELD_HITS = 5; // Also defined in Ship.h
 
 		class ShieldProgram : public Program {
 		public:

@@ -7,9 +7,9 @@
 #include "Event.h"
 #include "Point.h"
 #include "PropertiedObject.h"
-#include "RefCounted.h"
 #include "WidgetSet.h"
-#include "libs.h"
+#include "libs/RefCounted.h"
+#include "libs/libs.h"
 #include <climits>
 #include <set>
 
@@ -116,7 +116,7 @@ namespace UI {
 
 		// size control flags let a widget tell its container how it wants to be
 		// sized when it can't get its preferred size
-		Uint32 GetSizeControlFlags() const { return m_sizeControlFlags; }
+		uint32_t GetSizeControlFlags() const { return m_sizeControlFlags; }
 		enum SizeControl { // <enum scope='UI::Widget' name=UISizeControl public>
 			NO_WIDTH = 0x01, // do not contribute preferred width to the layout
 			NO_HEIGHT = 0x02, // do not contribute preferred height to the layout
@@ -271,7 +271,7 @@ namespace UI {
 		static inline Point SizeAdd(const Point &a, const Point &b) { return Point(SizeAdd(a.x, b.x), SizeAdd(a.y, b.y)); }
 
 		// set size control flags. no flags by default
-		void SetSizeControlFlags(Uint32 flags) { m_sizeControlFlags = flags; }
+		void SetSizeControlFlags(uint32_t flags) { m_sizeControlFlags = flags; }
 
 		// set the active area. defaults to the size allocated by the container
 		void SetActiveArea(const Point &activeArea, const Point &activeOffset = Point());
@@ -416,7 +416,7 @@ namespace UI {
 		Point m_position;
 		Point m_size;
 
-		Uint32 m_sizeControlFlags;
+		uint32_t m_sizeControlFlags;
 
 		Point m_drawOffset;
 

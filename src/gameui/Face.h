@@ -5,22 +5,28 @@
 #define GAMEUI_FACE_H
 
 #include "FaceParts.h"
-#include "SmartPtr.h"
-#include "graphics/Drawables.h"
-#include "graphics/Texture.h"
+#include "libs/SmartPtr.h"
 #include "ui/Context.h"
+
+namespace Graphics {
+	namespace Drawables {
+		class TexturedQuad;
+	}
+	class Material;
+	class Texture;
+}
 
 namespace GameUI {
 
 	class Face : public UI::Single {
 	public:
-		Face(UI::Context *context, FaceParts::FaceDescriptor& face, Uint32 seed = 0);
+		Face(UI::Context *context, FaceParts::FaceDescriptor& face, uint32_t seed = 0);
 
 		virtual UI::Point PreferredSize();
 		virtual void Layout();
 		virtual void Draw();
 
-		Face *SetHeightLines(Uint32 lines);
+		Face *SetHeightLines(uint32_t lines);
 
 		enum Flags { // <enum scope='GameUI::Face' name=GameUIFaceFlags public>
 			RAND = 0,
@@ -34,7 +40,7 @@ namespace GameUI {
 	private:
 		UI::Point m_preferredSize;
 
-		Uint32 m_seed;
+		uint32_t m_seed;
 
 		static RefCountedPtr<Graphics::Material> s_material;
 

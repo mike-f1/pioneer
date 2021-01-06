@@ -8,13 +8,17 @@
 #include "Shields.h"
 #include "graphics/Drawables.h"
 #include "graphics/Texture.h"
-#include "libs.h"
-#include "scenegraph/SceneGraph.h"
+#include "libs/libs.h"
 #include "ui/Context.h"
+
+namespace SceneGraph {
+	class Animation;
+	class Model;
+}
 
 class ModelViewer {
 public:
-	ModelViewer(LuaManager *l);
+	explicit ModelViewer(LuaManager *l);
 	~ModelViewer();
 
 	static void Run(const std::string &modelName);

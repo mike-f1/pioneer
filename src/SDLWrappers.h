@@ -4,7 +4,7 @@
 #ifndef _SDLWRAPPERS_H
 #define _SDLWRAPPERS_H
 
-#include "SmartPtr.h"
+#include "libs/SmartPtr.h"
 #include <SDL_surface.h>
 #include <string>
 

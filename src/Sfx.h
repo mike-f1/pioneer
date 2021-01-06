@@ -5,8 +5,9 @@
 #define _SFX_H
 
 #include "FrameId.h"
-#include "graphics/Material.h"
 #include "JsonFwd.h"
+#include "libs/vector3.h"
+#include "libs/vector2.h"
 
 #include <deque>
 
@@ -14,7 +15,9 @@ class Body;
 class Frame;
 
 namespace Graphics {
+	class Material;
 	class RenderState;
+	enum class EffectType;
 }
 
 enum SFX_TYPE {
@@ -30,7 +33,6 @@ public:
 	Sfx() = delete;
 	Sfx(const vector3d &pos, const vector3d &vel, const float speed, const SFX_TYPE type);
 	Sfx(const Json &jsonObj);
-	Sfx(const Sfx &);
 	void SetPosition(const vector3d &p);
 	const vector3d &GetPosition() const { return m_pos; }
 
@@ -72,21 +74,19 @@ public:
 
 	SfxManager();
 
+private:
+	template <typename... Args>
+	void AddInstance(SFX_TYPE type, Args&&... args) { m_instances[type].emplace_back(std::forward<Args>(args)...); }
+
+	void Cleanup();
 	size_t GetNumberInstances(const SFX_TYPE t) const { return m_instances[t].size(); }
 	Sfx &GetInstanceByIndex(const SFX_TYPE t, const size_t i) { return m_instances[t][i]; }
-	void AddInstance(Sfx &inst) { return m_instances[inst.m_type].push_back(inst); }
-	void Cleanup();
 
-private:
 	// types
 	struct MaterialData {
-		MaterialData() :
-			effect(Graphics::EFFECT_BILLBOARD),
-			num_textures(1),
-			num_imgs_wide(1),
-			coord_downscale(1.0f) {}
+		MaterialData();
 		Graphics::EffectType effect;
-		Uint32 num_textures;
+		uint32_t num_textures;
 		int num_imgs_wide;
 		float coord_downscale;
 	};

@@ -2,11 +2,15 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "FontCache.h"
+
 #include "FileSystem.h"
 #include "Lang.h"
 #include "graphics/RendererLocator.h"
 #include "gui/GuiScreen.h"
 #include "text/TextureFont.h"
+
+FontCache::~FontCache()
+{}
 
 RefCountedPtr<Text::TextureFont> FontCache::GetTextureFont(const std::string &name)
 {

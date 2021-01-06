@@ -7,8 +7,12 @@
  * Animation channel affecting a single transform node
  */
 #include "AnimationKey.h"
-#include "MatrixTransform.h"
+
+#include <vector>
+
 namespace SceneGraph {
+
+	class MatrixTransform;
 
 	class AnimationChannel {
 	public:

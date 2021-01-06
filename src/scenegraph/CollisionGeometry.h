@@ -11,9 +11,9 @@
 
 #include "Node.h"
 
-namespace Graphics {
-	class Surface;
-}
+#include "libs/vector3.h"
+#include <vector>
+#include <cstdint>
 
 class GeomTree;
 class Geom;
@@ -21,7 +21,7 @@ class Geom;
 namespace SceneGraph {
 	class CollisionGeometry : public Node {
 	public:
-		CollisionGeometry(const std::vector<vector3f> &, const std::vector<Uint32> &, unsigned int flag);
+		CollisionGeometry(const std::vector<vector3f> &, const std::vector<uint32_t> &, unsigned int flag);
 		CollisionGeometry(const CollisionGeometry &, NodeCopyCache *cache = 0);
 		virtual Node *Clone(NodeCopyCache *cache = 0) override;
 		virtual const char *GetTypeName() const override { return "CollisionGeometry"; }
@@ -30,7 +30,7 @@ namespace SceneGraph {
 		static CollisionGeometry *Load(NodeDatabase &);
 
 		const std::vector<vector3f> &GetVertices() const { return m_vertices; }
-		const std::vector<Uint32> &GetIndices() const { return m_indices; }
+		const std::vector<uint32_t> &GetIndices() const { return m_indices; }
 		unsigned int GetTriFlag() const { return m_triFlag; }
 
 		bool IsDynamic() const { return m_dynamic; }
@@ -47,9 +47,9 @@ namespace SceneGraph {
 		~CollisionGeometry();
 
 	private:
-		void CopyData(const std::vector<vector3f> &, const std::vector<Uint32> &);
+		void CopyData(const std::vector<vector3f> &, const std::vector<uint32_t> &);
 		std::vector<vector3f> m_vertices;
-		std::vector<Uint32> m_indices;
+		std::vector<uint32_t> m_indices;
 		unsigned int m_triFlag; //only one per node
 		bool m_dynamic;
 

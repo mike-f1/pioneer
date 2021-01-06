@@ -4,8 +4,16 @@
 #ifndef _GEOM_H
 #define _GEOM_H
 
-#include "../matrix4x4.h"
-#include "../vector3.h"
+#include <memory>
+#include <vector>
+
+#include "CollisionCallbackFwd.h"
+#include "libs/matrix4x4.h"
+#include "libs/vector3.h"
+
+#include "CSGDefinitions.h"
+
+static constexpr unsigned MAX_CONTACTS = 8;
 
 struct CollisionContact;
 class GeomTree;
@@ -16,6 +24,7 @@ struct BVHNode;
 class Geom {
 public:
 	Geom(const GeomTree *geomtree, const matrix4x4d &m, const vector3d &pos, void *data);
+
 	void MoveTo(const matrix4x4d &m);
 	void MoveTo(const matrix4x4d &m, const vector3d &pos);
 	inline const matrix4x4d &GetInvTransform() const { return m_invOrient; }
@@ -26,8 +35,8 @@ public:
 	inline void Disable() { m_active = false; }
 	inline bool IsEnabled() const { return m_active; }
 	inline const GeomTree *GetGeomTree() const { return m_geomtree; }
-	void Collide(Geom *b, void (*callback)(CollisionContact *)) const;
-	void CollideSphere(Sphere &sphere, void (*callback)(CollisionContact *)) const;
+	void Collide(Geom *b, CollisionContactVector &accum) const;
+	void CollideSphere(Sphere &sphere, CollisionContactVector &accum) const;
 	inline void *GetUserData() const { return m_data; }
 	inline void SetMailboxIndex(int idx) { m_mailboxIndex = idx; }
 	inline int GetMailboxIndex() const { return m_mailboxIndex; }
@@ -36,10 +45,16 @@ public:
 
 	matrix4x4d m_animTransform;
 
+	void SetCentralCylinder(std::unique_ptr<CSG_CentralCylinder> centralcylinder);
+	void AddBox(std::unique_ptr<CSG_Box> box);
+
+	bool CheckCollisionCylinder(Geom* b, CollisionContactVector &accum);
+	bool CheckBoxes(Geom* b, CollisionContactVector &accum);
+
 private:
-	void CollideEdgesWithTrisOf(int &maxContacts, const Geom *b, const matrix4x4d &transTo, void (*callback)(CollisionContact *)) const;
+	void CollideEdgesWithTrisOf(int &maxContacts, const Geom *b, const matrix4x4d &transTo, CollisionContactVector &accum) const;
 	void CollideEdgesTris(int &maxContacts, const BVHNode *edgeNode, const matrix4x4d &transToB,
-		const Geom *b, const BVHNode *btriNode, void (*callback)(CollisionContact *)) const;
+		const Geom *b, const BVHNode *btriNode, CollisionContactVector &accum) const;
 
 	// double-buffer position so we can keep previous position
 	matrix4x4d m_orient, m_invOrient;
@@ -49,6 +64,9 @@ private:
 	int m_group;
 	int m_mailboxIndex; // used to avoid duplicate collisions
 	bool m_active;
+
+	std::vector<CSG_Box> m_Boxes;
+	std::unique_ptr<CSG_CentralCylinder> m_centralCylinder;
 };
 
 #endif /* _GEOM_H */

@@ -4,14 +4,14 @@
 #ifndef PIGUI_IMAGE_H
 #define PIGUI_IMAGE_H
 
-#include "RefCounted.h"
-#include "vector2.h"
-#include <SDL_stdinc.h>
+#include "libs/RefCounted.h"
+#include "libs/vector2.h"
+#include <cstdint>
 #include <string>
 
 namespace Graphics {
 	class Texture;
-};
+}
 
 namespace PiGUI {
 
@@ -19,7 +19,7 @@ namespace PiGUI {
 	public:
 		explicit Image(const std::string &filename);
 
-		Uint32 GetId();
+		uint32_t GetId();
 		vector2f GetSize();
 		vector2f GetUv();
 

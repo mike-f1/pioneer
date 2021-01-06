@@ -2,19 +2,27 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "Loader.h"
+
 #include "BinaryConverter.h"
+#include "CollMesh.h"
 #include "CollisionGeometry.h"
 #include "FileSystem.h"
+#include "Group.h"
 #include "LOD.h"
 #include "Parser.h"
-#include "SceneGraph.h"
-#include "scenegraph/Animation.h"
-#include "StringF.h"
+#include "Animation.h"
+#include "Label3D.h"
+#include "Model.h"
+#include "MatrixTransform.h"
+#include "libs/utils.h"
+#include "libs/StringF.h"
+#include "libs/stringUtils.h"
+#include "graphics/Material.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/RenderState.h"
 #include "graphics/TextureBuilder.h"
-#include "utils.h"
+#include "graphics/VertexBuffer.h"
 #include <assimp/material.h>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
@@ -127,6 +135,9 @@ namespace SceneGraph {
 	{
 	}
 
+	Loader::~Loader()
+	{}
+
 	Model *Loader::LoadModel(const std::string &filename)
 	{
 		PROFILE_SCOPED()
@@ -149,9 +160,9 @@ namespace SceneGraph {
 
 			//check it's the expected type
 			if (info.IsFile()) {
-				if (ends_with_ci(fpath, ".model")) { // store the path for ".model" files
+				if (stringUtils::ends_with_ci(fpath, ".model")) { // store the path for ".model" files
 					list_model.push_back(fpath);
-				} else if (m_loadSGMs & ends_with_ci(fpath, ".sgm")) { // store only the shortname for ".sgm" files.
+				} else if (m_loadSGMs & stringUtils::ends_with_ci(fpath, ".sgm")) { // store only the shortname for ".sgm" files.
 					list_sgm.push_back(info.GetName().substr(0, info.GetName().size() - 4));
 				}
 			}
@@ -403,10 +414,10 @@ namespace SceneGraph {
 		if (m_doLog) m_logMessages.push_back(msg);
 	}
 
-	void Loader::CheckAnimationConflicts(const Animation *anim, const std::vector<Animation *> &otherAnims)
+	void Loader::CheckAnimationConflicts(const Animation *anim, const std::vector<Animation> &otherAnims)
 	{
 		typedef std::vector<AnimationChannel>::const_iterator ChannelIterator;
-		typedef std::vector<Animation *>::const_iterator AnimIterator;
+		typedef std::vector<Animation>::const_iterator AnimIterator;
 
 		if (anim->m_channels.empty() || otherAnims.empty()) return;
 
@@ -414,7 +425,7 @@ namespace SceneGraph {
 		//that is not supported at this point
 		for (ChannelIterator chan = anim->m_channels.begin(); chan != anim->m_channels.end(); ++chan) {
 			for (AnimIterator other = otherAnims.begin(); other != otherAnims.end(); ++other) {
-				const Animation *otherAnim = (*other);
+				const Animation *otherAnim = &(*other);
 				if (otherAnim == anim)
 					continue;
 				for (ChannelIterator otherChan = otherAnim->m_channels.begin(); otherChan != otherAnim->m_channels.end(); ++otherChan) {
@@ -514,7 +525,7 @@ namespace SceneGraph {
 			RefCountedPtr<Graphics::VertexBuffer> vb(RendererLocator::getRenderer()->CreateVertexBuffer(vbd));
 
 			// huge meshes are split by the importer so this should not exceed 65K indices
-			std::vector<Uint32> indices;
+			std::vector<uint32_t> indices;
 			if (mesh->mNumFaces > 0) {
 				indices.reserve(mesh->mNumFaces * 3);
 				for (unsigned int f = 0; f < mesh->mNumFaces; f++) {
@@ -535,8 +546,8 @@ namespace SceneGraph {
 
 			//create buffer & copy
 			RefCountedPtr<Graphics::IndexBuffer> ib(RendererLocator::getRenderer()->CreateIndexBuffer(indices.size(), Graphics::BUFFER_USAGE_STATIC));
-			Uint32 *idxPtr = ib->Map(Graphics::BUFFER_MAP_WRITE);
-			for (Uint32 j = 0; j < indices.size(); j++)
+			uint32_t *idxPtr = ib->Map(Graphics::BUFFER_MAP_WRITE);
+			for (uint32_t j = 0; j < indices.size(); j++)
 				idxPtr[j] = indices[j];
 			ib->Unmap();
 
@@ -591,7 +602,7 @@ namespace SceneGraph {
 		if (animDefs.empty() || scene->mNumAnimations == 0) return;
 		if (scene->mNumAnimations > 1) Output("File has %d animations, treating as one animation\n", scene->mNumAnimations);
 
-		std::vector<Animation *> &animations = m_model->m_animations;
+		std::vector<Animation> &animations = m_model->m_animations;
 
 		for (AnimList::const_iterator def = animDefs.begin();
 			 def != animDefs.end();
@@ -660,7 +671,7 @@ namespace SceneGraph {
 						const aiQuaternion &airot = aikey.mValue;
 						if (in_range(aikey.mTime, defStart, defEnd)) {
 							const double t = aikey.mTime * secondsPerTick;
-							chan.rotationKeys.push_back(RotationKey(t, Quaternionf(airot.w, airot.x, airot.y, airot.z)));
+							chan.rotationKeys.push_back(RotationKey(t, quaternionf(airot.w, airot.x, airot.y, airot.z)));
 							start = std::min(start, t);
 							end = std::max(end, t);
 						}
@@ -711,8 +722,10 @@ namespace SceneGraph {
 			if (newAnim) {
 				if (animation->m_channels.empty())
 					delete animation;
-				else
-					animations.push_back(animation);
+				else {
+					animations.push_back(*animation);
+					delete animation;
+				}
 			}
 		}
 	}
@@ -757,7 +770,7 @@ namespace SceneGraph {
 		PROFILE_SCOPED()
 		if (!m_mostDetailedLod) return AddLog("Thruster outside highest LOD, ignored");
 
-		const bool linear = starts_with(name, "thruster_linear");
+		const bool linear = stringUtils::starts_with(name, "thruster_linear");
 
 		matrix4x4f transform = m;
 
@@ -802,26 +815,26 @@ namespace SceneGraph {
 		assert(geom->GetNumMeshes() == 1);
 		StaticGeometry::Mesh mesh = geom->GetMeshAt(0);
 
-		const Uint32 posOffs = mesh.vertexBuffer->GetDesc().GetOffset(Graphics::ATTRIB_POSITION);
-		const Uint32 stride = mesh.vertexBuffer->GetDesc().stride;
-		const Uint32 numVtx = mesh.vertexBuffer->GetDesc().numVertices;
-		const Uint32 numIdx = mesh.indexBuffer->GetSize();
+		const uint32_t posOffs = mesh.vertexBuffer->GetDesc().GetOffset(Graphics::ATTRIB_POSITION);
+		const uint32_t stride = mesh.vertexBuffer->GetDesc().stride;
+		const uint32_t numVtx = mesh.vertexBuffer->GetDesc().numVertices;
+		const uint32_t numIdx = mesh.indexBuffer->GetSize();
 
 		//copy vertex positions from buffer
 		std::vector<vector3f> pos;
 		pos.reserve(numVtx);
 
-		Uint8 *vtxPtr = mesh.vertexBuffer->Map<Uint8>(Graphics::BUFFER_MAP_READ);
-		for (Uint32 i = 0; i < numVtx; i++)
+		uint8_t *vtxPtr = mesh.vertexBuffer->Map<uint8_t>(Graphics::BUFFER_MAP_READ);
+		for (uint32_t i = 0; i < numVtx; i++)
 			pos.push_back(*reinterpret_cast<vector3f *>(vtxPtr + (i * stride) + posOffs));
 		mesh.vertexBuffer->Unmap();
 
 		//copy indices from buffer
-		std::vector<Uint32> idx;
+		std::vector<uint32_t> idx;
 		idx.reserve(numIdx);
 
-		Uint32 *idxPtr = mesh.indexBuffer->Map(Graphics::BUFFER_MAP_READ);
-		for (Uint32 i = 0; i < numIdx; i++)
+		uint32_t *idxPtr = mesh.indexBuffer->Map(Graphics::BUFFER_MAP_READ);
+		for (uint32_t i = 0; i < numIdx; i++)
 			idx.push_back(idxPtr[i]);
 		mesh.indexBuffer->Unmap();
 		RefCountedPtr<CollisionGeometry> cgeom(new CollisionGeometry(pos, idx, collFlag));
@@ -838,19 +851,19 @@ namespace SceneGraph {
 
 		//lights, and possibly other special nodes should be leaf nodes (without meshes)
 		if (node->mNumChildren == 0 && node->mNumMeshes == 0) {
-			if (starts_with(nodename, "navlight_")) {
+			if (stringUtils::starts_with(nodename, "navlight_")) {
 				CreateNavlight(nodename, accum * m);
-			} else if (starts_with(nodename, "thruster_")) {
+			} else if (stringUtils::starts_with(nodename, "thruster_")) {
 				CreateThruster(nodename, accum * m);
-			} else if (starts_with(nodename, "label_")) {
+			} else if (stringUtils::starts_with(nodename, "label_")) {
 				CreateLabel(parent, m);
-			} else if (starts_with(nodename, "tag_")) {
+			} else if (stringUtils::starts_with(nodename, "tag_")) {
 				m_model->AddTag(nodename, new MatrixTransform(accum * m));
-			} else if (starts_with(nodename, "entrance_")) {
+			} else if (stringUtils::starts_with(nodename, "entrance_")) {
 				m_model->AddTag(nodename, new MatrixTransform(m));
-			} else if (starts_with(nodename, "loc_")) {
+			} else if (stringUtils::starts_with(nodename, "loc_")) {
 				m_model->AddTag(nodename, new MatrixTransform(m));
-			} else if (starts_with(nodename, "exit_")) {
+			} else if (stringUtils::starts_with(nodename, "exit_")) {
 				m_model->AddTag(nodename, new MatrixTransform(m));
 			}
 			return;
@@ -863,11 +876,11 @@ namespace SceneGraph {
 		parent->SetName(nodename);
 
 		//nodes named collision_* are not added as renderable geometry
-		if (node->mNumMeshes == 1 && starts_with(nodename, "collision_")) {
+		if (node->mNumMeshes == 1 && stringUtils::starts_with(nodename, "collision_")) {
 			const unsigned int collflag = GetGeomFlagForNodeName(nodename);
 			RefCountedPtr<CollisionGeometry> cgeom = CreateCollisionGeometry(geoms.at(node->mMeshes[0]), collflag);
 			cgeom->SetName(nodename + "_cgeom");
-			cgeom->SetDynamic(starts_with(nodename, "collision_d"));
+			cgeom->SetDynamic(stringUtils::starts_with(nodename, "collision_d"));
 			parent->AddChild(cgeom.Get());
 			return;
 		}
@@ -876,7 +889,7 @@ namespace SceneGraph {
 		if (node->mNumMeshes > 0) {
 			//expecting decal_0X
 			unsigned int numDecal = 0;
-			if (starts_with(nodename, "decal_")) {
+			if (stringUtils::starts_with(nodename, "decal_")) {
 				numDecal = atoi(nodename.substr(7, 1).c_str());
 				if (numDecal > 4)
 					throw LoadingError("More than 4 different decals");
@@ -938,11 +951,11 @@ namespace SceneGraph {
 		if (scene->mNumMeshes == 0)
 			throw LoadingError("No geometry found");
 
-		std::vector<Uint32> indices;
+		std::vector<uint32_t> indices;
 		std::vector<vector3f> vertices;
-		Uint32 indexOffset = 0;
+		uint32_t indexOffset = 0;
 
-		for (Uint32 i = 0; i < scene->mNumMeshes; i++) {
+		for (uint32_t i = 0; i < scene->mNumMeshes; i++) {
 			aiMesh *mesh = scene->mMeshes[i];
 
 			//copy indices
@@ -994,13 +1007,13 @@ namespace SceneGraph {
 		m->FindTagsByStartOfName(test, mounts_founds);
 
 		std::map<std::string, std::vector<MatrixTransform *>> mounts_map;
-		std::for_each(std::begin(mounts_founds), std::end(mounts_founds), [&mounts_map](MatrixTransform *m) {
+		std::for_each(std::begin(mounts_founds), std::end(mounts_founds), [&mounts_map](MatrixTransform *mt) {
 			// pick only 2 digit (...which
-			std::string id = m->GetName().substr(13, 2);
+			std::string id = mt->GetName().substr(13, 2);
 			if (mounts_map.count(id) == 0) {
 				mounts_map[id] = {};
 			};
-			(mounts_map[id]).push_back(m);
+			(mounts_map[id]).push_back(mt);
 		});
 
 		m->m_mounts.clear();

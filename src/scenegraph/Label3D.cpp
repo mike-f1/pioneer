@@ -4,11 +4,14 @@
 #include "Label3D.h"
 
 #include "NodeVisitor.h"
+#include "graphics/Material.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/RenderState.h"
 #include "graphics/VertexArray.h"
 #include "graphics/VertexBuffer.h"
+
+#include "profiler/Profiler.h"
 
 namespace SceneGraph {
 

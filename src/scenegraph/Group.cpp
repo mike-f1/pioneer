@@ -2,10 +2,11 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "Group.h"
+
 #include "BaseLoader.h"
 #include "NodeCopyCache.h"
 #include "NodeVisitor.h"
-#include "utils.h"
+#include "libs/utils.h"
 
 namespace SceneGraph {
 

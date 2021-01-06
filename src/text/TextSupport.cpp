@@ -2,12 +2,13 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "TextSupport.h"
+
 #include <cassert>
 
 namespace Text {
 
 	// returns num bytes consumed, or 0 for end/bogus
-	int utf8_decode_char(Uint32 *chr, const char *src)
+	int utf8_decode_char(uint32_t *chr, const char *src)
 	{
 		unsigned int c = *(reinterpret_cast<const unsigned char *>(src));
 		if (!c) {
@@ -46,7 +47,7 @@ namespace Text {
 	//  buf: a character buffer, which must have space for at least 4 bytes
 	//       (i.e., assigning to buf[3] must be a valid operation)
 	//  returns: number of bytes in the encoded character
-	int utf8_encode_char(Uint32 chr, char buf[4])
+	int utf8_encode_char(uint32_t chr, char buf[4])
 	{
 		unsigned char *ubuf = reinterpret_cast<unsigned char *>(buf);
 		if (chr <= 0x7f) {

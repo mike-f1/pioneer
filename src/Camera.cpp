@@ -15,12 +15,16 @@
 #include "ShipCockpit.h"
 #include "galaxy/GalaxyEnums.h"
 #include "galaxy/SystemBody.h"
+#include "graphics/Material.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
+#include "graphics/Texture.h"
 #include "graphics/TextureBuilder.h"
 
 using namespace Graphics;
 
+// size of reserved space for shadows vector
+constexpr unsigned STD_SHADOWS_SIZE = 16;
 // if a body would render smaller than this many pixels, just ignore it
 static const float OBJECT_HIDDEN_PIXEL_THRESHOLD = 2.0f;
 
@@ -103,12 +107,15 @@ Camera::Camera(RefCountedPtr<CameraContext> context) :
 	m_context(context)
 {
 	Graphics::MaterialDescriptor desc;
-	desc.effect = Graphics::EFFECT_BILLBOARD;
+	desc.effect = Graphics::EffectType::BILLBOARD;
 	desc.textures = 1;
 
 	m_billboardMaterial.reset(RendererLocator::getRenderer()->CreateMaterial(desc));
 	m_billboardMaterial->texture0 = Graphics::TextureBuilder::Billboard("textures/planet_billboard.dds").GetOrCreateTexture(RendererLocator::getRenderer(), "billboard");
 }
+
+Camera::~Camera()
+{}
 
 static void position_system_lights(Frame *camFrame, Frame *frame, std::vector<Camera::LightSource> &lights)
 {
@@ -142,31 +149,31 @@ void Camera::Update()
 
 	// evaluate each body and determine if/where/how to draw it
 	m_sortedBodies.clear();
-	for (Body *b : GameLocator::getGame()->GetSpace()->GetBodies()) {
+	for (Body *body : GameLocator::getGame()->GetSpace()->GetBodies()) {
 		BodyAttrs attrs;
-		attrs.body = b;
+		attrs.body = body;
 		attrs.billboard = false; // false by default
 
 		// determine position and transform for draw
 		//		Frame::GetFrameTransform(b->GetFrame(), camFrame, attrs.viewTransform);		// doesn't use interp coords, so breaks in some cases
-		Frame *f = Frame::GetFrame(b->GetFrame());
+		Frame *f = Frame::GetFrame(body->GetFrame());
 		attrs.viewTransform = f->GetInterpOrientRelTo(camFrame);
 		attrs.viewTransform.SetTranslate(f->GetInterpPositionRelTo(camFrame));
-		attrs.viewCoords = attrs.viewTransform * b->GetInterpPosition();
+		attrs.viewCoords = attrs.viewTransform * body->GetInterpPosition();
 
 		// cull off-screen objects
-		double rad = b->GetClipRadius();
+		double rad = body->GetClipRadius();
 		if (!m_context->GetFrustum().TestPointInfinite(attrs.viewCoords, rad))
 			continue;
 
 		attrs.camDist = attrs.viewCoords.Length();
-		attrs.bodyFlags = b->GetFlags();
+		attrs.bodyFlags = body->GetFlags();
 
 		// approximate pixel width (disc diameter) of body on screen
 		const float pixSize = Graphics::GetScreenHeight() * 2.0 * rad / (attrs.camDist * Graphics::GetFovFactor());
 
 		// terrain objects are visible from distance but might not have any discernable features
-		if (b->IsType(Object::TERRAINBODY)) {
+		if (body->IsType(Object::TERRAINBODY)) {
 			if (pixSize < BILLBOARD_PIXEL_THRESHOLD) {
 				attrs.billboard = true;
 
@@ -176,18 +183,18 @@ void Camera::Update()
 
 				// limit the minimum billboard size for planets so they're always a little visible
 				attrs.billboardSize = std::max(1.0f, pixSize);
-				if (b->IsType(Object::STAR)) {
-					attrs.billboardColor = GalaxyEnums::starRealColors[b->GetSystemBody()->GetType()];
-				} else if (b->IsType(Object::PLANET)) {
+				if (body->IsType(Object::STAR)) {
+					attrs.billboardColor = GalaxyEnums::starRealColors[body->GetSystemBody()->GetType()];
+				} else if (body->IsType(Object::PLANET)) {
 					// XXX this should incorporate some lighting effect
 					// (ie, colour of the illuminating star(s))
-					attrs.billboardColor = b->GetSystemBody()->GetAlbedo();
+					attrs.billboardColor = body->GetSystemBody()->GetAlbedo();
 				} else {
 					attrs.billboardColor = Color::WHITE;
 				}
 
 				// this should always be the main star in the system - except for the star itself!
-				if (!m_lightSources.empty() && !b->IsType(Object::STAR)) {
+				if (!m_lightSources.empty() && !body->IsType(Object::STAR)) {
 					const Graphics::Light &light = m_lightSources[0].GetLight();
 					attrs.billboardColor *= light.GetDiffuse(); // colour the billboard a little with the Starlight
 				}
@@ -247,7 +254,7 @@ void Camera::Draw(const Body *excludeBody, ShipCockpit *cockpit)
 				//go through all lights to calculate something resembling light intensity
 				float intensity = 0.f;
 				const Body *pBody = GameLocator::getGame()->GetPlayer();
-				for (Uint32 i = 0; i < m_lightSources.size(); i++) {
+				for (unsigned i = 0; i < m_lightSources.size(); i++) {
 					// Set up data for eclipses. All bodies are assumed to be spheres.
 					const LightSource &it = m_lightSources[i];
 					const vector3f lightDir(it.GetLight().GetPosition().Normalized());
@@ -301,12 +308,14 @@ void Camera::Draw(const Body *excludeBody, ShipCockpit *cockpit)
 		cockpit->RenderCockpit(this, camFrameId);
 }
 
-void Camera::CalcShadows(const int lightNum, const Body *b, std::vector<Shadow> &shadowsOut) const
+ const std::vector<Camera::Shadow> Camera::CalcShadows(const int lightNum, const Body *b) const
 {
+	 std::vector<Shadow> shadowsOut;
+	 shadowsOut.reserve(STD_SHADOWS_SIZE);
 	// Set up data for eclipses. All bodies are assumed to be spheres.
 	const Body *lightBody = m_lightSources[lightNum].GetBody();
 	if (!lightBody)
-		return;
+		return {};
 
 	const double lightRadius = lightBody->GetPhysRadius();
 	const vector3d bLightPos = lightBody->GetPositionRelTo(b);
@@ -349,10 +358,10 @@ void Camera::CalcShadows(const int lightNum, const Body *b, std::vector<Shadow> 
 		const vector3d projectedCentre = (b2pos - perpDist * lightDir) / bRadius;
 		if (projectedCentre.Length() < 1 + srad + lrad) {
 			// some part of b is (partially) eclipsed
-			Camera::Shadow shadow = { projectedCentre, static_cast<float>(srad), static_cast<float>(lrad) };
-			shadowsOut.push_back(shadow);
+			shadowsOut.emplace_back(projectedCentre, static_cast<float>(srad), static_cast<float>(lrad));
 		}
 	}
+	return shadowsOut;
 }
 
 float discCovered(const float dist, const float rad)
@@ -385,8 +394,8 @@ static std::vector<Camera::Shadow> shadows;
 float Camera::ShadowedIntensity(const int lightNum, const Body *b) const
 {
 	shadows.clear();
-	shadows.reserve(16);
-	CalcShadows(lightNum, b, shadows);
+	shadows.reserve(STD_SHADOWS_SIZE);
+	shadows = CalcShadows(lightNum, b);
 	float product = 1.0;
 	for (std::vector<Camera::Shadow>::const_iterator it = shadows.begin(), itEnd = shadows.end(); it != itEnd; ++it)
 		product *= 1.0 - discCovered(it->centre.Length() / it->lrad, it->srad / it->lrad);
@@ -394,18 +403,17 @@ float Camera::ShadowedIntensity(const int lightNum, const Body *b) const
 }
 
 // PrincipalShadows(b,n): returns the n biggest shadows on b in order of size
-void Camera::PrincipalShadows(const Body *b, const int n, std::vector<Shadow> &shadowsOut) const
+std::vector<Camera::Shadow> Camera::PrincipalShadows(const Body *b, const int n) const
 {
+	std::vector<Shadow> shadowsOut;
 	shadows.clear();
-	shadows.reserve(16);
+	shadows.reserve(STD_SHADOWS_SIZE);
 	for (size_t i = 0; i < 4 && i < m_lightSources.size(); i++) {
-		CalcShadows(i, b, shadows);
+		shadows = CalcShadows(i, b);
 	}
 	shadowsOut.reserve(shadows.size());
 	std::sort(shadows.begin(), shadows.end());
-	std::vector<Shadow>::reverse_iterator it = shadows.rbegin(), itREnd = shadows.rend();
-	for (int i = 0; i < n; i++) {
-		if (it == itREnd) break;
-		shadowsOut.push_back(*(it++));
-	}
+
+	std::reverse_copy(begin(shadows), end(shadows), begin(shadowsOut));
+	return shadowsOut;
 }

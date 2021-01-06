@@ -12,33 +12,38 @@
 #include "GZipFormat.h"
 #include "InGameViews.h"
 #include "InGameViewsLocator.h"
+#include "input/Input.h"
+#include "input/InputLocator.h"
 #include "Player.h"
 #include "Space.h"
 #include "galaxy/StarSystem.h"
-#include "utils.h"
+#include "libs/utils.h"
 
-static const int s_saveVersion = 89;
+static const int s_saveVersion = 90;
 
-void GameState::MakeNewGame(const SystemPath &path,
+void GameStateStatic::MakeNewGame(const SystemPath &path,
 		const double startDateTime,
-		const unsigned int sectorRadius)
+		const unsigned int sectorRadius_)
 {
 	Output("Starting new game at (%i;%i;%i;%i;%i)\n", path.sectorX, path.sectorY, path.sectorZ, path.systemIndex, path.bodyIndex);
-	Game *game = new Game(path, startDateTime, sectorRadius);
+	Game *game = new Game(path, startDateTime, sectorRadius_);
 
-	// TODO: Before setting InGameViews because it seems there some
+	// TODO: Set locator before InGameViews because it seems there some
 	// calls to GameLocator during initialization... :P
 	GameLocator::provideGame(game);
 
+	InputLocator::getInput()->InitGame();
+
 	// Sub optimal: need a better way to couple inGameViews to game
-	InGameViewsLocator::NewInGameViews(new InGameViews(game, path, sectorRadius));
+	InGameViewsLocator::NewInGameViews(new InGameViews(game, path, sectorRadius_));
+
 	// Here because 'l_game_attr_player' would have
 	// a player to be pushed on Lua VM through GameLocator,
 	// but that is not yet set in a ctor
 	game->EmitPauseState(game->IsPaused());
 }
 
-Json GameState::LoadGameToJson(const std::string &filename)
+Json GameStateStatic::LoadGameToJson(const std::string &filename)
 {
 	Json rootNode = JsonUtils::LoadJsonSaveFile(FileSystem::JoinPathBelow(GameConfSingleton::GetSaveDir(), filename), FileSystem::userFiles);
 	if (!rootNode.is_object()) {
@@ -52,7 +57,7 @@ Json GameState::LoadGameToJson(const std::string &filename)
 	return rootNode;
 }
 
-void GameState::LoadGame(const std::string &filename)
+void GameStateStatic::LoadGame(const std::string &filename)
 {
 	Output("Game::LoadGame('%s')\n", filename.c_str());
 
@@ -73,6 +78,9 @@ void GameState::LoadGame(const std::string &filename)
 
 	try {
 		 game = new Game(rootNode, sectorRadius);
+
+		InputLocator::getInput()->InitGame();
+
 		// Sub optimal: need a better way to couple inGameViews to game
 		const SystemPath &path = game->GetSpace()->GetStarSystem()->GetPath();
 		InGameViewsLocator::NewInGameViews(new InGameViews(rootNode, game, path, sectorRadius + 2));
@@ -85,7 +93,7 @@ void GameState::LoadGame(const std::string &filename)
 	GameLocator::provideGame(game);
 }
 
-bool GameState::CanLoadGame(const std::string &filename)
+bool GameStateStatic::CanLoadGame(const std::string &filename)
 {
 	auto file = FileSystem::userFiles.ReadFile(FileSystem::JoinPathBelow(GameConfSingleton::GetSaveDir(), filename));
 	if (!file)
@@ -95,7 +103,7 @@ bool GameState::CanLoadGame(const std::string &filename)
 	// file data is freed here
 }
 
-void GameState::SaveGame(const std::string &filename)
+void GameStateStatic::SaveGame(const std::string &filename)
 {
 	PROFILE_SCOPED()
 
@@ -153,17 +161,4 @@ void GameState::SaveGame(const std::string &filename)
 #ifdef PIONEER_PROFILER
 	Profiler::dumphtml(profilerPath.c_str());
 #endif
-}
-
-void GameState::DestroyGame()
-{
-	if (GameLocator::getGame() == nullptr) {
-		Output("Attempt to destroy a not existing Game!\n");
-		return;
-	}
-
-	InGameViewsLocator::NewInGameViews(nullptr);
-
-	delete GameLocator::getGame();
-	GameLocator::provideGame(nullptr);
 }

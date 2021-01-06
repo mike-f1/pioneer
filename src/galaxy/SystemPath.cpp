@@ -2,9 +2,11 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "SystemPath.h"
+
 #include "GameSaveError.h"
 #include "Json.h"
 #include <cstdlib>
+#include "libs/utils.h"
 
 // https://stackoverflow.com/questions/14265581/parse-split-a-string-in-c-using-string-delimiter-standard-c
 static std::vector<std::string> split(const std::string &str, const std::string &delim)
@@ -81,14 +83,15 @@ SystemPath SystemPath::FromJson(const Json &jsonObj)
 	try {
 		Json systemPathObj = jsonObj["system_path"];
 
-		Sint32 x = systemPathObj["sector_x"];
-		Sint32 y = systemPathObj["sector_y"];
-		Sint32 z = systemPathObj["sector_z"];
-		Uint32 si = systemPathObj["system_index"];
-		Uint32 bi = systemPathObj["body_index"];
+		int32_t x = systemPathObj["sector_x"];
+		int32_t y = systemPathObj["sector_y"];
+		int32_t z = systemPathObj["sector_z"];
+		uint32_t si = systemPathObj["system_index"];
+		uint32_t bi = systemPathObj["body_index"];
 
 		return SystemPath(x, y, z, si, bi);
 	} catch (Json::type_error &) {
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 		throw SavedGameCorruptException();
 	}
 }

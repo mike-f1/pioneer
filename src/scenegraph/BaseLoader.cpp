@@ -2,10 +2,17 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "BaseLoader.h"
+
+#include "Model.h"
+#include "LoaderDefinitions.h"
+
 #include "FileSystem.h"
+#include "libs/utils.h"
+#include "graphics/Material.h"
+#include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/TextureBuilder.h"
-#include "utils.h"
+#include "libs/stringUtils.h"
 
 using namespace SceneGraph;
 
@@ -13,7 +20,7 @@ BaseLoader::BaseLoader() :
 	m_model(nullptr)
 {
 	Graphics::Texture *sdfTex = Graphics::TextureBuilder("fonts/label3d.dds",
-		Graphics::LINEAR_CLAMP, true, true, true)
+		Graphics::TextureSampleMode::LINEAR_CLAMP, true, true, true)
 									.GetOrCreateTexture(RendererLocator::getRenderer(), "model");
 	m_labelFont.Reset(new Text::DistanceFieldFont("fonts/sdf_definition.txt", sdfTex));
 }
@@ -94,8 +101,8 @@ void BaseLoader::FindPatterns(PatternContainer &output)
 		const FileSystem::FileInfo &info = files.Current();
 		if (info.IsFile()) {
 			const std::string &name = info.GetName();
-			if (starts_with(name, "pattern")) {
-				if (ends_with_ci(name, ".png") || ends_with_ci(name, ".dds"))
+			if (stringUtils::starts_with(name, "pattern")) {
+				if (stringUtils::ends_with_ci(name, ".png") || stringUtils::ends_with_ci(name, ".dds"))
 					output.push_back(Pattern(name, m_curPath, RendererLocator::getRenderer()));
 			}
 		}

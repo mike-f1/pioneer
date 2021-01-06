@@ -5,8 +5,8 @@
 #define _SPACESTATION_H
 
 #include "ModelBody.h"
-#include "Quaternion.h"
 #include "SpaceStationType.h"
+#include "libs/quaternion.h"
 
 #define MAX_DOCKING_PORTS 240 //256-(0x10), 0x10 is used because the collision surfaces use it as an identifying flag
 
@@ -27,7 +27,7 @@ namespace SceneGraph {
 	class Animation;
 }
 
-class SpaceStation : public ModelBody {
+class SpaceStation final: public ModelBody {
 public:
 	OBJDEF(SpaceStation, ModelBody, SPACESTATION);
 	static void Init();
@@ -37,10 +37,12 @@ public:
 	SpaceStation(const SystemBody *);
 	SpaceStation(const Json &jsonObj, Space *space);
 
+	Json SaveToJson(Space *space) override;
+
 	virtual ~SpaceStation();
 	virtual vector3d GetAngVelocity() const { return vector3d(0, m_type->AngVel(), 0); }
-	virtual bool OnCollision(Object *b, Uint32 flags, double relVel) override;
-	bool DoShipDamage(Ship *s, Uint32 flags, double relVel);
+	virtual bool OnCollision(Object *b, uint32_t flags, double relVel) override;
+	bool DoShipDamage(Ship *s, uint32_t flags, double relVel);
 	virtual void Render(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform) override;
 	virtual void StaticUpdate(const float timeStep) override;
 	virtual void TimeStepUpdate(const float timeStep) override;
@@ -75,7 +77,6 @@ public:
 	virtual void UpdateInterpTransform(double alpha) override;
 
 protected:
-	virtual void SaveToJson(Json &jsonObj, Space *space) override;
 
 private:
 	void DockingUpdate(const double timeStep);
@@ -111,7 +112,7 @@ private:
 		int stage;
 		double stagePos; // 0 -> 1.0
 		vector3d fromPos; // in station model coords
-		Quaterniond fromRot;
+		quaterniond fromRot;
 		double maxOffset;
 	};
 	typedef std::vector<shipDocking_t>::const_iterator constShipDockingIter;

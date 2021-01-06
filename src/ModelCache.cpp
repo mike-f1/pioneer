@@ -4,9 +4,9 @@
 #include "ModelCache.h"
 
 #include "Shields.h"
-#include "scenegraph/SceneGraph.h"
 #include "scenegraph/Loader.h"
-#include "utils.h"
+#include "scenegraph/Model.h"
+#include "libs/utils.h"
 
 ModelCache::ModelMap ModelCache::s_models;
 

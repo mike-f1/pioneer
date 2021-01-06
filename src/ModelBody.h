@@ -5,12 +5,18 @@
 #define _MODELBODY_H
 
 #include "Body.h"
-#include "CollMesh.h"
+#include "Color.h"
 #include "FrameId.h"
+#include "libs/RefCounted.h"
 
+class Aabb;
 class Shields;
 class Geom;
 class Camera;
+class CollMesh;
+
+class CSG_CentralCylinder;
+class CSG_Box;
 
 namespace Graphics {
 	class Light;
@@ -29,26 +35,29 @@ public:
 	virtual ~ModelBody();
 	void SetPosition(const vector3d &p) override;
 	void SetOrient(const matrix3x3d &r) override;
-	virtual void SetFrame(FrameId fId) override;
+	void SetFrame(FrameId fId) override;
 	// Colliding: geoms are checked against collision space
 	void SetColliding(bool colliding);
 	bool IsColliding() const { return m_colliding; }
 	// Static: geoms are static relative to frame
 	void SetStatic(bool isStatic);
 	bool IsStatic() const { return m_isStatic; }
-	const Aabb &GetAabb() const { return m_collMesh->GetAabb(); }
-	SceneGraph::Model *GetModel() const { return m_model; }
-	CollMesh *GetCollMesh() { return m_collMesh.Get(); }
-	Geom *GetGeom() const { return m_geom; }
+	Aabb &GetAabb() const;
+	SceneGraph::Model *GetModel() const { return m_model.get(); }
+	CollMesh *GetCollMesh();
+	Geom *GetGeom() const { return m_geom.get(); }
+
+	void SetCentralCylinder(std::unique_ptr<CSG_CentralCylinder> centralcylinder);
+	void AddBox(std::unique_ptr<CSG_Box> box);
 
 	void SetModel(const char *modelName);
 
 	void RenderModel(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform, const bool setLighting = true);
 
-	virtual void TimeStepUpdate(const float timeStep) override;
+	void TimeStepUpdate(const float timeStep) override;
 
 protected:
-	virtual void SaveToJson(Json &jsonObj, Space *space) override;
+	Json SaveToJson(Space *space) override;
 
 	void SetLighting(const Camera *camera, std::vector<Graphics::Light> &oldLights, Color &oldAmbient);
 	void ResetLighting(const std::vector<Graphics::Light> &oldLights, const Color &oldAmbient);
@@ -67,10 +76,10 @@ private:
 	bool m_isStatic;
 	bool m_colliding;
 	RefCountedPtr<CollMesh> m_collMesh;
-	Geom *m_geom; //static geom
+	std::unique_ptr<Geom> m_geom; //static geom
 	std::string m_modelName;
-	SceneGraph::Model *m_model;
-	std::vector<Geom *> m_dynGeoms;
+	std::unique_ptr<SceneGraph::Model> m_model;
+	std::vector<std::unique_ptr<Geom>> m_dynGeoms;
 	SceneGraph::Animation *m_idleAnimation;
 	std::unique_ptr<Shields> m_shields;
 };

@@ -2,8 +2,9 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "FileSystem.h"
-#include "StringRange.h"
-#include "libs.h"
+
+#include "libs/StringRange.h"
+
 #include <algorithm>
 #include <cassert>
 #include <iterator>
@@ -132,6 +133,12 @@ namespace FileSystem {
 	void Uninit()
 	{
 	}
+
+	StringRange FileData::AsStringRange() const
+	{
+		return StringRange(m_data, m_size);
+	}
+
 
 	FileInfo::FileInfo(FileSource *source, const std::string &path, FileType type, Time::DateTime modTime) :
 		m_source(source),

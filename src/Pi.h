@@ -4,19 +4,27 @@
 #ifndef _PI_H
 #define _PI_H
 
-#include "Input.h"
-#include "gameconsts.h"
+#include "buildopts.h"
 
+#include "libs/RefCounted.h"
+
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
 
-class Cutscene;
 class LuaConsole;
 class LuaNameGen;
 class PiGui;
 class SystemPath;
+
+namespace MainState_ {
+	class PiState;
+	class GameState;
+	class InitState;
+	class QuitState;
+}
 
 class AsyncJobQueue;
 class SyncJobQueue;
@@ -39,107 +47,61 @@ namespace UI {
 	class Context;
 }
 
+enum class MainState;
+
 class Pi {
+	friend class MainState_::PiState;
+	friend class MainState_::GameState;
+	friend class MainState_::InitState;
+	friend class MainState_::QuitState;
 public:
-	static void Init(const std::map<std::string, std::string> &options, bool no_gui = false);
-	static void InitGame();
-	static void StartGame();
-	static void RequestEndGame(); // request that the game is ended as soon as safely possible
-	static void EndGame();
-	static void Start(const SystemPath &startPath);
+	Pi(const std::map<std::string, std::string> &options, const SystemPath &startPath, bool no_gui = false);
+	~Pi();
+
+	static void RequestEndGame();
 	static void RequestQuit();
-	static void MainLoop();
-	static void CutSceneLoop(double step, Cutscene *cutscene);
 	static void OnChangeDetailLevel();
-	static float GetFrameTime() { return m_frameTime; }
-	static float GetGameTickAlpha() { return m_gameTickAlpha; }
-
-	static bool IsConsoleActive();
-
-	static void SetMouseGrab(bool on);
-	static bool DoingMouseGrab() { return doingMouseGrab; }
-
-	static void CreateRenderTarget(const Uint16 width, const Uint16 height);
-	static void DrawRenderTarget();
-	static void BeginRenderTarget();
-	static void EndRenderTarget();
 
 	static std::unique_ptr<LuaNameGen> m_luaNameGen;
 
 #if ENABLE_SERVER_AGENT
-	static ServerAgent *serverAgent;
+	static std::unique_ptr<ServerAgent> serverAgent;
 #endif
 
 	static RefCountedPtr<UI::Context> ui;
 	static RefCountedPtr<PiGui> pigui;
 
-	static void DrawPiGui(double delta, std::string handler);
-
-	/* Only use #if WITH_DEVKEYS */
-	static bool showDebugInfo;
-
-#if PIONEER_PROFILER
-	static std::string profilerPath;
-	static bool doProfileSlow;
-	static bool doProfileOne;
-#endif
-
-	static Input input;
 	static std::unique_ptr<LuaConsole> m_luaConsole;
 
 	static JobQueue *GetAsyncJobQueue();
 	static JobQueue *GetSyncJobQueue();
 
-private:
-	enum class MainState {
-		MAIN_MENU,
-		GAME_START,
-		TOMBSTONE,
-		TO_GAME_START,
-		TO_MAIN_MENU,
-		TO_TOMBSTONE,
-	};
-	static MainState m_mainState;
+	static void HandleRequests(MainState &current);
 
+private:
 	// msgs/requests that can be posted which the game processes at the end of a game loop in HandleRequests
 	enum InternalRequests {
 		END_GAME = 0,
 		QUIT_GAME,
 	};
-	static void Quit() __attribute((noreturn));
-	static void HandleKeyDown(const SDL_Keysym &key);
-	static void HandleEvents();
-	static void HandleRequests();
-	// Return true if there'a a need of further checks
-	// (basically it should return true if a windows (as settings)
-	// needs to be displayed, thus the event should be passed to
-	// PiGui...
-	static bool HandleEscKey();
 
-	// private members
-	static std::vector<InternalRequests> internalRequests;
-	static const Uint32 SYNC_JOBS_PER_LOOP = 1;
+	static void LuaInit();
+
+	static void CreateRenderTarget(const uint16_t width, const uint16_t height);
+	static void DrawRenderTarget();
+	static void BeginRenderTarget();
+	static void EndRenderTarget();
+
+	static void TestGPUJobsSupport();
+
+	static std::vector<InternalRequests> m_internalRequests;
 	static std::unique_ptr<AsyncJobQueue> asyncJobQueue;
 	static std::unique_ptr<SyncJobQueue> syncJobQueue;
-
-	/** So, the game physics rate (50Hz) can run slower
-	  * than the frame rate. m_gameTickAlpha is the interpolation
-	  * factor between one physics tick and another [0.0-1.0]
-	  */
-	static float m_gameTickAlpha;
-	static float m_frameTime;
-
-	static std::unique_ptr<Cutscene> m_cutscene;
 
 	static Graphics::RenderTarget *m_renderTarget;
 	static RefCountedPtr<Graphics::Texture> m_renderTexture;
 	static std::unique_ptr<Graphics::Drawables::TexturedQuad> m_renderQuad;
 	static Graphics::RenderState *m_quadRenderState;
-
-	static bool doingMouseGrab;
-
-	static bool isRecordingVideo;
-	static FILE *ffmpegFile;
 };
 
 #endif /* _PI_H */

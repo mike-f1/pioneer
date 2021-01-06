@@ -4,18 +4,16 @@
 #include "SectorView.h"
 
 #include "Game.h"
-#include "GameConfig.h"
 #include "GameConfSingleton.h"
+#include "GameConfig.h"
 #include "GameLocator.h"
 #include "GameSaveError.h"
-#include "KeyBindings.h"
+#include "input/InputFrame.h"
+#include "input/KeyBindings.h"
 #include "LuaConstants.h"
 #include "LuaObject.h"
-#include "MathUtil.h"
-#include "Pi.h"
 #include "Player.h"
 #include "Space.h"
-#include "StringF.h"
 #include "galaxy/Faction.h"
 #include "galaxy/Galaxy.h"
 #include "galaxy/GalaxyCache.h"
@@ -24,26 +22,34 @@
 #include "graphics/Frustum.h"
 #include "graphics/Graphics.h"
 #include "graphics/Material.h"
+#include "graphics/RenderState.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
-#include "graphics/RenderState.h"
+#include "graphics/VertexArray.h"
+#include "graphics/VertexBuffer.h"
+#include "libs/MathUtil.h"
+#include "libs/StringF.h"
 #include <algorithm>
 #include <sstream>
 #include <unordered_set>
 
-#include "imgui/imgui.h"
+#include <imgui/imgui.h>
 
 using namespace Graphics;
 
-static const int DRAW_RAD = 5;
+constexpr int DRAW_RAD = 5;
 #define INNER_RADIUS (Sector::SIZE * 1.5f)
 #define OUTER_RADIUS (Sector::SIZE * float(DRAW_RAD))
-static const float FAR_THRESHOLD = 10.0f;
-static const float FAR_LIMIT = 38.f;
-static const float FAR_MAX = 46.f;
+constexpr float FAR_THRESHOLD = 10.0f;
+constexpr float FAR_LIMIT = 38.f;
+constexpr float FAR_MAX = 46.f;
 
-static const float ZOOM_SPEED = 15;
-static const float WHEEL_SENSITIVITY = .03f; // Should be a variable in user settings.
+constexpr float ZOOM_SPEED = 25;
+constexpr float WHEEL_SENSITIVITY = .03f; // Should be a variable in user settings.
+constexpr float ROTATION_SPEED_FACTOR = 0.3f;
+
+std::unique_ptr<InputFrame> SectorView::m_inputFrame;
+std::unique_ptr<InputFrame> SectorView::m_sectorFrame;
 
 SectorView::SectorView(const SystemPath &path, RefCountedPtr<Galaxy> galaxy, unsigned int cacheRadius) :
 	UIView(),
@@ -115,83 +121,50 @@ SectorView::SectorView(const Json &jsonObj, RefCountedPtr<Galaxy> galaxy, unsign
 		m_showFactionColor = sectorViewObj["show_faction_color"];
 
 	} catch (Json::type_error &) {
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 		throw SavedGameCorruptException();
 	}
 
 	InitObject(cacheRadius);
 }
 
-SectorView::SectorBinding SectorView::SectorBindings;
-
-void SectorView::SectorBinding::RegisterBindings()
-{
-}
-
 void SectorView::RegisterInputBindings()
 {
 	using namespace KeyBindings;
 
-	Input::BindingPage *page = Pi::input.GetBindingPage("SectorView");
-	Input::BindingGroup *group = page->GetBindingGroup("Miscellaneous");
+	m_inputFrame = std::make_unique<InputFrame>("GeneralPanRotateZoom");
 
-	SectorBindings.mapLockHyperspaceTarget = Pi::input.AddActionBinding("BindMapLockHyperspaceTarget", group, ActionBinding(SDLK_SPACE));
-	SectorBindings.actions.push_back(SectorBindings.mapLockHyperspaceTarget);
+	m_sectorBindings.mapViewShiftForwardBackward = m_inputFrame->GetAxisBinding("BindMapViewShiftForwardBackward");
+	m_sectorBindings.mapViewShiftLeftRight = m_inputFrame->GetAxisBinding("BindMapViewShiftLeftRight");
+	m_sectorBindings.mapViewShiftUpDown = m_inputFrame->GetAxisBinding("BindMapViewShiftUpDown");
 
-	SectorBindings.mapToggleSelectionFollowView = Pi::input.AddActionBinding("BindMapToggleSelectionFollowView", group, ActionBinding(SDLK_RETURN, SDLK_KP_ENTER));
-	SectorBindings.actions.push_back(SectorBindings.mapToggleSelectionFollowView);
+	m_sectorBindings.mapViewZoom = m_inputFrame->GetAxisBinding("BindMapViewZoom");
 
-	SectorBindings.mapWarpToCurrent = Pi::input.AddActionBinding("BindMapWarpToCurrent", group, ActionBinding(SDLK_c));
-	SectorBindings.actions.push_back(SectorBindings.mapWarpToCurrent);
+	m_sectorBindings.mapViewRotateLeftRight = m_inputFrame->GetAxisBinding("BindMapViewRotateLeftRight");
+	m_sectorBindings.mapViewRotateUpDown = m_inputFrame->GetAxisBinding("BindMapViewRotateUpDown");
 
-	SectorBindings.mapWarpToSelected = Pi::input.AddActionBinding("BindMapWarpToSelection", group, ActionBinding(SDLK_g));
-	SectorBindings.actions.push_back(SectorBindings.mapWarpToSelected);
+	m_sectorFrame = std::make_unique<InputFrame>("SectorView");
 
-	SectorBindings.mapWarpToHyperspaceTarget = Pi::input.AddActionBinding("BindMapWarpToHyperspaceTarget", group, ActionBinding(SDLK_h));
-	SectorBindings.actions.push_back(SectorBindings.mapWarpToHyperspaceTarget);
+	auto &page2 = InputFWD::GetBindingPage("SectorView");
 
-	SectorBindings.mapViewReset = Pi::input.AddActionBinding("BindMapViewReset", group, ActionBinding(SDLK_t));
-	SectorBindings.actions.push_back(SectorBindings.mapViewReset);
+	auto &groupMisc = page2.GetBindingGroup("Miscellaneous");
 
-	group = page->GetBindingGroup("ViewMovementControls");
+	m_sectorBindings.mapLockHyperspaceTarget = m_sectorFrame->AddActionBinding("BindMapLockHyperspaceTarget", groupMisc, ActionBinding(SDLK_SPACE));
 
-	SectorBindings.mapViewShiftForward = Pi::input.AddActionBinding("BindMapViewShiftForward", group, ActionBinding(SDLK_r));
-	SectorBindings.actions.push_back(SectorBindings.mapViewShiftForward);
+	m_sectorBindings.mapToggleSelectionFollowView = m_sectorFrame->AddActionBinding("BindMapToggleSelectionFollowView", groupMisc, ActionBinding(SDLK_RETURN, SDLK_KP_ENTER));
 
-	SectorBindings.mapViewShiftBackward = Pi::input.AddActionBinding("BindMapViewShiftBackward", group, ActionBinding(SDLK_f));
-	SectorBindings.actions.push_back(SectorBindings.mapViewShiftBackward);
+	m_sectorBindings.mapWarpToCurrent = m_sectorFrame->AddActionBinding("BindMapWarpToCurrent", groupMisc, ActionBinding(SDLK_c));
+	m_sectorBindings.mapWarpToSelected = m_sectorFrame->AddActionBinding("BindMapWarpToSelection", groupMisc, ActionBinding(SDLK_g));
+	m_sectorBindings.mapWarpToHyperspaceTarget = m_sectorFrame->AddActionBinding("BindMapWarpToHyperspaceTarget", groupMisc, ActionBinding(SDLK_h));
+	m_sectorBindings.mapViewReset = m_sectorFrame->AddActionBinding("BindMapViewReset", groupMisc, ActionBinding(SDLK_t));
+}
 
-	SectorBindings.mapViewShiftLeft = Pi::input.AddActionBinding("BindMapViewShiftLeft", group, ActionBinding(SDLK_a));
-	SectorBindings.actions.push_back(SectorBindings.mapViewShiftLeft);
+void SectorView::AttachBindingCallback()
+{
+	using namespace std::placeholders;
 
-	SectorBindings.mapViewShiftRight = Pi::input.AddActionBinding("BindMapViewShiftRight", group, ActionBinding(SDLK_d));
-	SectorBindings.actions.push_back(SectorBindings.mapViewShiftRight);
-
-	SectorBindings.mapViewShiftUp = Pi::input.AddActionBinding("BindMapViewShiftUp", group, ActionBinding(SDLK_w));
-	SectorBindings.actions.push_back(SectorBindings.mapViewShiftUp);
-
-	SectorBindings.mapViewShiftDown = Pi::input.AddActionBinding("BindMapViewShiftDown", group, ActionBinding(SDLK_s));
-	SectorBindings.actions.push_back(SectorBindings.mapViewShiftDown);
-
-	SectorBindings.mapViewZoomIn = Pi::input.AddActionBinding("BindMapViewZoomIn", group, ActionBinding(SDLK_PLUS));
-	SectorBindings.actions.push_back(SectorBindings.mapViewZoomIn);
-
-	SectorBindings.mapViewZoomOut = Pi::input.AddActionBinding("BindMapViewZoomOut", group, ActionBinding(SDLK_MINUS));
-	SectorBindings.actions.push_back(SectorBindings.mapViewZoomOut);
-
-	SectorBindings.mapViewRotateLeft = Pi::input.AddActionBinding("BindMapViewRotateLeft", group, ActionBinding(SDLK_RIGHT));
-	SectorBindings.actions.push_back(SectorBindings.mapViewRotateLeft);
-
-	SectorBindings.mapViewRotateRight = Pi::input.AddActionBinding("BindMapViewRotateRight", group, ActionBinding(SDLK_LEFT));
-	SectorBindings.actions.push_back(SectorBindings.mapViewRotateRight);
-
-	SectorBindings.mapViewRotateUp = Pi::input.AddActionBinding("BindMapViewRotateUp", group, ActionBinding(SDLK_DOWN));
-	SectorBindings.actions.push_back(SectorBindings.mapViewRotateUp);
-
-	SectorBindings.mapViewRotateDown = Pi::input.AddActionBinding("BindMapViewRotateDown", group, ActionBinding(SDLK_UP));
-	SectorBindings.actions.push_back(SectorBindings.mapViewRotateDown);
-
-	SectorBindings.mouseWheel = Pi::input.AddWheelBinding("MouseWheel", group, WheelBinding());
-	SectorBindings.wheel = SectorBindings.mouseWheel;
+	m_sectorFrame->AddCallbackFunction("BindMapLockHyperspaceTarget", std::bind(&SectorView::OnMapLockHyperspaceToggle, this, _1));
+	m_sectorFrame->AddCallbackFunction("BindMapToggleSelectionFollowView", std::bind(&SectorView::OnToggleSelectionFollowView, this, _1));
 }
 
 void SectorView::InitDefaults()
@@ -235,7 +208,7 @@ void SectorView::InitObject(unsigned int cacheRadius)
 	m_alphaBlendState = RendererLocator::getRenderer()->CreateRenderState(rsd);
 
 	Graphics::MaterialDescriptor bbMatDesc;
-	bbMatDesc.effect = Graphics::EFFECT_SPHEREIMPOSTOR;
+	bbMatDesc.effect = Graphics::EffectType::SPHEREIMPOSTOR;
 	m_starMaterial.Reset(RendererLocator::getRenderer()->CreateMaterial(bbMatDesc));
 
 	m_disk.reset(new Graphics::Drawables::Disk(RendererLocator::getRenderer(), m_solidState, Color::WHITE, 0.2f));
@@ -243,16 +216,13 @@ void SectorView::InitObject(unsigned int cacheRadius)
 	m_sectorCache = m_galaxy->NewSectorSlaveCache();
     size_t filled = m_galaxy->FillSectorCache(m_sectorCache, m_current, cacheRadius);
     Output("SectorView cache pre-filled with %lu entries\n", filled);
+
+	AttachBindingCallback();
 }
 
 SectorView::~SectorView()
 {
-	m_onMouseWheelCon.disconnect();
-
-	if (!Pi::input.RemoveInputFrame(&SectorBindings)) return;
-
-	m_mapLockHyperspaceTargetCon.disconnect();
-	m_mapToggleSelectionFollowViewCon.disconnect();
+	m_sectorFrame->RemoveCallbacks();
 }
 
 void SectorView::SaveToJson(Json &jsonObj)
@@ -380,7 +350,6 @@ void SectorView::Draw3D()
 
 void SectorView::DrawUI(const float frameTime)
 {
-	if (Pi::IsConsoleActive()) return;
 	/*
 	This will open a window with a list of displayed systems... It may be useful later
 	ImGui::Begin("Systems Labelled");
@@ -547,10 +516,10 @@ void SectorView::CollectSystems(RefCountedPtr<Sector> sec, const vector3f &origi
 	matrix4x4ftod(p, proj_mat);
 	Frustum frustum(model_mat, proj_mat);
 
-	Sint32 viewport[4];
+	int32_t viewport[4];
 	RendererLocator::getRenderer()->GetCurrentViewport(&viewport[0]);
 
-	Uint32 sysIdx = 0;
+	uint32_t sysIdx = 0;
 	for (std::vector<Sector::System>::iterator sys = sec->m_systems.begin(); sys != sec->m_systems.end(); ++sys, ++sysIdx) {
 		// skip the system if it doesn't fall within the sphere we're viewing.
 		if ((m_pos * Sector::SIZE - (*sys).GetFullPosition()).Length() > drawRadius) continue;
@@ -605,7 +574,7 @@ SectorView::t_systemsAndPosVector SectorView::CollectHomeworlds(const vector3f &
 	matrix4x4ftod(p, proj_mat);
 	Frustum frustum(model_mat, proj_mat);
 
-	Sint32 viewport[4];
+	int32_t viewport[4];
 	RendererLocator::getRenderer()->GetCurrentViewport(&viewport[0]);
 
 	for (auto it = m_visibleFactions.begin(); it != m_visibleFactions.end(); ++it) {
@@ -640,7 +609,7 @@ void SectorView::PutDiamonds(const t_systemsAndPosVector &homeworlds)
 		const vector3d &pos = element.second;
 
 		// draw a big diamond for the location of the star
-		static const float STARSIZE = 5;
+		constexpr float STARSIZE = 5;
 		Graphics::VertexArray outline(Graphics::ATTRIB_POSITION, 4);
 		outline.Add(vector3f(pos.x - STARSIZE - 1.f, pos.y, 0.f));
 		outline.Add(vector3f(pos.x, pos.y + STARSIZE + 1.f, 0.f));
@@ -838,17 +807,17 @@ void SectorView::AutoRoute(const SystemPath &start, const SystemPath &target, st
 	std::vector<SystemPath> nodes;
 	nodes.push_back(start);
 
-	const Sint32 minX = std::min(start.sectorX, target.sectorX) - 2, maxX = std::max(start.sectorX, target.sectorX) + 2;
-	const Sint32 minY = std::min(start.sectorY, target.sectorY) - 2, maxY = std::max(start.sectorY, target.sectorY) + 2;
-	const Sint32 minZ = std::min(start.sectorZ, target.sectorZ) - 2, maxZ = std::max(start.sectorZ, target.sectorZ) + 2;
+	const int32_t minX = std::min(start.sectorX, target.sectorX) - 2, maxX = std::max(start.sectorX, target.sectorX) + 2;
+	const int32_t minY = std::min(start.sectorY, target.sectorY) - 2, maxY = std::max(start.sectorY, target.sectorY) + 2;
+	const int32_t minZ = std::min(start.sectorZ, target.sectorZ) - 2, maxZ = std::max(start.sectorZ, target.sectorZ) + 2;
 	const vector3f start_pos = start_sec->m_systems[start.systemIndex].GetFullPosition();
 	const vector3f target_pos = target_sec->m_systems[target.systemIndex].GetFullPosition();
 
 	// go sector by sector for the minimum cube of sectors and add systems
 	// if they are within 110% of dist of both start and target
-	for (Sint32 sx = minX; sx <= maxX; sx++) {
-		for (Sint32 sy = minY; sy <= maxY; sy++) {
-			for (Sint32 sz = minZ; sz < maxZ; sz++) {
+	for (int32_t sx = minX; sx <= maxX; sx++) {
+		for (int32_t sy = minY; sy <= maxY; sy++) {
+			for (int32_t sz = minZ; sz < maxZ; sz++) {
 				const SystemPath sec_path = SystemPath(sx, sy, sz);
 				RefCountedPtr<const Sector> sec = m_galaxy->GetSector(sec_path);
 				for (std::vector<Sector::System>::size_type s = 0; s < sec->m_systems.size(); s++) {
@@ -985,7 +954,7 @@ void SectorView::DrawNearSector(const int sx, const int sy, const int sz, const 
 	RendererLocator::getRenderer()->SetTransform(trans);
 	RefCountedPtr<Sector> ps = m_sectorCache->GetCached(SystemPath(sx, sy, sz));
 
-	Uint32 sysIdx = 0;
+	uint32_t sysIdx = 0;
 	for (std::vector<Sector::System>::iterator i = ps->m_systems.begin(); i != ps->m_systems.end(); ++i, ++sysIdx) {
 		// calculate where the system is in relation the centre of the view...
 		const vector3f sysAbsPos = Sector::SIZE * vector3f(float(sx), float(sy), float(sz)) + i->GetPosition();
@@ -1070,7 +1039,7 @@ void SectorView::DrawNearSector(const int sx, const int sy, const int sz, const 
 		systrans.Scale((GalaxyEnums::starScale[(*i).GetStarType(0)]));
 		RendererLocator::getRenderer()->SetTransform(systrans);
 
-		const Uint8 *col;
+		const uint8_t *col;
 		if (m_showFactionColor) {
 			col = (*i).GetFaction()->colour;
 		} else {
@@ -1178,12 +1147,8 @@ void SectorView::OnSwitchTo()
 {
 	RendererLocator::getRenderer()->SetViewport(0, 0, Graphics::GetScreenWidth(), Graphics::GetScreenHeight());
 
-	if (!Pi::input.PushInputFrame(&SectorBindings)) return;
-
-	// Initialize signals for keys press & mouse wheel:
-	m_mapLockHyperspaceTargetCon = SectorBindings.mapLockHyperspaceTarget->onPress.connect(sigc::mem_fun(this, &SectorView::OnMapLockHyperspaceToggle));
-	m_mapToggleSelectionFollowViewCon = SectorBindings.mapToggleSelectionFollowView->onPress.connect(sigc::mem_fun(this, &SectorView::OnToggleSelectionFollowView));
-	m_onMouseWheelCon = SectorBindings.mouseWheel->onAxis.connect(sigc::mem_fun(this, &SectorView::OnMouseWheel));
+	m_inputFrame->SetActive(true);
+	m_sectorFrame->SetActive(true);
 
 	UIView::OnSwitchTo();
 
@@ -1192,18 +1157,17 @@ void SectorView::OnSwitchTo()
 
 void SectorView::OnSwitchFrom()
 {
-	if (!Pi::input.RemoveInputFrame(&SectorBindings)) return;
-
-	m_mapLockHyperspaceTargetCon.disconnect();
-	m_mapToggleSelectionFollowViewCon.disconnect();
-	m_onMouseWheelCon.disconnect();
+	m_inputFrame->SetActive(false);
+	m_sectorFrame->SetActive(false);
 }
 
-void SectorView::OnToggleSelectionFollowView() {
+void SectorView::OnToggleSelectionFollowView(bool down) {
+	if (down) return;
 	m_automaticSystemSelection = !m_automaticSystemSelection;
 }
 
-void SectorView::OnMapLockHyperspaceToggle() {
+void SectorView::OnMapLockHyperspaceToggle(bool down) {
+	if (down) return;
 	// space "locks" (or unlocks) the hyperspace target to the selected system
 	if ((m_matchTargetToSelection || m_hyperspaceTarget != m_selected) && !m_selected.IsSameSystem(m_current)) {
 		SetHyperspaceTarget(m_selected);
@@ -1214,27 +1178,23 @@ void SectorView::OnMapLockHyperspaceToggle() {
 
 void SectorView::UpdateBindings()
 {
-	// XXX ugly hack checking for Lua console here
-	if (Pi::IsConsoleActive())
-		return;
-
 	bool reset_view = false;
 
 	// fast move selection to current player system or hyperspace target
-	const bool shifted = (Pi::input.KeyState(SDLK_LSHIFT) || Pi::input.KeyState(SDLK_RSHIFT));
-	if (SectorBindings.mapWarpToCurrent->IsActive()) {
+	const bool shifted = InputFWD::GetMoveSpeedShiftModifier() >= 1.0 ? true : false;
+	if (m_sectorFrame->IsActive(m_sectorBindings.mapWarpToCurrent)) {
 		GotoSystem(m_current);
 		reset_view = shifted;
-	} else if (SectorBindings.mapWarpToSelected->IsActive()) {
+	} else if (m_sectorFrame->IsActive(m_sectorBindings.mapWarpToSelected)) {
 		GotoSystem(m_selected);
 		reset_view = shifted;
-	} else if (SectorBindings.mapWarpToHyperspaceTarget->IsActive()) {
+	} else if (m_sectorFrame->IsActive(m_sectorBindings.mapWarpToHyperspaceTarget)) {
 		GotoSystem(m_hyperspaceTarget);
 		reset_view = shifted;
 	}
 
 	// reset rotation and zoom
-	if (reset_view || SectorBindings.mapViewReset->IsActive()) {
+	if (reset_view || m_sectorFrame->IsActive(m_sectorBindings.mapViewReset)) {
 		while (m_rotZ < -180.0f)
 			m_rotZ += 360.0f;
 		while (m_rotZ > 180.0f)
@@ -1267,40 +1227,40 @@ void SectorView::Update(const float frameTime)
 	rot.RotateZ(DEG2RAD(-m_rotZ));
 
 	// don't check raw keypresses if the search box is active
-	// XXX ugly hack checking for Lua console here
-	if (!Pi::IsConsoleActive()) {
-		UpdateBindings();
+	UpdateBindings();
 
-		const float moveSpeed = Pi::input.GetMoveSpeedShiftModifier();
-		float move = moveSpeed * frameTime;
-		vector3f shift(0.0f);
-		if (SectorBindings.mapViewShiftLeft->IsActive()) shift.x -= move;
-		if (SectorBindings.mapViewShiftRight->IsActive()) shift.x += move;
-		if (SectorBindings.mapViewShiftUp->IsActive()) shift.y += move;
-		if (SectorBindings.mapViewShiftDown->IsActive()) shift.y -= move;
-		if (SectorBindings.mapViewShiftForward->IsActive()) shift.z -= move;
-		if (SectorBindings.mapViewShiftBackward->IsActive()) shift.z += move;
-		m_posMovingTo += shift * rot;
-
-		if (SectorBindings.mapViewZoomIn->IsActive())
-			m_zoomMovingTo -= move;
-		if (SectorBindings.mapViewZoomOut->IsActive())
-			m_zoomMovingTo += move;
-		m_zoomMovingTo = Clamp(m_zoomMovingTo, 0.1f, FAR_MAX);
-
-		if (SectorBindings.mapViewRotateLeft->IsActive()) m_rotZMovingTo -= 0.2f * moveSpeed;
-		if (SectorBindings.mapViewRotateRight->IsActive()) m_rotZMovingTo += 0.2f * moveSpeed;
-		if (SectorBindings.mapViewRotateUp->IsActive()) m_rotXMovingTo -= 0.2f * moveSpeed;
-		if (SectorBindings.mapViewRotateDown->IsActive()) m_rotXMovingTo += 0.2f * moveSpeed;
+	const float moveSpeed = InputFWD::GetMoveSpeedShiftModifier();
+	float move = moveSpeed * frameTime;
+	vector3f shift(0.0f);
+	if (m_inputFrame->IsActive(m_sectorBindings.mapViewShiftLeftRight)) {
+		shift.x -= m_inputFrame->GetValue(m_sectorBindings.mapViewShiftLeftRight) * move;
+	}
+	if (m_inputFrame->IsActive(m_sectorBindings.mapViewShiftUpDown)) {
+		shift.y -= -m_inputFrame->GetValue(m_sectorBindings.mapViewShiftUpDown) * move;
+	}
+	if (m_inputFrame->IsActive(m_sectorBindings.mapViewShiftForwardBackward)) {
+		shift.z += m_inputFrame->GetValue(m_sectorBindings.mapViewShiftForwardBackward) * move;
 	}
 
-	if (Pi::input.MouseButtonState(SDL_BUTTON_RIGHT)) {
-		int motion[2];
-		Pi::input.GetMouseMotion(motion);
+	m_posMovingTo += shift * rot;
 
-		m_rotXMovingTo += 0.2f * float(motion[1]);
-		m_rotZMovingTo += 0.2f * float(motion[0]);
+	if (m_inputFrame->IsActive(m_sectorBindings.mapViewZoom)) {
+		m_zoomMovingTo -= m_inputFrame->GetValue(m_sectorBindings.mapViewZoom) * move * 5.0f;
 	}
+	m_zoomMovingTo = Clamp(m_zoomMovingTo, 0.1f, FAR_MAX);
+
+	if (m_inputFrame->IsActive(m_sectorBindings.mapViewRotateLeftRight)) {
+		if (m_inputFrame->GetValue(m_sectorBindings.mapViewRotateLeftRight) < 0.0) m_rotZMovingTo -= ROTATION_SPEED_FACTOR * moveSpeed;
+		if (m_inputFrame->GetValue(m_sectorBindings.mapViewRotateLeftRight) > 0.0) m_rotZMovingTo += ROTATION_SPEED_FACTOR * moveSpeed;
+	}
+	if (m_inputFrame->IsActive(m_sectorBindings.mapViewRotateUpDown)) {
+		if (m_inputFrame->GetValue(m_sectorBindings.mapViewRotateUpDown) > 0.0) m_rotXMovingTo -= ROTATION_SPEED_FACTOR * moveSpeed;
+		if (m_inputFrame->GetValue(m_sectorBindings.mapViewRotateUpDown) < 0.0) m_rotXMovingTo += ROTATION_SPEED_FACTOR * moveSpeed;
+	}
+
+	auto motion = InputFWD::GetMouseMotion(MouseMotionBehaviour::Rotate);
+	m_rotXMovingTo += ROTATION_SPEED_FACTOR * float(std::get<2>(motion));
+	m_rotZMovingTo += ROTATION_SPEED_FACTOR * float(std::get<1>(motion));
 
 	m_rotXMovingTo = Clamp(m_rotXMovingTo, -170.0f, -10.0f);
 
@@ -1377,21 +1337,13 @@ void SectorView::Update(const float frameTime)
 		m_jumpSphereState = RendererLocator::getRenderer()->CreateRenderState(rsd);
 
 		Graphics::MaterialDescriptor matdesc;
-		matdesc.effect = EFFECT_FRESNEL_SPHERE;
+		matdesc.effect = Graphics::EffectType::FRESNEL_SPHERE;
 		m_fresnelMat.Reset(RendererLocator::getRenderer()->CreateMaterial(matdesc));
 		m_fresnelMat->diffuse = Color::WHITE;
 		m_jumpSphere.reset(new Graphics::Drawables::Sphere3D(RendererLocator::getRenderer(), m_fresnelMat, m_jumpSphereState, 4, 1.0f));
 	}
 
 	UIView::Update(frameTime);
-}
-
-void SectorView::OnMouseWheel(bool up)
-{
-	if (!up)
-		m_zoomMovingTo += ZOOM_SPEED * WHEEL_SENSITIVITY * Pi::input.GetMoveSpeedShiftModifier();
-	else
-		m_zoomMovingTo -= ZOOM_SPEED * WHEEL_SENSITIVITY * Pi::input.GetMoveSpeedShiftModifier();
 }
 
 void SectorView::ShrinkCache()
@@ -1430,7 +1382,7 @@ double SectorView::GetZoomLevel() const
 
 void SectorView::ZoomIn()
 {
-	const float moveSpeed = Pi::input.GetMoveSpeedShiftModifier();
+	const float moveSpeed = InputFWD::GetMoveSpeedShiftModifier();
 	float move = moveSpeed * m_lastFrameTime;
 	m_zoomMovingTo -= move;
 	m_zoomMovingTo = Clamp(m_zoomMovingTo, 0.1f, FAR_MAX);
@@ -1438,7 +1390,7 @@ void SectorView::ZoomIn()
 
 void SectorView::ZoomOut()
 {
-	const float moveSpeed = Pi::input.GetMoveSpeedShiftModifier();
+	const float moveSpeed = InputFWD::GetMoveSpeedShiftModifier();
 	float move = moveSpeed * m_lastFrameTime;
 	m_zoomMovingTo += move;
 	m_zoomMovingTo = Clamp(m_zoomMovingTo, 0.1f, FAR_MAX);

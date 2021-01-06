@@ -3,9 +3,9 @@
 
 #include "GenGasGiantColourMaterial.h"
 #include "RendererGL.h"
-#include "StringF.h"
 #include "TextureGL.h"
 #include "graphics/Graphics.h"
+#include "libs/StringF.h"
 #include <sstream>
 
 namespace Graphics {
@@ -19,7 +19,7 @@ namespace Graphics {
 				ss << "#define TEXTURE0\n";
 
 			// this masking hack is because I also need to encode data in the UPPER 16-bits
-			const Uint32 quality = desc.quality & 0x0000FFFF;
+			const uint32_t quality = desc.quality & 0x0000FFFF;
 			switch (quality) {
 			default:
 			case GEN_JUPITER_TEXTURE:
@@ -43,7 +43,7 @@ namespace Graphics {
 				break;
 			}
 			// extract the top 16-bits to get how many octaves we can use
-			const Uint32 octaves = (desc.quality & 0xFFFF0000) >> 16;
+			const uint32_t octaves = (desc.quality & 0xFFFF0000) >> 16;
 			ss << "#define FBM_OCTAVES " << std::to_string(octaves) << std::endl;
 
 			// No lights
@@ -76,7 +76,7 @@ namespace Graphics {
 
 		Program *GenGasGiantColourMaterial::CreateProgram(const MaterialDescriptor &desc)
 		{
-			assert(desc.effect == EFFECT_GEN_GASGIANT_TEXTURE);
+			assert(desc.effect == EffectType::GEN_GASGIANT_TEXTURE);
 			assert(desc.dirLights < 5);
 			return new GenGasGiantColourProgram(desc);
 		}
@@ -104,7 +104,7 @@ namespace Graphics {
 			p->hueAdjust.Set(params.hueAdjust);
 
 			//Light uniform parameters
-			for (Uint32 i = 0; i < m_renderer->GetNumLights(); i++) {
+			for (uint32_t i = 0; i < m_renderer->GetNumLights(); i++) {
 				const Light &Light = m_renderer->GetLight(i);
 				p->lights[i].diffuse.Set(Light.GetDiffuse());
 				p->lights[i].specular.Set(Light.GetSpecular());

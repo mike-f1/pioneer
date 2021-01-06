@@ -10,7 +10,7 @@
 
 #include "EnumStrings.h"
 #include "Factions.h"
-#include "utils.h"
+#include "libs/utils.h"
 
 const float Sector::SIZE = 8.f;
 
@@ -76,7 +76,6 @@ void Sector::Dump(FILE *file, const char *indent) const
 	fprintf(file, "\t" SIZET_FMT " systems\n", m_systems.size());
 	for (const Sector::System &sys : m_systems) {
 		assert(sx == sys.sx && sy == sys.sy && sz == sys.sz);
-		assert(sys.idx >= 0);
 		fprintf(file, "\tSystem(%d,%d,%d,%u) {\n", sys.sx, sys.sy, sys.sz, sys.idx);
 		fprintf(file, "\t\t\"%s\"\n", sys.GetName().c_str());
 		fprintf(file, "\t\t%sEXPLORED%s\n", sys.IsExplored() ? "" : "UN", sys.GetCustomSystem() != nullptr ? ", CUSTOM" : "");
@@ -84,7 +83,7 @@ void Sector::Dump(FILE *file, const char *indent) const
 		fprintf(file, "\t\tpos (%f, %f, %f)\n", double(sys.GetPosition().x), double(sys.GetPosition().y), double(sys.GetPosition().z));
 		fprintf(file, "\t\tseed %u\n", sys.GetSeed());
 		fprintf(file, "\t\tpopulation %.0f\n", sys.GetPopulation().ToDouble() * 1e9);
-		fprintf(file, "\t\t%d stars%s\n", sys.GetNumStars(), sys.GetNumStars() > 0 ? " {" : "");
+		fprintf(file, "\t\t%u stars%s\n", sys.GetNumStars(), sys.GetNumStars() > 0 ? " {" : "");
 		for (unsigned i = 0; i < sys.GetNumStars(); ++i)
 			fprintf(file, "\t\t\t%s\n", EnumStrings::GetString("BodyType", sys.GetStarType(i)));
 		if (sys.GetNumStars() > 0) fprintf(file, "\t\t}\n");

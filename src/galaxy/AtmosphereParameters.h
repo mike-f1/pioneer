@@ -2,7 +2,7 @@
 #define ATMOSPHEREPARAMETERS_H_INCLUDED
 
 #include "Color.h"
-#include "vector3.h"
+#include "libs/vector3.h"
 
 struct AtmosphereParameters {
 	float atmosRadius;

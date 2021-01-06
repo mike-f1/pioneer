@@ -16,6 +16,7 @@
 #include "CollisionGeometry.h"
 #include "FileSystem.h"
 #include "LOD.h"
+#include "LoaderDefinitions.h"
 #include "StaticGeometry.h"
 #include "Thruster.h"
 #include <functional>
@@ -40,7 +41,7 @@ namespace SceneGraph {
 
 		//if you implement any new node types, you must also register a loader function
 		//before calling Load.
-		void RegisterLoader(const std::string &typeName, std::function<Node *(NodeDatabase &)>);
+		void RegisterLoader(const std::string &typeName, const std::function<Node *(NodeDatabase &)> &);
 
 	private:
 		Model *CreateModel(const std::string &filename, Serializer::Reader &);

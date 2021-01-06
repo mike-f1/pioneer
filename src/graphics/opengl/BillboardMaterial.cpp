@@ -2,8 +2,9 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "BillboardMaterial.h"
+
 #include "RendererGL.h"
-#include "StringF.h"
+#include "libs/StringF.h"
 #include "TextureGL.h"
 #include "graphics/Graphics.h"
 #include <sstream>
@@ -17,7 +18,7 @@ namespace Graphics {
 			std::stringstream ss;
 
 			m_name = "billboards";
-			if (desc.effect == EFFECT_BILLBOARD_ATLAS)
+			if (desc.effect == EffectType::BILLBOARD_ATLAS)
 				m_defines = stringf("#define USE_SPRITE_ATLAS\n");
 
 			LoadShaders(m_name, m_defines);

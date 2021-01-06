@@ -11,13 +11,13 @@
 #include "InGameViews.h"
 #include "InGameViewsLocator.h"
 #include "Player.h"
-#include "ShipCpanel.h"
 #include "graphics/Graphics.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 
 DeathView::DeathView() :
-	View()
+	View(),
+	m_cameraDist(0.0)
 {
 	float size[2];
 	GetSizeRequested(size);
@@ -30,22 +30,24 @@ DeathView::DeathView() :
 
 	const float fovY = GameConfSingleton::getInstance().Float("FOVVertical");
 	m_cameraContext.Reset(new CameraContext(Graphics::GetScreenWidth(), Graphics::GetScreenHeight(), fovY, znear, zfar));
-	m_camera.reset(new Camera(m_cameraContext));
+	m_camera = std::make_unique<Camera>(m_cameraContext);
 }
 
-DeathView::~DeathView() {}
+DeathView::~DeathView()
+{}
 
 void DeathView::Init()
 {
-	m_cameraDist = GameLocator::getGame()->GetPlayer()->GetClipRadius() * 5.0;
-	m_cameraContext->SetCameraFrame(GameLocator::getGame()->GetPlayer()->GetFrame());
-	m_cameraContext->SetCameraPosition(GameLocator::getGame()->GetPlayer()->GetInterpPosition() + vector3d(0, 0, m_cameraDist));
+	Player *player = GameLocator::getGame()->GetPlayer();
+	m_cameraDist = player->GetClipRadius() * 5.0;
+	m_cameraContext->SetCameraFrame(player->GetFrame());
+	m_cameraContext->SetCameraPosition(player->GetInterpPosition() + vector3d(0, 0, m_cameraDist));
 	m_cameraContext->SetCameraOrient(matrix3x3d::Identity());
 }
 
 void DeathView::OnSwitchTo()
 {
-	InGameViewsLocator::getInGameViews()->GetCpan()->HideAll();
+	InGameViewsLocator::getInGameViews()->ShouldDrawGui(false);
 }
 
 void DeathView::Update(const float frameTime)

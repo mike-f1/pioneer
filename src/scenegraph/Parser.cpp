@@ -2,9 +2,13 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "Parser.h"
+
+#include "LoaderDefinitions.h"
+
 #include "FileSystem.h"
-#include "StringF.h"
-#include "StringRange.h"
+#include "libs/utils.h"
+#include "libs/StringF.h"
+#include "libs/StringRange.h"
 #include <sstream>
 
 namespace SceneGraph {

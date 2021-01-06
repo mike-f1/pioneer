@@ -25,7 +25,7 @@ public:
 	~ModelCache() = delete;
 
 	struct ModelNotFoundException : public std::runtime_error {
-		ModelNotFoundException(std::string name) :
+		ModelNotFoundException(const std::string &name) :
 			std::runtime_error("Could not find model '" + name + "'\n") {}
 	};
 

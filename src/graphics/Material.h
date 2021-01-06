@@ -13,36 +13,35 @@
  * For the OGL renderer, a Material is always accompanied by a Program.
  */
 #include "Color.h"
-#include "matrix4x4.h"
-#include "RefCounted.h"
+#include "libs/matrix4x4.h"
+#include "libs/RefCounted.h"
 
 namespace Graphics {
 
 	class Texture;
-	class RendererOGL;
 
 	// Shorthand for unique effects
 	// The other descriptor parameters may or may not have effect,
 	// depends on the effect
-	enum EffectType {
-		EFFECT_DEFAULT,
-		EFFECT_VTXCOLOR,
-		EFFECT_UI,
-		EFFECT_STARFIELD,
-		EFFECT_PLANETRING,
-		EFFECT_GEOSPHERE_TERRAIN,
-		EFFECT_GEOSPHERE_TERRAIN_WITH_LAVA,
-		EFFECT_GEOSPHERE_TERRAIN_WITH_WATER,
-		EFFECT_GEOSPHERE_SKY,
-		EFFECT_GEOSPHERE_STAR,
-		EFFECT_GASSPHERE_TERRAIN,
-		EFFECT_FRESNEL_SPHERE,
-		EFFECT_SHIELD,
-		EFFECT_SKYBOX,
-		EFFECT_SPHEREIMPOSTOR,
-		EFFECT_GEN_GASGIANT_TEXTURE,
-		EFFECT_BILLBOARD_ATLAS,
-		EFFECT_BILLBOARD
+	enum class EffectType {
+		DEFAULT,
+		VTXCOLOR,
+		UI,
+		STARFIELD,
+		PLANETRING,
+		GEOSPHERE_TERRAIN,
+		GEOSPHERE_TERRAIN_WITH_LAVA,
+		GEOSPHERE_TERRAIN_WITH_WATER,
+		GEOSPHERE_SKY,
+		GEOSPHERE_STAR,
+		GASSPHERE_TERRAIN,
+		FRESNEL_SPHERE,
+		SHIELD,
+		SKYBOX,
+		SPHEREIMPOSTOR,
+		GEN_GASGIANT_TEXTURE,
+		BILLBOARD_ATLAS,
+		BILLBOARD
 	};
 
 	// XXX : there must be a better place to put this
@@ -67,10 +66,10 @@ namespace Graphics {
 		bool usePatterns; //pattern/color system
 		bool vertexColors;
 		bool instanced;
-		Sint32 textures; //texture count
-		Uint32 dirLights; //set by RendererOGL if lighting == true
-		Uint32 quality; // see: Graphics::MaterialQuality
-		Uint32 numShadows; //use by GeoSphere/GasGiant for eclipse
+		int32_t textures; //texture count
+		uint32_t dirLights; //set by RendererOGL if lighting == true
+		uint32_t quality; // see: Graphics::MaterialQuality
+		uint32_t numShadows; //use by GeoSphere/GasGiant for eclipse
 
 		friend bool operator==(const MaterialDescriptor &a, const MaterialDescriptor &b);
 	};

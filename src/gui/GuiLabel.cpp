@@ -49,7 +49,7 @@ namespace Gui {
 		ResizeRequest();
 	}
 
-	Label *Label::Color(Uint8 r, Uint8 g, Uint8 b)
+	Label *Label::Color(uint8_t r, uint8_t g, uint8_t b)
 	{
 		::Color c(r, g, b);
 		if (m_color != c) {

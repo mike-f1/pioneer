@@ -43,7 +43,7 @@ public:
 		m_ssys->m_explored = explored;
 		m_ssys->m_exploredTime = time;
 	}
-	void SetSeed(Uint32 seed) { m_ssys->m_seed = seed; }
+	void SetSeed(uint32_t seed) { m_ssys->m_seed = seed; }
 	void SetFaction(const Faction *faction) { m_ssys->m_faction = faction; }
 	void SetEconType(GalacticEconomy::EconType econType) { m_ssys->m_econType = econType; }
 	void SetSysPolit(SysPolit polit) { m_ssys->m_polit = polit; }

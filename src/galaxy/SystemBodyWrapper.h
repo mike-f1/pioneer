@@ -2,8 +2,6 @@
 #define SYSTEMBODYWRAPPER_H
 
 #include <string>
-#include <SDL_stdinc.h>
-
 #include "Color.h"
 #include "galaxy/GalaxyEnums.h"
 
@@ -31,7 +29,7 @@ class SystemBodyWrapper
 
 		const std::string &GetSystemBodyName() const;
 		const SystemPath &GetSystemBodyPath() const;
-		Uint32 GetSystemBodySeed() const;
+		uint32_t GetSystemBodySeed() const;
 		bool SystemBodyHasRings() const;
 		const RingStyle &GetSystemBodyRings() const;
 

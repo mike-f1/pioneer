@@ -2,10 +2,13 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "RingMaterial.h"
+
 #include "RendererGL.h"
-#include "StringF.h"
 #include "TextureGL.h"
 #include "graphics/Graphics.h"
+#include "libs/StringF.h"
+
+#include "libs/utils.h"
 
 namespace Graphics {
 	namespace OGL {
@@ -27,7 +30,7 @@ namespace Graphics {
 			m_program->texture0.Set(this->texture0, 0);
 
 			//Light uniform parameters
-			for (Uint32 i = 0; i < m_renderer->GetNumLights(); i++) {
+			for (uint32_t i = 0; i < m_renderer->GetNumLights(); i++) {
 				const Light &Light = m_renderer->GetLight(i);
 				m_program->lights[i].diffuse.Set(Light.GetDiffuse());
 				m_program->lights[i].specular.Set(Light.GetSpecular());

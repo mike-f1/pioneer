@@ -2,8 +2,12 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "LuaUtils.h"
+
 #include "FileSystem.h"
-#include "libs.h"
+#include "libs/libs.h"
+#include "libs/stringUtils.h"
+#include "libs/StringRange.h"
+#include "libs/utils.h"
 
 extern "C" {
 #include "jenkins/lookup3.h"
@@ -51,7 +55,7 @@ static int l_hash_random(lua_State *L)
 
 	int numargs = lua_gettop(L);
 	// Note according to hashlittle2 comments, hashA is better mixed than hashB.
-	Uint32 hashA = 0, hashB = 0;
+	uint32_t hashA = 0, hashB = 0;
 
 	luaL_checkany(L, 1);
 	switch (lua_type(L, 1)) {
@@ -93,8 +97,8 @@ static int l_hash_random(lua_State *L)
 		lua_pushnumber(L, x);
 		return 1;
 	} else if (numargs == 3) {
-		Sint64 m = Sint64(lua_tonumber(L, 2));
-		Sint64 n = Sint64(lua_tonumber(L, 3));
+		int64_t m = int64_t(lua_tonumber(L, 2));
+		int64_t n = int64_t(lua_tonumber(L, 3));
 
 		if (m > n) {
 			return luaL_error(L, "arguments invalid (m > n not allowed)");
@@ -111,10 +115,10 @@ static int l_hash_random(lua_State *L)
 			}
 		}
 
-		Uint64 range = n - m + 1;
-		Uint64 bits = (Uint64(hashB) << 32) | Uint64(hashA);
+		uint64_t range = n - m + 1;
+		uint64_t bits = (uint64_t(hashB) << 32) | uint64_t(hashA);
 		// return a value x: m <= x <= n
-		lua_pushnumber(L, double(Sint64(m) + Sint64(bits % range)));
+		lua_pushnumber(L, double(int64_t(m) + int64_t(bits % range)));
 		return 1;
 	} else {
 		return luaL_error(L, "wrong number of arguments");
@@ -609,7 +613,7 @@ void pi_lua_import_recursive(lua_State *L, const std::string &basepath)
 			pi_lua_import_recursive(L, fpath);
 		} else {
 			assert(info.IsFile());
-			if (ends_with_ci(fpath, ".lua")) {
+			if (stringUtils::ends_with_ci(fpath, ".lua")) {
 				if (pi_lua_import(L, fpath, true))
 					lua_pop(L, 1); // pop imported value
 			}
@@ -958,7 +962,7 @@ void pi_lua_dofile_recursive(lua_State *l, const std::string &basepath)
 			pi_lua_dofile_recursive(l, fpath);
 		} else {
 			assert(info.IsFile());
-			if (ends_with_ci(fpath, ".lua")) {
+			if (stringUtils::ends_with_ci(fpath, ".lua")) {
 				RefCountedPtr<FileSystem::FileData> code = info.Read();
 				pi_lua_dofile(l, *code);
 			}
@@ -1005,7 +1009,8 @@ bool pi_lua_split_table_path(lua_State *l, const std::string &path)
 
 	lua_getfield(l, LUA_REGISTRYINDEX, "CoreImports");
 
-	size_t start = 0, end = 0;
+	size_t start = path.find_first_not_of(delim);
+	size_t end = 0;
 	while (end != std::string::npos) {
 		// get to the first non-delim char
 		start = path.find_first_not_of(delim, end);

@@ -3,11 +3,17 @@
 
 #include "Propulsion.h"
 
+#include "DynamicBody.h"
 #include "Game.h"
 #include "GameLocator.h"
 #include "GameSaveError.h"
+#include "Json.h"
+#include "JsonUtils.h"
+#include "libs/utils.h"
+#include "scenegraph/Model.h"
+#include <limits>
+
 #include "Object.h" // <- here only for comment in AIFaceDirection (line 320)
-#include "PlayerShipController.h"
 
 void Propulsion::SaveToJson(Json &jsonObj, Space *space)
 {
@@ -19,7 +25,7 @@ void Propulsion::SaveToJson(Json &jsonObj, Space *space)
 	// !!! These are commented to avoid savegame bumps:
 	//jsonObj["tank_mass"] = m_fuelTankMass;
 	//jsonObj["propulsion"] = PropulsionObj;
-};
+}
 
 void Propulsion::LoadFromJson(const Json &jsonObj, Space *space)
 {
@@ -33,26 +39,25 @@ void Propulsion::LoadFromJson(const Json &jsonObj, Space *space)
 		// !!! This is commented to avoid savegame bumps:
 		//m_fuelTankMass = jsonObj["tank_mass"].asInt();
 	} catch (Json::type_error &) {
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 		throw SavedGameCorruptException();
 	}
-};
+}
 
-Propulsion::Propulsion()
+Propulsion::Propulsion() :
+	m_angThrust(0.0),
+	m_linThrusters(0.0),
+	m_angThrusters(0.0),
+	m_fuelTankMass(1),
+	m_thrusterFuel(0.0),
+	m_reserveFuel(0.0),
+	m_effectiveExhaustVelocity(100000.0),
+	m_fuelStateChange(false),
+	m_dBody(nullptr),
+	m_smodel(nullptr)
 {
-	m_fuelTankMass = 1;
-	for (int i = 0; i < Thruster::THRUSTER_MAX; i++)
-		m_linThrust[i] = 0.0;
-	for (int i = 0; i < Thruster::THRUSTER_MAX; i++)
-		m_linAccelerationCap[i] = INFINITY;
-	m_angThrust = 0.0;
-	m_effectiveExhaustVelocity = 100000.0;
-	m_thrusterFuel = 0.0; //0.0-1.0, remaining fuel
-	m_reserveFuel = 0.0;
-	m_fuelStateChange = false;
-	m_linThrusters = vector3d(0, 0, 0);
-	m_angThrusters = vector3d(0, 0, 0);
-	m_smodel = nullptr;
-	m_dBody = nullptr;
+	m_linThrust.fill(0.0);
+	m_linAccelerationCap.fill(std::numeric_limits<float>::max());
 }
 
 void Propulsion::Init(DynamicBody *b, SceneGraph::Model *m, const int tank_mass, const double effExVel, const float lin_Thrust[], const float ang_Thrust)
@@ -61,8 +66,7 @@ void Propulsion::Init(DynamicBody *b, SceneGraph::Model *m, const int tank_mass,
 	m_effectiveExhaustVelocity = effExVel;
 	for (int i = 0; i < Thruster::THRUSTER_MAX; i++)
 		m_linThrust[i] = lin_Thrust[i];
-	for (int i = 0; i < Thruster::THRUSTER_MAX; i++)
-		m_linAccelerationCap[i] = INFINITY;
+	m_linAccelerationCap.fill(std::numeric_limits<float>::max());
 	m_angThrust = ang_Thrust;
 	m_smodel = m;
 	m_dBody = b;
@@ -190,6 +194,16 @@ vector3d Propulsion::GetThrustUncapped(const vector3d &dir) const
 	maxThrust.z = (dir.z > 0) ? m_linThrust[THRUSTER_REVERSE] : m_linThrust[THRUSTER_FORWARD];
 
 	return maxThrust;
+}
+
+double Propulsion::GetAccel(Thruster thruster) const
+{
+	return GetThrust(thruster) / m_dBody->GetMass();
+}
+
+double Propulsion::GetAccelMin() const
+{
+	return GetThrustMin() / m_dBody->GetMass();
 }
 
 float Propulsion::GetFuelUseRate()
@@ -436,8 +450,17 @@ double Propulsion::AIFaceDirection(const vector3d &dir, double av)
 	// baseclass version in Ship would always be 0. the version in Player
 	// would be constructed from user input. that adjustment could then be
 	// considered by this method when computing the required change
-	if (m_dBody->IsType(Object::PLAYER) && (PlayerShipController::InputBindings.roll->IsActive()))
+	// * Update XX May 2020: removed KeyBinding and PlayerShipController as
+	// * it seems, by commenting below line, these aren't needed. But the
+	// * above comment still valid and (probably) would drive to a better and
+	// * deeper separation between these classes... Or it may be that the below
+	// * line was breaking something which has not recognized... So left all
+	// * here, waiting to solve the original issue :/
+
+	//if (m_dBody->IsType(Object::PLAYER) && (PlayerShipController::InputBindings.roll->IsActive())) {
+	if (m_dBody->IsType(Object::PLAYER)) {
 		diff.z = GetAngThrusterState().z;
+	}
 	SetAngThrusterState(diff);
 	return ang;
 }

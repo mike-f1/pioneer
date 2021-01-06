@@ -106,9 +106,9 @@ const struct EnumItem ENUM_ShipTypeThruster[] = {
 };
 
 const struct EnumItem ENUM_PropulsionFuelStatus[] = {
-	{ "OK", int(Propulsion::FUEL_OK) },
-	{ "WARNING", int(Propulsion::FUEL_WARNING) },
-	{ "EMPTY", int(Propulsion::FUEL_EMPTY) },
+	{ "OK", int(Propulsion::FuelState::OK) },
+	{ "WARNING", int(Propulsion::FuelState::WARNING) },
+	{ "EMPTY", int(Propulsion::FuelState::EMPTY) },
 	{ 0, 0 },
 };
 
@@ -183,9 +183,9 @@ const struct EnumItem ENUM_ShipTypeTag[] = {
 };
 
 const struct EnumItem ENUM_EconType[] = {
-	{ "MINING", int(GalacticEconomy::ECON_MINING) },
-	{ "AGRICULTURE", int(GalacticEconomy::ECON_AGRICULTURE) },
-	{ "INDUSTRY", int(GalacticEconomy::ECON_INDUSTRY) },
+	{ "MINING", int(GalacticEconomy::EconType::MINING) },
+	{ "AGRICULTURE", int(GalacticEconomy::EconType::AGRICULTURE) },
+	{ "INDUSTRY", int(GalacticEconomy::EconType::INDUSTRY) },
 	{ 0, 0 },
 };
 
@@ -294,12 +294,12 @@ const struct EnumItem ENUM_GameUIMarkerStyle[] = {
 };
 
 const struct EnumItem ENUM_ModelDebugFlags[] = {
-	{ "NONE", int(SceneGraph::Model::DEBUG_NONE) },
-	{ "BBOX", int(SceneGraph::Model::DEBUG_BBOX) },
-	{ "COLLMESH", int(SceneGraph::Model::DEBUG_COLLMESH) },
-	{ "WIREFRAME", int(SceneGraph::Model::DEBUG_WIREFRAME) },
-	{ "TAGS", int(SceneGraph::Model::DEBUG_TAGS) },
-	{ "DOCKING", int(SceneGraph::Model::DEBUG_DOCKING) },
+	{ "NONE", int(SceneGraph::DebugFlags::NONE) },
+	{ "BBOX", int(SceneGraph::DebugFlags::BBOX) },
+	{ "COLLMESH", int(SceneGraph::DebugFlags::COLLMESH) },
+	{ "WIREFRAME", int(SceneGraph::DebugFlags::WIREFRAME) },
+	{ "TAGS", int(SceneGraph::DebugFlags::TAGS) },
+	{ "DOCKING", int(SceneGraph::DebugFlags::DOCKING) },
 	{ 0, 0 },
 };
 

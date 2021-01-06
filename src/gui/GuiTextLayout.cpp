@@ -5,8 +5,10 @@
 
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
+#include "graphics/VertexArray.h"
+#include "graphics/VertexBuffer.h"
 #include "text/TextSupport.h"
-#include "utils.h"
+#include "libs/utils.h"
 
 static const float PARAGRAPH_SPACING = 1.5f;
 
@@ -25,6 +27,9 @@ namespace Gui {
 		prevWidth = -1.0f;
 		prevColor = Color::WHITE;
 	}
+
+	TextLayout::~TextLayout()
+	{}
 
 	void TextLayout::SetText(const char *_str)
 	{
@@ -50,7 +55,7 @@ namespace Gui {
 					}
 				}
 
-				Uint32 chr;
+				uint32_t chr;
 				int n = Text::utf8_decode_char(&chr, &str[i]);
 				assert(n);
 				i += n;

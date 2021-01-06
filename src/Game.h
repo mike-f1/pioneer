@@ -5,17 +5,18 @@
 #define _GAME_H
 
 #include "JsonFwd.h"
-#include "RefCounted.h"
 #include "galaxy/GalaxyCache.h"
 #include "galaxy/SystemPath.h"
-#include "gameconsts.h"
-#include "vector3.h"
+#include "libs/RefCounted.h"
+#include "libs/gameconsts.h"
+#include "libs/vector3.h"
 #include <string>
 #include <list>
 
 class Galaxy;
 class GameLog;
 class HyperspaceCloud;
+class LuaInputFrames;
 class LuaTimer;
 class Player;
 class Space;
@@ -25,8 +26,13 @@ namespace Graphics {
 	class Renderer;
 }
 
+namespace MainState_ {
+	class GameState;
+}
+
 class Game {
-	friend class GameState;
+	friend class GameStateStatic;
+	friend class MainState_::GameState;
 	// start docked in station referenced by path or nearby to body if it is no station
 	Game(const SystemPath &path, const double startDateTime, unsigned int cacheRadius);
 
@@ -59,7 +65,7 @@ public:
 	void WantHyperspace();
 
 	// hyperspace parameters. only meaningful when IsHyperspace() is true
-	float GetHyperspaceProgress() const { return m_hyperspaceProgress; }
+	double GetHyperspaceProgress() const { return m_hyperspaceProgress; }
 	double GetHyperspaceDuration() const { return m_hyperspaceDuration; }
 	double GetHyperspaceEndTime() const { return m_hyperspaceEndTime; }
 	double GetHyperspaceArrivalProbability() const;
@@ -105,7 +111,7 @@ public:
 	float GetTimeAccelRate() const { return s_timeAccelRates[m_timeAccel]; }
 	float GetInvTimeAccelRate() const { return s_timeInvAccelRates[m_timeAccel]; }
 
-	float GetTimeStep() const { return s_timeAccelRates[m_timeAccel] * (1.0f / PHYSICS_HZ); }
+	double GetTimeStep() const { return s_timeAccelRates[m_timeAccel] * (1.0f / PHYSICS_HZ); }
 
 	GameLog &GetGameLog() const { return *m_log.get(); };
 
@@ -114,7 +120,7 @@ public:
 private:
 	unsigned int m_cacheRadius;
 
-	void GenCaches(const SystemPath *here, unsigned int cacheRadius,
+	void GenCaches(const SystemPath &here, unsigned int cacheRadius,
 		StarSystemCache::CacheFilledCallback callback = StarSystemCache::CacheFilledCallback());
 	void UpdateStarSystemCache(const SystemPath *here, unsigned int cacheRadius);
 
@@ -130,6 +136,7 @@ private:
 
 	std::unique_ptr<Player> m_player;
 	std::unique_ptr<LuaTimer> m_luaTimer;
+	std::unique_ptr<LuaInputFrames> m_luaInputFrame;
 
 	std::unique_ptr<GameLog> m_log;
 

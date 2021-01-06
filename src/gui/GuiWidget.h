@@ -6,7 +6,10 @@
 
 #include "Color.h"
 #include "GuiEvents.h"
-#include "libs.h"
+#include "libs/libs.h"
+
+#include "SDL_keyboard.h"
+#include <sigc++/sigc++.h>
 
 namespace Gui {
 	class Container;
@@ -47,7 +50,7 @@ namespace Gui {
 		bool IsVisible() const;
 		Container *GetParent() const { return m_parent; }
 		void SetParent(Container *p) { m_parent = p; }
-		void SetToolTip(std::string s) { m_tooltip = s; }
+		void SetToolTip(const std::string &s) { m_tooltip = s; }
 		const std::string &GetToolTip() const { return m_tooltip; }
 
 		// event handlers should return false to stop propagating event
@@ -58,7 +61,7 @@ namespace Gui {
 		virtual void OnMouseEnter();
 		virtual void OnMouseLeave();
 		virtual bool OnKeyDown(const SDL_Keysym *sym) { return false; }
-		virtual void OnTextInput(Uint32 unicode) {}
+		virtual void OnTextInput(uint32_t unicode) {}
 		bool IsMouseOver() { return m_mouseOver; }
 		// only to be called by Screen::OnKeyDown
 		void OnPreShortcut(const SDL_Keysym *sym);

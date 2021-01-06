@@ -4,14 +4,15 @@
 #ifndef _FONTCACHE_H
 #define _FONTCACHE_H
 
-#include "RefCounted.h"
+#include "libs/RefCounted.h"
 #include "text/TextureFont.h"
 #include <map>
 #include <string>
 
 class FontCache {
 public:
-	FontCache() {}
+	FontCache() = default;
+	~FontCache();
 
 	RefCountedPtr<Text::TextureFont> GetTextureFont(const std::string &name);
 

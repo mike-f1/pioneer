@@ -3,6 +3,9 @@
 
 #include "Animation.h"
 
+#include <SDL_timer.h>
+#include "libs/utils.h"
+
 namespace UI {
 
 	Animation::Animation(Widget *widget, Type type, Easing easing, Target target, float duration, bool continuous, Animation *next, sigc::slot<void> callback) :
@@ -188,11 +191,11 @@ namespace UI {
 	void AnimationController::Update()
 	{
 		PROFILE_SCOPED();
-		const Uint32 now = SDL_GetTicks();
+		const uint32_t now = SDL_GetTicks();
 
 		for (auto i = m_animations.begin(); i != m_animations.end();) {
 			Animation *animation = (*i).first.Get();
-			Uint32 start = (*i).second;
+			uint32_t start = (*i).second;
 
 			float remaining = 0.0f;
 			if (!animation->IsCompleted())
@@ -202,7 +205,7 @@ namespace UI {
 				Animation *nextAnimation = animation->GetNext();
 				if (nextAnimation) {
 					assert(!animation->IsRunning());
-					m_animations.push_back(std::make_pair(RefCountedPtr<Animation>(nextAnimation), now - Uint32(-remaining * 1000.0f)));
+					m_animations.push_back(std::make_pair(RefCountedPtr<Animation>(nextAnimation), now - uint32_t(-remaining * 1000.0f)));
 					nextAnimation->Running();
 				}
 				m_animations.erase(i++);

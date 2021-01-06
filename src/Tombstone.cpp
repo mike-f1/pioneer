@@ -5,9 +5,10 @@
 
 #include "Lang.h"
 #include "ModelCache.h"
+#include "graphics/Material.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
-#include "scenegraph/SceneGraph.h"
+#include "scenegraph/Model.h"
 
 Tombstone::Tombstone(int width, int height) :
 	Cutscene(width, height)
@@ -19,8 +20,8 @@ Tombstone::Tombstone(int width, int height) :
 
 	m_model = ModelCache::FindModel("tombstone");
 	m_model->SetLabel(Lang::TOMBSTONE_EPITAPH);
-	const Uint32 numMats = m_model->GetNumMaterials();
-	for (Uint32 m = 0; m < numMats; m++) {
+	const uint32_t numMats = m_model->GetNumMaterials();
+	for (uint32_t m = 0; m < numMats; m++) {
 		RefCountedPtr<Graphics::Material> mat = m_model->GetMaterialByIndex(m);
 		mat->specialParameter0 = nullptr;
 	}

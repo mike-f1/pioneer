@@ -6,6 +6,8 @@
 #include "scenegraph/Serializer.h"
 #include "collider/GeomTree.h"
 
+#include "profiler/Profiler.h"
+
 //This simply stores the collision GeomTrees
 //and AABB.
 
@@ -35,9 +37,9 @@ void CollMesh::Load(Serializer::Reader &rd)
 
 	m_geomTree = new GeomTree(rd);
 
-	const Uint32 numDynGeomTrees = rd.Int32();
+	const uint32_t numDynGeomTrees = rd.Int32();
 	m_dynGeomTrees.reserve(numDynGeomTrees);
-	for (Uint32 it = 0; it < numDynGeomTrees; ++it) {
+	for (uint32_t it = 0; it < numDynGeomTrees; ++it) {
 		m_dynGeomTrees.push_back(new GeomTree(rd));
 	}
 
@@ -56,12 +58,12 @@ const std::vector<vector3f> &CollMesh::GetGeomTreeVertices() const
 	return m_geomTree->GetVertices();
 }
 
-const Uint32 *CollMesh::GetGeomTreeIndices() const
+const std::vector<uint32_t> &CollMesh::GetGeomTreeIndices() const
 {
 	return m_geomTree->GetIndices();
 }
 
-const unsigned int *CollMesh::GetGeomTreeTriFlags() const
+const std::vector<unsigned> &CollMesh::GetGeomTreeTriFlags() const
 {
 	return m_geomTree->GetTriFlags();
 }

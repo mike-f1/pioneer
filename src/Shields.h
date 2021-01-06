@@ -6,23 +6,20 @@
 /*
  * Mesh shields for ships and other objects.
  */
+
+#include "Color.h"
 #include "JsonFwd.h"
-#include "libs.h"
+#include "graphics/ShieldRenderParameters.h"
+#include "libs/RefCounted.h"
+#include "libs/matrix4x4.h"
+#include "libs/vector3.h"
 #include <deque>
+#include <vector>
 
 namespace SceneGraph {
 	class Model;
 	class StaticGeometry;
 } // namespace SceneGraph
-
-struct ShieldRenderParameters {
-	static const Uint32 MAX_SHIELD_HITS = 5; // Also defined in ShieldMaterial.h
-	float strength;
-	float coolDown;
-	vector3f hitPos[MAX_SHIELD_HITS];
-	float radii[MAX_SHIELD_HITS];
-	Sint32 numHits;
-};
 
 class Shields {
 public:
@@ -33,7 +30,7 @@ public:
 		RefCountedPtr<SceneGraph::StaticGeometry> m_mesh;
 	};
 
-	Shields(SceneGraph::Model *);
+	explicit Shields(SceneGraph::Model *);
 	virtual ~Shields();
 	virtual void SaveToJson(Json &jsonObj);
 	virtual void LoadFromJson(const Json &jsonObj);
@@ -51,10 +48,10 @@ public:
 
 protected:
 	struct Hits {
-		Hits(const vector3d &_pos, const Uint32 _start, const Uint32 _end);
+		Hits(const vector3d &_pos, const uint32_t _start, const uint32_t _end);
 		vector3d pos;
-		Uint32 start;
-		Uint32 end;
+		uint32_t start;
+		uint32_t end;
 	};
 	typedef std::deque<Shields::Hits>::iterator HitIterator;
 	std::deque<Hits> m_hits;

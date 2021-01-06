@@ -5,7 +5,7 @@
 #define _MUSIC_H
 
 #include "Sound.h"
-#include <SDL.h>
+
 #include <string>
 #include <vector>
 
@@ -13,9 +13,9 @@ namespace Sound {
 	class MusicEvent : public Event {
 	public:
 		MusicEvent();
-		MusicEvent(Uint32 id);
+		MusicEvent(uint32_t id);
 		~MusicEvent();
-		virtual void Play(const char *fx, const float volume_left, const float volume_right, Op op);
+		virtual void Play(const char *fx, const float volume_left, const float volume_right, Op op) override;
 	};
 
 	class MusicPlayer {

@@ -28,7 +28,7 @@ namespace Gui {
 			m_shadow = isOn;
 			return this;
 		}
-		Label *Color(Uint8 r, Uint8 g, Uint8 b);
+		Label *Color(uint8_t r, uint8_t g, uint8_t b);
 		Label *Color(const ::Color &);
 
 	private:
@@ -38,7 +38,7 @@ namespace Gui {
 		std::string m_text;
 		::Color m_color;
 		bool m_shadow;
-		Uint32 m_dlist;
+		uint32_t m_dlist;
 		RefCountedPtr<Text::TextureFont> m_font;
 		std::unique_ptr<TextLayout> m_layout;
 		TextLayout::ColourMarkupMode m_colourMarkupMode;

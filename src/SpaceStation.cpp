@@ -18,24 +18,26 @@
 #include "Player.h"
 #include "Ship.h"
 #include "Space.h"
-#include "StringF.h"
+#include "libs/StringF.h"
+#include "collider/CSGDefinitions.h"
 #include "galaxy/SystemBody.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 #include "scenegraph/Animation.h"
 #include "scenegraph/MatrixTransform.h"
+#include "scenegraph/Model.h"
 #include "scenegraph/ModelSkin.h"
+
+#include <memory>
 
 SpaceStation::SpaceStation(const SystemBody *sbody) :
 	ModelBody(),
-	m_type(nullptr)
+	m_oldAngDisplacement(0.0),
+	m_type(nullptr),
+	m_sbody(sbody),
+	m_doorAnimationStep(0.0),
+	m_doorAnimationState(0.0)
 {
-	m_sbody = sbody;
-
-	m_oldAngDisplacement = 0.0;
-
-	m_doorAnimationStep = m_doorAnimationState = 0.0;
-
 	InitStation();
 }
 
@@ -52,7 +54,7 @@ SpaceStation::SpaceStation(const Json &jsonObj, Space *space) :
 
 		Json shipDockingArray = spaceStationObj["ship_docking"].get<Json::array_t>();
 		m_shipDocking.reserve(shipDockingArray.size());
-		for (Uint32 i = 0; i < shipDockingArray.size(); i++) {
+		for (uint32_t i = 0; i < shipDockingArray.size(); i++) {
 			m_shipDocking.push_back(shipDocking_t());
 			shipDocking_t &sd = m_shipDocking.back();
 
@@ -72,7 +74,7 @@ SpaceStation::SpaceStation(const Json &jsonObj, Space *space) :
 		// retrieve each of the port details and bay IDs
 		Json portArray = spaceStationObj["ports"].get<Json::array_t>();
 		m_ports.reserve(portArray.size());
-		for (Uint32 i = 0; i < portArray.size(); i++) {
+		for (uint32_t i = 0; i < portArray.size(); i++) {
 			m_ports.push_back(SpaceStationType::SPort());
 			SpaceStationType::SPort &port = m_ports.back();
 
@@ -90,6 +92,7 @@ SpaceStation::SpaceStation(const Json &jsonObj, Space *space) :
 
 		m_navLights->LoadFromJson(spaceStationObj);
 	} catch (Json::type_error &) {
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 		throw SavedGameCorruptException();
 	}
 }
@@ -99,16 +102,16 @@ void SpaceStation::Init()
 	SpaceStationType::Init();
 }
 
-void SpaceStation::SaveToJson(Json &jsonObj, Space *space)
+Json SpaceStation::SaveToJson(Space *space)
 {
-	ModelBody::SaveToJson(jsonObj, space);
+	Json jsonObj = ModelBody::SaveToJson(space);
 
 	Json spaceStationObj({}); // Create JSON object to contain space station data.
 
 	Json shipDockingArray = Json::array(); // Create JSON array to contain ship docking data.
-	for (Uint32 i = 0; i < m_shipDocking.size(); i++) {
+	for (uint32_t i = 0; i < m_shipDocking.size(); i++) {
 		Json shipDockingArrayEl({}); // Create JSON object to contain ship docking.
-		Uint32 bodyIndex = space->GetIndexForBody(m_shipDocking[i].ship);
+		uint32_t bodyIndex = space->GetIndexForBody(m_shipDocking[i].ship);
 		if (bodyIndex != 0) {
 			shipDockingArrayEl["index_for_body"] = bodyIndex;
 			shipDockingArrayEl["stage"] = m_shipDocking[i].stage;
@@ -122,7 +125,7 @@ void SpaceStation::SaveToJson(Json &jsonObj, Space *space)
 
 	// store each of the port details and bay IDs
 	Json portArray = Json::array(); // Create JSON array to contain port data.
-	for (Uint32 i = 0; i < m_ports.size(); i++) {
+	for (uint32_t i = 0; i < m_ports.size(); i++) {
 		Json portArrayEl({}); // Create JSON object to contain port.
 
 		if (m_ports[i].inUse)
@@ -140,19 +143,20 @@ void SpaceStation::SaveToJson(Json &jsonObj, Space *space)
 	m_navLights->SaveToJson(spaceStationObj);
 
 	jsonObj["space_station"] = spaceStationObj; // Add space station object to supplied object.
+	return jsonObj;
 }
 
 void SpaceStation::PostLoadFixup(Space *space)
 {
 	ModelBody::PostLoadFixup(space);
-	for (Uint32 i = 0; i < m_shipDocking.size(); i++) {
+	for (uint32_t i = 0; i < m_shipDocking.size(); i++) {
 		m_shipDocking[i].ship = static_cast<Ship *>(space->GetBodyByIndex(m_shipDocking[i].shipIndex));
 	}
 }
 
 void SpaceStation::InitStation()
 {
-	m_adjacentCity = 0;
+	m_adjacentCity = nullptr;
 	for (int i = 0; i < NUM_STATIC_SLOTS; i++)
 		m_staticSlot[i] = false;
 	Random rand(m_sbody->GetSeed());
@@ -161,7 +165,7 @@ void SpaceStation::InitStation()
 	if (space_station_type != "") {
 		m_type = SpaceStationType::FindByName(space_station_type);
 		if (m_type == nullptr)
-			Output("WARNING: SpaceStation::InitStation wants to initialize a custom station of type %s, but no station type with that id has been found.\n", space_station_type.c_str());
+			Output("WARNING: SpaceStation::InitStation wants to initialize a custom station of type '%s', but no station type with that id has been found.\n", space_station_type.c_str());
 	}
 	if (m_type == nullptr)
 		m_type = SpaceStationType::RandomStationType(rand, ground);
@@ -203,8 +207,6 @@ void SpaceStation::InitStation()
 	m_navLights.reset(new NavLights(model, 2.2f));
 	m_navLights->SetEnabled(true);
 
-	if (ground) SetClipRadius(CITY_ON_PLANET_RADIUS); // overrides setmodel
-
 	m_doorAnimation = model->FindAnimation("doors");
 
 	SceneGraph::ModelSkin skin;
@@ -215,6 +217,22 @@ void SpaceStation::InitStation()
 	if (model->SupportsPatterns()) {
 		model->SetPattern(rand.Int32(0, model->GetNumPatterns() - 1));
 	}
+
+	// this model have "an hole" (the central empty cylinder) which
+	// will replace tri-edge collision detection stuffs
+	SpaceStationType::cylinder_t cc = m_type->GetCentralCylinder();
+	if (cc.is_valid) {
+		std::unique_ptr<CSG_CentralCylinder> csg_cylinder(new CSG_CentralCylinder(cc.diameter, cc.min, cc.max, cc.dock));
+		ModelBody::SetCentralCylinder(std::move(csg_cylinder));
+	}
+
+	std::vector<SpaceStationType::box_t> boxes = m_type->GetBoxes();
+	for (auto box : boxes) {
+		std::unique_ptr<CSG_Box> csg_box(new CSG_Box(box.min, box.max, box.dock));
+		ModelBody::AddBox(std::move(csg_box));
+	}
+
+	if (ground) SetClipRadius(CITY_ON_PLANET_RADIUS); // overrides setmodel
 }
 
 SpaceStation::~SpaceStation()
@@ -224,7 +242,7 @@ SpaceStation::~SpaceStation()
 
 void SpaceStation::NotifyRemoved(const Body *const removedBody)
 {
-	for (Uint32 i = 0; i < m_shipDocking.size(); i++) {
+	for (uint32_t i = 0; i < m_shipDocking.size(); i++) {
 		if (m_shipDocking[i].ship == removedBody) {
 			m_shipDocking[i].ship = 0;
 		}
@@ -233,7 +251,7 @@ void SpaceStation::NotifyRemoved(const Body *const removedBody)
 
 int SpaceStation::GetMyDockingPort(const Ship *s) const
 {
-	for (Uint32 i = 0; i < m_shipDocking.size(); i++) {
+	for (uint32_t i = 0; i < m_shipDocking.size(); i++) {
 		if (s == m_shipDocking[i].ship) return i;
 	}
 	return -1;
@@ -241,8 +259,8 @@ int SpaceStation::GetMyDockingPort(const Ship *s) const
 
 int SpaceStation::NumShipsDocked() const
 {
-	Sint32 numShipsDocked = 0;
-	for (Uint32 i = 0; i < m_shipDocking.size(); i++) {
+	int32_t numShipsDocked = 0;
+	for (uint32_t i = 0; i < m_shipDocking.size(); i++) {
 		if (NULL != m_shipDocking[i].ship)
 			++numShipsDocked;
 	}
@@ -271,7 +289,7 @@ int SpaceStation::GetFreeDockingPort(const Ship *s) const
 
 void SpaceStation::SetDocked(Ship *ship, const int port)
 {
-	assert(m_shipDocking.size() > Uint32(port));
+	assert(m_shipDocking.size() > uint32_t(port));
 	m_shipDocking[port].ship = ship;
 	m_shipDocking[port].stage = m_type->NumDockingStages() + 3;
 
@@ -312,7 +330,7 @@ bool SpaceStation::LaunchShip(Ship *ship, const int port)
 	const vector3d up = ship->GetOrient().VectorY().Normalized() * ship->GetLandingPosOffset();
 
 	sd.fromPos = (ship->GetPosition() - GetPosition() + up) * GetOrient(); // station space
-	sd.fromRot = Quaterniond::FromMatrix3x3(GetOrient().Transpose() * ship->GetOrient());
+	sd.fromRot = quaterniond::FromMatrix3x3(GetOrient().Transpose() * ship->GetOrient());
 
 	ship->SetFlightState(Ship::UNDOCKING);
 
@@ -322,7 +340,7 @@ bool SpaceStation::LaunchShip(Ship *ship, const int port)
 bool SpaceStation::GetDockingClearance(Ship *s, std::string &outMsg)
 {
 	assert(m_shipDocking.size() == m_type->NumDockingPorts());
-	for (Uint32 i = 0; i < m_shipDocking.size(); i++) {
+	for (uint32_t i = 0; i < m_shipDocking.size(); i++) {
 		if (m_shipDocking[i].ship == s) {
 			outMsg = stringf(Lang::CLEARANCE_ALREADY_GRANTED_BAY_N, formatarg("bay", i + 1));
 			return (m_shipDocking[i].stage > 0); // grant docking only if the ship is not already docked/undocking
@@ -332,7 +350,7 @@ bool SpaceStation::GetDockingClearance(Ship *s, std::string &outMsg)
 	const Aabb &bbox = s->GetAabb();
 	const float bboxRad = vector2f(float(bbox.max.x), float(bbox.max.z)).Length();
 
-	for (Uint32 i = 0; i < m_shipDocking.size(); i++) {
+	for (uint32_t i = 0; i < m_shipDocking.size(); i++) {
 		// initial unoccupied check
 		if (m_shipDocking[i].ship != 0) continue;
 
@@ -364,13 +382,13 @@ bool SpaceStation::GetDockingClearance(Ship *s, std::string &outMsg)
 	return false;
 }
 
-bool SpaceStation::OnCollision(Object *b, Uint32 flags, double relVel)
+bool SpaceStation::OnCollision(Object *b, uint32_t flags, double relVel)
 {
 	if ((flags & 0x10) && (b->IsType(Object::SHIP))) {
 		Ship *s = static_cast<Ship *>(b);
 
 		int port = -1;
-		for (Uint32 i = 0; i < m_shipDocking.size(); i++) {
+		for (uint32_t i = 0; i < m_shipDocking.size(); i++) {
 			if (m_shipDocking[i].ship == s) {
 				port = i;
 				break;
@@ -415,7 +433,7 @@ bool SpaceStation::OnCollision(Object *b, Uint32 flags, double relVel)
 			sd.stage = 2;
 			sd.stagePos = 0;
 			sd.fromPos = (s->GetPosition() - GetPosition()) * GetOrient(); // station space
-			sd.fromRot = Quaterniond::FromMatrix3x3(GetOrient().Transpose() * s->GetOrient());
+			sd.fromRot = quaterniond::FromMatrix3x3(GetOrient().Transpose() * s->GetOrient());
 			LockPort(port, true);
 
 			s->SetFlightState(Ship::DOCKING);
@@ -434,7 +452,7 @@ bool SpaceStation::OnCollision(Object *b, Uint32 flags, double relVel)
 	}
 }
 
-bool SpaceStation::DoShipDamage(Ship *s, Uint32 flags, double relVel)
+bool SpaceStation::DoShipDamage(Ship *s, uint32_t flags, double relVel)
 {
 	if (s == nullptr) return false;
 	s->DynamicBody::OnCollision(this, flags, relVel);
@@ -458,7 +476,7 @@ bool SpaceStation::DoShipDamage(Ship *s, Uint32 flags, double relVel)
 void SpaceStation::DockingUpdate(const double timeStep)
 {
 	vector3d p1, p2, zaxis;
-	for (Uint32 i = 0; i < m_shipDocking.size(); i++) {
+	for (uint32_t i = 0; i < m_shipDocking.size(); i++) {
 		shipDocking_t &dt = m_shipDocking[i];
 		if (!dt.ship) continue;
 		if (dt.stage > m_type->NumDockingStages()) {
@@ -471,7 +489,7 @@ void SpaceStation::DockingUpdate(const double timeStep)
 				// at high time steps on an orbital
 				if (!IsGroundStation()) {
 					dt.fromPos = vector3d(0.0); //No offset
-					dt.fromRot = Quaterniond(1.0, 0.0, 0.0, 0.0); //Identity (no rotation)
+					dt.fromRot = quaterniond(1.0, 0.0, 0.0, 0.0); //Identity (no rotation)
 					dt.stage += 2;
 					continue;
 				}
@@ -482,14 +500,14 @@ void SpaceStation::DockingUpdate(const double timeStep)
 					// Reposition needed
 					dt.fromPos = dt.ship->GetPosition();
 					matrix3x3d padOrient = matrix3x3d::FromVectors(dport.xaxis, dport.yaxis, dport.zaxis);
-					dt.fromRot = Quaterniond::FromMatrix3x3((GetOrient() * padOrient).Transpose() * dt.ship->GetOrient());
+					dt.fromRot = quaterniond::FromMatrix3x3((GetOrient() * padOrient).Transpose() * dt.ship->GetOrient());
 					dt.stage++;
 					dt.stagePos = 0.0;
 				} else {
 					// Save ship position
 					dt.fromPos = (dt.ship->GetPosition() - GetPosition() - GetOrient() * dport.pos) * GetOrient();
 					matrix3x3d padOrient = matrix3x3d::FromVectors(dport.xaxis, dport.yaxis, dport.zaxis);
-					dt.fromRot = Quaterniond::FromMatrix3x3((GetOrient() * padOrient).Transpose() * dt.ship->GetOrient());
+					dt.fromRot = quaterniond::FromMatrix3x3((GetOrient() * padOrient).Transpose() * dt.ship->GetOrient());
 					dt.stage += 2;
 				}
 				continue;
@@ -498,7 +516,7 @@ void SpaceStation::DockingUpdate(const double timeStep)
 				if (dt.stagePos >= 1.0) {
 					dt.stage++;
 					dt.fromPos = vector3d(0.0); //No offset
-					dt.fromRot = Quaterniond(1.0, 0.0, 0.0, 0.0); //Identity (no rotation)
+					dt.fromRot = quaterniond(1.0, 0.0, 0.0, 0.0); //Identity (no rotation)
 				}
 				continue;
 			case 3: // Just docked
@@ -539,7 +557,7 @@ void SpaceStation::DockingUpdate(const double timeStep)
 			SpaceStationType::positionOrient_t dport;
 			PiVerify(m_type->GetDockAnimPositionOrient(i, dt.stage, 1.0f, dt.fromPos, dport, dt.ship));
 			matrix3x3d fromRot = matrix3x3d::FromVectors(dport.xaxis, dport.yaxis, dport.zaxis);
-			dt.fromRot = Quaterniond::FromMatrix3x3(fromRot);
+			dt.fromRot = quaterniond::FromMatrix3x3(fromRot);
 			dt.fromPos = dport.pos;
 
 			// transition between docking stages
@@ -631,8 +649,8 @@ void SpaceStation::PositionDockingShip(Ship *ship, int port) const
 	matrix3x3d wantRot = matrix3x3d::FromVectors(dport.xaxis, dport.yaxis, dport.zaxis);
 	// use quaternion spherical linear interpolation to do
 	// rotation smoothly
-	Quaterniond wantQuat = Quaterniond::FromMatrix3x3(wantRot);
-	Quaterniond q = Quaterniond::Nlerp(dt.fromRot, wantQuat, dt.stagePos);
+	quaterniond wantQuat = quaterniond::FromMatrix3x3(wantRot);
+	quaterniond q = quaterniond::Nlerp(dt.fromRot, wantQuat, dt.stagePos);
 	wantRot = q.ToMatrix3x3<double>();
 	ship->SetOrient(GetOrient() * wantRot);
 }
@@ -646,7 +664,7 @@ void SpaceStation::PositionDockedShip(Ship *ship, int port) const
 
 	ship->SetPosition(GetPosition() + GetOrient() * (dport.pos + dt.fromPos));
 	// Note: ship bounding box is used to generate dport.pos
-	Quaterniond dportQ = Quaterniond::FromMatrix3x3(matrix3x3d::FromVectors(dport.xaxis, dport.yaxis, dport.zaxis));
+	quaterniond dportQ = quaterniond::FromMatrix3x3(matrix3x3d::FromVectors(dport.xaxis, dport.yaxis, dport.zaxis));
 	dportQ = dportQ * dt.fromRot;
 	matrix3x3d shipRot = dportQ.ToMatrix3x3<double>();
 	ship->SetOrient(GetOrient() * shipRot);
@@ -654,6 +672,8 @@ void SpaceStation::PositionDockedShip(Ship *ship, int port) const
 
 void SpaceStation::StaticUpdate(const float timeStep)
 {
+	PROFILE_SCOPED()
+
 	DockingUpdate(timeStep);
 	m_navLights->Update(timeStep);
 }
@@ -786,7 +806,7 @@ vector3d SpaceStation::GetTargetIndicatorPosition(FrameId relToId) const
 {
 	// return the next waypoint if permission has been granted for player,
 	// and the docking point's position once the docking anim starts
-	for (Uint32 i = 0; i < m_shipDocking.size(); i++) {
+	for (uint32_t i = 0; i < m_shipDocking.size(); i++) {
 		if (i >= m_type->NumDockingPorts()) break;
 		if ((m_shipDocking[i].ship == GameLocator::getGame()->GetPlayer()) && (m_shipDocking[i].stage > 0) && (m_shipDocking[i].stage != m_type->NumDockingStages() + 1)) { // last part is "not currently docked"
 

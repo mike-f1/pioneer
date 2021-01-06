@@ -1,9 +1,11 @@
 // Copyright © 2008-2019 Pioneer Developers. See AUTHORS.txt for details
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
-#include "FileSystem.h"
 #include "OS.h"
+
 #include "buildopts.h"
+
+#include "FileSystem.h"
 #include <SDL.h>
 #include <fenv.h>
 #include <sys/time.h>
@@ -14,6 +16,8 @@
 #include <unistd.h>
 #endif
 #include <sys/utsname.h>
+
+#include "libs/utils.h"
 
 namespace OS {
 
@@ -64,16 +68,16 @@ namespace OS {
 #endif
 	}
 
-	Uint64 HFTimerFreq()
+	uint64_t HFTimerFreq()
 	{
 		return 1000000;
 	}
 
-	Uint64 HFTimer()
+	uint64_t HFTimer()
 	{
 		timeval t;
 		gettimeofday(&t, 0);
-		return Uint64(t.tv_sec) * 1000000 + Uint64(t.tv_usec);
+		return uint64_t(t.tv_sec) * 1000000 + uint64_t(t.tv_usec);
 	}
 
 	int GetNumCores()

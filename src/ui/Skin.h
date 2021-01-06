@@ -5,12 +5,10 @@
 #define UI_SKIN_H
 
 #include "Point.h"
-#include "SmartPtr.h"
 #include "graphics/Material.h"
 #include "graphics/RenderState.h"
-#include "libs.h"
-
-#include <SDL_stdinc.h>
+#include "libs/SmartPtr.h"
+#include "libs/libs.h"
 
 namespace UI {
 

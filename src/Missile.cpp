@@ -15,7 +15,6 @@
 #include "Space.h"
 #include "collider/CollisionContact.h"
 
-
 Missile::Missile(const ShipType::Id &shipId, Body *owner, int power)
 {
 	AddFeature(Feature::PROPULSION); // add component propulsion
@@ -68,15 +67,16 @@ Missile::Missile(const Json &jsonObj, Space *space) :
 		m_power = missileObj["power"];
 		m_armed = missileObj["armed"];
 	} catch (Json::type_error &) {
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 		throw SavedGameCorruptException();
 	}
 
 	GetPropulsion()->Init(this, GetModel(), m_type->fuelTankMass, m_type->effectiveExhaustVelocity, m_type->linThrust, m_type->angThrust);
 }
 
-void Missile::SaveToJson(Json &jsonObj, Space *space)
+Json Missile::SaveToJson(Space *space)
 {
-	DynamicBody::SaveToJson(jsonObj, space);
+	Json jsonObj = DynamicBody::SaveToJson(space);
 	GetPropulsion()->SaveToJson(jsonObj, space);
 	Json missileObj = Json::object(); // Create JSON object to contain missile data.
 
@@ -89,6 +89,7 @@ void Missile::SaveToJson(Json &jsonObj, Space *space)
 	missileObj["ship_type_id"] = m_type->id;
 
 	jsonObj["missile"] = missileObj; // Add missile object to supplied object.
+	return jsonObj;
 }
 
 void Missile::PostLoadFixup(Space *space)
@@ -113,6 +114,7 @@ void Missile::ECMAttack(int power_val)
 
 void Missile::StaticUpdate(const float timeStep)
 {
+	PROFILE_SCOPED()
 	// Note: direct call to AI->TimeStepUpdate
 
 	if (!m_curAICmd) {
@@ -159,7 +161,7 @@ void Missile::TimeStepUpdate(const float timeStep)
 	}
 }
 
-bool Missile::OnCollision(Object *o, Uint32 flags, double relVel)
+bool Missile::OnCollision(Object *o, uint32_t flags, double relVel)
 {
 	if (!IsDead()) {
 		Explode();

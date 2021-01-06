@@ -5,19 +5,24 @@
 #define _TEXT_TEXTUREFONT_H
 
 #include "FontConfig.h"
-#include "RefCounted.h"
-#include "graphics/Material.h"
-#include "graphics/Texture.h"
-#include "graphics/VertexBuffer.h"
+#include "libs/RefCounted.h"
+#include "Color.h"
 
 #include <unordered_map>
+#include <map>
+#include <memory>
 
 namespace FileSystem {
 	class FileData;
 }
 
 namespace Graphics {
+	class Material;
 	class RenderState;
+	class Texture;
+	class VertexArray;
+	class VertexBuffer;
+	enum class TextureFormat;
 }
 
 // forward declarations for FreeType types
@@ -72,22 +77,22 @@ namespace Text {
 			int offX, offY;
 			float offU, offV; //atlas UV offset
 			FT_Face ftFace;
-			Uint32 ftIndex;
+			uint32_t ftIndex;
 		};
-		const Glyph &GetGlyph(Uint32 ch);
+		const Glyph &GetGlyph(uint32_t ch);
 
 		static int GetGlyphCount() { return s_glyphCount; }
 		static void ClearGlyphCount() { s_glyphCount = 0; }
 
-		RefCountedPtr<Graphics::Texture> GetTexture() const { return m_texture; }
-		Graphics::Material *GetMaterial() const { return m_mat.get(); }
+		RefCountedPtr<Graphics::Texture> GetTexture() const;
+		Graphics::Material *GetMaterial() const;
 
 	private:
 		TextureFont(const TextureFont &);
 		TextureFont &operator=(const TextureFont &);
 
 		void AddCachedVertexBuffer(Graphics::VertexBuffer *pVB, const std::string &str);
-		Uint32 CleanVertexBufferCache();
+		uint32_t CleanVertexBufferCache();
 
 		FontConfig m_config;
 		float m_scale;
@@ -98,7 +103,7 @@ namespace Text {
 		FT_Face GetFTFace(const FontConfig::Face &face);
 		std::map<FontConfig::Face, std::pair<FT_Face, RefCountedPtr<FileSystem::FileData>>> m_faces;
 
-		Glyph BakeGlyph(Uint32 chr);
+		Glyph BakeGlyph(uint32_t chr);
 
 		float GetKern(const Glyph &a, const Glyph &b);
 
@@ -110,7 +115,7 @@ namespace Text {
 
 		static int s_glyphCount;
 
-		std::map<Uint32, Glyph> m_glyphs;
+		std::map<uint32_t, Glyph> m_glyphs;
 
 		// UV offsets for glyphs
 		unsigned int m_atlasU;

@@ -106,9 +106,9 @@ void LuaObject<SystemPath>::PushToLua(const SystemPath &o)
  */
 static int l_sbodypath_new(lua_State *l)
 {
-	Sint32 sector_x = luaL_checkinteger(l, 1);
-	Sint32 sector_y = luaL_checkinteger(l, 2);
-	Sint32 sector_z = luaL_checkinteger(l, 3);
+	int32_t sector_x = luaL_checkinteger(l, 1);
+	int32_t sector_y = luaL_checkinteger(l, 2);
+	int32_t sector_z = luaL_checkinteger(l, 3);
 
 	SystemPath path(sector_x, sector_y, sector_z);
 
@@ -171,7 +171,7 @@ static int l_sbodypath_is_same_system(lua_State *l)
 	if (!b->HasValidSystem())
 		return luaL_error(l, "SystemPath:IsSameSystem() argument #1 does not refer to a system");
 
-	lua_pushboolean(l, a->IsSameSystem(b));
+	lua_pushboolean(l, a->IsSameSystem(*b));
 	return 1;
 }
 
@@ -203,7 +203,7 @@ static int l_sbodypath_is_same_sector(lua_State *l)
 	SystemPath *a = LuaObject<SystemPath>::CheckFromLua(1);
 	SystemPath *b = LuaObject<SystemPath>::CheckFromLua(2);
 
-	lua_pushboolean(l, a->IsSameSector(b));
+	lua_pushboolean(l, a->IsSameSector(*b));
 	return 1;
 }
 
@@ -346,7 +346,7 @@ static int l_sbodypath_get_star_system(lua_State *l)
 	if (path->IsSectorPath())
 		return luaL_error(l, "SystemPath:GetStarSystem() self argument does not refer to a system");
 
-	RefCountedPtr<StarSystem> s = GameLocator::getGame()->GetGalaxy()->GetStarSystem(path);
+	RefCountedPtr<StarSystem> s = GameLocator::getGame()->GetGalaxy()->GetStarSystem(*path);
 	// LuaObject<StarSystem> shares ownership of the StarSystem,
 	// because LuaAcquirer<LuaObject<StarSystem>> uses IncRefCount and DecRefCount
 	LuaObject<StarSystem>::PushToLua(s.Get());
@@ -381,7 +381,7 @@ static int l_sbodypath_get_system_body(lua_State *l)
 		return 0;
 	}
 
-	RefCountedPtr<StarSystem> sys = GameLocator::getGame()->GetGalaxy()->GetStarSystem(path);
+	RefCountedPtr<StarSystem> sys = GameLocator::getGame()->GetGalaxy()->GetStarSystem(*path);
 	if (path->IsSystemPath()) {
 		luaL_error(l, "Path <%d,%d,%d : %d ('%s')> does not name a body", path->sectorX, path->sectorY, path->sectorZ, path->systemIndex, sys->GetName().c_str());
 		return 0;
@@ -391,7 +391,7 @@ static int l_sbodypath_get_system_body(lua_State *l)
 	// (note: this may change if it becomes possible to remove systems during the game)
 	assert(path->bodyIndex < sys->GetNumBodies());
 
-	SystemBody *sbody = sys->GetBodyByPath(path);
+	SystemBody *sbody = sys->GetBodyByPath(*path);
 	LuaObject<SystemBody>::PushToLua(sbody);
 	return 1;
 }
@@ -592,23 +592,23 @@ static bool _systempath_deserializer(const char *pos, const char **next)
 {
 	const char *end;
 
-	Sint32 sectorX = strtol(pos, const_cast<char **>(&end), 0);
+	int32_t sectorX = strtol(pos, const_cast<char **>(&end), 0);
 	if (pos == end) return false;
 	pos = end + 1; // skip newline
 
-	Sint32 sectorY = strtol(pos, const_cast<char **>(&end), 0);
+	int32_t sectorY = strtol(pos, const_cast<char **>(&end), 0);
 	if (pos == end) return false;
 	pos = end + 1; // skip newline
 
-	Sint32 sectorZ = strtol(pos, const_cast<char **>(&end), 0);
+	int32_t sectorZ = strtol(pos, const_cast<char **>(&end), 0);
 	if (pos == end) return false;
 	pos = end + 1; // skip newline
 
-	Uint32 systemNum = strtoul(pos, const_cast<char **>(&end), 0);
+	uint32_t systemNum = strtoul(pos, const_cast<char **>(&end), 0);
 	if (pos == end) return false;
 	pos = end + 1; // skip newline
 
-	Uint32 sbodyId = strtoul(pos, const_cast<char **>(&end), 0);
+	uint32_t sbodyId = strtoul(pos, const_cast<char **>(&end), 0);
 	if (pos == end) return false;
 	pos = end + 1; // skip newline
 

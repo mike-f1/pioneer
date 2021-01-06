@@ -13,8 +13,8 @@
 #include <assert.h>
 #include <cmath>
 
-#include "RefCounted.h"
-#include "fixed.h"
+#include "libs/RefCounted.h"
+#include "libs/fixed.h"
 
 extern "C" {
 #include "jenkins/lookup3.h"
@@ -37,22 +37,28 @@ public:
 	//
 
 	// Construct a new random generator using the given seed
-	Random(const Uint32 initialSeed = 0xabcd1234)
+	explicit Random(const uint32_t initialSeed = 0xabcd1234) :
+		cached(false),
+		z1(0.0)
 	{
 		seed(initialSeed);
 	}
 
 	// Construct a new generator given an array of 32-bit seeds.
-	Random(const Uint32 *const seeds, size_t length)
+	Random(const uint32_t *const seeds, size_t length) :
+		cached(false),
+		z1(0.0)
 	{
 		seed(seeds, length);
 	}
 
 	// Construct a new random generator from an array of 64-bit
 	// seeds.
-	Random(const Uint64 *const seeds, size_t length)
+	Random(const uint64_t *const seeds, size_t length) :
+		cached(false),
+		z1(0.0)
 	{
-		seed(reinterpret_cast<const Uint32 *const>(seeds), length * 2);
+		seed(reinterpret_cast<const uint32_t *const>(seeds), length * 2);
 	}
 
 	//
@@ -60,21 +66,21 @@ public:
 	//
 
 	// Seed the RNG using the hash of the given array of seeds.
-	void seed(const Uint32 *const seeds, size_t length)
+	void seed(const uint32_t *const seeds, size_t length)
 	{
-		const Uint32 hash = lookup3_hashword(seeds, length, 0);
+		const uint32_t hash = lookup3_hashword(seeds, length, 0);
 		mPCG.seed(hash);
 		cached = false;
 	}
 
 	// Seed using an array of 64-bit integers
-	void seed(const Uint64 *const seeds, size_t length)
+	void seed(const uint64_t *const seeds, size_t length)
 	{
-		seed(reinterpret_cast<const Uint32 *const>(seeds), length * 2);
+		seed(reinterpret_cast<const uint32_t *const>(seeds), length * 2);
 	}
 
 	// Seed using a single 32-bit integer
-	void seed(const Uint32 value)
+	void seed(const uint32_t value)
 	{
 		seed(&value, 1);
 	}
@@ -89,7 +95,7 @@ public:
 
 	// Get the next integer from the sequence
 	// interval [0, 2**32)
-	inline Uint32 Int32()
+	inline uint32_t Int32()
 	{
 		return mPCG();
 	}
@@ -97,7 +103,7 @@ public:
 	// Pick an integer like you're rolling a "choices" sided die,
 	// a 6 sided die would return a number between 0 and 5.
 	// interval [0, choices)
-	inline Uint32 Int32(const int choices)
+	inline uint32_t Int32(const int choices)
 	{
 		return Int32() % choices;
 	}
@@ -185,12 +191,13 @@ public:
 	inline double Normal(const double mean, const double stddev)
 	{
 		//https://en.wikipedia.org/wiki/Box-Muller_transform#Polar_form
-		double u, v, s, z0;
+		double z0;
 
 		if (cached) {
 			z0 = z1;
 			cached = false;
 		} else {
+			double u, v, s;
 			do {
 				u = Double_closed(-1, 1);
 				v = Double_closed(-1, 1);
@@ -221,7 +228,7 @@ public:
 	// Pick a fixed-point integer half open interval [0,1)
 	inline fixed Fixed()
 	{
-		return fixed(Int32());
+		return fixed(int64_t(Int32()));
 	}
 
 	// interval [0,1)

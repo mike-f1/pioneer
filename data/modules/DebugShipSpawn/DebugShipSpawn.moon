@@ -8,6 +8,16 @@ Equipment = require 'Equipment'
 import Vector2, Color from _G
 ui = require 'pigui.pigui'
 
+
+local Iframes = import("InputFrames")
+
+local ifr = Iframes.CreateOrUse("Debug")
+
+local displayDebugWindow = false
+ifr:AddAction("DisplayShipSpawn", "", "", "Key1073741893Mod0", function(isUp)
+		if isUp then displayDebugWindow = not displayDebugWindow end
+	end)
+
 ship_defs = {}
 
 update_ship_def_table = ->
@@ -84,10 +94,7 @@ ship_spawn_debug_window = ->
         ui.sameLine!
         spawn_distance = ui.sliderFloat("#spawn_distance", spawn_distance, 0.5, 50, "%.1fkm")
 
-displayDebugWindow = false
 ui.registerModule 'game', ->
-    if ui.isKeyReleased(ui.keys.f11) and ui.ctrlHeld!
-        displayDebugWindow = not displayDebugWindow
 
     if displayDebugWindow and Game.CurrentView() == "world"
         ui.withStyleColors { "WindowBg": Color(15, 15, 16, 240) }, ->

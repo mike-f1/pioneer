@@ -5,7 +5,7 @@
 #define _FILESOURCEZIP_H
 
 #include "FileSystem.h"
-#include <SDL_stdinc.h>
+#include <cstdint>
 #include <map>
 #include <string>
 
@@ -18,20 +18,20 @@ namespace FileSystem {
 		FileSourceZip(FileSourceFS &fs, const std::string &zipPath);
 		virtual ~FileSourceZip();
 
-		virtual FileInfo Lookup(const std::string &path);
-		virtual RefCountedPtr<FileData> ReadFile(const std::string &path);
-		virtual bool ReadDirectory(const std::string &path, std::vector<FileInfo> &output);
+		virtual FileInfo Lookup(const std::string &path) override;
+		virtual RefCountedPtr<FileData> ReadFile(const std::string &path) override;
+		virtual bool ReadDirectory(const std::string &path, std::vector<FileInfo> &output) override;
 
 	private:
 		void *m_archive;
 
 		struct FileStat {
-			FileStat(Uint32 _index, Uint64 _size, const FileInfo &_info) :
+			FileStat(uint32_t _index, uint64_t _size, const FileInfo &_info) :
 				index(_index),
 				size(_size),
 				info(_info) {}
-			const Uint32 index;
-			const Uint64 size;
+			const uint32_t index;
+			const uint64_t size;
 			const FileInfo info;
 		};
 

@@ -7,10 +7,13 @@
 #include "Color.h"
 #include "UIView.h"
 #include "graphics/Drawables.h"
-#include "matrix4x4.h"
-#include "vector3.h"
+#include "input/InputFwd.h"
+#include "libs/matrix4x4.h"
+#include "libs/vector3.h"
+#include <memory>
 
 class Game;
+class InputFrame;
 class Orbit;
 class Ship;
 class StarSystem;
@@ -53,9 +56,15 @@ public:
 	const TransferPlanner *GetPlanner() const { return m_planner.get(); };
 	void ResetPlanner();
 
+	static void RegisterInputBindings();
+	void AttachBindingCallback();
+
 private:
+	virtual void OnSwitchTo() override;
+	virtual void OnSwitchFrom() override;
+
 	static const double PICK_OBJECT_RECT_SIZE;
-	static const Uint16 N_VERTICES_MAX;
+	static const uint16_t N_VERTICES_MAX;
 	void PutOrbit(const Orbit *orb, const vector3d &offset, const Color &color, const double planetRadius = 0.0, const bool showLagrange = false);
 	void PutBody(const SystemBody *b, const vector3d &offset, const matrix4x4f &trans);
 	void PutLabel(const SystemBody *b, const vector3d &offset);
@@ -72,7 +81,6 @@ private:
 	void OnToggleGridButtonClick(void);
 	void OnToggleL4L5ButtonClick(Gui::MultiStateImageButton *);
 	void ResetViewpoint();
-	void MouseWheel(bool up);
 	void RefreshShips(void);
 	void DrawShips(const double t, const vector3d &offset);
 	void PrepareGrid();
@@ -117,7 +125,6 @@ private:
 	Gui::Label *m_infoText;
 	Gui::Label *m_plannerFactorText, *m_plannerStartTimeText, *m_plannerProgradeDvText, *m_plannerNormalDvText, *m_plannerRadialDvText;
 	Gui::LabelSet *m_objectLabels;
-	sigc::connection m_onMouseWheelCon;
 
 	std::unique_ptr<Graphics::Drawables::Disk> m_bodyIcon;
 	std::unique_ptr<Gui::TexturedQuad> m_l4Icon;
@@ -134,6 +141,15 @@ private:
 	std::unique_ptr<Graphics::VertexArray> m_lineVerts;
 	Graphics::Drawables::Lines m_lines;
 
+	inline static struct SystemViewBinding {
+		AxisId mapViewZoom;
+
+		AxisId mapViewRotateLeftRight;
+		AxisId mapViewRotateUpDown;
+
+	} m_systemViewBindings;
+
+	static std::unique_ptr<InputFrame> m_inputFrame;
 };
 
 #endif /* _SYSTEMVIEW_H */

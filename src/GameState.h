@@ -8,10 +8,10 @@ class SystemPath;
 
 static const unsigned int sectorRadius = 5;
 
-class GameState
+class GameStateStatic
 {
 public:
-	GameState() = delete;
+	GameStateStatic() = delete;
 
 	static void MakeNewGame(const SystemPath &path,
 			const double startDateTime = 0.0,
@@ -22,8 +22,6 @@ public:
 	static void LoadGame(const std::string &filename);
 	static bool CanLoadGame(const std::string &filename);
 	static void SaveGame(const std::string &filename);
-
-	static void DestroyGame();
 
 protected:
 

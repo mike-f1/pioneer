@@ -11,7 +11,7 @@
 #include "LuaRef.h"
 #include "LuaUtils.h"
 #include "LuaWrappable.h"
-#include "RefCounted.h"
+#include "libs/RefCounted.h"
 #include <tuple>
 #include <typeinfo>
 
@@ -106,6 +106,9 @@ class LuaObjectBase {
 	friend class LuaSerializer;
 
 public:
+	LuaObjectBase() = delete;
+	LuaObjectBase(const LuaObjectBase &) = delete;
+
 	// creates a single "typeless" object and attaches the listed methods,
 	// attributes and metamethods to it. leaves the created object on the
 	// stack
@@ -174,9 +177,6 @@ protected:
 	const char *GetType() const { return m_type; }
 
 private:
-	LuaObjectBase() {}
-	LuaObjectBase(const LuaObjectBase &) {}
-
 	// lua method to determine if the underlying object is still present in
 	// the registry (ie still exists)
 	static int l_exists(lua_State *l);
@@ -292,7 +292,7 @@ private:
 template <typename T>
 class LuaCoreObject : public LuaObject<T> {
 public:
-	LuaCoreObject(T *o) :
+	explicit LuaCoreObject(T *o) :
 		m_object(o)
 	{
 		m_deleteConnection = m_object->DeleteEmitter::onDelete.connect(sigc::mem_fun(this, &LuaCoreObject::OnDelete));
@@ -327,7 +327,7 @@ private:
 template <typename T>
 class LuaSharedObject : public LuaObject<T> {
 public:
-	LuaSharedObject(T *o) :
+	explicit LuaSharedObject(T *o) :
 		m_object(o) {}
 
 	LuaWrappable *GetObject() const
@@ -345,7 +345,7 @@ private:
 template <typename T>
 class LuaCopyObject : public LuaObject<T> {
 public:
-	LuaCopyObject(const T &o)
+	explicit LuaCopyObject(const T &o)
 	{
 		lua_State *l = Lua::manager->GetLuaState();
 		m_object = new (LuaObjectBase::Allocate(sizeof(T))) T(o);

@@ -4,11 +4,11 @@
 #include "Terrain.h"
 
 #include "FileSystem.h"
-#include "FloatComparison.h"
 #include "GameConfig.h"
 #include "perlin.h"
-#include "../utils.h"
-#include "../galaxy/SystemBody.h"
+#include "libs/utils.h"
+#include "galaxy/SystemBody.h"
+#include "libs/FloatComparison.h"
 
 // static instancer. selects the best height and color classes for the body
 Terrain *Terrain::InstanceTerrain(const SystemBody *body)
@@ -369,17 +369,6 @@ static size_t bufread_or_die(void *ptr, size_t size, size_t nmemb, ByteRange &bu
 	return read_count;
 }
 
-// XXX this sucks, but there isn't a reliable cross-platform way to get them
-#ifndef INT16_MIN
-#define INT16_MIN (-32767 - 1)
-#endif
-#ifndef INT16_MAX
-#define INT16_MAX (32767)
-#endif
-#ifndef UINT16_MAX
-#define UINT16_MAX (65535)
-#endif
-
 Terrain::Terrain(const SystemBody *body) :
 	m_seed(body->GetSeed()),
 	m_rand(body->GetSeed()),
@@ -398,25 +387,27 @@ Terrain::Terrain(const SystemBody *body) :
 
 		ByteRange databuf = fdata->AsByteRange();
 
-		Sint16 minHMap = INT16_MAX, maxHMap = INT16_MIN;
-		Uint16 minHMapScld = UINT16_MAX, maxHMapScld = 0;
+		int16_t minHMap = std::numeric_limits<int16_t>::max();
+		int16_t maxHMap = std::numeric_limits<int16_t>::lowest();
+		uint16_t minHMapScld = std::numeric_limits<uint16_t>::max();
+		uint16_t maxHMapScld = 0;
 
 		// XXX unify heightmap types
 		switch (body->GetHeightMapFractal()) {
 		case 0: {
-			Uint16 v;
+			uint16_t v;
 			bufread_or_die(&v, 2, 1, databuf);
 			m_heightMapSizeX = v;
 			bufread_or_die(&v, 2, 1, databuf);
 			m_heightMapSizeY = v;
-			const Uint32 heightmapPixelArea = (m_heightMapSizeX * m_heightMapSizeY);
+			const uint32_t heightmapPixelArea = (m_heightMapSizeX * m_heightMapSizeY);
 
-			std::unique_ptr<Sint16[]> heightMap(new Sint16[heightmapPixelArea]);
-			bufread_or_die(heightMap.get(), sizeof(Sint16), heightmapPixelArea, databuf);
+			std::unique_ptr<int16_t[]> heightMap(new int16_t[heightmapPixelArea]);
+			bufread_or_die(heightMap.get(), sizeof(int16_t), heightmapPixelArea, databuf);
 			m_heightMap.reset(new double[heightmapPixelArea]);
 			double *pHeightMap = m_heightMap.get();
-			for (Uint32 i = 0; i < heightmapPixelArea; i++) {
-				const Sint16 val = heightMap.get()[i];
+			for (uint32_t i = 0; i < heightmapPixelArea; i++) {
+				const int16_t val = heightMap.get()[i];
 				minHMap = std::min(minHMap, val);
 				maxHMap = std::max(maxHMap, val);
 				// store then increment pointer
@@ -429,13 +420,13 @@ Terrain::Terrain(const SystemBody *body) :
 		}
 
 		case 1: {
-			Uint16 v;
+			uint16_t v;
 			// XXX x and y reversed from above *sigh*
 			bufread_or_die(&v, 2, 1, databuf);
 			m_heightMapSizeY = v;
 			bufread_or_die(&v, 2, 1, databuf);
 			m_heightMapSizeX = v;
-			const Uint32 heightmapPixelArea = (m_heightMapSizeX * m_heightMapSizeY);
+			const uint32_t heightmapPixelArea = (m_heightMapSizeX * m_heightMapSizeY);
 
 			// read height scaling and min height which are doubles
 			double te;
@@ -444,12 +435,12 @@ Terrain::Terrain(const SystemBody *body) :
 			bufread_or_die(&te, 8, 1, databuf);
 			m_minh = te;
 
-			std::unique_ptr<Uint16[]> heightMapScaled(new Uint16[heightmapPixelArea]);
-			bufread_or_die(heightMapScaled.get(), sizeof(Uint16), heightmapPixelArea, databuf);
+			std::unique_ptr<uint16_t[]> heightMapScaled(new uint16_t[heightmapPixelArea]);
+			bufread_or_die(heightMapScaled.get(), sizeof(uint16_t), heightmapPixelArea, databuf);
 			m_heightMap.reset(new double[heightmapPixelArea]);
 			double *pHeightMap = m_heightMap.get();
-			for (Uint32 i = 0; i < heightmapPixelArea; i++) {
-				const Uint16 val = heightMapScaled[i];
+			for (uint32_t i = 0; i < heightmapPixelArea; i++) {
+				const uint16_t val = heightMapScaled[i];
 				minHMapScld = std::min(minHMapScld, val);
 				maxHMapScld = std::max(maxHMapScld, val);
 				// store then increment pointer
@@ -634,7 +625,7 @@ Terrain::~Terrain()
  */
 void Terrain::SetFracDef(const unsigned int index, const double featureHeightMeters, const double featureWidthMeters, const double smallestOctaveMeters)
 {
-	assert(index >= 0 && index < MAX_FRACDEFS);
+	assert(index < MAX_FRACDEFS);
 	// feature
 	m_fracdef[index].amplitude = featureHeightMeters / (m_maxHeight * m_planetRadius);
 	m_fracdef[index].frequency = m_planetRadius / featureWidthMeters;

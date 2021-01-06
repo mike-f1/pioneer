@@ -4,14 +4,15 @@
 #ifndef _AABB_H
 #define _AABB_H
 
-#include "libs.h"
+#include "libs/vector3.h"
+#include <limits>
 
 struct Aabb {
 	vector3d min, max;
 	double radius;
 	Aabb() :
-		min(DBL_MAX, DBL_MAX, DBL_MAX),
-		max(-DBL_MAX, -DBL_MAX, -DBL_MAX),
+		min(std::numeric_limits<double>::max()),
+		max(std::numeric_limits<double>::lowest()),
 		radius(0.1)
 	{}
 	void Update(const vector3d &p)

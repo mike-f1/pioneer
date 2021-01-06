@@ -2,8 +2,9 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "Thruster.h"
+
 #include "BaseLoader.h"
-#include "Easing.h"
+#include "libs/Easing.h"
 #include "NodeVisitor.h"
 #include "Serializer.h"
 #include "graphics/Material.h"
@@ -14,17 +15,19 @@
 #include "graphics/VertexArray.h"
 #include "graphics/VertexBuffer.h"
 
+#include "libs/utils.h"
+
 namespace SceneGraph {
 
 	static const std::string thrusterTextureFilename("textures/thruster.dds");
 	static const std::string thrusterGlowTextureFilename("textures/halo.dds");
 	static Color baseColor(178, 153, 255, 255);
 
-	Thruster::Thruster(bool _linear, const vector3f &_pos, const vector3f &_dir) :
+	Thruster::Thruster(bool linear, const vector3f &pos, const vector3f &dir) :
 		Node(NODE_TRANSPARENT),
-		linearOnly(_linear),
-		dir(_dir),
-		pos(_pos),
+		linearOnly(linear),
+		m_dir(dir),
+		m_pos(pos),
 		currentColor(baseColor)
 	{
 		//set up materials
@@ -53,8 +56,8 @@ namespace SceneGraph {
 		m_tMat(thruster.m_tMat),
 		m_renderState(thruster.m_renderState),
 		linearOnly(thruster.linearOnly),
-		dir(thruster.dir),
-		pos(thruster.pos),
+		m_dir(thruster.m_dir),
+		m_pos(thruster.m_pos),
 		currentColor(thruster.currentColor)
 	{
 	}
@@ -72,7 +75,7 @@ namespace SceneGraph {
 	void Thruster::Render(const matrix4x4f &trans, const RenderData *rd)
 	{
 		PROFILE_SCOPED()
-		float power = -dir.Dot(vector3f(rd->linthrust));
+		float power = -m_dir.Dot(vector3f(rd->linthrust));
 
 		if (!linearOnly) {
 			// pitch X
@@ -80,7 +83,7 @@ namespace SceneGraph {
 			// roll  Z
 			//model center is at 0,0,0, no need for invSubModelMat stuff
 			const vector3f at = vector3f(rd->angthrust);
-			const vector3f angdir = pos.Cross(dir);
+			const vector3f angdir = m_pos.Cross(m_dir);
 
 			const float xp = angdir.x * at.x;
 			const float yp = angdir.y * at.y;
@@ -100,7 +103,7 @@ namespace SceneGraph {
 		m_tMat->diffuse = m_glowMat->diffuse = currentColor * power;
 
 		//directional fade
-		vector3f cdir = vector3f(trans * -dir).Normalized();
+		vector3f cdir = vector3f(trans * -m_dir).Normalized();
 		vector3f vdir = vector3f(trans[2], trans[6], -trans[10]).Normalized();
 		// XXX check this for transition to new colors.
 		m_glowMat->diffuse.a = Easing::Circ::EaseIn(Clamp(vdir.Dot(cdir), 0.f, 1.f), 0.f, 1.f, 1.f) * 255;
@@ -121,8 +124,8 @@ namespace SceneGraph {
 	{
 		Node::Save(db);
 		db.wr->Bool(linearOnly);
-		db.wr->Vector3f(dir);
-		db.wr->Vector3f(pos);
+		db.wr->Vector3f(m_dir);
+		db.wr->Vector3f(m_pos);
 	}
 
 	Thruster *Thruster::Load(NodeDatabase &db)

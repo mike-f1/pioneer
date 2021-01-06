@@ -10,6 +10,7 @@
 #include "GameLocator.h"
 #include "GameSaveError.h"
 #include "Json.h"
+#include "JsonUtils.h"
 #include "LuaEvent.h"
 #include "LuaUtils.h"
 #include "Planet.h"
@@ -23,6 +24,7 @@
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/RenderState.h"
+#include "graphics/Texture.h"
 #include "graphics/TextureBuilder.h"
 #include "graphics/VertexArray.h"
 
@@ -154,7 +156,7 @@ Beam::Beam(const Json &jsonObj, Space *space) :
 		JsonToColor(&m_color, projectileObj["color"]);
 		m_parentIndex = projectileObj["index_for_body"];
 	} catch (Json::type_error &) {
-		Output("Loading error in '%s'\n", __func__);
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 		throw SavedGameCorruptException();
 	}
 }
@@ -163,9 +165,9 @@ Beam::~Beam()
 {
 }
 
-void Beam::SaveToJson(Json &jsonObj, Space *space)
+Json Beam::SaveToJson(Space *space)
 {
-	Body::SaveToJson(jsonObj, space);
+	Json jsonObj = Body::SaveToJson(space);
 
 	Json projectileObj({}); // Create JSON object to contain projectile data.
 
@@ -178,6 +180,7 @@ void Beam::SaveToJson(Json &jsonObj, Space *space)
 	projectileObj["index_for_body"] = space->GetIndexForBody(m_parent);
 
 	jsonObj["projectile"] = projectileObj; // Add projectile object to supplied object.
+	return jsonObj;
 }
 
 void Beam::PostLoadFixup(Space *space)
@@ -215,7 +218,7 @@ float Beam::GetDamage() const
 
 double Beam::GetRadius() const
 {
-	return sqrt(m_length * m_length);
+	return std::abs(m_length);
 }
 
 void Beam::StaticUpdate(const float timeStep)
@@ -225,10 +228,8 @@ void Beam::StaticUpdate(const float timeStep)
 	if (!m_active)
 		return;
 
-	CollisionContact c;
-
 	Frame *frame = Frame::GetFrame(GetFrame());
-	frame->GetCollisionSpace()->TraceRay(GetPosition(), m_dir.Normalized(), m_length, &c, static_cast<ModelBody *>(m_parent)->GetGeom());
+	CollisionContact c = frame->GetCollisionSpace()->TraceRay(GetPosition(), m_dir.Normalized(), m_length, static_cast<ModelBody *>(m_parent)->GetGeom());
 
 	if (c.userData1) {
 		Object *o = static_cast<Object *>(c.userData1);

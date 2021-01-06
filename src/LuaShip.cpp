@@ -15,6 +15,7 @@
 #include "ShipType.h"
 #include "Space.h"
 #include "SpaceStation.h"
+#include "scenegraph/Model.h"
 #include "ship/PlayerShipController.h"
 #include "galaxy/Galaxy.h"
 #include "galaxy/Sector.h"
@@ -1427,7 +1428,9 @@ static int l_ship_get_gun_on_mount(lua_State *l)
 {
 	Ship *s = LuaObject<Ship>::CheckFromLua(1);
 	int num = luaL_checknumber(l, 2);
-	LuaPush(l, s->FindGunOnMount(num));
+	int gun = s->FindGunOnMount(num);
+	if (gun < 0) lua_pushnil(l);
+	else lua_pushinteger(l, gun);
 	return 1;
 }
 

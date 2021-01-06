@@ -34,7 +34,7 @@ if (MSVC)
 
 	# Use M_PI/M_E macros from math.h
 	add_definitions(-D_USE_MATH_DEFINES -DHAVE_M_PI)
-	
+
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 endif (MSVC)
@@ -103,10 +103,14 @@ list(APPEND SRC_FOLDERS
 	src/graphics/dummy
 	src/graphics/opengl
 	src/gui
+    src/input
+	src/libs
 	src/pigui
+    src/pi_states
 	src/scenegraph
 	src/ship
 	src/sound
+	src/sphere
 	src/terrain
 	src/text
 	src/ui
@@ -123,9 +127,7 @@ list(REMOVE_ITEM CXX_FILES
 	src/main.cpp
 	src/modelcompiler.cpp
 	src/savegamedump.cpp
-	src/tests.cpp
-	src/textstress.cpp
-	src/uitest.cpp
+    src/tests/uitest.cpp
 )
 
 list(APPEND FILESYSTEM_CXX_FILES)
@@ -248,8 +250,9 @@ add_executable(savegamedump WIN32
 	src/savegamedump.cpp
 	src/JsonUtils.cpp
 	src/FileSystem.cpp
-	src/utils.cpp
-	src/StringF.cpp
+	src/libs/utils.cpp
+	src/libs/StringF.cpp
+	src/libs/stringUtils.cpp
 	src/GZipFormat.cpp
 	src/DateTime.cpp
 	src/Lang.cpp
@@ -289,7 +292,7 @@ target_link_libraries(modelcompiler LINK_PRIVATE ${pioneerLibs} ${winLibs})
 target_link_libraries(savegamedump LINK_PRIVATE ${SDL2_LIBRARIES} ${SDL2_IMAGE_LIBRARIES} profiler lz4 ${winLibs})
 
 set_target_properties(${PROJECT_NAME} modelcompiler savegamedump pioneerLib PROPERTIES
-	CXX_STANDARD 11
+	CXX_STANDARD 17
 	CXX_STANDARD_REQUIRED ON
 	CXX_EXTENSIONS ON
 )
@@ -298,7 +301,7 @@ if(MSVC)
 	add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 		COMMAND xcopy ..\\pioneer-thirdparty\\win32\\bin\\x64\\vs2017\\*.dll $(TargetDir)*.dll /Y /C
 		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-		COMMENT "copy the dlls into the directory" 
+		COMMENT "copy the dlls into the directory"
 		VERBATIM
 	)
 endif(MSVC)

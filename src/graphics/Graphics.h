@@ -4,9 +4,9 @@
 #ifndef _GRAPHICS_H
 #define _GRAPHICS_H
 
-#include "RenderTarget.h"
 #include <memory>
 #include <vector>
+#include <cstdint>
 
 /*
  * bunch of reused 3d drawy routines.
@@ -70,11 +70,11 @@ namespace Graphics {
 	std::vector<VideoMode> GetAvailableVideoModes();
 
 	struct ScreendumpState {
-		std::unique_ptr<Uint8[]> pixels;
-		Uint32 width;
-		Uint32 height;
-		Uint32 stride;
-		Uint32 bpp;
+		std::unique_ptr<uint8_t[]> pixels;
+		uint32_t width;
+		uint32_t height;
+		uint32_t stride;
+		uint32_t bpp;
 	};
 } // namespace Graphics
 

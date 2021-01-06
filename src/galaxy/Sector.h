@@ -8,10 +8,11 @@
 #include "GalaxyCache.h"
 #include "GalaxyEnums.h"
 #include "Random.h"
-#include "RefCounted.h"
 #include "galaxy/SystemPath.h"
-#include "vector3.h"
+#include "libs/RefCounted.h"
+#include "libs/vector3.h"
 
+#include <array>
 #include <string>
 #include <vector>
 #include <sigc++/sigc++.h>
@@ -49,7 +50,7 @@ public:
 		friend class SectorPersistenceGenerator;
 
 	public:
-		System(Sector *sector, int x, int y, int z, Uint32 si) :
+		System(Sector *sector, int x, int y, int z, uint32_t si) :
 			sx(x),
 			sy(y),
 			sz(z),
@@ -78,7 +79,7 @@ public:
 			assert(i < m_numStars);
 			return m_starType[i];
 		}
-		Uint32 GetSeed() const { return m_seed; }
+		uint32_t GetSeed() const { return m_seed; }
 		const CustomSystem *GetCustomSystem() const { return m_customSys; }
 		const Faction *GetFaction() const
 		{
@@ -103,7 +104,7 @@ public:
 		SystemPath GetPath() const { return SystemPath(sx, sy, sz, idx); }
 
 		const int sx, sy, sz;
-		const Uint32 idx;
+		const uint32_t idx;
 
 	private:
 		void AssignFaction() const;
@@ -113,8 +114,8 @@ public:
 		std::vector<std::string> m_other_names;
 		vector3f m_pos;
 		unsigned m_numStars;
-		GalaxyEnums::BodyType m_starType[4];
-		Uint32 m_seed;
+		std::array<GalaxyEnums::BodyType, 4> m_starType;
+		uint32_t m_seed;
 		const CustomSystem *m_customSys;
 		mutable const Faction *m_faction; // mutable because we only calculate on demand
 		fixed m_population;

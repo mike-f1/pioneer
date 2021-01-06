@@ -5,13 +5,17 @@
 
 #include "GameSaveError.h"
 #include "JsonUtils.h"
-#include "Ship.h"
+#include "graphics/Material.h"
+#include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/RenderState.h"
 #include "graphics/TextureBuilder.h"
+#include "libs/utils.h"
 #include "scenegraph/CollisionGeometry.h"
 #include "scenegraph/FindNodeVisitor.h"
-#include "scenegraph/SceneGraph.h"
+#include "scenegraph/MatrixTransform.h"
+#include "scenegraph/Model.h"
+#include "scenegraph/StaticGeometry.h"
 #include <sstream>
 
 namespace {
@@ -66,7 +70,7 @@ Shields::Shield::Shield(const Color3ub &_colour, const matrix4x4f &matrix, Scene
 	m_mesh(_sg)
 {}
 
-Shields::Hits::Hits(const vector3d &_pos, const Uint32 _start, const Uint32 _end) :
+Shields::Hits::Hits(const vector3d &_pos, const uint32_t _start, const uint32_t _end) :
 	pos(_pos),
 	start(_start),
 	end(_end)
@@ -81,7 +85,7 @@ void Shields::Init()
 	desc.textures = 0;
 	desc.lighting = true;
 	desc.alphaTest = false;
-	desc.effect = Graphics::EffectType::EFFECT_SHIELD;
+	desc.effect = Graphics::EffectType::SHIELD;
 	s_matShield.Reset(RendererLocator::getRenderer()->CreateMaterial(desc));
 	s_matShield->diffuse = Color(1.0f, 1.0f, 1.0f, 1.0f);
 
@@ -107,14 +111,14 @@ void Shields::ReparentShieldNodes(SceneGraph::Model *model)
 		MatrixTransform *mt = dynamic_cast<MatrixTransform *>(results.at(i));
 		assert(mt);
 
-		const Uint32 NumChildren = mt->GetNumChildren();
+		const uint32_t NumChildren = mt->GetNumChildren();
 		if (NumChildren > 0) {
 			// Group to contain all of the shields we might find
 			Group *shieldGroup = new Group();
 			shieldGroup->SetName(s_shieldGroupName);
 
 			// go through all of this MatrixTransforms children to extract all of the shield meshes
-			for (Uint32 iChild = 0; iChild < NumChildren; ++iChild) {
+			for (uint32_t iChild = 0; iChild < NumChildren; ++iChild) {
 				Node *node = mt->GetChildAt(iChild);
 				assert(node);
 				if (node) {
@@ -135,7 +139,7 @@ void Shields::ReparentShieldNodes(SceneGraph::Model *model)
 					rsd.depthWrite = false;
 					sg->SetRenderState(RendererLocator::getRenderer()->CreateRenderState(rsd));
 
-					for (Uint32 iMesh = 0; iMesh < sg->GetNumMeshes(); ++iMesh) {
+					for (uint32_t iMesh = 0; iMesh < sg->GetNumMeshes(); ++iMesh) {
 						StaticGeometry::Mesh &rMesh = sg->GetMeshAt(iMesh);
 						rMesh.material = GetGlobalShieldMaterial();
 					}
@@ -191,7 +195,7 @@ Shields::Shields(SceneGraph::Model *model) :
 		MatrixTransform *mt = dynamic_cast<MatrixTransform *>(results.at(i));
 		assert(mt);
 
-		for (Uint32 iChild = 0; iChild < mt->GetNumChildren(); ++iChild) {
+		for (uint32_t iChild = 0; iChild < mt->GetNumChildren(); ++iChild) {
 			Node *node = mt->GetChildAt(iChild);
 			if (node) {
 				RefCountedPtr<StaticGeometry> sg(dynamic_cast<StaticGeometry *>(node));
@@ -204,7 +208,7 @@ Shields::Shields(SceneGraph::Model *model) :
 				sg->SetRenderState(RendererLocator::getRenderer()->CreateRenderState(rsd));
 
 				// set the material
-				for (Uint32 iMesh = 0; iMesh < sg->GetNumMeshes(); ++iMesh) {
+				for (uint32_t iMesh = 0; iMesh < sg->GetNumMeshes(); ++iMesh) {
 					StaticGeometry::Mesh &rMesh = sg->GetMeshAt(iMesh);
 					rMesh.material = GetGlobalShieldMaterial();
 				}
@@ -258,6 +262,7 @@ void Shields::LoadFromJson(const Json &jsonObj)
 			}
 		}
 	} catch (Json::type_error &) {
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 		throw SavedGameCorruptException();
 	}
 }
@@ -265,7 +270,7 @@ void Shields::LoadFromJson(const Json &jsonObj)
 void Shields::Update(const float coolDown, const float shieldStrength)
 {
 	// update hits on the shields
-	const Uint32 tickTime = SDL_GetTicks();
+	const uint32_t tickTime = SDL_GetTicks();
 	{
 		HitIterator it = m_hits.begin();
 		while (it != m_hits.end()) {
@@ -289,14 +294,14 @@ void Shields::Update(const float coolDown, const float shieldStrength)
 		s_renderParams.strength = shieldStrength;
 		s_renderParams.coolDown = coolDown;
 
-		Uint32 numHits = m_hits.size();
-		for (Uint32 i = 0; i < numHits && i < ShieldRenderParameters::MAX_SHIELD_HITS; ++i) {
+		uint32_t numHits = m_hits.size();
+		for (uint32_t i = 0; i < numHits && i < MAX_SHIELD_HITS; ++i) {
 			const Hits &hit = m_hits[i];
 			s_renderParams.hitPos[i] = vector3f(hit.pos.x, hit.pos.y, hit.pos.z);
 
 			//Calculate the impact's radius dependant on time
-			Uint32 dif1 = hit.end - hit.start;
-			Uint32 dif2 = tickTime - hit.start;
+			uint32_t dif1 = hit.end - hit.start;
+			uint32_t dif2 = tickTime - hit.start;
 			//Range from start (0.0) to end (1.0)
 			float dif = float(dif2 / (dif1 * 1.0f));
 
@@ -326,7 +331,7 @@ void Shields::SetColor(const Color3ub &inCol)
 
 void Shields::AddHit(const vector3d &hitPos)
 {
-	Uint32 tickTime = SDL_GetTicks();
+	uint32_t tickTime = SDL_GetTicks();
 	m_hits.push_back(Hits(hitPos, tickTime, tickTime + 1000));
 }
 

@@ -4,6 +4,8 @@
 #include "Color.h"
 #include "LuaUtils.h"
 
+#include <cassert>
+
 const Color4f Color4f::BLACK = Color4f(0.0f, 0.0f, 0.0f, 1.0f);
 const Color4f Color4f::WHITE = Color4f(1.0f, 1.0f, 1.0f, 1.0f);
 const Color4f Color4f::RED = Color4f(1.0f, 0.0f, 0.0f, 1.0f);
@@ -103,7 +105,7 @@ Color4ub Color4ub::FromLuaTable(lua_State *l, int idx)
 	return Color4ub(r * 255, g * 255, b * 255, a * 255);
 }
 
-Uint8 Color4ub::GetLuminance() const
+uint8_t Color4ub::GetLuminance() const
 {
 	// these weights are those used for the JPEG luma channel
 	return (r * 299 + g * 587 + b * 114) / 1000;

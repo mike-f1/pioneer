@@ -6,14 +6,16 @@
 #include "Game.h"
 #include "GameLocator.h"
 #include "GameSaveError.h"
-#include "KeyBindings.h"
+#include "input/InputFrame.h"
+#include "input/KeyBindings.h"
 #include "Lang.h"
 #include "Missile.h"
 #include "Player.h"
 #include "Space.h"
+#include "graphics/Graphics.h"
+#include "graphics/RenderState.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
-#include "graphics/RenderState.h"
 #include "graphics/VertexArray.h"
 
 using namespace Graphics;
@@ -36,9 +38,11 @@ static const Color radarPlayerMissileColour = Color(243, 237, 29);
 static const Color radarCargoColour = Color(166, 166, 166);
 static const Color radarCloudColour = Color(128, 128, 255);
 
+std::unique_ptr<InputFrame> RadarWidget::m_inputFrame;
+
 RadarWidget::RadarWidget()
 {
-	m_mode = RADAR_MODE_AUTO;
+	m_mode = RadarMode::MODE_AUTO;
 	m_currentRange = m_manualRange = m_targetRange = RADAR_RANGE_MIN;
 
 	InitObject();
@@ -55,6 +59,7 @@ RadarWidget::RadarWidget(const Json &jsonObj)
 		m_manualRange = radarObj["manual_range"];
 		m_targetRange = radarObj["target_range"];
 	} catch (Json::type_error &) {
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 		throw SavedGameCorruptException();
 	}
 
@@ -65,7 +70,6 @@ void RadarWidget::InitObject()
 {
 	InitScaling();
 
-	m_toggleScanModeConnection = KeyBindings::toggleScanMode.onPress.connect(sigc::mem_fun(this, &RadarWidget::ToggleMode));
 	m_lastRange = RADAR_RANGE_MAX * 100.0f; // force regen
 
 	GenerateBaseGeometry();
@@ -78,11 +82,39 @@ void RadarWidget::InitObject()
 	m_renderState = RendererLocator::getRenderer()->CreateRenderState(rsd);
 
 	GenerateRingsAndSpokes();
+	AttachBindingCallback();
+}
+
+void RadarWidget::RegisterInputBindings()
+{
+	using namespace KeyBindings;
+
+	m_inputFrame = std::make_unique<InputFrame>("RadarWidget");
+
+	BindingPage &page = InputFWD::GetBindingPage("RadarView");
+	BindingGroup &group = page.GetBindingGroup("Miscellaneous");
+
+	m_radarWidgetBindings.toggleScanMode = m_inputFrame->AddActionBinding("BindToggleScanMode", group, ActionBinding(SDLK_SLASH));
+
+	m_radarWidgetBindings.changeScanRange = m_inputFrame->AddAxisBinding("BindChangeScanRange", group, AxisBinding(SDLK_RIGHTBRACKET, SDLK_LEFTBRACKET));
+
+	// Explicitly activate InputFrame as RadarWidget is always active (for now...)
+	// TODO: this is not true as the radar can be sold, thus its InputFrame should be
+	// deactivated... It should be changed when IngameView will grow to something better
+	m_inputFrame->SetActive(true);
+}
+
+void RadarWidget::AttachBindingCallback()
+{
+	using namespace KeyBindings;
+	using namespace std::placeholders;
+
+	m_inputFrame->AddCallbackFunction("BindToggleScanMode", std::bind(&RadarWidget::ToggleMode, this, _1));
 }
 
 RadarWidget::~RadarWidget()
 {
-	m_toggleScanModeConnection.disconnect();
+	m_inputFrame->RemoveCallbacks();
 }
 
 void RadarWidget::GetSizeRequested(float size[2])
@@ -91,13 +123,15 @@ void RadarWidget::GetSizeRequested(float size[2])
 	size[1] = 62;
 }
 
-void RadarWidget::ToggleMode()
+void RadarWidget::ToggleMode(bool down)
 {
+	if (down) return;
 	if (IsVisible() && GameLocator::getGame()->GetTimeAccel() != Game::TIMEACCEL_PAUSED) {
-		if (m_mode == RADAR_MODE_AUTO)
-			m_mode = RADAR_MODE_MANUAL;
-		else
-			m_mode = RADAR_MODE_AUTO;
+		if (m_mode == RadarMode::MODE_AUTO) {
+			m_mode = RadarMode::MODE_MANUAL;
+		} else {
+			m_mode = RadarMode::MODE_AUTO;
+		}
 	}
 }
 
@@ -167,7 +201,7 @@ void RadarWidget::Update()
 	int radar_cap = 0;
 	GameLocator::getGame()->GetPlayer()->Properties().Get("radar_cap", radar_cap);
 	if (radar_cap <= 0) {
-		m_mode = RADAR_MODE_AUTO;
+		m_mode = RadarMode::MODE_AUTO;
 		m_currentRange = m_manualRange = m_targetRange = RADAR_RANGE_MIN;
 		return;
 	}
@@ -210,7 +244,7 @@ void RadarWidget::Update()
 
 			if ((body) == GameLocator::getGame()->GetPlayer()->GetCombatTarget()) c.isSpecial = true;
 
-			if (m_mode == RADAR_MODE_AUTO && range_type != RANGE_COMBAT) {
+			if (m_mode == RadarMode::MODE_AUTO && range_type != RANGE_COMBAT) {
 				if (c.isSpecial == true) {
 					combat_dist = dist;
 					range_type = RANGE_COMBAT;
@@ -228,7 +262,7 @@ void RadarWidget::Update()
 
 			if ((body) == GameLocator::getGame()->GetPlayer()->GetNavTarget()) c.isSpecial = true;
 
-			if (m_mode == RADAR_MODE_AUTO && range_type < RANGE_NAV) {
+			if (m_mode == RadarMode::MODE_AUTO && range_type < RANGE_NAV) {
 				if (c.isSpecial == true) {
 					nav_dist = dist;
 					range_type = RANGE_NAV;
@@ -246,23 +280,27 @@ void RadarWidget::Update()
 		m_contacts.push_back(c);
 	}
 
-	if (KeyBindings::increaseScanRange.IsActive()) {
-		if (m_mode == RADAR_MODE_AUTO) {
-			m_manualRange = m_targetRange;
-			m_mode = RADAR_MODE_MANUAL;
-		} else
-			m_manualRange = m_currentRange;
-		m_manualRange = Clamp(m_manualRange * 1.05f, RADAR_RANGE_MIN, RADAR_RANGE_MAX);
-	} else if (KeyBindings::decreaseScanRange.IsActive()) {
-		if (m_mode == RADAR_MODE_AUTO) {
-			m_manualRange = m_targetRange;
-			m_mode = RADAR_MODE_MANUAL;
-		} else
-			m_manualRange = m_currentRange;
-		m_manualRange = Clamp(m_manualRange * 0.95f, RADAR_RANGE_MIN, RADAR_RANGE_MAX);
+	if (m_inputFrame->IsActive(m_radarWidgetBindings.changeScanRange)) {
+		if (m_inputFrame->GetValue(m_radarWidgetBindings.changeScanRange) > 0.0) {
+			if (m_mode == RadarMode::MODE_AUTO) {
+				m_manualRange = m_targetRange;
+				m_mode = RadarMode::MODE_MANUAL;
+			} else {
+				m_manualRange = m_currentRange;
+			}
+			m_manualRange = Clamp(m_manualRange * 1.15f, RADAR_RANGE_MIN, RADAR_RANGE_MAX);
+		} else if (m_inputFrame->GetValue(m_radarWidgetBindings.changeScanRange) < 0.0) {
+			if (m_mode == RadarMode::MODE_AUTO) {
+				m_manualRange = m_targetRange;
+				m_mode = RadarMode::MODE_MANUAL;
+			} else {
+				m_manualRange = m_currentRange;
+			}
+			m_manualRange = Clamp(m_manualRange * 0.85f, RADAR_RANGE_MIN, RADAR_RANGE_MAX);
+		}
 	}
 
-	if (m_mode == RADAR_MODE_AUTO) {
+	if (m_mode == RadarMode::MODE_AUTO) {
 		switch (range_type) {
 		case RANGE_COMBAT:
 			m_targetRange = Clamp(combat_dist * A_BIT, RADAR_RANGE_MIN, RADAR_RANGE_MAX);
@@ -290,7 +328,7 @@ void RadarWidget::DrawBlobs(bool below)
 {
 	assert(!m_contacts.empty());
 
-	static const Uint32 MAX_CONTACTS(100);
+	static const uint32_t MAX_CONTACTS(100);
 	std::vector<vector3f> blobs;
 	std::vector<vector3f> vts;
 	std::vector<Color> blobcolors;
@@ -431,7 +469,7 @@ void RadarWidget::GenerateRingsAndSpokes()
 	vector3f vn(sin(a), RADAR_YSHRINK * cos(a), 0.0f);
 
 	// bright part
-	Color col = (m_mode == RADAR_MODE_AUTO) ? Color(0, 178, 0, 128) : Color(178, 178, 0, 128);
+	Color col = (m_mode == RadarMode::MODE_AUTO) ? Color(0, 178, 0, 128) : Color(178, 178, 0, 128);
 	for (int i = 0; i <= dimstart; i++) {
 		if (i == csize) break; // whole circle bright case
 		m_edgeVts.push_back(vector3f(m_circle[i].x, m_circle[i].y, 0.0f));

@@ -4,6 +4,7 @@
 #include "Event.h"
 #include "EnumStrings.h"
 #include "LuaObject.h"
+#include "libs/utils.h"
 
 namespace UI {
 
@@ -116,7 +117,7 @@ namespace UI {
 		static const std::string delim("+");
 
 		SDL_Keycode sym = SDLK_UNKNOWN;
-		Uint32 mod = KMOD_NONE;
+		uint32_t mod = KMOD_NONE;
 
 		size_t start = 0, end = 0;
 		while (end != std::string::npos) {

@@ -2,7 +2,8 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "JobQueue.h"
-#include "StringF.h"
+
+#include "libs/StringF.h"
 
 void Job::UnlinkHandle()
 {
@@ -89,7 +90,7 @@ Job::Handle::~Handle()
 	}
 }
 
-AsyncJobQueue::AsyncJobQueue(Uint32 numRunners) :
+AsyncJobQueue::AsyncJobQueue(uint32_t numRunners) :
 	m_shutdown(false)
 {
 	// Want to limit this for now to the maximum number of threads defined in the class
@@ -98,7 +99,7 @@ AsyncJobQueue::AsyncJobQueue(Uint32 numRunners) :
 	m_queueLock = SDL_CreateMutex();
 	m_queueWaitCond = SDL_CreateCond();
 
-	for (Uint32 i = 0; i < numRunners; i++) {
+	for (uint32_t i = 0; i < numRunners; i++) {
 		m_finishedLock[i] = SDL_CreateMutex();
 		m_runners.push_back(new JobRunner(this, i));
 	}
@@ -200,10 +201,10 @@ void AsyncJobQueue::Finish(Job *job, const uint8_t threadIdx)
 }
 
 // call OnFinish methods for completed jobs, and clean up
-Uint32 AsyncJobQueue::FinishJobs()
+uint32_t AsyncJobQueue::FinishJobs()
 {
 	PROFILE_SCOPED()
-	Uint32 finished = 0;
+	uint32_t finished = 0;
 
 	const uint32_t numRunners = m_runners.size();
 	for (uint32_t i = 0; i < numRunners; ++i) {
@@ -385,10 +386,10 @@ Job::Handle SyncJobQueue::Queue(Job *job, JobClient *client)
 }
 
 // call OnFinish methods for completed jobs, and clean up
-Uint32 SyncJobQueue::FinishJobs()
+uint32_t SyncJobQueue::FinishJobs()
 {
 	PROFILE_SCOPED()
-	Uint32 finished = 0;
+	uint32_t finished = 0;
 
 	while (!m_finished.empty()) {
 		Job *job = m_finished.front();
@@ -433,11 +434,11 @@ void SyncJobQueue::Cancel(Job *job)
 	job->OnCancel();
 }
 
-Uint32 SyncJobQueue::RunJobs(Uint32 count)
+uint32_t SyncJobQueue::RunJobs(uint32_t count)
 {
-	Uint32 executed = 0;
+	uint32_t executed = 0;
 	assert(count >= 1);
-	for (Uint32 i = 0; i < count; ++i) {
+	for (uint32_t i = 0; i < count; ++i) {
 		if (m_queue.empty())
 			break;
 

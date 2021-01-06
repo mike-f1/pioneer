@@ -48,7 +48,7 @@ namespace UI {
 		std::list<Child> m_children;
 
 		Point m_preferredSize;
-		Uint32 m_numVariable;
+		uint32_t m_numVariable;
 	};
 
 	class VBox : public Box {

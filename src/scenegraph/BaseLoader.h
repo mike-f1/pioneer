@@ -6,15 +6,21 @@
 /**
  * Model loader baseclass
  */
-#include "LoaderDefinitions.h"
-#include "Model.h"
 #include "text/DistanceFieldFont.h"
+
+#include "Pattern.h"
+
+#include <string>
+#include "libs/RefCounted.h"
 
 namespace Graphics {
 	class Material;
 }
 
 namespace SceneGraph {
+
+	class Model;
+	class MaterialDefinition;
 
 	class BaseLoader {
 	public:

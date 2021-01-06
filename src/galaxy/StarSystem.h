@@ -4,7 +4,6 @@
 #ifndef _STARSYSTEM_H
 #define _STARSYSTEM_H
 
-#include "RefCounted.h"
 #include "Polit.h"
 #include "Economy.h"
 #include "ExplorationState.h"
@@ -12,9 +11,11 @@
 #include "Polit.h"
 #include "SystemBody.h"
 #include "SystemPath.h"
-#include "gameconsts.h"
+#include "libs/fixed.h"
+#include "libs/gameconsts.h"
+#include "libs/RefCounted.h"
 
-#include <SDL_stdinc.h>
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -48,27 +49,27 @@ public:
 	RefCountedPtr<const SystemBody> GetRootBody() const { return m_rootBody; }
 	RefCountedPtr<SystemBody> GetRootBody() { return m_rootBody; }
 	bool HasSpaceStations() const { return !m_spaceStations.empty(); }
-	Uint32 GetNumSpaceStations() const { return static_cast<Uint32>(m_spaceStations.size()); }
+	uint32_t GetNumSpaceStations() const { return static_cast<uint32_t>(m_spaceStations.size()); }
 	IterationProxy<std::vector<SystemBody *>> GetSpaceStations() { return MakeIterationProxy(m_spaceStations); }
 	const IterationProxy<const std::vector<SystemBody *>> GetSpaceStations() const { return MakeIterationProxy(m_spaceStations); }
 	IterationProxy<std::vector<SystemBody *>> GetStars() { return MakeIterationProxy(m_stars); }
 	const IterationProxy<const std::vector<SystemBody *>> GetStars() const { return MakeIterationProxy(m_stars); }
-	Uint32 GetNumBodies() const { return static_cast<Uint32>(m_bodies.size()); }
+	uint32_t GetNumBodies() const { return static_cast<uint32_t>(m_bodies.size()); }
 	IterationProxy<std::vector<RefCountedPtr<SystemBody>>> GetBodies() { return MakeIterationProxy(m_bodies); }
 	const IterationProxy<const std::vector<RefCountedPtr<SystemBody>>> GetBodies() const { return MakeIterationProxy(m_bodies); }
 
-	bool IsCommodityLegal(const GalacticEconomy::Commodity t)
+	bool IsCommodityLegal(const GalacticEconomy::Commodity t) const
 	{
 		return m_commodityLegal[int(t)];
 	}
 
-	int GetCommodityBasePriceModPercent(GalacticEconomy::Commodity t)
+	int GetCommodityBasePriceModPercent(GalacticEconomy::Commodity t) const
 	{
 		return m_tradeLevel[int(t)];
 	}
 
 	const Faction *GetFaction() const { return m_faction; }
-	bool GetUnexplored() const { return m_explored == eUNEXPLORED; }
+	bool GetUnexplored() const { return m_explored == ExplorationState::eUNEXPLORED; }
 	ExplorationState GetExplored() const { return m_explored; }
 	double GetExploredTime() const { return m_exploredTime; }
 
@@ -109,7 +110,7 @@ private:
 	fixed m_metallicity;
 	fixed m_industrial;
 	GalacticEconomy::EconType m_econType;
-	Uint32 m_seed;
+	uint32_t m_seed;
 
 	// percent price alteration
 	int m_tradeLevel[GalacticEconomy::COMMODITY_COUNT];

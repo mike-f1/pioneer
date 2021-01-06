@@ -4,10 +4,10 @@
 #include "GuiContainer.h"
 
 #include "Gui.h"
+#include "graphics/Drawables.h"
+#include "graphics/Material.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
-
-#include <SDL_stdinc.h>
 
 namespace Gui {
 

@@ -6,14 +6,22 @@
 /*
  * Generic node for the model scenegraph
  */
-#include "RefCounted.h"
-#include "graphics/Material.h"
-#include "libs.h"
+
+#include "Color.h"
+#include "libs/RefCounted.h"
+#include "libs/matrix4x4.h"
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace Serializer {
 	class Reader;
 	class Writer;
 } // namespace Serializer
+
+namespace Graphics {
+	class Material;
+} // namespace Graphics
 
 namespace SceneGraph {
 
@@ -76,8 +84,8 @@ namespace SceneGraph {
 
 		virtual void Accept(NodeVisitor &v);
 		virtual void Traverse(NodeVisitor &v);
-		virtual void Render(const matrix4x4f &trans, const RenderData *rd) {}
-		virtual void Render(const std::vector<matrix4x4f> &trans, const RenderData *rd) {}
+		virtual void Render(const matrix4x4f &, const RenderData *) {}
+		virtual void Render(const std::vector<matrix4x4f> &, const RenderData *) {}
 		void DrawAxes();
 		void SetName(const std::string &name) { m_name = name; }
 		const std::string &GetName() const { return m_name; }

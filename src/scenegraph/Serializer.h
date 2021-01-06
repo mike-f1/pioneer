@@ -5,10 +5,10 @@
 #define _SERIALIZE_H
 
 #include "Aabb.h"
-#include "ByteRange.h"
 #include "Color.h"
-#include "Quaternion.h"
-#include "vector3.h"
+#include "libs/ByteRange.h"
+#include "libs/quaternion.h"
+#include "libs/vector3.h"
 #include <stdexcept>
 #include <string>
 
@@ -22,20 +22,20 @@
 // It is intended only for the efficient (de)serialization of model binary data;
 // where possible, prefer serializing state information via JSON instead.
 namespace Serializer {
-	static_assert((sizeof(Uint32) == 4 && alignof(Uint32) == 4), "Int32 is sized differently on this platform and will not serialize properly.");
-	static_assert((sizeof(Uint64) == 8 && alignof(Uint64) == 8), "Int64 is sized differently on this platform and will not serialize properly.");
+	static_assert((sizeof(uint32_t) == 4 && alignof(uint32_t) == 4), "Int32 is sized differently on this platform and will not serialize properly.");
+	static_assert((sizeof(uint64_t) == 8 && alignof(uint64_t) == 8), "Int64 is sized differently on this platform and will not serialize properly.");
 	static_assert((sizeof(Color) == 4 && alignof(Color) == 1), "Color is padded differently on this platform and will not serialize properly.");
 	static_assert((sizeof(vector2f) == 8 && alignof(vector2f) == 4), "Vector2f is padded differently on this platform and will not serialize properly.");
 	static_assert((sizeof(vector2d) == 16 && alignof(vector2d) == 8), "Vector2d is padded differently on this platform and will not serialize properly.");
 	static_assert((sizeof(vector3f) == 12 && alignof(vector3f) == 4), "Vector3f is padded differently on this platform and will not serialize properly.");
 	static_assert((sizeof(vector3d) == 24 && alignof(vector3d) == 8), "Vector3d is padded differently on this platform and will not serialize properly.");
-	static_assert((sizeof(Quaternionf) == 16 && alignof(Quaternionf) == 4), "Quaternionf is padded differently on this platform and will not serialize properly.");
+	static_assert((sizeof(quaternionf) == 16 && alignof(quaternionf) == 4), "quaternionf is padded differently on this platform and will not serialize properly.");
 	static_assert((sizeof(Aabb) == 56 && alignof(Aabb) == 8), "Aabb is padded differently on this platform and will not serialize properly.");
 
 	class Writer {
 	public:
 		Writer() {}
-		const std::string &GetData() { return m_str; }
+		const std::string &GetData() const { return m_str; }
 
 		template <typename T>
 		void writeObject(const T &obj)
@@ -45,7 +45,7 @@ namespace Serializer {
 
 		void writeObject(const std::string &obj)
 		{
-			writeObject<Uint32>(obj.size());
+			writeObject<uint32_t>(obj.size());
 			m_str.append(obj.c_str(), obj.size());
 		}
 
@@ -56,7 +56,7 @@ namespace Serializer {
 				return;
 			}
 
-			Uint32 len = strlen(s);
+			uint32_t len = strlen(s);
 			*this << len;
 			m_str.append(s, len);
 		}
@@ -66,8 +66,8 @@ namespace Serializer {
 		void writeObject(const vector3f &vec) { *this << vec.x << vec.y << vec.z; }
 		void writeObject(const vector3d &vec) { *this << vec.x << vec.y << vec.z; }
 		void writeObject(const Color &col) { *this << col.r << col.g << col.b << col.a; }
-		void writeObject(const Quaternionf &quat) { *this << quat.w << quat.x << quat.y << quat.z; }
-		void writeObject(const Quaterniond &quat) { *this << quat.w << quat.x << quat.y << quat.z; }
+		void writeObject(const quaternionf &quat) { *this << quat.w << quat.x << quat.y << quat.z; }
+		void writeObject(const quaterniond &quat) { *this << quat.w << quat.x << quat.y << quat.z; }
 		void writeObject(const Aabb &aabb) { *this << aabb.min << aabb.max << aabb.radius; }
 
 		template <typename T>
@@ -79,27 +79,27 @@ namespace Serializer {
 
 		void Blob(ByteRange range)
 		{
-			assert(range.Size() < SDL_MAX_UINT32);
+			assert(range.Size() < std::numeric_limits<uint32_t>::max());
 			Int32(range.Size());
 			if (range.Size()) {
 				m_str.append(range.begin, range.Size());
 			}
 		}
-		void Byte(Uint8 x) { *this << x; }
 		void Bool(bool x) { *this << x; }
-		void Int16(Uint16 x) { *this << x; }
-		void Int32(Uint32 x) { *this << x; }
-		void Int64(Uint64 x) { *this << x; }
+		void Byte(uint8_t x) { *this << x; }
+		void Int16(uint16_t x) { *this << x; }
+		void Int32(uint32_t x) { *this << x; }
+		void Int64(uint64_t x) { *this << x; }
 		void Float(float f) { *this << f; }
 		void Double(double f) { *this << f; }
 		void String(const char *s) { *this << s; }
 		void String(const std::string &s) { *this << s; }
 
-		void Vector2f(vector2f vec) { *this << vec; }
-		void Vector2d(vector2d vec) { *this << vec; }
-		void Vector3f(vector3f vec) { *this << vec; }
-		void Vector3d(vector3d vec) { *this << vec; }
-		void WrQuaternionf(const Quaternionf &q) { *this << q; }
+		void Vector2f(const vector2f &vec) { *this << vec; }
+		void Vector2d(const vector2d &vec) { *this << vec; }
+		void Vector3f(const vector3f &vec) { *this << vec; }
+		void Vector3d(const vector3d &vec) { *this << vec; }
+		void WrQuaternionf(const quaternionf &q) { *this << q; }
 		void Color4UB(const Color &c) { *this << c; }
 		void WrSection(const std::string &section_label, const std::string &section_data) { *this << section_label << section_data; }
 
@@ -119,16 +119,18 @@ namespace Serializer {
 	public:
 		Reader() :
 			m_at(nullptr),
-			m_streamVersion(-1) {}
+			m_streamVersion(-1)
+		{}
 
 		explicit Reader(const ByteRange &data) :
 			m_data(data),
-			m_at(data.begin)
+			m_at(data.begin),
+			m_streamVersion(-1)
 		{}
 
-		bool AtEnd() { return m_at != m_data.end; }
+		bool AtEnd() const { return m_at != m_data.end; }
 
-		bool Check(std::size_t needed_size)
+		bool Check(std::size_t needed_size) const
 		{
 			return m_data.end >= m_at + needed_size;
 		}
@@ -139,7 +141,7 @@ namespace Serializer {
 			m_at = m_data.begin + pos;
 		}
 
-		std::size_t Pos() { return std::size_t(m_at - m_data.begin); }
+		std::size_t Pos() const { return std::size_t(m_at - m_data.begin); }
 
 		template <typename T>
 		void readObject(T &out)
@@ -151,7 +153,7 @@ namespace Serializer {
 
 			out = *reinterpret_cast<const T *>(m_at);
 			m_at += sizeof(T);
-		};
+		}
 
 		void readObject(std::string &out)
 		{
@@ -166,8 +168,8 @@ namespace Serializer {
 		void readObject(vector3f &vec) { *this >> vec.x >> vec.y >> vec.z; }
 		void readObject(vector3d &vec) { *this >> vec.x >> vec.y >> vec.z; }
 		void readObject(Color &col) { *this >> col.r >> col.g >> col.b >> col.a; }
-		void readObject(Quaternionf &quat) { *this >> quat.w >> quat.x >> quat.y >> quat.z; }
-		void readObject(Quaterniond &quat) { *this >> quat.w >> quat.x >> quat.y >> quat.z; }
+		void readObject(quaternionf &quat) { *this >> quat.w >> quat.x >> quat.y >> quat.z; }
+		void readObject(quaterniond	 &quat) { *this >> quat.w >> quat.x >> quat.y >> quat.z; }
 		void readObject(Aabb &aabb) { *this >> aabb.min >> aabb.max >> aabb.radius; }
 
 		template <typename T>
@@ -191,10 +193,10 @@ namespace Serializer {
 
 		// Prefer using Reader::operator>> instead; these functions involve creating an unnessesary temporary variable.
 		bool Bool() { return obj<bool>(); }
-		Uint8 Byte() { return obj<Uint8>(); }
-		Uint16 Int16() { return obj<Uint16>(); }
-		Uint32 Int32() { return obj<Uint32>(); }
-		Uint64 Int64() { return obj<Uint64>(); }
+		uint8_t Byte() { return obj<uint8_t>(); }
+		uint16_t Int16() { return obj<uint16_t>(); }
+		uint32_t Int32() { return obj<uint32_t>(); }
+		uint64_t Int64() { return obj<uint64_t>(); }
 		float Float() { return obj<float>(); }
 		double Double() { return obj<double>(); }
 
@@ -206,7 +208,7 @@ namespace Serializer {
 		vector3f Vector3f() { return obj<vector3f>(); }
 		vector3d Vector3d() { return obj<vector3d>(); }
 
-		Quaternionf RdQuaternionf() { return obj<Quaternionf>(); }
+		quaternionf RdQuaternionf() { return obj<quaternionf>(); }
 
 		Reader RdSection(const std::string &section_label_expected);
 

@@ -2,11 +2,12 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "Program.h"
+
 #include "FileSystem.h"
 #include "OS.h"
-#include "StringF.h"
-#include "StringRange.h"
 #include "graphics/Graphics.h"
+#include "libs/StringF.h"
+#include "libs/StringRange.h"
 
 #include <set>
 
@@ -137,7 +138,7 @@ namespace Graphics {
 			FILE *tmp = fopen(outFilename.c_str(), "wb");
 			if(tmp) {
 				Output("%s", filename);
-				for( Uint32 i=0; i<blocks.size(); i++ ) {
+				for( uint32_t i=0; i<blocks.size(); i++ ) {
 					const char *block = blocks[i];
 					const GLint sizes = block_sizes[i];
 					if(block && sizes>0) {

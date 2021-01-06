@@ -4,9 +4,9 @@
 #ifndef _NAVLIGHTS_H
 #define _NAVLIGHTS_H
 
-#include "SDL_stdinc.h"
+#include <cstdint>
 #include "JsonFwd.h"
-#include "RefCounted.h"
+#include "libs/RefCounted.h"
 
 #include "graphics/VertexArray.h"
 
@@ -35,10 +35,10 @@ public:
 	};
 
 	struct LightBulb {
-		LightBulb(Uint8 group, Uint8 mask, Uint8 color, SceneGraph::Billboard *bb);
-		Uint8 group;
-		Uint8 mask; //bitmask: 00001111 light on half the period, 11111111 light on the entire period etc...
-		Uint8 color;
+		LightBulb(uint8_t group, uint8_t mask, uint8_t color, SceneGraph::Billboard *bb);
+		uint8_t group;
+		uint8_t mask; //bitmask: 00001111 light on half the period, 11111111 light on the entire period etc...
+		uint8_t color;
 		SceneGraph::Billboard *billboard;
 	};
 
@@ -57,7 +57,7 @@ public:
 	static void Uninit();
 
 protected:
-	std::map<Uint32, std::vector<LightBulb>> m_groupLights;
+	std::map<uint32_t, std::vector<LightBulb>> m_groupLights;
 	float m_time;
 	float m_period;
 	bool m_enabled;

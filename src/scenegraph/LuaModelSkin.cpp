@@ -5,6 +5,8 @@
 #include "ModelSkin.h"
 #include "Serializer.h"
 
+#include "libs/libs.h"
+
 namespace SceneGraph {
 
 	class LuaModelSkin {
@@ -110,7 +112,7 @@ static bool _modelskin_deserializer(const char *pos, const char **next)
 {
 	const char *end;
 
-	Uint32 serlen = strtoul(pos, const_cast<char **>(&end), 0);
+	uint32_t serlen = strtoul(pos, const_cast<char **>(&end), 0);
 	if (pos == end) return false;
 	pos = end + 1; // skip newline
 

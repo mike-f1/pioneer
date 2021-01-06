@@ -8,6 +8,8 @@
 #include "LuaTable.h"
 #include "LuaVector2.h"
 
+#include "profiler/Profiler.h"
+
 namespace PiGUI {
 
 	class LuaPiguiFace {
@@ -46,7 +48,7 @@ namespace PiGUI {
 			PROFILE_SCOPED()
 			FaceParts::FaceDescriptor face = _unpack_face(l);
 
-			Uint32 seed = 0;
+			uint32_t seed = 0;
 
 			if (lua_gettop(l) > 1 && !lua_isnil(l, 2))
 				seed = luaL_checkunsigned(l, 2);
@@ -59,7 +61,7 @@ namespace PiGUI {
 		{
 			PROFILE_SCOPED()
 			Face *f = LuaObject<PiGUI::Face>::CheckFromLua(1);
-			Uint32 result = f->GetTextureId();
+			uint32_t result = f->GetTextureId();
 
 			lua_pushlightuserdata(l, reinterpret_cast<void *>(result));
 			return 1;

@@ -4,11 +4,11 @@
 #ifndef GRAPHICS_TYPES_H
 #define GRAPHICS_TYPES_H
 
-#include "SDL_stdinc.h"
+#include <cstdint>
 
 namespace Graphics {
 
-	typedef Uint32 AttributeSet;
+	typedef uint32_t AttributeSet;
 
 	//Vertex attribute semantic
 	enum VertexAttrib {

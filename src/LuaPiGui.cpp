@@ -8,6 +8,9 @@
 #include "GameLocator.h"
 #include "InGameViews.h"
 #include "InGameViewsLocator.h"
+#include "input/Input.h"
+#include "input/JoyStick.h"
+#include "input/InputLocator.h"
 #include "LuaColor.h"
 #include "LuaConstants.h"
 #include "LuaUtils.h"
@@ -795,11 +798,59 @@ static int l_pigui_text_colored(lua_State *l)
 	return 0;
 }
 
+static int get_standard_modifiers(ImGuiIO &io)
+{
+	int mod = KMOD_NONE;
+
+	if (io.KeyAlt) mod |= KMOD_ALT;
+	if (io.KeyShift) mod |= KMOD_SHIFT;
+	if (io.KeyCtrl) mod |= KMOD_CTRL;
+	if (io.KeySuper) mod |= KMOD_GUI;
+
+	return mod;
+}
+
+static int l_pigui_get_wheelbinding(lua_State *l)
+{
+	PROFILE_SCOPED()
+	std::string binding = "";
+
+	ImGuiIO io = ImGui::GetIO();
+
+	// Escape is used to clear an existing binding
+	// io.KeysDown uses scancodes, but we want to use keycodes.
+	if (io.KeysDown[SDL_GetScancodeFromKey(SDLK_ESCAPE)]) {
+		binding = "disabled";
+		LuaPush<std::string>(l, binding);
+		return 1;
+	}
+
+	int mod = get_standard_modifiers(io);
+
+	// check if it would use the wheel as axis
+	if (io.MouseWheelH > 0.0) {
+		binding = KeyBindings::WheelAxisBinding(KeyBindings::WheelDirection::LEFT, SDL_Keymod(mod)).ToString();
+	} else if (io.MouseWheelH < 0.0) {
+		binding = KeyBindings::WheelAxisBinding(KeyBindings::WheelDirection::RIGHT, SDL_Keymod(mod)).ToString();
+	}
+	if (io.MouseWheel > 0.0) {
+		binding = KeyBindings::WheelAxisBinding(KeyBindings::WheelDirection::UP, SDL_Keymod(mod)).ToString();
+	} else if (io.MouseWheel < 0.0) {
+		binding = KeyBindings::WheelAxisBinding(KeyBindings::WheelDirection::DOWN, SDL_Keymod(mod)).ToString();
+	}
+
+	if (!binding.compare(""))
+		lua_pushnil(l);
+	else
+		LuaPush<std::string>(l, binding);
+	return 1;
+}
+
 static int l_pigui_get_axisbinding(lua_State *l)
 {
 	PROFILE_SCOPED()
 	std::string binding = "";
-	if (!Pi::input.IsJoystickEnabled()) {
+	if (!InputLocator::getInput()->IsJoystickEnabled()) {
 		lua_pushnil(l);
 		return 1;
 	}
@@ -814,15 +865,16 @@ static int l_pigui_get_axisbinding(lua_State *l)
 		return 1;
 	}
 
-	// otherwise actually check the joystick
+	int mod = get_standard_modifiers(io);
 
-	auto joysticks = Pi::input.GetJoysticksState();
+	// otherwise actually check the joystick
+	auto joysticks = InputLocator::getInput()->GetJoystick()->GetJoysticksState();
 
 	for (auto js : joysticks) {
 		std::vector<float> axes = js.second.axes;
 		for (size_t a = 0; a < axes.size(); a++) {
-			if (axes[a] > 0.25 || axes[a] < -0.25) {
-				binding = "Joy" + Pi::input.JoystickGUIDString(js.first) + "/Axis" + std::to_string(a);
+			if (axes[a] > 0.5 || axes[a] < -0.5) {
+				binding = KeyBindings::JoyAxisBinding(js.second.guid, a, SDL_Keymod(mod)).ToString();
 				break;
 			}
 		}
@@ -841,7 +893,6 @@ static int l_pigui_get_keybinding(lua_State *l)
 	PROFILE_SCOPED()
 	ImGuiIO io = ImGui::GetIO();
 	int key = 0;
-	int mod = 0;
 
 	std::string binding;
 
@@ -862,24 +913,37 @@ static int l_pigui_get_keybinding(lua_State *l)
 		return 1;
 	}
 
-	// No modifier if the key is a modifier
-	// These are all in a continous range
-	if (!(key >= SDLK_LCTRL && key <= SDLK_RGUI)) {
-		if (io.KeyAlt) mod |= KMOD_ALT;
-		if (io.KeyShift) mod |= KMOD_SHIFT;
-		if (io.KeyCtrl) mod |= KMOD_CTRL;
-		if (io.KeySuper) mod |= KMOD_GUI;
+	int mod = get_standard_modifiers(io);
+
+	// check mouse wheel activation
+	if (io.MouseWheel > 0.0) {
+		binding = KeyBindings::KeyBinding(KeyBindings::WheelDirection::UP, SDL_Keymod(mod)).ToString();
+		LuaPush<std::string>(l, binding);
+		return 1;
+	} else if (io.MouseWheel < 0.0) {
+		binding = KeyBindings::KeyBinding(KeyBindings::WheelDirection::DOWN, SDL_Keymod(mod)).ToString();
+		LuaPush<std::string>(l, binding);
+		return 1;
+	}
+	if (io.MouseWheelH > 0.0) {
+		binding = KeyBindings::KeyBinding(KeyBindings::WheelDirection::LEFT, SDL_Keymod(mod)).ToString();
+		LuaPush<std::string>(l, binding);
+		return 1;
+	} else if (io.MouseWheelH < 0.0) {
+		binding = KeyBindings::KeyBinding(KeyBindings::WheelDirection::RIGHT, SDL_Keymod(mod)).ToString();
+		LuaPush<std::string>(l, binding);
+		return 1;
 	}
 
 	// Check joysticks if no keys are held down
-	if (Pi::input.IsJoystickEnabled() && (key == 0 || (key >= SDLK_LCTRL && key <= SDLK_RGUI))) {
-		auto joysticks = Pi::input.GetJoysticksState();
+	if (InputLocator::getInput()->IsJoystickEnabled() && (key == 0 || (key >= SDLK_LCTRL && key <= SDLK_RGUI))) {
+		auto joysticks = InputLocator::getInput()->GetJoystick()->GetJoysticksState();
 
 		for (auto js : joysticks) {
 			std::vector<bool> buttons = js.second.buttons;
 			for (size_t b = 0; b < buttons.size(); b++) {
 				if (buttons[b]) {
-					binding = "Joy" + Pi::input.JoystickGUIDString(js.first) + "/Button" + std::to_string(b);
+					binding = KeyBindings::KeyBinding(js.second.guid, b, SDL_Keymod(mod)).ToString();
 					break;
 				}
 			}
@@ -891,7 +955,7 @@ static int l_pigui_get_keybinding(lua_State *l)
 					case SDL_HAT_RIGHT:
 					case SDL_HAT_UP:
 					case SDL_HAT_DOWN:
-						binding = "Joy" + Pi::input.JoystickGUIDString(js.first) + "/Hat" + std::to_string(h) + "Dir" + std::to_string(js.second.hats[h]);
+						binding = KeyBindings::KeyBinding(js.second.guid, h, hatDir, SDL_Keymod(mod)).ToString();
 						break;
 					default:
 						continue;
@@ -902,10 +966,9 @@ static int l_pigui_get_keybinding(lua_State *l)
 			if (binding.compare("")) break;
 		}
 	} else if (key != 0) {
-		// hard coding is bad, but is instantiating a keybinding every frame worse?
-		binding = "Key" + std::to_string(key);
-		if (mod > 0) binding += "Mod" + std::to_string(mod);
+		binding = KeyBindings::KeyBinding(key, SDL_Keymod(mod)).ToString();
 	}
+
 	if (!binding.compare(""))
 		lua_pushnil(l);
 	else
@@ -1662,7 +1725,7 @@ static int l_pigui_set_mouse_button_state(lua_State *l)
 	PROFILE_SCOPED()
 	int button = LuaPull<int>(l, 1);
 	bool state = LuaPull<bool>(l, 2);
-	Pi::input.SetMouseButtonState(button, state);
+	InputLocator::getInput()->SetMouseButtonState(button, state);
 	if (state == false) {
 		// new UI caches which widget should receive the mouse up event
 		// after a mouse down. This function exists exactly because the mouse-up event
@@ -1676,7 +1739,7 @@ static int l_pigui_set_mouse_button_state(lua_State *l)
 static int l_pigui_should_show_labels(lua_State *l)
 {
 	PROFILE_SCOPED()
-	bool show_labels = InGameViewsLocator::getInGameViews()->GetWorldView()->ShouldShowLabels();
+	bool show_labels = InGameViewsLocator::getInGameViews()->ShouldDrawLabels();
 	LuaPush(l, show_labels);
 	return 1;
 }
@@ -1686,14 +1749,6 @@ static int l_attr_handlers(lua_State *l)
 	PROFILE_SCOPED()
 	PiGui *pigui = LuaObject<PiGui>::CheckFromLua(1);
 	pigui->GetHandlers().PushCopyToStack();
-	return 1;
-}
-
-static int l_attr_keys(lua_State *l)
-{
-	PROFILE_SCOPED()
-	PiGui *pigui = LuaObject<PiGui>::CheckFromLua(1);
-	pigui->GetKeys().PushCopyToStack();
 	return 1;
 }
 
@@ -1833,7 +1888,7 @@ static int l_pigui_radial_menu(lua_State *l)
 static int l_pigui_should_draw_ui(lua_State *l)
 {
 	PROFILE_SCOPED()
-	LuaPush(l, InGameViewsLocator::getInGameViews()->DrawGui());
+	LuaPush(l, InGameViewsLocator::getInGameViews()->ShouldDrawGui());
 	return 1;
 }
 
@@ -1980,11 +2035,10 @@ static int l_pigui_vsliderfloat(lua_State *l)
 	return 1;
 }
 
-static int l_pigui_is_key_released(lua_State *l)
+static int l_pigui_is_escape_released(lua_State *l)
 {
 	PROFILE_SCOPED()
-	SDL_Keycode key = LuaPull<int>(l, 1);
-	LuaPush<bool>(l, ImGui::IsKeyReleased(SDL_GetScancodeFromKey(key)));
+	LuaPush<bool>(l, ImGui::IsKeyReleased(SDL_SCANCODE_ESCAPE));
 	return 1;
 }
 
@@ -2178,6 +2232,7 @@ void LuaObject<PiGui>::RegisterClass()
 		{ "SetWindowFocus", l_pigui_set_window_focus },
 		{ "GetKeyBinding", l_pigui_get_keybinding },
 		{ "GetAxisBinding", l_pigui_get_axisbinding },
+		{ "GetWheelBinding", l_pigui_get_wheelbinding },
 		{ "PushStyleColor", l_pigui_push_style_color },
 		{ "PopStyleColor", l_pigui_pop_style_color },
 		{ "PushStyleVar", l_pigui_push_style_var },
@@ -2247,7 +2302,7 @@ void LuaObject<PiGui>::RegisterClass()
 		{ "VSliderInt", l_pigui_vsliderint },
 		{ "GetMouseClickedPos", l_pigui_get_mouse_clicked_pos },
 		{ "AddConvexPolyFilled", l_pigui_add_convex_poly_filled },
-		{ "IsKeyReleased", l_pigui_is_key_released },
+		{ "IsEscapeReleased", l_pigui_is_escape_released },
 		{ "DragInt4", l_pigui_drag_int_4 },
 		{ "GetWindowPos", l_pigui_get_window_pos },
 		{ "GetWindowSize", l_pigui_get_window_size },
@@ -2292,7 +2347,6 @@ void LuaObject<PiGui>::RegisterClass()
 		{ "key_none", l_attr_key_none },
 		{ "key_shift", l_attr_key_shift },
 		{ "key_alt", l_attr_key_alt },
-		{ "keys", l_attr_keys },
 		{ 0, 0 }
 	};
 

@@ -5,12 +5,16 @@
 #define _VERTEXARRAY_H
 
 #include "Types.h"
-#include "libs.h"
+
+#include "Color.h"
+#include "libs/vector3.h"
+#include "libs/vector2.h"
+#include <vector>
+#include <cstdint>
 
 namespace Graphics {
 
-	/*
- * VertexArray is a multi-purpose vertex container. Users specify
+/* VertexArray is a multi-purpose vertex container. Users specify
  * the attributes they intend to use and then add vertices. Renderers
  * do whatever they need to do with regards to the attribute set.
  * This is not optimized for high performance drawing, but okay for simple
@@ -24,7 +28,7 @@ namespace Graphics {
 
 		//check presence of an attribute
 		__inline bool HasAttrib(const VertexAttrib v) const { return (m_attribs & v) != 0; }
-		__inline Uint32 GetNumVerts() const { return static_cast<Uint32>(position.size()); }
+		__inline uint32_t GetNumVerts() const { return static_cast<uint32_t>(position.size()); }
 		__inline AttributeSet GetAttributeSet() const { return m_attribs; }
 
 		__inline bool IsEmpty() const { return position.empty(); }
@@ -44,14 +48,14 @@ namespace Graphics {
 		//virtual void Reserve(unsigned int howmuch)
 
 		// don't mix these
-		void Set(const Uint32 idx, const vector3f &v);
-		void Set(const Uint32 idx, const vector3f &v, const Color &c);
-		void Set(const Uint32 idx, const vector3f &v, const Color &c, const vector3f &normal);
-		void Set(const Uint32 idx, const vector3f &v, const Color &c, const vector2f &uv);
-		void Set(const Uint32 idx, const vector3f &v, const vector2f &uv);
-		void Set(const Uint32 idx, const vector3f &v, const vector3f &n);
-		void Set(const Uint32 idx, const vector3f &v, const vector3f &normal, const vector2f &uv);
-		void Set(const Uint32 idx, const vector3f &v, const vector3f &n, const vector2f &uv, const vector3f &tang);
+		void Set(const uint32_t idx, const vector3f &v);
+		void Set(const uint32_t idx, const vector3f &v, const Color &c);
+		void Set(const uint32_t idx, const vector3f &v, const Color &c, const vector3f &n);
+		void Set(const uint32_t idx, const vector3f &v, const Color &c, const vector2f &uv);
+		void Set(const uint32_t idx, const vector3f &v, const vector2f &uv);
+		void Set(const uint32_t idx, const vector3f &v, const vector3f &n);
+		void Set(const uint32_t idx, const vector3f &v, const vector3f &normal, const vector2f &uv);
+		void Set(const uint32_t idx, const vector3f &v, const vector3f &n, const vector2f &uv, const vector3f &tang);
 
 		//could make these private, but it is nice to be able to
 		//add attributes separately...

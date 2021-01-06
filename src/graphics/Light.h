@@ -5,11 +5,11 @@
 #define _LIGHT_H
 
 #include "Color.h"
-#include "vector3.h"
+#include "libs/vector3.h"
 
 namespace Graphics {
 
-	static const Uint32 TOTAL_NUM_LIGHTS = 4U;
+	static const uint32_t TOTAL_NUM_LIGHTS = 4U;
 
 	class Light {
 	public:

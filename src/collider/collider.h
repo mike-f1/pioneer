@@ -4,7 +4,7 @@
 #ifndef _COLLISION_H
 #define _COLLISION_H
 
-#include "../vector3.h"
+#include "libs/vector3.h"
 #include "CollisionContact.h"
 #include "CollisionSpace.h"
 #include "Geom.h"

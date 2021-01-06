@@ -1,9 +1,11 @@
+
 // Copyright © 2008-2019 Pioneer Developers. See AUTHORS.txt for details
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "LuaVector2.h"
 
 #include "LuaUtils.h"
+#include <cassert>
 
 static int l_vector_new(lua_State *L)
 {

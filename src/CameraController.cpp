@@ -3,13 +3,14 @@
 
 #include "CameraController.h"
 
-#include "AnimationCurves.h"
 #include "Frame.h"
 #include "Game.h"
 #include "GameSaveError.h"
-#include "MathUtil.h"
 #include "Ship.h"
+#include "libs/AnimationCurves.h"
+#include "libs/MathUtil.h"
 #include "scenegraph/MatrixTransform.h"
+#include "scenegraph/Model.h"
 
 CameraController::CameraController(RefCountedPtr<CameraContext> camera, const Ship *ship) :
 	m_camera(camera),
@@ -156,6 +157,7 @@ void InternalCameraController::LoadFromJson(const Json &jsonObj)
 		m_rotX = internalCameraObj.value("rotX", 0.0f);
 		m_rotY = internalCameraObj.value("rotY", 0.0f);
 	} catch (Json::type_error &) {
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 		throw SavedGameCorruptException();
 	}
 }
@@ -330,7 +332,8 @@ FlyByCameraController::FlyByCameraController(RefCountedPtr<CameraContext> camera
 	m_dist(500),
 	m_distTo(m_dist),
 	m_roll(0),
-	m_flybyOrient(matrix3x3d::Identity())
+	m_flybyOrient(matrix3x3d::Identity()),
+	m_old_frame(nullptr)
 {
 }
 

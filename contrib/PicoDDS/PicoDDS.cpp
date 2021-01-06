@@ -1,14 +1,14 @@
 // ========================================================================
 // Licencing Infomation
 // ========================================================================
-// 
+//
 // Re-author: Andrew Copland (2011)
-// 
+//
 // Description: After hunting around for a SIMPLE DirectDrawSurface file
 //		loader I finally got fed up with overly complicated libs with
 //		horrific dependencies and ripped this one mostly from the GTL.
 //		Therefore the license associated (very liberal as it is) is below.
-// 
+//
 //		It is not a great implementation and it is largely unfinished but
 //		it handles DXT1 to 5 and is a single header which is about as
 //		complex as I feel these snippets should really be.
@@ -56,7 +56,7 @@ Send any general questions, bug reports etc to me (Rob Jones):
 
 namespace PicoDDS
 {
-	
+
 DDSImage::DDSImage() : headerdone_(false)
 {
 	memset(&surfacedata_,0,sizeof(surfacedata_));
@@ -97,12 +97,11 @@ size_t DDSImage::Read(const char* pData, const size_t dataSize)
 	imgdata_.size = CalculateStorageSize();
 	if(0 >= imgdata_.size)
 		return 0;
-			
+
 	if(FORMAT_NONE == imgdata_.format)
 		return 0;
 
 	const long headerSize=128;
-	const size_t DDSStructSize = sizeof(DDS::DDSStruct)+4;
 	// proceed with allocating memory and reading the file
 	imgdata_.imgData = new byte[imgdata_.size];
 
@@ -143,7 +142,7 @@ ImgFormat DDSImage::GetTextureFormat() const
 	if(surfacedata_.pixelformat.flags & DDS::DDPF_FOURCC)
 	{
 		format = GetDXTFormat();
-	} 
+	}
 	else if(surfacedata_.pixelformat.flags & DDS::DDPF_RGB)
 	{
 		if(surfacedata_.pixelformat.flags & DDS::DDPF_ALPHAPIXELS)
@@ -267,13 +266,13 @@ int DDSImage::GetNumImages() const
 			++count;
 		mask *= 2;	// move to next face
 	}
-	return count;		
+	return count;
 }
 
 ImgFormat DDSImage::GetDXTFormat() const
 {
 	ImgFormat format = FORMAT_NONE;
-	switch(surfacedata_.pixelformat.fourCC) 
+	switch(surfacedata_.pixelformat.fourCC)
 	{
 	case FOURCC('D','X','T','1'):
 		format = FORMAT_DXT1;
@@ -321,7 +320,7 @@ ImgFormat DDSImage::GetDXTFormat() const
 int DDSImage::GetOpenGLFormat()
 {
 	int format = 0;
-	switch(surfacedata_.pixelformat.fourCC) 
+	switch(surfacedata_.pixelformat.fourCC)
 	{
 	case FOURCC('D','X','T','1'):
 		if( surfacedata_.pixelformat.flags & DDS::DDPF_ALPHAPIXELS ) {
@@ -344,7 +343,7 @@ int DDSImage::GetOpenGLFormat()
 		//format = GL_COMPRESSED_RGB_3DC_ATI;
 		//break;
 	default:
-		assert(false && "Do not currently support un-compressed files or ATI2."); 
+		assert(false && "Do not currently support un-compressed files or ATI2.");
 		break;
 	}
 	return format;
@@ -384,7 +383,7 @@ bool DDSImage::ReadHeader(const char* pDataIn, DDS::DDSStruct& header)
 	{
 		header.reserved[i]=ReadDword(pData);
 	}
-			
+
 	//pixelfromat
 	header.pixelformat.size=ReadDword(pData);
 	header.pixelformat.flags=ReadDword(pData);
@@ -407,7 +406,7 @@ bool DDSImage::ReadHeader(const char* pDataIn, DDS::DDSStruct& header)
 }
 
 // this is the function to call when we want to load an image
-size_t DDSLoad(const char* filename, DDSImage& dds) 
+size_t DDSLoad(const char* filename, DDSImage& dds)
 {
 	// open the file for reading (binary mode)
 	FILE* file = fopen(filename, "rb");

@@ -5,7 +5,7 @@
 #define SECTORCACHE_H
 
 #include "JobQueue.h"
-#include "RefCounted.h"
+#include "libs/RefCounted.h"
 #include "galaxy/SystemPath.h"
 #include <functional>
 #include <map>
@@ -34,7 +34,7 @@ public:
 	RefCountedPtr<T> GetIfCached(const SystemPath &path);
 
 	void ClearCache(); // Completely clear slave caches
-	bool IsEmpty() { return m_attic.empty(); }
+	bool IsEmpty() const { return m_attic.empty(); }
 
 	void OutputCacheStatistics(bool reset = true);
 

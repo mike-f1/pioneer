@@ -6,7 +6,7 @@
 
 #include <string>
 #include <vector>
-#include "vector3.h"
+#include "libs/vector3.h"
 
 enum GunDir {
 	GUN_FRONT,
@@ -19,7 +19,7 @@ enum GunDir {
 struct Mount {
 	Mount() = default;
 
-	Mount(std::string name_, std::vector<vector3d> locs_, GunDir dir_) :
+	Mount(const std::string &name_, const std::vector<vector3d> &locs_, GunDir dir_) :
 		name(name_),
 		locs(locs_),
 		dir(dir_)

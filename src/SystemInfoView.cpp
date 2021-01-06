@@ -11,7 +11,8 @@
 #include "Player.h"
 #include "SectorView.h"
 #include "Space.h"
-#include "StringF.h"
+#include "libs/StringF.h"
+#include "libs/stringUtils.h"
 #include "galaxy/Faction.h"
 #include "galaxy/Galaxy.h"
 #include "galaxy/StarSystem.h"
@@ -43,7 +44,7 @@ void SystemInfoView::OnBodySelected(SystemBody *b)
 {
 	{
 		Output("\n");
-		Output("Gas, liquid, ice: %f, %f, %f\n", b->GetVolatileGas(), b->GetVolatileLiquid(), b->GetVolatileIces());
+		Output("%s: Gas, liquid, ice: %f, %f, %f\n", b->GetName().c_str(), b->GetVolatileGas(), b->GetVolatileLiquid(), b->GetVolatileIces());
 	}
 
 	SystemPath path = m_system->GetPathOf(b);
@@ -56,7 +57,7 @@ void SystemInfoView::OnBodySelected(SystemBody *b)
 		}
 	} else {
 		if (isCurrentSystem) {
-			Body *body = GameLocator::getGame()->GetSpace()->FindBodyForPath(&path);
+			Body *body = GameLocator::getGame()->GetSpace()->FindBodyForPath(path);
 			if (body != 0)
 				GameLocator::getGame()->GetPlayer()->SetNavTarget(body);
 		} else if (b->GetSuperType() == GalaxyEnums::BodySuperType::SUPERTYPE_STAR) { // We allow hyperjump to any star of the system
@@ -126,8 +127,8 @@ void SystemInfoView::OnBodyViewed(SystemBody *b)
 			data += " (" + (pdays > 1000 ? stringf(Lang::N_YEARS, formatarg("years", pdays / 365)) : stringf(Lang::N_DAYS, formatarg("days", b->GetParent()->GetOrbit().Period() / (60 * 60 * 24)))) + ")";
 		}
 		_add_label_and_value(Lang::ORBITAL_PERIOD, data);
-		_add_label_and_value(Lang::PERIAPSIS_DISTANCE, format_distance(b->GetOrbMin() * AU, 3) + (multiple ? (std::string(" (") + format_distance(b->GetParent()->GetOrbMin() * AU, 3) + ")") : ""));
-		_add_label_and_value(Lang::APOAPSIS_DISTANCE, format_distance(b->GetOrbMax() * AU, 3) + (multiple ? (std::string(" (") + format_distance(b->GetParent()->GetOrbMax() * AU, 3) + ")") : ""));
+		_add_label_and_value(Lang::PERIAPSIS_DISTANCE, stringUtils::format_distance(b->GetOrbMin() * AU, 3) + (multiple ? (std::string(" (") + stringUtils::format_distance(b->GetParent()->GetOrbMin() * AU, 3) + ")") : ""));
+		_add_label_and_value(Lang::APOAPSIS_DISTANCE, stringUtils::format_distance(b->GetOrbMax() * AU, 3) + (multiple ? (std::string(" (") + stringUtils::format_distance(b->GetParent()->GetOrbMax() * AU, 3) + ")") : ""));
 		_add_label_and_value(Lang::ECCENTRICITY, stringf("%0{f.2}", b->GetOrbit().GetEccentricity()) + (multiple ? (std::string(" (") + stringf("%0{f.2}", b->GetParent()->GetOrbit().GetEccentricity()) + ")") : ""));
 		if (b->GetType() != GalaxyEnums::BodyType::TYPE_STARPORT_ORBITAL) {
 			_add_label_and_value(Lang::AXIAL_TILT, stringf(Lang::N_DEGREES, formatarg("angle", b->GetAxialTilt() * (180.0 / M_PI))));
@@ -288,8 +289,8 @@ void SystemInfoView::UpdateEconomyTab()
 
 void SystemInfoView::PutBodies(SystemBody *body, Gui::Fixed *container, int dir, float pos[2], int &majorBodies, int &starports, int &onSurface, float &prevSize)
 {
-	float size[2];
-	float myPos[2];
+	std::array<float, 2> size;
+	std::array<float, 2> myPos;
 	myPos[0] = pos[0];
 	myPos[1] = pos[1];
 	if (body->GetSuperType() == GalaxyEnums::BodySuperType::SUPERTYPE_STARPORT) starports++;
@@ -307,8 +308,8 @@ void SystemInfoView::PutBodies(SystemBody *body, Gui::Fixed *container, int dir,
 				}
 			}
 		}
-		m_bodyIcons.push_back(std::pair<Uint32, BodyIcon *>(body->GetPath().bodyIndex, ib));
-		ib->GetSize(size);
+		m_bodyIcons.push_back(std::pair<uint32_t, BodyIcon *>(body->GetPath().bodyIndex, ib));
+		ib->GetSize(size.data());
 		if (prevSize < 0) prevSize = size[!dir];
 		ib->onSelect.connect(sigc::bind(sigc::mem_fun(this, &SystemInfoView::OnBodySelected), body));
 		ib->onMouseEnter.connect(sigc::bind(sigc::mem_fun(this, &SystemInfoView::OnBodyViewed), body));
@@ -329,7 +330,7 @@ void SystemInfoView::PutBodies(SystemBody *body, Gui::Fixed *container, int dir,
 
 	float prevSizeForKids = size[!dir];
 	for (SystemBody *kid : body->GetChildren()) {
-		PutBodies(kid, container, dir, myPos, majorBodies, starports, onSurface, prevSizeForKids);
+		PutBodies(kid, container, dir, myPos.data(), majorBodies, starports, onSurface, prevSizeForKids);
 	}
 }
 
@@ -527,7 +528,7 @@ static bool IsShownInInfoView(const SystemBody *sb)
 		sb->GetType() == GalaxyEnums::BodyType::TYPE_STARPORT_ORBITAL;
 }
 
-SystemInfoView::RefreshType SystemInfoView::NeedsRefresh()
+SystemInfoView::RefreshType SystemInfoView::NeedsRefresh() const
 {
 	if (!m_system || !InGameViewsLocator::getInGameViews()->GetSectorView()->GetSelected().IsSameSystem(m_system->GetPath()))
 		return REFRESH_ALL;

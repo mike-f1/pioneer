@@ -2,12 +2,11 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "buildopts.h"
-#include "libs.h"
-#include "utils.h"
+
+#include "libs/utils.h"
+
 #include <cstdio>
 #include <cstdlib>
-
-#include "scenegraph/SceneGraph.h"
 
 #include "FileSystem.h"
 #include "GameConfig.h"
@@ -15,7 +14,8 @@
 #include "JobQueue.h"
 #include "ModManager.h"
 #include "OS.h"
-#include "StringF.h"
+#include "libs/StringF.h"
+#include "libs/stringUtils.h"
 #include "graphics/Drawables.h"
 #include "graphics/Graphics.h"
 #include "graphics/Light.h"
@@ -28,6 +28,9 @@
 #include "scenegraph/BinaryConverter.h"
 #include "scenegraph/DumpVisitor.h"
 #include "scenegraph/FindNodeVisitor.h"
+#include "scenegraph/Loader.h"
+#include "scenegraph/Model.h"
+
 #include <sstream>
 
 std::unique_ptr<GameConfig> s_config;
@@ -47,7 +50,6 @@ void RunCompiler(const std::string &modelName, const std::string &filepath, cons
 // ********************************************************************************
 class CompileJob : public Job {
 public:
-	CompileJob(){};
 	CompileJob(const std::string &name, const std::string &path, const bool inPlace) :
 		m_name(name),
 		m_path(path),
@@ -75,7 +77,7 @@ void SetupRenderer()
 
 	//init components
 	FileSystem::userFiles.MakeDirectory(""); // ensure the config directory exists
-	static const Uint32 sdl_init_nothing = 0;
+	static const uint32_t sdl_init_nothing = 0;
 	if (SDL_Init(sdl_init_nothing) < 0)
 		Error("SDL initialization failed: %s\n", SDL_GetError());
 
@@ -100,11 +102,11 @@ void SetupRenderer()
 
 #ifdef USES_THREADS
 	// get threads up
-	Uint32 numThreads = s_config->Int("WorkerThreads");
+	uint32_t numThreads = s_config->Int("WorkerThreads");
 	const int numCores = OS::GetNumCores();
 	assert(numCores > 0);
 	if (numThreads == 0)
-		numThreads = std::max(Uint32(numCores), 1U); // this is a tool, we can use all of the cores for processing unlike Pioneer
+		numThreads = std::max(uint32_t(numCores), 1U); // this is a tool, we can use all of the cores for processing unlike Pioneer
 	asyncJobQueue.reset(new AsyncJobQueue(numThreads));
 	Output("started %d worker threads\n", numThreads);
 #endif
@@ -229,7 +231,7 @@ start:
 
 					//check it's the expected type
 					if (info.IsFile()) {
-						if (ends_with_ci(fpath, ".model")) { // store the path for ".model" files
+						if (stringUtils::ends_with_ci(fpath, ".model")) { // store the path for ".model" files
 							const std::string shortname(info.GetName().substr(0, info.GetName().size() - 6));
 							if (shortname == modelName) {
 								filePath = fpath;
@@ -268,7 +270,7 @@ start:
 
 			//check it's the expected type
 			if (info.IsFile()) {
-				if (ends_with_ci(fpath, ".model")) { // store the path for ".model" files
+				if (stringUtils::ends_with_ci(fpath, ".model")) { // store the path for ".model" files
 					list_model.push_back(std::make_pair(info.GetName().substr(0, info.GetName().size() - 6), fpath));
 				}
 			}

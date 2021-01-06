@@ -7,7 +7,7 @@
 #include "Program.h"
 #include "RenderStateGL.h"
 #include "RenderTargetGL.h"
-#include "StringF.h"
+#include "libs/StringF.h"
 #include "TextureGL.h"
 #include "VertexBufferGL.h"
 #include "graphics/Graphics.h"
@@ -41,7 +41,7 @@ namespace Graphics {
 
 	static bool CreateWindowAndContext(const char *name, const Graphics::Settings &vs, int samples, int depth_bits, SDL_Window **window, SDL_GLContext *context)
 	{
-		Uint32 winFlags = 0;
+		uint32_t winFlags = 0;
 
 		assert(vs.rendererType == Graphics::RendererType::RENDERER_OPENGL_3x);
 
@@ -228,7 +228,7 @@ namespace Graphics {
 		m_modelViewStack.push(matrix4x4f::Identity());
 		m_projectionStack.push(matrix4x4f::Identity());
 
-		SetClearColor(Color4f(0.f, 0.f, 0.f, 0.f));
+		SetClearColor(Color4ub(0, 0, 0, 0));
 		SetViewport(0, 0, m_width, m_height);
 
 		if (vs.enableDebugMessages)
@@ -613,7 +613,7 @@ namespace Graphics {
 		return true;
 	}
 
-	bool RendererOGL::SetLights(Uint32 numlights, const Light *lights)
+	bool RendererOGL::SetLights(uint32_t numlights, const Light *lights)
 	{
 		numlights = std::min(numlights, TOTAL_NUM_LIGHTS);
 		if (numlights < 1) {
@@ -625,7 +625,7 @@ namespace Graphics {
 		m_numLights = numlights;
 		m_numDirLights = 0;
 
-		for (Uint32 i = 0; i < numlights; i++) {
+		for (uint32_t i = 0; i < numlights; i++) {
 			const Light &l = lights[i];
 			m_lights[i].SetPosition(l.GetPosition());
 			m_lights[i].SetDiffuse(l.GetDiffuse());
@@ -676,7 +676,7 @@ namespace Graphics {
 		if (iter == s_AttribBufferMap.end()) {
 			// not found a buffer so create a new one
 			VertexBufferDesc vbd;
-			Uint32 attribIdx = 0;
+			uint32_t attribIdx = 0;
 			assert(v->HasAttrib(ATTRIB_POSITION));
 			vbd.attrib[attribIdx].semantic = ATTRIB_POSITION;
 			vbd.attrib[attribIdx].format = ATTRIB_FORMAT_FLOAT3;
@@ -702,7 +702,7 @@ namespace Graphics {
 				vbd.attrib[attribIdx].format = ATTRIB_FORMAT_FLOAT3;
 				++attribIdx;
 			}
-			vbd.numVertices = static_cast<Uint32>(v->position.size());
+			vbd.numVertices = static_cast<uint32_t>(v->position.size());
 			vbd.usage = BUFFER_USAGE_DYNAMIC; // dynamic since we'll be reusing these buffers if possible
 
 			// VertexBuffer
@@ -727,7 +727,7 @@ namespace Graphics {
 		return res;
 	}
 
-	bool RendererOGL::DrawPointSprites(const Uint32 count, const vector3f *positions, RenderState *rs, Material *material, float size)
+	bool RendererOGL::DrawPointSprites(const uint32_t count, const vector3f *positions, RenderState *rs, Material *material, float size)
 	{
 		PROFILE_SCOPED()
 		if (count == 0 || !material || !material->texture0)
@@ -768,7 +768,7 @@ namespace Graphics {
 		// got a buffer so use it and fill it with newest data
 		PosNormVert *vtxPtr = drawVB->Map<PosNormVert>(Graphics::BUFFER_MAP_WRITE);
 		assert(drawVB->GetDesc().stride == sizeof(PosNormVert));
-		for (Uint32 i = 0; i < count; i++) {
+		for (uint32_t i = 0; i < count; i++) {
 			vtxPtr[i].pos = positions[i];
 			vtxPtr[i].norm = vector3f(0.0f, 0.0f, size);
 		}
@@ -782,7 +782,7 @@ namespace Graphics {
 		return true;
 	}
 
-	bool RendererOGL::DrawPointSprites(const Uint32 count, const vector3f *positions, const vector2f *offsets, const float *sizes, RenderState *rs, Material *material)
+	bool RendererOGL::DrawPointSprites(const uint32_t count, const vector3f *positions, const vector2f *offsets, const float *sizes, RenderState *rs, Material *material)
 	{
 		PROFILE_SCOPED()
 		if (count == 0 || !material || !material->texture0)
@@ -821,7 +821,7 @@ namespace Graphics {
 		// got a buffer so use it and fill it with newest data
 		PosNormVert *vtxPtr = drawVB->Map<PosNormVert>(Graphics::BUFFER_MAP_WRITE);
 		assert(drawVB->GetDesc().stride == sizeof(PosNormVert));
-		for (Uint32 i = 0; i < count; i++) {
+		for (uint32_t i = 0; i < count; i++) {
 			vtxPtr[i].pos = positions[i];
 			vtxPtr[i].norm = vector3f(offsets[i], Clamp(sizes[i], 0.1f, FLT_MAX));
 		}
@@ -930,49 +930,49 @@ namespace Graphics {
 		// Create the material. It will be also used to create the shader,
 		// like a tiny factory
 		switch (desc.effect) {
-		case EFFECT_VTXCOLOR:
+		case EffectType::VTXCOLOR:
 			mat = new OGL::VtxColorMaterial();
 			break;
-		case EFFECT_UI:
+		case EffectType::UI:
 			mat = new OGL::UIMaterial();
 			break;
-		case EFFECT_PLANETRING:
+		case EffectType::PLANETRING:
 			mat = new OGL::RingMaterial();
 			break;
-		case EFFECT_STARFIELD:
+		case EffectType::STARFIELD:
 			mat = new OGL::StarfieldMaterial();
 			break;
-		case EFFECT_GEOSPHERE_TERRAIN:
-		case EFFECT_GEOSPHERE_TERRAIN_WITH_LAVA:
-		case EFFECT_GEOSPHERE_TERRAIN_WITH_WATER:
+		case EffectType::GEOSPHERE_TERRAIN:
+		case EffectType::GEOSPHERE_TERRAIN_WITH_LAVA:
+		case EffectType::GEOSPHERE_TERRAIN_WITH_WATER:
 			mat = new OGL::GeoSphereSurfaceMaterial();
 			break;
-		case EFFECT_GEOSPHERE_SKY:
+		case EffectType::GEOSPHERE_SKY:
 			mat = new OGL::GeoSphereSkyMaterial();
 			break;
-		case EFFECT_GEOSPHERE_STAR:
+		case EffectType::GEOSPHERE_STAR:
 			mat = new OGL::GeoSphereStarMaterial();
 			break;
-		case EFFECT_FRESNEL_SPHERE:
+		case EffectType::FRESNEL_SPHERE:
 			mat = new OGL::FresnelColourMaterial();
 			break;
-		case EFFECT_SHIELD:
+		case EffectType::SHIELD:
 			mat = new OGL::ShieldMaterial();
 			break;
-		case EFFECT_SKYBOX:
+		case EffectType::SKYBOX:
 			mat = new OGL::SkyboxMaterial();
 			break;
-		case EFFECT_SPHEREIMPOSTOR:
+		case EffectType::SPHEREIMPOSTOR:
 			mat = new OGL::SphereImpostorMaterial();
 			break;
-		case EFFECT_GASSPHERE_TERRAIN:
+		case EffectType::GASSPHERE_TERRAIN:
 			mat = new OGL::GasGiantSurfaceMaterial();
 			break;
-		case EFFECT_GEN_GASGIANT_TEXTURE:
+		case EffectType::GEN_GASGIANT_TEXTURE:
 			mat = new OGL::GenGasGiantColourMaterial();
 			break;
-		case EFFECT_BILLBOARD_ATLAS:
-		case EFFECT_BILLBOARD:
+		case EffectType::BILLBOARD_ATLAS:
+		case EffectType::BILLBOARD:
 			mat = new OGL::BillboardMaterial();
 			break;
 		default:
@@ -1070,30 +1070,30 @@ namespace Graphics {
 		OGL::RenderTarget *rt = new OGL::RenderTarget(desc);
 		CheckRenderErrors(__FUNCTION__, __LINE__);
 		rt->Bind();
-		if (desc.colorFormat != TEXTURE_NONE) {
+		if (desc.colorFormat != TextureFormat::NONE) {
 			Graphics::TextureDescriptor cdesc(
 				desc.colorFormat,
 				vector2f(desc.width, desc.height),
 				vector2f(desc.width, desc.height),
-				LINEAR_CLAMP,
+				TextureSampleMode::LINEAR_CLAMP,
 				false,
 				false,
 				false,
-				0, Graphics::TEXTURE_2D);
+				0, Graphics::TextureType::T_2D);
 			OGL::TextureGL *colorTex = new OGL::TextureGL(cdesc, false, false);
 			rt->SetColorTexture(colorTex);
 		}
-		if (desc.depthFormat != TEXTURE_NONE) {
+		if (desc.depthFormat != TextureFormat::NONE) {
 			if (desc.allowDepthTexture) {
 				Graphics::TextureDescriptor ddesc(
-					TEXTURE_DEPTH,
+					TextureFormat::DEPTH,
 					vector2f(desc.width, desc.height),
 					vector2f(desc.width, desc.height),
-					LINEAR_CLAMP,
+					TextureSampleMode::LINEAR_CLAMP,
 					false,
 					false,
 					false,
-					0, Graphics::TEXTURE_2D);
+					0, Graphics::TextureType::T_2D);
 				OGL::TextureGL *depthTex = new OGL::TextureGL(ddesc, false, false);
 				rt->SetDepthTexture(depthTex);
 			} else {
@@ -1112,13 +1112,13 @@ namespace Graphics {
 		return new OGL::VertexBuffer(desc);
 	}
 
-	IndexBuffer *RendererOGL::CreateIndexBuffer(Uint32 size, BufferUsage usage)
+	IndexBuffer *RendererOGL::CreateIndexBuffer(uint32_t size, BufferUsage usage)
 	{
 		m_stats.AddToStatCount(Stats::STAT_CREATE_BUFFER, 1);
 		return new OGL::IndexBuffer(size, usage);
 	}
 
-	InstanceBuffer *RendererOGL::CreateInstanceBuffer(Uint32 size, BufferUsage usage)
+	InstanceBuffer *RendererOGL::CreateInstanceBuffer(uint32_t size, BufferUsage usage)
 	{
 		m_stats.AddToStatCount(Stats::STAT_CREATE_BUFFER, 1);
 		return new OGL::InstanceBuffer(size, usage);
@@ -1241,28 +1241,7 @@ namespace Graphics {
 		// pad rows to 4 bytes, which is the default row alignment for OpenGL
 		sd.stride = ((sd.bpp * sd.width) + 3) & ~3;
 
-		sd.pixels.reset(new Uint8[sd.stride * sd.height]);
-
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		glPixelStorei(GL_PACK_ALIGNMENT, 4); // never trust defaults
-		glReadBuffer(GL_FRONT);
-		glReadPixels(0, 0, sd.width, sd.height, GL_RGBA, GL_UNSIGNED_BYTE, sd.pixels.get());
-		glFinish();
-
-		return true;
-	}
-
-	bool RendererOGL::FrameGrab(ScreendumpState &sd)
-	{
-		int w, h;
-		SDL_GetWindowSize(m_window, &w, &h);
-		sd.width = w;
-		sd.height = h;
-		sd.bpp = 4; // XXX get from window
-
-		sd.stride = (4 * sd.width);
-
-		sd.pixels.reset(new Uint8[sd.stride * sd.height]);
+		sd.pixels.reset(new uint8_t[sd.stride * sd.height]);
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glPixelStorei(GL_PACK_ALIGNMENT, 4); // never trust defaults

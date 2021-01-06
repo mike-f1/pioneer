@@ -2,11 +2,12 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "Gui.h"
-#include "libs.h"
 #include "text/TextSupport.h"
 #include "text/TextureFont.h"
 
 #include "graphics/RendererLocator.h"
+#include "graphics/VertexArray.h"
+#include "graphics/VertexBuffer.h"
 
 namespace Gui {
 
@@ -142,7 +143,7 @@ namespace Gui {
 		return accepted;
 	}
 
-	void TextEntry::OnTextInput(Uint32 unicode)
+	void TextEntry::OnTextInput(uint32_t unicode)
 	{
 		bool changed = false;
 

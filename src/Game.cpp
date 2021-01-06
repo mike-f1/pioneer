@@ -17,7 +17,7 @@
 #include "LuaEvent.h"
 #include "LuaSerializer.h"
 #include "LuaTimer.h"
-#include "MathUtil.h"
+#include "input/LuaInputFrames.h"
 #include "Object.h"
 #include "Player.h"
 #include "Sfx.h"
@@ -25,7 +25,8 @@
 #include "SpaceStation.h"
 #include "galaxy/Galaxy.h"
 #include "galaxy/GalaxyGenerator.h"
-#include "ship/PlayerShipController.h"
+#include "libs/MathUtil.h"
+#include "ship/PlayerShipController.h" // <- Only to avoid spinning "like mad" when hitting time accel
 
 #if WITH_OBJECTVIEWER
 #include "ObjectViewerView.h"
@@ -76,12 +77,12 @@ Game::Game(const SystemPath &path, const double startDateTime, unsigned int cach
 	}
 
 	m_starSystemCache = m_galaxy->NewStarSystemSlaveCache();
-	GenCaches(&path, m_cacheRadius + 2,
+	GenCaches(path, m_cacheRadius + 2,
 			[this, path]() { UpdateStarSystemCache(&path, m_cacheRadius); });
 
-	m_space.reset(new Space(GetTime(), GetTimeStep(), sys, path));
+	m_space = std::make_unique<Space>(GetTime(), GetTimeStep(), sys, path);
 
-	Body *b = m_space->FindBodyForPath(&path);
+	Body *b = m_space->FindBodyForPath(path);
 	assert(b);
 
 	m_player.reset(new Player("kanara"));
@@ -98,9 +99,10 @@ Game::Game(const SystemPath &path, const double startDateTime, unsigned int cach
 		m_player->SetVelocity(vector3d(0, 0, 0));
 	}
 
-	m_luaTimer.reset(new LuaTimer());
+	m_luaTimer = std::make_unique<LuaTimer>();
+	m_luaInputFrame = std::make_unique<LuaInputFrames>();
 
-	m_log.reset(new GameLog());
+	m_log = std::make_unique<GameLog>();
 
 #ifdef PIONEER_PROFILER
 	Profiler::dumphtml(profilerPath.c_str());
@@ -136,7 +138,7 @@ Game::Game(const Json &jsonObj, unsigned int cacheRadius) :
 		starSystem = StarSystem::FromJson(m_galaxy, jsonObj["star_system"]);
 
 		// space, all the bodies and things
-		m_space.reset(new Space(starSystem, jsonObj, m_time));
+		m_space = std::make_unique<Space>(starSystem, jsonObj, m_time);
 
 		unsigned int player = jsonObj["player"];
 		m_player.reset(static_cast<Player *>(m_space->GetBodyByIndex(player)));
@@ -145,8 +147,8 @@ Game::Game(const Json &jsonObj, unsigned int cacheRadius) :
 
 		// hyperspace clouds being brought over from the previous system
 		Json hyperspaceCloudArray = jsonObj["hyperspace_clouds"].get<Json::array_t>();
-		for (Uint32 i = 0; i < hyperspaceCloudArray.size(); i++) {
-			m_hyperspaceClouds.push_back(static_cast<HyperspaceCloud *>(Body::FromJson(hyperspaceCloudArray[i], 0)));
+		for (uint32_t i = 0; i < hyperspaceCloudArray.size(); i++) {
+			m_hyperspaceClouds.push_back(new HyperspaceCloud(hyperspaceCloudArray[i], nullptr));
 		}
 	} catch (Json::type_error &) {
 		throw SavedGameCorruptException();
@@ -155,7 +157,7 @@ Game::Game(const Json &jsonObj, unsigned int cacheRadius) :
 	// Prepare caches
 	SystemPath path = starSystem->GetPath();
 	m_starSystemCache = m_galaxy->NewStarSystemSlaveCache();
-	GenCaches(&path, m_cacheRadius + 2,
+	GenCaches(path, m_cacheRadius + 2,
 			[this, path]() { UpdateStarSystemCache(&path, m_cacheRadius); });
 
 	/// HACK!
@@ -168,9 +170,10 @@ Game::Game(const Json &jsonObj, unsigned int cacheRadius) :
 
 	luaSerializer->UninitTableRefs();
 
-	m_luaTimer.reset(new LuaTimer());
+	m_luaTimer = std::make_unique<LuaTimer>();
+	m_luaInputFrame = std::make_unique<LuaInputFrames>();
 
-	m_log.reset(new GameLog());
+	m_log = std::make_unique<GameLog>();
 }
 
 Game::~Game()
@@ -216,7 +219,7 @@ void Game::ToJson(Json &jsonObj)
 	jsonObj["star_system"] = starsystemObj;
 	// game state
 	jsonObj["time"] = m_time;
-	jsonObj["state"] = Uint32(m_state);
+	jsonObj["state"] = uint32_t(m_state);
 
 	jsonObj["want_hyperspace"] = m_wantHyperspace;
 	jsonObj["hyperspace_progress"] = m_hyperspaceProgress;
@@ -234,8 +237,7 @@ void Game::ToJson(Json &jsonObj)
 	// hyperspace clouds being brought over from the previous system
 	Json hyperspaceCloudArray = Json::array(); // Create JSON array to contain hyperspace cloud data.
 	for (std::list<HyperspaceCloud *>::const_iterator i = m_hyperspaceClouds.begin(); i != m_hyperspaceClouds.end(); ++i) {
-		Json hyperspaceCloudArrayEl = Json::object(); // Create JSON object to contain hyperspace cloud.
-		(*i)->ToJson(hyperspaceCloudArrayEl, m_space.get());
+		Json hyperspaceCloudArrayEl = (*i)->SaveToJson(m_space.get());
 		hyperspaceCloudArray.push_back(hyperspaceCloudArrayEl); // Append hyperspace cloud object to array.
 	}
 	jsonObj["hyperspace_clouds"] = hyperspaceCloudArray; // Add hyperspace cloud array to supplied object.
@@ -437,7 +439,7 @@ void Game::GetHyperspaceExitParams(const SystemPath &source, const SystemPath &d
 void Game::GetHyperspaceExitParams(const SystemPath &source, vector3d &pos, vector3d &vel)
 {
 	GetHyperspaceExitParams(source, m_space->GetStarSystem()->GetPath(), pos, vel);
-};
+}
 
 void Game::SwitchToHyperspace()
 {
@@ -495,7 +497,7 @@ void Game::SwitchToHyperspace()
 
 	// Update caches:
 	assert(m_starSystemCache && m_sectorCache);
-	GenCaches(&m_hyperspaceDest, m_cacheRadius + 2,
+	GenCaches(m_hyperspaceDest, m_cacheRadius + 2,
 			[this]() { UpdateStarSystemCache(&this->m_hyperspaceDest, m_cacheRadius); });
 
 	// put the player in it
@@ -527,7 +529,7 @@ void Game::SwitchToNormalSpace()
 
 	// create a new space for the system
 	m_space.reset(); // HACK: Here because next line will create Frames *before* deleting existing ones
-	m_space.reset(new Space(GetTime(), GetTimeStep(), m_galaxy->GetStarSystem(m_hyperspaceDest), m_hyperspaceDest));
+	m_space = std::make_unique<Space>(GetTime(), GetTimeStep(), m_galaxy->GetStarSystem(m_hyperspaceDest), m_hyperspaceDest);
 
 	// put the player in it
 	m_player->SetFrame(Frame::GetRootFrameId());
@@ -575,14 +577,12 @@ void Game::SwitchToNormalSpace()
 				// travelling to the system as a whole, so just dump them on
 				// the cloud - we can't do any better in this case
 				ship->SetPosition(cloud->GetPosition());
-			}
-
-			else {
+			} else {
 				// on their way to a body. they're already in-system so we
 				// want to simulate some travel to their destination. we
 				// naively assume full accel for half the distance, flip and
 				// full brake for the rest.
-				Body *target_body = m_space->FindBodyForPath(&sdest);
+				Body *target_body = m_space->FindBodyForPath(sdest);
 				double dist_to_target = cloud->GetPositionRelTo(target_body).Length();
 				double half_dist_to_target = dist_to_target / 2.0;
 				//double accel = -(ship->GetShipType()->linThrust[ShipType::THRUSTER_FORWARD] / ship->GetMass());
@@ -616,7 +616,7 @@ void Game::SwitchToNormalSpace()
 					// flyto command in onEnterSystem so it should sort it
 					// itself out long before the player can get near
 
-					SystemBody *sbody = m_space->GetStarSystem()->GetBodyByPath(&sdest);
+					SystemBody *sbody = m_space->GetStarSystem()->GetBodyByPath(sdest);
 					if (sbody->GetType() == GalaxyEnums::BodyType::TYPE_STARPORT_ORBITAL) {
 						ship->SetFrame(target_body->GetFrame());
 						ship->SetPosition(MathUtil::RandomPointOnSphere(1000.0) * 1000.0); // somewhere 1000km out
@@ -626,7 +626,7 @@ void Game::SwitchToNormalSpace()
 						if (sbody->GetType() == GalaxyEnums::BodyType::TYPE_STARPORT_SURFACE) {
 							sbody = sbody->GetParent();
 							SystemPath path = m_space->GetStarSystem()->GetPathOf(sbody);
-							target_body = m_space->FindBodyForPath(&path);
+							target_body = m_space->FindBodyForPath(path);
 						}
 
 						double sdist = sbody->GetRadius() * 2.0;
@@ -754,7 +754,7 @@ void Game::RequestTimeAccelDec(bool force)
 	m_forceTimeAccel = force;
 }
 
-void Game::GenCaches(const SystemPath *here, unsigned int sectorRadius,
+void Game::GenCaches(const SystemPath &here, unsigned int sectorRadius,
 	StarSystemCache::CacheFilledCallback callback)
 {
 	PROFILE_SCOPED()
@@ -770,8 +770,8 @@ void Game::UpdateStarSystemCache(const SystemPath *here, unsigned int sectorRadi
 
 	const int survivorRadius = sectorRadius * 3;
 
-	size_t rem_sec = m_sectorCache->ShrinkCache(*here, survivorRadius, m_hyperspaceSource);
-	size_t rem_ss = m_starSystemCache->ShrinkCache(*here, survivorRadius, m_hyperspaceSource);
+	m_sectorCache->ShrinkCache(*here, survivorRadius, m_hyperspaceSource);
+	m_starSystemCache->ShrinkCache(*here, survivorRadius, m_hyperspaceSource);
 
 	m_galaxy->FillStarSystemCache(m_starSystemCache, *here, sectorRadius, m_sectorCache);
 }

@@ -4,14 +4,18 @@
 #include "CustomSystem.h"
 
 #include "GalaxyEnums.h"
-#include "gameconsts.h"
-#include "utils.h"
+#include "libs/utils.h"
+#include "libs/gameconsts.h"
 
 CustomSystem::CustomSystem() :
 	sBody(nullptr),
 	numStars(0),
+	sectorX(0),
+	sectorY(0),
+	sectorZ(0),
 	seed(0),
 	want_rand_explored(true),
+	explored(true),
 	faction(nullptr),
 	govType(Polit::GOV_INVALID),
 	want_rand_lawlessness(true)
@@ -32,11 +36,13 @@ void CustomSystem::SanityChecks()
 }
 
 CustomSystemBody::CustomSystemBody() :
+	type(GalaxyEnums::BodyType::TYPE_MIN),
 	aspectRatio(fixed(1, 1)),
 	averageTemp(1),
 	want_rand_offset(true),
 	latitude(0.0),
 	longitude(0.0),
+	heightMapFractal(-1),
 	volatileGas(0),
 	ringStatus(WANT_RANDOM_RINGS),
 	seed(0),
@@ -91,7 +97,7 @@ static void checks(CustomSystemBody &csb)
 		schwarzschild /= SOL_RADIUS;
 		if (csb.radius < schwarzschild) {
 			Output("Warning: Blackhole radius defaulted to Schwarzschild radius (%f Sol radii)\n", schwarzschild);
-			csb.radius = schwarzschild;
+			csb.radius = fixed::FromDouble(schwarzschild);
 		}
 	}
 }

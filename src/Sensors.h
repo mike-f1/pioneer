@@ -12,7 +12,9 @@
  *  - allow "pinned" radar contacts (visible at all ranges, for missions)
  */
 #include "Body.h"
-#include "libs.h"
+#include "Color.h"
+
+#include <list>
 
 class Body;
 class HudTrail;
@@ -20,14 +22,14 @@ class Ship;
 
 class Sensors {
 public:
-	enum IFF {
-		IFF_UNKNOWN, //also applies to inert objects
-		IFF_NEUTRAL,
-		IFF_ALLY,
-		IFF_HOSTILE
+	enum class IFF {
+		UNKNOWN, //also applies to inert objects
+		NEUTRAL,
+		ALLY,
+		HOSTILE
 	};
 
-	enum TargetingCriteria {
+	enum class TargetingCriteria {
 		TARGET_NEAREST_HOSTILE
 	};
 

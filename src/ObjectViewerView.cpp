@@ -10,42 +10,52 @@
 #include "Camera.h"
 #include "Frame.h"
 #include "Game.h"
-#include "GameConfig.h"
 #include "GameConfSingleton.h"
+#include "GameConfig.h"
 #include "GameLocator.h"
-#include "Pi.h"
+#include "input/InputFrame.h"
+#include "input/InputFrameStatusTicket.h"
+#include "input/KeyBindings.h"
 #include "Player.h"
 #include "Random.h"
 #include "RandomSingleton.h"
-#include "StringF.h"
 #include "TerrainBody.h"
 #include "galaxy/SystemBody.h"
 #include "graphics/Drawables.h"
 #include "graphics/Light.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
-#include "terrain/Terrain.h"
+#include "libs/StringF.h"
+#include "libs/stringUtils.h"
+#include "scenegraph/Model.h"
+#include "sphere/BaseSphereDebugFlags.h"
 
-#include "gui/GuiBox.h"
-#include "gui/GuiButton.h"
-#include "gui/GuiLabel.h"
-#include "gui/GuiScreen.h"
-#include "gui/GuiTextEntry.h"
+#include <imgui/imgui.h>
 
 #include <sstream>
 
-constexpr const float VIEW_DIST = 1000.0;
+const matrix4x4d INITIAL_CAM_ANGLES = matrix4x4d::RotateXMatrix(DEG2RAD(-30.0)) * matrix4x4d::RotateYMatrix(DEG2RAD(-15.0));
+constexpr const float VIEW_START_DIST = 1000.0;
+constexpr const float LIGHT_START_ANGLE = M_PI / 4.0;
 
-ObjectViewerView::ObjectViewerView(Game *game) :
-	UIView()
+constexpr const float MOVEMENT_SPEED = 0.5;
+constexpr const float WHEEL_SENSITIVITY = .03f; // Should be a variable in user settings.
+
+std::unique_ptr<InputFrame> ObjectViewerView::m_inputFrame;
+
+ObjectViewerView::ObjectViewerView() :
+	UIView(),
+	m_debugFlags(SceneGraph::DebugFlags::NONE),
+	m_planetDebugFlags(GSDebugFlags::NONE),
+	m_viewingDist(VIEW_START_DIST),
+	m_lastTarget(nullptr),
+	m_newTarget(nullptr),
+	m_camRot(INITIAL_CAM_ANGLES),
+	m_camTwist(matrix3x3d::Identity()),
+	m_lightAngle(LIGHT_START_ANGLE),
+	m_lightRotate(RotateLight::NONE),
+	m_zoomChange(Zooming::NONE)
 {
-	SetTransparency(true);
-	m_viewingDist = VIEW_DIST;
-	m_camRot = matrix4x4d::Identity();
-
-	float size[2];
-	GetSizeRequested(size);
-
 	SetTransparency(true);
 
 	float znear;
@@ -53,74 +63,178 @@ ObjectViewerView::ObjectViewerView(Game *game) :
 	RendererLocator::getRenderer()->GetNearFarRange(znear, zfar);
 
 	const float fovY = GameConfSingleton::getInstance().Float("FOVVertical");
-	m_cameraContext.Reset(new CameraContext(Graphics::GetScreenWidth(), Graphics::GetScreenHeight(), fovY, znear, zfar));
-	m_camera.reset(new Camera(m_cameraContext));
+	RefCountedPtr<CameraContext> cameraContext;
+	cameraContext.Reset(new CameraContext(Graphics::GetScreenWidth(), Graphics::GetScreenHeight(), fovY, znear, zfar));
+	m_camera.reset(new Camera(cameraContext));
 
-	m_cameraContext->SetCameraFrame(game->GetPlayer()->GetFrame());
-	m_cameraContext->SetCameraPosition(game->GetPlayer()->GetInterpPosition() + vector3d(0, 0, m_viewingDist));
-	m_cameraContext->SetCameraOrient(matrix3x3d::Identity());
+	cameraContext->SetCameraFrame(Frame::GetRootFrameId());
+	cameraContext->SetCameraPosition(vector3d(0.0));
+	cameraContext->SetCameraOrient(matrix3x3d::Identity());
+}
 
-	m_infoLabel = new Gui::Label("");
-	Add(m_infoLabel, 2, Gui::Screen::GetHeight() - 66 - Gui::Screen::GetFontHeight());
+ObjectViewerView::~ObjectViewerView()
+{
+	m_inputFrame->RemoveCallbacks();
+}
 
-	m_vbox = new Gui::VBox();
-	Add(m_vbox, 580, 2);
+void ObjectViewerView::RegisterInputBindings()
+{
+	using namespace KeyBindings;
+	using namespace std::placeholders;
 
-	m_vbox->PackEnd(new Gui::Label("Mass (earths):"));
-	m_sbodyMass = new Gui::TextEntry();
-	m_vbox->PackEnd(m_sbodyMass);
+	m_inputFrame = std::make_unique<InputFrame>("ObjectViewer");
 
-	m_vbox->PackEnd(new Gui::Label("Radius (earths):"));
-	m_sbodyRadius = new Gui::TextEntry();
-	m_vbox->PackEnd(m_sbodyRadius);
+	auto &page = InputFWD::GetBindingPage("ObjectViewer");
+	page.shouldBeTranslated = false;
 
-	m_vbox->PackEnd(new Gui::Label("Integer seed:"));
-	m_sbodySeed = new Gui::TextEntry();
-	m_vbox->PackEnd(m_sbodySeed);
+	auto &groupMisce = page.GetBindingGroup("Miscellaneous");
 
-	m_vbox->PackEnd(new Gui::Label("Volatile gases (>= 0):"));
-	m_sbodyVolatileGas = new Gui::TextEntry();
-	m_vbox->PackEnd(m_sbodyVolatileGas);
+	m_objectViewerBindings.resetZoom = m_inputFrame->AddActionBinding("ResetZoom", groupMisce, ActionBinding(SDLK_SPACE));
 
-	m_vbox->PackEnd(new Gui::Label("Volatile liquid (0-1):"));
-	m_sbodyVolatileLiquid = new Gui::TextEntry();
-	m_vbox->PackEnd(m_sbodyVolatileLiquid);
+	auto &groupVMC = page.GetBindingGroup("ViewMovementControls");
+	m_objectViewerBindings.zoom = m_inputFrame->AddAxisBinding("Zoom", groupVMC, AxisBinding(SDLK_KP_PLUS, SDLK_KP_MINUS));
+	m_objectViewerBindings.rotateLeftRight = m_inputFrame->AddAxisBinding("RotateLeftRight", groupVMC, AxisBinding(SDLK_LEFT, SDLK_RIGHT));
+	m_objectViewerBindings.rotateUpDown = m_inputFrame->AddAxisBinding("RotateUpDown", groupVMC, AxisBinding(SDLK_DOWN, SDLK_UP));
 
-	m_vbox->PackEnd(new Gui::Label("Volatile ices (0-1):"));
-	m_sbodyVolatileIces = new Gui::TextEntry();
-	m_vbox->PackEnd(m_sbodyVolatileIces);
+	m_objectViewerBindings.rotateLightLeft = m_inputFrame->AddActionBinding("RotateLightLeft", groupVMC, ActionBinding(SDLK_r));
+	m_objectViewerBindings.rotateLightRight = m_inputFrame->AddActionBinding("RotateLightRight", groupVMC, ActionBinding(SDLK_f));
+}
 
-	m_vbox->PackEnd(new Gui::Label("Life (0-1):"));
-	m_sbodyLife = new Gui::TextEntry();
-	m_vbox->PackEnd(m_sbodyLife);
+void ObjectViewerView::AttachBindingCallback()
+{
+	using namespace std::placeholders;
+}
 
-	m_vbox->PackEnd(new Gui::Label("Volcanicity (0-1):"));
-	m_sbodyVolcanicity = new Gui::TextEntry();
-	m_vbox->PackEnd(m_sbodyVolcanicity);
+void ObjectViewerView::OnSwitchTo()
+{
+	// rotate X is vertical
+	// rotate Y is horizontal
+	m_camRot = INITIAL_CAM_ANGLES;
+	m_lightAngle = LIGHT_START_ANGLE;
 
-	m_vbox->PackEnd(new Gui::Label("Crust metallicity (0-1):"));
-	m_sbodyMetallicity = new Gui::TextEntry();
-	m_vbox->PackEnd(m_sbodyMetallicity);
+	if (m_bindingLock) m_bindingLock.reset();
 
-	Gui::LabelButton *b = new Gui::LabelButton(new Gui::Label("Change planet terrain type"));
-	b->onClick.connect(sigc::mem_fun(this, &ObjectViewerView::OnChangeTerrain));
-	m_vbox->PackEnd(b);
+	m_bindingLock = InputFWD::DisableAllInputFrameExcept(m_inputFrame.get());
 
-	Gui::HBox *hbox = new Gui::HBox();
+	m_inputFrame->SetActive(true);
 
-	b = new Gui::LabelButton(new Gui::Label("Prev Seed"));
-	b->onClick.connect(sigc::mem_fun(this, &ObjectViewerView::OnPrevSeed));
-	hbox->PackEnd(b);
+	UIView::OnSwitchTo();
+}
 
-	b = new Gui::LabelButton(new Gui::Label("Random Seed"));
-	b->onClick.connect(sigc::mem_fun(this, &ObjectViewerView::OnRandomSeed));
-	hbox->PackEnd(b);
+void ObjectViewerView::OnSwitchFrom()
+{
+	m_bindingLock.reset();
 
-	b = new Gui::LabelButton(new Gui::Label("Next Seed"));
-	b->onClick.connect(sigc::mem_fun(this, &ObjectViewerView::OnNextSeed));
-	hbox->PackEnd(b);
+	m_inputFrame->SetActive(false);
 
-	m_vbox->PackEnd(hbox);
+	UIView::OnSwitchFrom();
+}
+
+Body *getATarget() {
+	Body *body = GameLocator::getGame()->GetPlayer()->GetNavTarget();
+	if (body == nullptr) body = GameLocator::getGame()->GetPlayer()->GetCombatTarget();
+	if (body == nullptr) body = GameLocator::getGame()->GetPlayer();
+	return body;
+}
+
+void ObjectViewerView::Update(const float frameTime)
+{
+	if (GameLocator::getGame() != nullptr) {
+		// Make refactor easier when a target will be independent from game
+		m_newTarget = getATarget();
+	}
+	if (m_newTarget != m_lastTarget) {
+		// Re-set debug flags before changing target
+		ModelBody *lastT = dynamic_cast<ModelBody *>(m_lastTarget);
+		if (lastT) lastT->GetModel()->SetDebugFlags(m_debugFlags);
+
+		ModelBody *newT = dynamic_cast<ModelBody *>(m_newTarget);
+		if (newT) m_debugFlags = newT->GetModel()->GetDebugFlags();
+		else m_debugFlags = SceneGraph::DebugFlags::NONE;
+
+		TerrainBody *lastTb = dynamic_cast<TerrainBody *>(m_lastTarget);
+		if (lastTb) lastTb->SetDebugFlags(m_planetDebugFlags);
+
+		TerrainBody *newTb = dynamic_cast<TerrainBody *>(m_newTarget);
+		if (newTb) m_planetDebugFlags = newTb->GetDebugFlags();
+		else m_planetDebugFlags = GSDebugFlags::NONE;
+
+		m_lastTarget = m_newTarget;
+		// Reset view parameter for new target.
+		OnResetViewParams();
+		// Update planet parameters for new target
+		OnReloadSBData();
+	}
+	if (m_lastTarget == nullptr) return;
+
+	const float moveSpeed = MOVEMENT_SPEED * WHEEL_SENSITIVITY * InputFWD::GetMoveSpeedShiftModifier();
+	float move = moveSpeed * frameTime;
+
+	if (m_inputFrame->IsActive(m_objectViewerBindings.zoom)) {
+		if (m_inputFrame->GetValue(m_objectViewerBindings.zoom) > 0) {
+			m_zoomChange = Zooming::IN;
+		} else {
+			m_zoomChange = Zooming::OUT;
+		}
+	}
+
+	float zoom_change = 1.0;
+	switch (m_zoomChange) {
+	case Zooming::IN : zoom_change += move; break;
+	case Zooming::OUT : zoom_change -= move; break;
+	default: break;
+	}
+	m_viewingDist *= zoom_change;
+
+	float min_distance = 10.0;
+	if (m_lastTarget->IsType(Object::TERRAINBODY)) {
+        TerrainBody *tb = static_cast<TerrainBody *>(m_lastTarget);
+        min_distance = tb->GetSystemBodyRadius();
+	} else {
+		min_distance = m_lastTarget->GetClipRadius() * 0.5;
+	}
+	m_viewingDist = Clamp(m_viewingDist, min_distance, 1e12f);
+	m_zoomChange = Zooming::NONE;
+
+	if (m_inputFrame->IsActive(m_objectViewerBindings.resetZoom) && m_lastTarget != nullptr) {
+		OnResetViewParams();
+	}
+
+	if (m_inputFrame->IsActive(m_objectViewerBindings.rotateLightLeft)) {
+		m_lightRotate = RotateLight::LEFT;
+	}
+	if (m_inputFrame->IsActive(m_objectViewerBindings.rotateLightRight)) {
+		m_lightRotate = RotateLight::RIGHT;
+	}
+
+	switch (m_lightRotate) {
+	case RotateLight::LEFT : m_lightAngle += move * 30.0; break;
+	case RotateLight::RIGHT : m_lightAngle -= move * 30.0; break;
+	default: break;
+	}
+	m_lightAngle = Clamp(m_lightAngle, float(-DEG2RAD(180.0)), float(DEG2RAD(180.0)));
+	m_lightRotate = RotateLight::NONE;
+
+	if (m_inputFrame->IsActive(m_objectViewerBindings.rotateUpDown)) {
+		m_camRot = matrix4x4d::RotateXMatrix(m_inputFrame->GetValue(m_objectViewerBindings.rotateUpDown) * move * 5.0) * m_camRot;
+	}
+	if (m_inputFrame->IsActive(m_objectViewerBindings.rotateLeftRight)) {
+		m_camRot = matrix4x4d::RotateYMatrix(m_inputFrame->GetValue(m_objectViewerBindings.rotateLeftRight) * move * 5.0) * m_camRot;
+	}
+
+	auto motion = InputFWD::GetMouseMotion(MouseMotionBehaviour::Rotate);
+	if (std::get<0>(motion)) {
+		m_camRot = matrix4x4d::RotateXMatrix(-0.002 * std::get<2>(motion)) *
+			matrix4x4d::RotateYMatrix(-0.002 * std::get<1>(motion)) * m_camRot;
+	} else {
+		motion = InputFWD::GetMouseMotion(MouseMotionBehaviour::DriveShip);
+		if (std::get<0>(motion)) {
+			m_camTwist = matrix3x3d::RotateX(-0.002 * std::get<2>(motion)) *
+				matrix3x3d::RotateY(-0.002 * std::get<1>(motion)) * m_camTwist;
+			//m_camTwist.Print();
+		}
+	}
+	UIView::Update(frameTime);
 }
 
 void ObjectViewerView::Draw3D()
@@ -135,132 +249,246 @@ void ObjectViewerView::Draw3D()
 	Graphics::Light light;
 	light.SetType(Graphics::Light::LIGHT_DIRECTIONAL);
 
-	const int btnState = Pi::input.MouseButtonState(SDL_BUTTON_RIGHT);
-	if (btnState) {
-		int m[2];
-		Pi::input.GetMouseMotion(m);
-		m_camRot = matrix4x4d::RotateXMatrix(-0.002 * m[1]) *
-			matrix4x4d::RotateYMatrix(-0.002 * m[0]) * m_camRot;
-		m_cameraContext->SetCameraPosition(GameLocator::getGame()->GetPlayer()->GetInterpPosition() + vector3d(0, 0, m_viewingDist));
-		m_cameraContext->BeginFrame();
-		m_camera->Update();
-	}
+	vector3d camPos = vector3d(0., 0., -m_viewingDist);
+	RefCountedPtr<CameraContext> cameraContext = m_camera->GetContext();
+	cameraContext->SetCameraOrient(m_camTwist);
+	cameraContext->SetCameraPosition(camPos);
+	cameraContext->BeginFrame();
 
 	if (m_lastTarget) {
-		if (m_lastTarget->IsType(Object::STAR))
+		if (m_lastTarget->IsType(Object::STAR)) {
 			light.SetPosition(vector3f(0.f));
-		else {
-			light.SetPosition(vector3f(0.577f));
+		} else {
+			vector3f pos = vector3f(m_camTwist * vector3d(std::sin(m_lightAngle), 1.0, std::cos(m_lightAngle)));
+			light.SetPosition(pos);
 		}
 		RendererLocator::getRenderer()->SetLights(1, &light);
 
-		m_lastTarget->Render(m_camera.get(), vector3d(0, 0, -m_viewingDist), m_camRot);
+		matrix4x4d twistMat(m_camTwist);
+		m_lastTarget->Render(m_camera.get(), m_camTwist * camPos, twistMat * m_camRot);
 
 		// industry-standard red/green/blue XYZ axis indiactor
-		RendererLocator::getRenderer()->SetTransform(matrix4x4d::Translation(vector3d(0, 0, -m_viewingDist)) * m_camRot * matrix4x4d::ScaleMatrix(m_lastTarget->GetClipRadius() * 2.0));
+		RendererLocator::getRenderer()->SetTransform(twistMat * matrix4x4d::Translation(camPos) * m_camRot * matrix4x4d::ScaleMatrix(m_lastTarget->GetClipRadius() * 2.0));
 		Graphics::Drawables::GetAxes3DDrawable(RendererLocator::getRenderer())->Draw(RendererLocator::getRenderer());
 	}
 
 	UIView::Draw3D();
-	if (btnState) {
-		m_cameraContext->EndFrame();
-	}
+
+	cameraContext->EndFrame();
 }
 
-void ObjectViewerView::OnSwitchTo()
+void ObjectViewerView::DrawUI(const float frameTime)
 {
-	// rotate X is vertical
-	// rotate Y is horizontal
-	m_camRot = matrix4x4d::RotateXMatrix(DEG2RAD(-30.0)) * matrix4x4d::RotateYMatrix(DEG2RAD(-15.0));
-	UIView::OnSwitchTo();
-}
-
-void ObjectViewerView::Update(const float frameTime)
-{
-	if (Pi::input.KeyState(SDLK_PERIOD)) m_viewingDist *= 0.99f;
-	if (Pi::input.KeyState(SDLK_MINUS)) m_viewingDist *= 1.01f;
-	if (Pi::input.KeyState(SDLK_SPACE) && m_lastTarget != nullptr) {
-		m_viewingDist = m_lastTarget->GetClipRadius() * 2.0f;
-	}
-	m_viewingDist = Clamp(m_viewingDist, 10.0f, 1e12f);
-
-	char buf[128];
-	Body *body = GameLocator::getGame()->GetPlayer()->GetNavTarget();
-	if (body == nullptr) body = GameLocator::getGame()->GetPlayer()->GetCombatTarget();
-
-	if (body && (body != m_lastTarget)) {
-		// Reset view distance for new target.
-		m_viewingDist = body->GetClipRadius() * 2.0f;
-		m_lastTarget = body;
-
-		if (body->IsType(Object::TERRAINBODY)) {
-			TerrainBody *tbody = static_cast<TerrainBody *>(body);
-			const SystemBody *sbody = tbody->GetSystemBody();
-			m_sbodyVolatileGas->SetText(stringf("%0{f.3}", sbody->GetVolatileGas()));
-			m_sbodyVolatileLiquid->SetText(stringf("%0{f.3}", sbody->GetVolatileLiquid()));
-			m_sbodyVolatileIces->SetText(stringf("%0{f.3}", sbody->GetVolatileIces()));
-			m_sbodyLife->SetText(stringf("%0{f.3}", sbody->GetLife()));
-			m_sbodyVolcanicity->SetText(stringf("%0{f.3}", sbody->GetVolcanicity()));
-			m_sbodyMetallicity->SetText(stringf("%0{f.3}", sbody->GetMetallicity()));
-			m_sbodySeed->SetText(stringf("%0{i}", int(sbody->GetSeed())));
-			m_sbodyMass->SetText(stringf("%0{f}", sbody->GetMassAsFixed().ToFloat()));
-			m_sbodyRadius->SetText(stringf("%0{f}", sbody->GetRadiusAsFixed().ToFloat()));
-		}
-	}
-
 	std::ostringstream pathStr;
-	if (body) {
+	if (m_lastTarget) {
 		// fill in pathStr from sp values and sys->GetName()
 		static const std::string comma(", ");
-		const SystemBody *psb = body->GetSystemBody();
+		const SystemBody *psb = m_lastTarget->GetSystemBody();
 		if (psb) {
 			const SystemPath sp = psb->GetPath();
-			pathStr << body->GetSystemBody()->GetName() << " (" << sp.sectorX << comma << sp.sectorY << comma << sp.sectorZ << comma << sp.systemIndex << comma << sp.bodyIndex << ")";
+			pathStr << m_lastTarget->GetSystemBody()->GetName() << " (" << sp.sectorX << comma << sp.sectorY << comma << sp.sectorZ << comma << sp.systemIndex << comma << sp.bodyIndex << ")";
 		} else {
 			pathStr << "<unknown>";
 		}
+	} else {
+		pathStr << "<no object>";
 	}
 
+	char buf[128];
 	snprintf(buf, sizeof(buf), "View dist: %s     Object: %s\nSystemPath: %s",
-		format_distance(m_viewingDist).c_str(), (body ? body->GetLabel().c_str() : "<none>"),
+		stringUtils::format_distance(m_viewingDist).c_str(), (m_lastTarget ? m_lastTarget->GetLabel().c_str() : "<none>"),
 		pathStr.str().c_str());
-	m_infoLabel->SetText(buf);
 
-	if (body && body->IsType(Object::TERRAINBODY))
-		m_vbox->ShowAll();
-	else
-		m_vbox->HideAll();
+	vector2f screen(Graphics::GetScreenWidth(), Graphics::GetScreenHeight());
+	if (!(screen == m_screen)) {
+		m_screen = screen;
+		vector2f upperLeft(screen.x * 2.0 / 3.0, screen.y);
+		vector2f bottomRight(screen.x, 0);
+		ImGui::SetNextWindowPos(ImVec2(0.0, 0.0), 0, ImVec2(0.0, 0.0));
+	}
 
-	UIView::Update(frameTime);
+	ImGui::SetNextWindowBgAlpha(0.7f);
+	ImGui::Begin("ObjectViewer", nullptr, ImGuiWindowFlags_NoScrollbar
+					| ImGuiWindowFlags_NoCollapse
+					| ImGuiWindowFlags_AlwaysAutoResize
+					| ImGuiWindowFlags_NoSavedSettings
+					| ImGuiWindowFlags_NoFocusOnAppearing
+					| ImGuiWindowFlags_NoBringToFrontOnFocus
+					);
+
+	ImGui::TextUnformatted(buf);
+
+	if (m_lastTarget) {
+		ImGui::Separator();
+		switch (m_lastTarget->GetType()) {
+			case Object::CARGOBODY:
+			case Object::PLAYER:
+			case Object::SHIP:
+			case Object::SPACESTATION:
+			case Object::MISSILE:
+			case Object::CITYONPLANET:
+				DrawAdditionalUIForBodies();
+			break;
+			case Object::HYPERSPACECLOUD: ImGui::TextUnformatted("Type is HyperspaceCloud"); break;
+			case Object::PLANET:
+			case Object::STAR:
+			case Object::TERRAINBODY:
+				DrawAdditionalUIForSysBodies();
+			break;
+			case Object::PROJECTILE:
+			default: break;
+		};
+	}
+
+	ImGui::Separator();
+	ImGui::SliderAngle("Light Angle", &m_lightAngle, -180.0f, +180.0f);
+	ImGui::Button("Reset View\nParameters");
+	if (ImGui::IsItemClicked(0)) OnResetViewParams();
+	ImGui::SameLine();
+	ImGui::Button("Reset Twist\nParameters");
+	if (ImGui::IsItemClicked(0)) OnResetTwistMatrix();
+	ImGui::End();
+}
+
+void ObjectViewerView::DrawAdditionalUIForSysBodies()
+{
+	ImGui::InputFloat("Mass (earths)", &m_sbMass, 0.01f, 1.0f, "%.4f");
+	ImGui::InputFloat("Radius (earths)", &m_sbRadius, 0.01f, 1.0f, "%.4f");
+	const int step = 1, step_fast = 10;
+	ImGui::InputScalar("Integer seed", ImGuiDataType_U32, &m_sbSeed, &step, &step_fast, "%u");
+	ImGui::InputFloat("Volatile gases (>= 0)", &m_sbVolatileGas, 0.01f, 0.1f, "%.4f");
+	m_sbVolatileGas = Clamp(m_sbVolatileGas, 0.0f, 10.0f);
+	ImGui::InputFloat("Volatile liquid (0-1)", &m_sbVolatileLiquid, 0.01f, 0.1f, "%.4f");
+	m_sbVolatileLiquid = Clamp(m_sbVolatileLiquid, 0.0f, 1.0f);
+	ImGui::InputFloat("Volatile ices (0-1)", &m_sbVolatileIces, 0.01f, 0.1f, "%.4f");
+	m_sbVolatileIces = Clamp(m_sbVolatileIces, 0.0f, 1.0f);
+	ImGui::InputFloat("Life (0-1)", &m_sbLife, 0.01f, 0.1f, "%.4f");
+	m_sbLife = Clamp(m_sbLife, 0.0f, 1.0f);
+	ImGui::InputFloat("Volcanicity (0-1)", &m_sbVolcanicity, 0.01f, 1.0f, "%.4f");
+	m_sbVolcanicity = Clamp(m_sbVolcanicity, 0.0f, 1.0f);
+	ImGui::InputFloat("Crust metallicity (0-1)", &m_sbMetallicity, 0.01f, 1.0f, "%.4f");
+	m_sbMetallicity = Clamp(m_sbMetallicity, 0.0f, 1.0f);
+
+	ImGui::Button("Prev Seed");
+	if (ImGui::IsItemClicked(0)) OnPrevSeed();
+	ImGui::SameLine();
+	ImGui::Button("Random Seed");
+	if (ImGui::IsItemClicked(0)) OnRandomSeed();
+	ImGui::SameLine();
+	ImGui::Button("Next Seed");
+	if (ImGui::IsItemClicked(0)) OnNextSeed();
+	ImGui::Button("Reset Changes");
+	if (ImGui::IsItemClicked(0)) OnReloadSBData();
+	ImGui::SameLine();
+	ImGui::Button("Apply Changes");
+	if (ImGui::IsItemClicked(0)) OnChangeTerrain();
+
+	ImGui::Checkbox("Display Single Patch BBOX", &m_showSingleBBox);
+	ImGui::Checkbox("Display Nearest Patches BBOX", &m_showNearestBBox);
+	ImGui::Checkbox("Display Bounding Sphere", &m_showBoundSphere);
+
+	m_planetDebugFlags = (m_showSingleBBox ? GSDebugFlags::SINGLE_PATCH_BBOX : GSDebugFlags::NONE) |
+		(m_showNearestBBox ? GSDebugFlags::NEAR_PATCHES_BBOX : GSDebugFlags::NONE) |
+		(m_showBoundSphere ? GSDebugFlags::BOUNDING_SPHERE : GSDebugFlags::NONE);
+
+	TerrainBody *tb = dynamic_cast<TerrainBody *>(m_lastTarget);
+	if (tb) tb->SetDebugFlags(m_planetDebugFlags);
+}
+
+void ObjectViewerView::DrawAdditionalUIForBodies()
+{
+	switch (m_lastTarget->GetType()) {
+		case Object::CARGOBODY: ImGui::TextUnformatted("Type is CargoBody"); break;
+		case Object::PLAYER:
+		case Object::SHIP:
+		{
+			const ShipType *st = static_cast<Ship *>(m_lastTarget)->GetShipType();
+			if (st != nullptr) {
+				ImGui::Text("Ship model %s", st->id.c_str());
+			}
+		}
+		break;
+		case Object::SPACESTATION: ImGui::TextUnformatted("Type is SpaceStation"); break;
+		case Object::MISSILE: ImGui::TextUnformatted("Type is Missile"); break;
+		case Object::CITYONPLANET: ImGui::TextUnformatted("Type is CityOnPlanet"); break;
+		default: break;
+	};
+
+	ImGui::Checkbox("Display BBOX", &m_showBBox);
+	ImGui::SameLine();
+	ImGui::Checkbox("Display Collision Mesh", &m_showCollMesh);
+	ImGui::Checkbox("Display WireFrame", &m_showWireFrame);
+	ImGui::SameLine();
+	ImGui::Checkbox("Display Tags", &m_showTags);
+	ImGui::SameLine();
+	ImGui::Checkbox("Display Docking", &m_showDocking);
+
+	SceneGraph::DebugFlags debug = (m_showBBox ? SceneGraph::DebugFlags::BBOX : SceneGraph::DebugFlags::NONE) |
+		(m_showCollMesh ? SceneGraph::DebugFlags::COLLMESH : SceneGraph::DebugFlags::NONE) |
+		(m_showWireFrame ? SceneGraph::DebugFlags::WIREFRAME : SceneGraph::DebugFlags::NONE) |
+		(m_showTags ? SceneGraph::DebugFlags::TAGS : SceneGraph::DebugFlags::NONE) |
+		(m_showDocking ? SceneGraph::DebugFlags::DOCKING : SceneGraph::DebugFlags::NONE);
+
+	ModelBody *mb = dynamic_cast<ModelBody *>(m_lastTarget);
+	if (mb) mb->GetModel()->SetDebugFlags(debug);
+}
+
+void ObjectViewerView::OnResetViewParams()
+{
+	if (m_lastTarget != nullptr) {
+		m_viewingDist = m_lastTarget->GetClipRadius() * 2.0f;
+	} else {
+		m_viewingDist = VIEW_START_DIST;
+	}
+	m_lightAngle = LIGHT_START_ANGLE;
+	m_camTwist = matrix3x3d::Identity();
+	m_camRot = INITIAL_CAM_ANGLES;
+}
+
+void ObjectViewerView::OnResetTwistMatrix()
+{
+	// TODO: m_camTwist is not well integrated, however it works
+	// for roles it is introduced for, which is to look at planet in perspective.
+	// All of that "crap" is needed because of Camera doesn't do its job very well,
+	// which seems to be another big TODO...
+	m_camTwist = matrix3x3d::Identity();
+}
+
+void ObjectViewerView::OnReloadSBData()
+{
+	if (m_lastTarget->IsType(Object::TERRAINBODY)) {
+		TerrainBody *tbody = static_cast<TerrainBody *>(m_lastTarget);
+		const SystemBody *sbody = tbody->GetSystemBody();
+		m_sbMass = sbody->GetMassAsFixed().ToFloat();
+		m_sbRadius = sbody->GetRadiusAsFixed().ToFloat();
+		m_sbSeed = sbody->GetSeed();
+		m_sbVolatileGas = sbody->GetVolatileGas();
+		m_sbVolatileLiquid = sbody->GetVolatileLiquid();
+		m_sbVolatileIces = sbody->GetVolatileIces();
+		m_sbLife = sbody->GetLife();
+		m_sbVolcanicity = sbody->GetVolcanicity();
+		m_sbMetallicity = sbody->GetMetallicity();
+	}
 }
 
 void ObjectViewerView::OnChangeTerrain()
 {
-	const fixed volatileGas = fixed(65536.0 * atof(m_sbodyVolatileGas->GetText().c_str()), 65536);
-	const fixed volatileLiquid = fixed(65536.0 * atof(m_sbodyVolatileLiquid->GetText().c_str()), 65536);
-	const fixed volatileIces = fixed(65536.0 * atof(m_sbodyVolatileIces->GetText().c_str()), 65536);
-	const fixed life = fixed(65536.0 * atof(m_sbodyLife->GetText().c_str()), 65536);
-	const fixed volcanicity = fixed(65536.0 * atof(m_sbodyVolcanicity->GetText().c_str()), 65536);
-	const fixed metallicity = fixed(65536.0 * atof(m_sbodyMetallicity->GetText().c_str()), 65536);
-	const fixed mass = fixed(65536.0 * atof(m_sbodyMass->GetText().c_str()), 65536);
-	const fixed radius = fixed(65536.0 * atof(m_sbodyRadius->GetText().c_str()), 65536);
+	if (!m_lastTarget) return;
 
-	// XXX this is horrendous, but probably safe for the moment. all bodies,
-	// terrain, whatever else holds a const pointer to the same toplevel
-	// sbody. one day objectviewer should be far more contained and not
-	// actually modify the space
-	Body *body = GameLocator::getGame()->GetPlayer()->GetNavTarget();
-	SystemBody *sbody = const_cast<SystemBody *>(body->GetSystemBody());
+	TerrainBody *tbody = static_cast<TerrainBody *>(m_lastTarget);
+	SystemBody *sbody = const_cast<SystemBody *>(tbody->GetSystemBody());
 
-	sbody->m_seed = atoi(m_sbodySeed->GetText().c_str());
-	sbody->m_radius = radius;
-	sbody->m_mass = mass;
-	sbody->m_metallicity = metallicity;
-	sbody->m_volatileGas = volatileGas;
-	sbody->m_volatileLiquid = volatileLiquid;
-	sbody->m_volatileIces = volatileIces;
-	sbody->m_volcanicity = volcanicity;
-	sbody->m_life = life;
+	if (!sbody) return;
+
+	sbody->m_seed = m_sbSeed;
+	sbody->m_radius = fixed(65536.0 * m_sbRadius, 65536);
+	sbody->m_mass = fixed(65536.0 * m_sbMass, 65536);
+	sbody->m_metallicity = fixed(65536.0 * m_sbMetallicity, 65536);
+	sbody->m_volatileGas = fixed(65536.0 * m_sbVolatileGas, 65536);
+	sbody->m_volatileLiquid = fixed(65536.0 * m_sbVolatileLiquid, 65536);
+	sbody->m_volatileIces = fixed(65536.0 * m_sbVolatileIces, 65536);
+	sbody->m_volcanicity = fixed(65536.0 * m_sbVolcanicity, 65536);
+	sbody->m_life = fixed::FromDouble(m_sbLife);
 
 	// force reload
 	TerrainBody::OnChangeDetailLevel(GameConfSingleton::getDetail().planets);
@@ -268,20 +496,27 @@ void ObjectViewerView::OnChangeTerrain()
 
 void ObjectViewerView::OnRandomSeed()
 {
-	m_sbodySeed->SetText(stringf("%0{i}", int(RandomSingleton::getInstance().Int32())));
-	OnChangeTerrain();
+	m_sbSeed = RandomSingleton::getInstance().Int32();
 }
 
 void ObjectViewerView::OnNextSeed()
 {
-	m_sbodySeed->SetText(stringf("%0{i}", atoi(m_sbodySeed->GetText().c_str()) + 1));
-	OnChangeTerrain();
+	m_sbSeed++;
 }
 
 void ObjectViewerView::OnPrevSeed()
 {
-	m_sbodySeed->SetText(stringf("%0{i}", atoi(m_sbodySeed->GetText().c_str()) - 1));
-	OnChangeTerrain();
+	m_sbSeed--;
+}
+
+void ObjectViewerView::OnLightRotateLeft()
+{
+	m_lightRotate = RotateLight::LEFT;
+}
+
+void ObjectViewerView::OnLightRotateRight()
+{
+	m_lightRotate = RotateLight::RIGHT;
 }
 
 #endif

@@ -116,7 +116,7 @@ static int l_fac_govtype_weight(lua_State *L)
 	Faction *fac = l_fac_check(L, 1);
 	const char *typeName = luaL_checkstring(L, 2);
 	const Polit::GovType g = static_cast<Polit::GovType>(LuaConstants::GetConstant(L, "PolitGovType", typeName));
-	const Sint32 weight = luaL_checkinteger(L, 3); // signed as we will need to compare with signed out of Random.Int32
+	const int32_t weight = luaL_checkinteger(L, 3); // signed as we will need to compare with signed out of Random.Int32
 
 	if (g < Polit::GOV_RAND_MIN || g > Polit::GOV_RAND_MAX) {
 		pi_lua_warn(L,
@@ -144,11 +144,11 @@ static int l_fac_homeworld(lua_State *L)
 {
 	FactionBuilder *facbld = l_fac_check_builder(L, 1);
 	Faction *fac = facbld->fac;
-	Sint32 x = luaL_checkinteger(L, 2);
-	Sint32 y = luaL_checkinteger(L, 3);
-	Sint32 z = luaL_checkinteger(L, 4);
-	Sint32 si = luaL_checkinteger(L, 5);
-	Uint32 bi = luaL_checkinteger(L, 6);
+	int32_t x = luaL_checkinteger(L, 2);
+	int32_t y = luaL_checkinteger(L, 3);
+	int32_t z = luaL_checkinteger(L, 4);
+	int32_t si = luaL_checkinteger(L, 5);
+	uint32_t bi = luaL_checkinteger(L, 6);
 
 	// search for home systems, first moving outward from the axes, then
 	// if that didn't work moving inward toward them
@@ -198,7 +198,7 @@ static int l_fac_illegal_goods_probability(lua_State *L)
 	const char *typeName = luaL_checkstring(L, 2);
 	const GalacticEconomy::Commodity e = static_cast<GalacticEconomy::Commodity>(
 		LuaConstants::GetConstant(L, "CommodityType", typeName));
-	const Uint32 probability = luaL_checkunsigned(L, 3);
+	const uint32_t probability = luaL_checkunsigned(L, 3);
 
 	if (probability > 100) {
 		pi_lua_warn(L,
@@ -232,9 +232,9 @@ static int l_fac_claim(lua_State *L)
 {
 	Faction *fac = l_fac_check(L, 1);
 
-	Sint32 sector_x = luaL_checkinteger(L, 2);
-	Sint32 sector_y = luaL_checkinteger(L, 3);
-	Sint32 sector_z = luaL_checkinteger(L, 4);
+	int32_t sector_x = luaL_checkinteger(L, 2);
+	int32_t sector_y = luaL_checkinteger(L, 3);
+	int32_t sector_z = luaL_checkinteger(L, 4);
 
 	SystemPath path(sector_x, sector_y, sector_z);
 
@@ -275,7 +275,7 @@ static void ExportFactionToLua(const Faction *fac, const size_t index)
 
 	for (size_t i = 0; i < fac->govtype_weights.size(); i++) {
 		const Polit::GovType gt = fac->govtype_weights[i].first;
-		for (Uint32 j = 0; ENUM_PolitGovType[j].name != 0; j++) {
+		for (uint32_t j = 0; ENUM_PolitGovType[j].name != 0; j++) {
 			if (ENUM_PolitGovType[j].value == gt) {
 				outstr << "f:govtype_weight('" << ENUM_PolitGovType[j].name << "',\t\t" << fac->govtype_weights[i].second << ")" << std::endl;
 			}
@@ -285,7 +285,7 @@ static void ExportFactionToLua(const Faction *fac, const size_t index)
 
 	for (auto m : fac->commodity_legality) {
 		const GalacticEconomy::Commodity gec = m.first;
-		for (Uint32 j = 0; ENUM_CommodityType[j].name != 0; j++) {
+		for (uint32_t j = 0; ENUM_CommodityType[j].name != 0; j++) {
 			if (ENUM_CommodityType[j].value == int(gec)) {
 				outstr << "f:illegal_goods_probability('" << ENUM_CommodityType[j].name << "',\t\t" << m.second << ")" << std::endl;
 			}
@@ -529,7 +529,7 @@ void FactionsDatabase::AddFaction(Faction *faction)
 	faction->idx = m_factions.size() - 1;
 }
 
-const Faction *FactionsDatabase::GetFaction(const Uint32 index) const
+const Faction *FactionsDatabase::GetFaction(const uint32_t index) const
 {
 	PROFILE_SCOPED()
 	assert(index < m_factions.size());
@@ -547,7 +547,7 @@ const Faction *FactionsDatabase::GetFaction(const std::string &factionName) cons
 	}
 }
 
-const Uint32 FactionsDatabase::GetNumFactions() const
+uint32_t FactionsDatabase::GetNumFactions() const
 {
 	PROFILE_SCOPED()
 	return m_factions.size();
@@ -616,12 +616,12 @@ void FactionsDatabase::Octsapling::Add(Galaxy *galaxy, const Faction *faction)
 		*/
 		Sector::System sys = sec->m_systems[faction->homeworld.systemIndex];
 
-		int xmin = BoxIndex(Sint32(sys.GetFullPosition().x - float((faction->Radius()))));
-		int xmax = BoxIndex(Sint32(sys.GetFullPosition().x + float((faction->Radius()))));
-		int ymin = BoxIndex(Sint32(sys.GetFullPosition().y - float((faction->Radius()))));
-		int ymax = BoxIndex(Sint32(sys.GetFullPosition().y + float((faction->Radius()))));
-		int zmin = BoxIndex(Sint32(sys.GetFullPosition().z - float((faction->Radius()))));
-		int zmax = BoxIndex(Sint32(sys.GetFullPosition().z + float((faction->Radius()))));
+		int xmin = BoxIndex(int32_t(sys.GetFullPosition().x - float((faction->Radius()))));
+		int xmax = BoxIndex(int32_t(sys.GetFullPosition().x + float((faction->Radius()))));
+		int ymin = BoxIndex(int32_t(sys.GetFullPosition().y - float((faction->Radius()))));
+		int ymax = BoxIndex(int32_t(sys.GetFullPosition().y + float((faction->Radius()))));
+		int zmin = BoxIndex(int32_t(sys.GetFullPosition().z - float((faction->Radius()))));
+		int zmax = BoxIndex(int32_t(sys.GetFullPosition().z + float((faction->Radius()))));
 
 		/* put the faction in all the octbox cells needed in a hideously inexact way that
 		   will generate duplicates in each cell in many cases

@@ -4,8 +4,8 @@
 #ifndef _SCENEGRAPH_ANIMATIONKEY_H
 #define _SCENEGRAPH_ANIMATIONKEY_H
 
-#include "Quaternion.h"
-#include "vector3.h"
+#include "libs/quaternion.h"
+#include "libs/vector3.h"
 
 namespace SceneGraph {
 
@@ -25,9 +25,9 @@ namespace SceneGraph {
 	};
 
 	struct RotationKey : public AnimationKey {
-		Quaternionf rotation;
+		quaternionf rotation;
 
-		RotationKey(double t, const Quaternionf &q) :
+		RotationKey(double t, const quaternionf &q) :
 			AnimationKey(t),
 			rotation(q) {}
 	};

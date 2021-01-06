@@ -272,7 +272,7 @@ ui.registerHandler('game', function(delta_t)
 			end)
 		end)
 
-		if Game.CurrentView() == "world" and ui.noModifierHeld() and ui.isKeyReleased(ui.keys.escape) then
+		if Game.CurrentView() == "world" and ui.isEscapeReleased() then
 			if not ui.showOptionsWindow then
 				Game.SetTimeAcceleration("paused")
 				ui.showOptionsWindow = true

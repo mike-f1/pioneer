@@ -9,12 +9,12 @@
 #include "Space.h"
 #include "collider/CollisionSpace.h"
 #include "galaxy/SystemBody.h"
-#include "utils.h"
+#include "libs/utils.h"
 
 std::vector<Frame> Frame::s_frames;
 std::vector<CollisionSpace> Frame::s_collisionSpaces;
 
-Frame::Frame(const Dummy &d, const FrameId &parent, const char *label, unsigned int flags, double radius) :
+Frame::Frame(const Dummy &d_, const FrameId &parent, const char *label, unsigned int flags, double radius) :
 	m_parent(parent),
 	m_sbody(nullptr),
 	m_astroBody(nullptr),
@@ -24,9 +24,10 @@ Frame::Frame(const Dummy &d, const FrameId &parent, const char *label, unsigned 
 	m_vel(vector3d(0.0)),
 	m_angSpeed(0.0),
 	m_radius(radius),
-	m_flags(flags)
+	m_flags(flags),
+	m_astroBodyIndex(0)
 {
-	if (!d.madeWithFactory)
+	if (!d_.madeWithFactory)
 		Error("Frame ctor called directly!\n");
 
 	m_thisId = s_frames.size();
@@ -42,7 +43,7 @@ Frame::Frame(const Dummy &d, const FrameId &parent, const char *label, unsigned 
 		m_label = label;
 }
 
-Frame::Frame(const Dummy &d, const FrameId &parent) :
+Frame::Frame(const Dummy &d_, const FrameId &parent) :
 	m_parent(parent),
 	m_sbody(nullptr),
 	m_astroBody(nullptr),
@@ -54,9 +55,10 @@ Frame::Frame(const Dummy &d, const FrameId &parent) :
 	m_label("camera"),
 	m_radius(0.0),
 	m_flags(FLAG_ROTATING),
-	m_collisionSpace(-1)
+	m_collisionSpace(-1),
+	m_astroBodyIndex(0)
 {
-	if (!d.madeWithFactory)
+	if (!d_.madeWithFactory)
 		Error("Frame ctor called directly!\n");
 
 	m_thisId = s_frames.size();
@@ -133,6 +135,7 @@ void Frame::ToJson(Json &frameObj, const FrameId &fId, Space *space)
 	assert(f != nullptr);
 
 	frameObj["frameId"] = f->m_thisId;
+	frameObj["parentId"] = f->m_parent;
 	frameObj["flags"] = f->m_flags;
 	frameObj["radius"] = f->m_radius;
 	frameObj["label"] = f->m_label;
@@ -158,7 +161,7 @@ void Frame::ToJson(Json &frameObj, const FrameId &fId, Space *space)
 Frame::~Frame()
 {
 	if (!d.madeWithFactory) {
-		Error("Frame instance deletion outside 'DeleteFrame' [%i]\n", m_thisId.id());
+		Output("WARNING: Frame instance deletion outside 'DeleteFrame' [%i]\n", m_thisId.id());
 	}
 }
 
@@ -182,14 +185,14 @@ FrameId Frame::FromJson(const Json &frameObj, Space *space, const FrameId &paren
 
 	Frame *f = &s_frames.back();
 
-	f->m_parent = parent;
 	f->d.madeWithFactory = false;
 
 	try {
-		f->m_thisId = frameObj["frameId"];
+		f->m_thisId = frameObj["frameId"].get<int>();
+		f->m_parent = frameObj["parentId"].get<int>();
 
 		// Check if frames order in load and save are the same
-		assert((s_frames.size() - 1) == f->m_thisId.id());
+		assert(int(s_frames.size() - 1) == f->m_thisId.id());
 
 		f->m_flags = frameObj["flags"];
 		f->m_radius = frameObj["radius"];
@@ -217,7 +220,7 @@ FrameId Frame::FromJson(const Json &frameObj, Space *space, const FrameId &paren
 			f->m_children.clear();
 		}
 	} catch (Json::type_error &) {
-		Output("Loading error in '%s'\n", typeid(f).name());
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 		f->d.madeWithFactory = true;
 		throw SavedGameCorruptException();
 	}
@@ -263,7 +266,7 @@ void Frame::DeleteCameraFrame(const FrameId &camera)
 
 // Call dtor "popping" element in vector
 #ifndef NDEBUG
-	if (camera.id() < s_frames.size() - 1) {
+	if (camera.id() < int(s_frames.size() - 1)) {
 		Error("DeleteCameraFrame: seems camera frame is not the last frame!\n");
 		abort();
 	};
@@ -281,7 +284,7 @@ void Frame::PostUnserializeFixup(const FrameId &fId, Space *space)
 		PostUnserializeFixup(kid, space);
 }
 
-void Frame::CollideFrames(void (*callback)(CollisionContact *))
+void Frame::CollideFrames(CollCallback &callback)
 {
 	PROFILE_SCOPED()
 

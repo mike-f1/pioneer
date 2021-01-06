@@ -9,8 +9,8 @@
 #include "Body.h"
 #include "Color.h"
 #include "Object.h"
-#include "matrix4x4.h"
-#include "vector3.h"
+#include "libs/matrix4x4.h"
+#include "libs/vector3.h"
 
 class Camera;
 class Space;
@@ -23,7 +23,7 @@ namespace Graphics {
 
 struct ProjectileData;
 
-class Beam : public Body {
+class Beam final: public Body {
 public:
 	OBJDEF(Beam, Body, PROJECTILE);
 
@@ -33,17 +33,19 @@ public:
 	Beam(Body *parent, const ProjectileData &prData, const vector3d &pos, const vector3d &baseVel, const vector3d &dir);
 	Beam(const Json &jsonObj, Space *space);
 	virtual ~Beam();
-	virtual void Render(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform) override final;
-	void TimeStepUpdate(const float timeStep) override final;
-	void StaticUpdate(const float timeStep) override final;
-	virtual void NotifyRemoved(const Body *const removedBody) override final;
-	virtual void PostLoadFixup(Space *space) override final;
-	virtual void UpdateInterpTransform(double alpha) override final;
+
+	Json SaveToJson(Space *space) override;
+
+	void Render(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform) override;
+	void TimeStepUpdate(const float timeStep) override;
+	void StaticUpdate(const float timeStep) override;
+	void NotifyRemoved(const Body *const removedBody) override;
+	void PostLoadFixup(Space *space) override;
+	void UpdateInterpTransform(double alpha) override;
 
 	static void FreeModel();
 
 protected:
-	virtual void SaveToJson(Json &jsonObj, Space *space) override final;
 
 private:
 	float GetDamage() const;

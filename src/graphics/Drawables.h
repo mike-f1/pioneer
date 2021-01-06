@@ -4,13 +4,26 @@
 #ifndef _DRAWABLES_H
 #define _DRAWABLES_H
 
-#include "graphics/Material.h"
-#include "graphics/VertexArray.h"
-#include "graphics/VertexBuffer.h"
+#include "Types.h"
+
+#include <memory>
+#include <vector>
+#include <string>
+
+#include "Color.h"
+#include "libs/RefCounted.h"
+#include "libs/vector2.h"
+#include "libs/vector3.h"
+#include "libs/matrix4x4.h"
 
 namespace Graphics {
+	class IndexBuffer;
+	class Material;
 	class Renderer;
 	class RenderState;
+	class Texture;
+	class VertexArray;
+	class VertexBuffer;
 
 	namespace Drawables {
 
@@ -23,6 +36,7 @@ namespace Graphics {
 			Circle(Renderer *renderer, const float radius, const Color &c, RenderState *state);
 			Circle(Renderer *renderer, const float radius, const float x, const float y, const float z, const Color &c, RenderState *state);
 			Circle(Renderer *renderer, const float radius, const vector3f &center, const Color &c, RenderState *state);
+			~Circle();
 			void Draw(Renderer *renderer);
 
 		private:
@@ -39,6 +53,7 @@ namespace Graphics {
 		public:
 			Disk(Graphics::Renderer *r, Graphics::RenderState *, const Color &c, float radius);
 			Disk(Graphics::Renderer *r, RefCountedPtr<Material>, Graphics::RenderState *, const int edges = 72, const float radius = 1.0f);
+			~Disk();
 			void Draw(Graphics::Renderer *r);
 
 			void SetColor(const Color &);
@@ -56,14 +71,14 @@ namespace Graphics {
 		public:
 			Line3D();
 			Line3D(const Line3D &b); // this needs an explicit copy constructor due to the std::unique_ptr below
-			~Line3D() {}
+			~Line3D();
 			void SetStart(const vector3f &);
 			void SetEnd(const vector3f &);
 			void SetColor(const Color &);
 			void Draw(Renderer *, RenderState *);
 
 		private:
-			void CreateVertexBuffer(Graphics::Renderer *r, const Uint32 size);
+			void CreateVertexBuffer(Graphics::Renderer *r, const uint32_t size);
 			void Dirty();
 
 			bool m_refreshVertexBuffer;
@@ -78,12 +93,13 @@ namespace Graphics {
 		class Lines {
 		public:
 			Lines();
-			void SetData(const Uint32 vertCount, const vector3f *vertices, const Color &color);
-			void SetData(const Uint32 vertCount, const vector3f *vertices, const Color *colors);
+			~Lines();
+			void SetData(const uint32_t vertCount, const vector3f *vertices, const Color &color);
+			void SetData(const uint32_t vertCount, const vector3f *vertices, const Color *colors);
 			void Draw(Renderer *, RenderState *, const PrimitiveType pt = Graphics::LINE_SINGLE);
 
 		private:
-			void CreateVertexBuffer(Graphics::Renderer *r, const Uint32 size);
+			void CreateVertexBuffer(Graphics::Renderer *r, const uint32_t size);
 
 			bool m_refreshVertexBuffer;
 			RefCountedPtr<Material> m_material;
@@ -96,11 +112,12 @@ namespace Graphics {
 		class PointSprites {
 		public:
 			PointSprites();
+			~PointSprites();
 			void SetData(const int count, const vector3f *positions, const Color *colours, const float *sizes, Graphics::Material *pMaterial);
 			void Draw(Renderer *, RenderState *);
 
 		private:
-			void CreateVertexBuffer(Graphics::Renderer *r, const Uint32 size);
+			void CreateVertexBuffer(Graphics::Renderer *r, const uint32_t size);
 
 			bool m_refreshVertexBuffer;
 			RefCountedPtr<Graphics::Material> m_material;
@@ -113,12 +130,13 @@ namespace Graphics {
 		class Points {
 		public:
 			Points();
+			~Points();
 			void SetData(Renderer *, const int count, const vector3f *positions, const matrix4x4f &trans, const Color &color, const float size);
 			void SetData(Renderer *, const int count, const vector3f *positions, const Color *color, const matrix4x4f &trans, const float size);
 			void Draw(Renderer *, RenderState *);
 
 		private:
-			void CreateVertexBuffer(Graphics::Renderer *r, const Uint32 size);
+			void CreateVertexBuffer(Graphics::Renderer *r, const uint32_t size);
 
 			bool m_refreshVertexBuffer;
 			RefCountedPtr<Material> m_material;
@@ -127,15 +145,41 @@ namespace Graphics {
 		};
 		//------------------------------------------------------------
 
+		// Three dimensional Box without normals or UV, designed to be fast
+		class Box3D {
+		public:
+			// a centered Box:
+			Box3D(Renderer *, RefCountedPtr<Material> material, Graphics::RenderState *, const vector3f &dim);
+			// a box from min and max
+			Box3D(Renderer *, RefCountedPtr<Material> material, Graphics::RenderState *, const vector3f &min, const vector3f &max);
+			~Box3D();
+
+			Box3D(Box3D &&) noexcept;
+
+			void Draw(Renderer *r) const;
+
+			RefCountedPtr<Material> GetMaterial() const;
+
+		private:
+			void Init(Renderer *renderer, RefCountedPtr<Material> material, Graphics::RenderState *state);
+			void PrepareIndexes(Renderer *);
+			std::unique_ptr<VertexBuffer> m_vertexBuffer;
+			static std::unique_ptr<IndexBuffer> s_indexBuffer;
+			RefCountedPtr<Material> m_material;
+			Graphics::RenderState *m_renderState;
+		};
+		//------------------------------------------------------------
+
 		// Three dimensional sphere (subdivided icosahedron) with normals
 		// and spherical texture coordinates.
 		class Sphere3D {
 		public:
 			//subdivisions must be 0-4
-			Sphere3D(Renderer *, RefCountedPtr<Material> material, Graphics::RenderState *, int subdivisions = 0, float scale = 1.f, const Uint32 attribs = (ATTRIB_POSITION | ATTRIB_NORMAL | ATTRIB_UV0));
+			Sphere3D(Renderer *, RefCountedPtr<Material> material, Graphics::RenderState *, int subdivisions = 0, float scale = 1.f, const uint32_t attribs = (ATTRIB_POSITION | ATTRIB_NORMAL | ATTRIB_UV0));
+			~Sphere3D();
 			void Draw(Renderer *r);
 
-			RefCountedPtr<Material> GetMaterial() const { return m_material; }
+			RefCountedPtr<Material> GetMaterial() const;
 
 		private:
 			std::unique_ptr<VertexBuffer> m_vertexBuffer;
@@ -147,8 +191,8 @@ namespace Graphics {
 			//add a new vertex, return the index
 			int AddVertex(VertexArray &, const vector3f &v, const vector3f &n);
 			//add three vertex indices to form a triangle
-			void AddTriangle(std::vector<Uint32> &, int i1, int i2, int i3);
-			void Subdivide(VertexArray &, std::vector<Uint32> &,
+			void AddTriangle(std::vector<uint32_t> &, int i1, int i2, int i3);
+			void Subdivide(VertexArray &, std::vector<uint32_t> &,
 				const matrix4x4f &trans, const vector3f &v1, const vector3f &v2, const vector3f &v3,
 				int i1, int i2, int i3, int depth);
 		};
@@ -168,7 +212,7 @@ namespace Graphics {
 			// Build a textured quad to display an arbitrary texture.
 			TexturedQuad(Graphics::Renderer *r, Graphics::Texture *texture, const vector2f &pos, const vector2f &size, RenderState *state);
 			TexturedQuad(Graphics::Renderer *r, RefCountedPtr<Graphics::Material> &material, const Graphics::VertexArray &va, RenderState *state);
-
+			~TexturedQuad();
 			void Draw(Graphics::Renderer *r);
 			void Draw(Graphics::Renderer *r, const Color4ub &tint);
 			const Graphics::Texture *GetTexture() const { return m_texture.Get(); }
@@ -185,6 +229,7 @@ namespace Graphics {
 		class Rect {
 		public:
 			Rect(Graphics::Renderer *r, const vector2f &pos, const vector2f &size, const Color &c, RenderState *state, const bool bIsStatic = true);
+			~Rect();
 			void Update(const vector2f &pos, const vector2f &size, const Color &c);
 			void Draw(Graphics::Renderer *r);
 
@@ -199,6 +244,7 @@ namespace Graphics {
 		class RoundEdgedRect {
 		public:
 			RoundEdgedRect(Graphics::Renderer *r, const vector2f &size, const float rad, const Color &c, RenderState *state, const bool bIsStatic = true);
+			~RoundEdgedRect();
 			void Update(const vector2f &size, float rad, const Color &c);
 			void Draw(Graphics::Renderer *r);
 
@@ -213,7 +259,7 @@ namespace Graphics {
 		//industry-standard red/green/blue XYZ axis indicator
 		class Axes3D {
 		public:
-			Axes3D(Graphics::Renderer *r, Graphics::RenderState *state = nullptr);
+			explicit Axes3D(Graphics::Renderer *r, Graphics::RenderState *state = nullptr);
 			void Draw(Graphics::Renderer *r);
 
 		private:

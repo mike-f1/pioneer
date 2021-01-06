@@ -21,7 +21,7 @@ public:
 	ShipCpanel();
 	ShipCpanel(const Json &jsonObj);
 	virtual ~ShipCpanel();
-	virtual void Draw();
+	virtual void Draw() override;
 	void Update();
 
 	void TimeStepUpdate(float step);

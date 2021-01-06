@@ -3,6 +3,8 @@
 
 #include "VertexArray.h"
 
+#include "profiler/Profiler.h"
+
 namespace Graphics {
 
 	VertexArray::VertexArray(AttributeSet attribs, int size)
@@ -90,51 +92,51 @@ namespace Graphics {
 		tangent.push_back(tang);
 	}
 
-	void VertexArray::Set(const Uint32 idx, const vector3f &v)
+	void VertexArray::Set(const uint32_t idx, const vector3f &v)
 	{
 		position[idx] = v;
 	}
 
-	void VertexArray::Set(const Uint32 idx, const vector3f &v, const Color &c)
+	void VertexArray::Set(const uint32_t idx, const vector3f &v, const Color &c)
 	{
 		position[idx] = v;
 		diffuse[idx] = c;
 	}
 
-	void VertexArray::Set(const Uint32 idx, const vector3f &v, const Color &c, const vector3f &n)
+	void VertexArray::Set(const uint32_t idx, const vector3f &v, const Color &c, const vector3f &n)
 	{
 		position[idx] = v;
 		diffuse[idx] = c;
 		normal[idx] = n;
 	}
 
-	void VertexArray::Set(const Uint32 idx, const vector3f &v, const Color &c, const vector2f &uv)
+	void VertexArray::Set(const uint32_t idx, const vector3f &v, const Color &c, const vector2f &uv)
 	{
 		position[idx] = v;
 		diffuse[idx] = c;
 		uv0[idx] = uv;
 	}
 
-	void VertexArray::Set(const Uint32 idx, const vector3f &v, const vector2f &uv)
+	void VertexArray::Set(const uint32_t idx, const vector3f &v, const vector2f &uv)
 	{
 		position[idx] = v;
 		uv0[idx] = uv;
 	}
 
-	void VertexArray::Set(const Uint32 idx, const vector3f &v, const vector3f &n)
+	void VertexArray::Set(const uint32_t idx, const vector3f &v, const vector3f &n)
 	{
 		position[idx] = v;
 		normal[idx] = n;
 	}
 
-	void VertexArray::Set(const Uint32 idx, const vector3f &v, const vector3f &n, const vector2f &uv)
+	void VertexArray::Set(const uint32_t idx, const vector3f &v, const vector3f &n, const vector2f &uv)
 	{
 		position[idx] = v;
 		normal[idx] = n;
 		uv0[idx] = uv;
 	}
 
-	void VertexArray::Set(const Uint32 idx, const vector3f &v, const vector3f &n, const vector2f &uv, const vector3f &tang)
+	void VertexArray::Set(const uint32_t idx, const vector3f &v, const vector3f &n, const vector2f &uv, const vector3f &tang)
 	{
 		position[idx] = v;
 		normal[idx] = n;

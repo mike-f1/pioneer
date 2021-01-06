@@ -484,10 +484,10 @@ static int l_get_heading_pitch_roll(lua_State *l)
 		return 0;
 	}
 
-	std::tuple<double, double, double> res = InGameViewsLocator::getInGameViews()->GetWorldView()->CalculateHeadingPitchRoll(pt);
-	LuaPush(l, std::get<0>(res));
-	LuaPush(l, std::get<1>(res));
-	LuaPush(l, std::get<2>(res));
+	vector3d res = InGameViewsLocator::getInGameViews()->GetWorldView()->CalculateHeadingPitchRoll(pt);
+	LuaPush(l, res.x);
+	LuaPush(l, res.y);
+	LuaPush(l, res.z);
 	return 3;
 }
 
@@ -509,7 +509,7 @@ static int l_get_rotation_damping(lua_State *l)
 static int l_toggle_rotation_damping(lua_State *l)
 {
 	Player *player = LuaObject<Player>::CheckFromLua(1);
-	player->GetPlayerController()->ToggleRotationDamping();
+	player->GetPlayerController()->SetRotationDamping(!player->GetPlayerController()->GetRotationDamping());
 	return 0;
 }
 

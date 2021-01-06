@@ -6,12 +6,13 @@
 
 #include "FrameId.h"
 
-#include "IterationProxy.h"
 #include "JsonFwd.h"
-#include "matrix3x3.h"
-#include "matrix4x4.h"
-#include "utils.h"
-#include "vector3.h"
+#include "collider/CollisionCallbackFwd.h"
+#include "libs/utils.h"
+#include "libs/IterationProxy.h"
+#include "libs/matrix3x3.h"
+#include "libs/matrix4x4.h"
+#include "libs/vector3.h"
 #include <list>
 #include <string>
 
@@ -73,11 +74,11 @@ public:
 
 	static Frame *GetRootFrame() {
 		if (s_frames.empty()) return nullptr;
-		return &s_frames[rootFrameId];
+		return &s_frames[FrameId::RootFrameId];
 	}
 
 	static FrameId GetRootFrameId() {
-		return rootFrameId;
+		return FrameId::RootFrameId;
 	}
 
 	FrameId GetId() const {return m_thisId; }
@@ -101,7 +102,7 @@ public:
 	bool HasRotFrame() const { return m_flags & FLAG_HAS_ROT; }
 
 	FrameId GetParent() const { return m_parent; }
-	FrameId GetNonRotFrame() { return IsRotFrame() ? m_parent : m_thisId; }
+	FrameId GetNonRotFrame() const { return IsRotFrame() ? m_parent : m_thisId; }
 	FrameId GetRotFrame() { return HasRotFrame() ? m_children.front() : m_thisId; }
 
 	void SetBodies(SystemBody *s, Body *b)
@@ -115,7 +116,7 @@ public:
 	void AddChild(const FrameId &fId) { m_children.push_back(fId); }
 	void RemoveChild(const FrameId &fId);
 	bool HasChildren() const { return !m_children.empty(); }
-	unsigned GetNumChildren() const { return static_cast<Uint32>(m_children.size()); }
+	unsigned GetNumChildren() const { return static_cast<unsigned>(m_children.size()); }
 	IterationProxy<std::vector<FrameId>> GetChildren() { return MakeIterationProxy(m_children); }
 	const IterationProxy<const std::vector<FrameId>> GetChildren() const { return MakeIterationProxy(m_children); }
 
@@ -128,7 +129,7 @@ public:
 	CollisionSpace *GetCollisionSpace() const;
 
 	static void UpdateOrbitRails(double time, double timestep);
-	static void CollideFrames(void (*callback)(CollisionContact *));
+	static void CollideFrames(CollCallback &callback);
 	void UpdateInterpTransform(double alpha);
 	void ClearMovement();
 

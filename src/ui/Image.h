@@ -4,12 +4,17 @@
 #ifndef UI_IMAGE_H
 #define UI_IMAGE_H
 
-#include "SmartPtr.h"
+#include "libs/SmartPtr.h"
 #include "Widget.h"
-#include "graphics/Drawables.h"
-#include "graphics/Material.h"
-#include "graphics/Texture.h"
-#include "vector2.h"
+#include "libs/vector2.h"
+
+namespace Graphics {
+	namespace Drawables {
+		class TexturedQuad;
+	}
+	class Material;
+	class Texture;
+}
 
 namespace UI {
 
@@ -20,7 +25,7 @@ namespace UI {
 
 		// SetHeightLines sets the widget's preferred size to fit the image to a
 		// specified number of text lines in the widget's current font.
-		Image *SetHeightLines(Uint32 lines);
+		Image *SetHeightLines(uint32_t lines);
 
 		// SetNaturalSize sets the widget's preferred size to match the size of
 		// the image data.
@@ -45,7 +50,8 @@ namespace UI {
 
 	protected:
 		friend class Context;
-		Image(Context *context, const std::string &filename, Uint32 sizeControlFlags);
+		Image(Context *context, const std::string &filename, uint32_t sizeControlFlags);
+		virtual ~Image();
 
 	private:
 		RefCountedPtr<Graphics::Texture> m_texture;

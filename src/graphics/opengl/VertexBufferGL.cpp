@@ -3,7 +3,7 @@
 
 #include "graphics/opengl/VertexBufferGL.h"
 #include "graphics/VertexArray.h"
-#include "utils.h"
+#include "libs/utils.h"
 
 namespace Graphics {
 	namespace OGL {
@@ -42,14 +42,14 @@ namespace Graphics {
 		{
 			PROFILE_SCOPED()
 			//update offsets in desc
-			for (Uint32 i = 0; i < MAX_ATTRIBS; i++) {
+			for (uint32_t i = 0; i < MAX_ATTRIBS; i++) {
 				if (m_desc.attrib[i].offset == 0)
 					m_desc.attrib[i].offset = VertexBufferDesc::CalculateOffset(m_desc, m_desc.attrib[i].semantic);
 			}
 
 			//update stride in desc (respecting offsets)
 			if (m_desc.stride == 0) {
-				Uint32 lastAttrib = 0;
+				uint32_t lastAttrib = 0;
 				while (lastAttrib < MAX_ATTRIBS) {
 					if (m_desc.attrib[lastAttrib].semantic == ATTRIB_NONE)
 						break;
@@ -71,12 +71,12 @@ namespace Graphics {
 			//Allocate GL buffer with undefined contents
 			//Critical optimisation for some architectures in cases where buffer is created and written in the same frame
 			glBindBuffer(GL_ARRAY_BUFFER, m_buffer);
-			const Uint32 dataSize = m_desc.numVertices * m_desc.stride;
+			const uint32_t dataSize = m_desc.numVertices * m_desc.stride;
 			const GLenum usage = (m_desc.usage == BUFFER_USAGE_STATIC) ? GL_STATIC_DRAW : GL_DYNAMIC_DRAW;
 			glBufferData(GL_ARRAY_BUFFER, dataSize, 0, usage);
 
 			//Setup the VAO pointers
-			for (Uint8 i = 0; i < MAX_ATTRIBS; i++) {
+			for (uint8_t i = 0; i < MAX_ATTRIBS; i++) {
 				const auto &attr = m_desc.attrib[i];
 				if (attr.semantic == ATTRIB_NONE)
 					break;
@@ -115,7 +115,7 @@ namespace Graphics {
 
 			// Allocate client data store for dynamic buffers
 			if (GetDesc().usage != BUFFER_USAGE_STATIC) {
-				m_data = new Uint8[dataSize];
+				m_data = new uint8_t[dataSize];
 				memset(m_data, 0, dataSize);
 			} else
 				m_data = nullptr;
@@ -128,7 +128,7 @@ namespace Graphics {
 			delete[] m_data;
 		}
 
-		Uint8 *VertexBuffer::MapInternal(BufferMapMode mode)
+		uint8_t *VertexBuffer::MapInternal(BufferMapMode mode)
 		{
 			PROFILE_SCOPED()
 			assert(mode != BUFFER_MAP_NONE); //makes no sense
@@ -138,9 +138,9 @@ namespace Graphics {
 				glBindVertexArray(m_vao);
 				glBindBuffer(GL_ARRAY_BUFFER, m_buffer);
 				if (mode == BUFFER_MAP_READ)
-					return reinterpret_cast<Uint8 *>(glMapBuffer(GL_ARRAY_BUFFER, GL_READ_ONLY));
+					return reinterpret_cast<uint8_t *>(glMapBuffer(GL_ARRAY_BUFFER, GL_READ_ONLY));
 				else if (mode == BUFFER_MAP_WRITE)
-					return reinterpret_cast<Uint8 *>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
+					return reinterpret_cast<uint8_t *>(glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY));
 			}
 
 			return m_data;
@@ -212,7 +212,7 @@ namespace Graphics {
 		{
 			PosNormVert *vtxPtr = vb->Map<PosNormVert>(Graphics::BUFFER_MAP_WRITE);
 			assert(vb->GetDesc().stride == sizeof(PosNormVert));
-			for (Uint32 i = 0; i < va.GetNumVerts(); i++) {
+			for (uint32_t i = 0; i < va.GetNumVerts(); i++) {
 				vtxPtr[i].pos = va.position[i];
 				vtxPtr[i].norm = va.normal[i];
 			}
@@ -223,7 +223,7 @@ namespace Graphics {
 		{
 			PosUVVert *vtxPtr = vb->Map<PosUVVert>(Graphics::BUFFER_MAP_WRITE);
 			assert(vb->GetDesc().stride == sizeof(PosUVVert));
-			for (Uint32 i = 0; i < va.GetNumVerts(); i++) {
+			for (uint32_t i = 0; i < va.GetNumVerts(); i++) {
 				vtxPtr[i].pos = va.position[i];
 				vtxPtr[i].uv = va.uv0[i];
 			}
@@ -234,7 +234,7 @@ namespace Graphics {
 		{
 			PosColVert *vtxPtr = vb->Map<PosColVert>(Graphics::BUFFER_MAP_WRITE);
 			assert(vb->GetDesc().stride == sizeof(PosColVert));
-			for (Uint32 i = 0; i < va.GetNumVerts(); i++) {
+			for (uint32_t i = 0; i < va.GetNumVerts(); i++) {
 				vtxPtr[i].pos = va.position[i];
 				vtxPtr[i].col = va.diffuse[i];
 			}
@@ -245,7 +245,7 @@ namespace Graphics {
 		{
 			PosVert *vtxPtr = vb->Map<PosVert>(Graphics::BUFFER_MAP_WRITE);
 			assert(vb->GetDesc().stride == sizeof(PosVert));
-			for (Uint32 i = 0; i < va.GetNumVerts(); i++) {
+			for (uint32_t i = 0; i < va.GetNumVerts(); i++) {
 				vtxPtr[i].pos = va.position[i];
 			}
 			vb->Unmap();
@@ -255,7 +255,7 @@ namespace Graphics {
 		{
 			PosColUVVert *vtxPtr = vb->Map<PosColUVVert>(Graphics::BUFFER_MAP_WRITE);
 			assert(vb->GetDesc().stride == sizeof(PosColUVVert));
-			for (Uint32 i = 0; i < va.GetNumVerts(); i++) {
+			for (uint32_t i = 0; i < va.GetNumVerts(); i++) {
 				vtxPtr[i].pos = va.position[i];
 				vtxPtr[i].col = va.diffuse[i];
 				vtxPtr[i].uv = va.uv0[i];
@@ -267,7 +267,7 @@ namespace Graphics {
 		{
 			PosNormUVVert *vtxPtr = vb->Map<PosNormUVVert>(Graphics::BUFFER_MAP_WRITE);
 			assert(vb->GetDesc().stride == sizeof(PosNormUVVert));
-			for (Uint32 i = 0; i < va.GetNumVerts(); i++) {
+			for (uint32_t i = 0; i < va.GetNumVerts(); i++) {
 				vtxPtr[i].pos = va.position[i];
 				vtxPtr[i].norm = va.normal[i];
 				vtxPtr[i].uv = va.uv0[i];
@@ -279,7 +279,7 @@ namespace Graphics {
 		{
 			PosNormColVert *vtxPtr = vb->Map<PosNormColVert>(Graphics::BUFFER_MAP_WRITE);
 			assert(vb->GetDesc().stride == sizeof(PosNormColVert));
-			for (Uint32 i = 0; i < va.GetNumVerts(); i++) {
+			for (uint32_t i = 0; i < va.GetNumVerts(); i++) {
 				vtxPtr[i].pos = va.position[i];
 				vtxPtr[i].norm = va.normal[i];
 				vtxPtr[i].col = va.diffuse[i];
@@ -346,7 +346,7 @@ namespace Graphics {
 			glBindVertexArray(m_vao);
 
 			// Enable the Vertex attributes
-			for (Uint8 i = 0; i < MAX_ATTRIBS; i++) {
+			for (uint8_t i = 0; i < MAX_ATTRIBS; i++) {
 				const auto &attr = m_desc.attrib[i];
 				switch (attr.semantic) {
 				case ATTRIB_POSITION: glEnableVertexAttribArray(0); break;
@@ -364,7 +364,7 @@ namespace Graphics {
 		void VertexBuffer::Release()
 		{
 			// Enable the Vertex attributes
-			for (Uint8 i = 0; i < MAX_ATTRIBS; i++) {
+			for (uint8_t i = 0; i < MAX_ATTRIBS; i++) {
 				const auto &attr = m_desc.attrib[i];
 				switch (attr.semantic) {
 				case ATTRIB_POSITION: glDisableVertexAttribArray(0); break;
@@ -382,7 +382,7 @@ namespace Graphics {
 		}
 
 		// ------------------------------------------------------------
-		IndexBuffer::IndexBuffer(Uint32 size, BufferUsage hint) :
+		IndexBuffer::IndexBuffer(uint32_t size, BufferUsage hint) :
 			Graphics::IndexBuffer(size, hint)
 		{
 			assert(size > 0);
@@ -390,12 +390,12 @@ namespace Graphics {
 			const GLenum usage = (hint == BUFFER_USAGE_STATIC) ? GL_STATIC_DRAW : GL_DYNAMIC_DRAW;
 			glGenBuffers(1, &m_buffer);
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_buffer);
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Uint32) * m_size, 0, usage);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32_t) * m_size, 0, usage);
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
 			if (GetUsage() != BUFFER_USAGE_STATIC) {
-				m_data = new Uint32[size];
-				memset(m_data, 0, sizeof(Uint32) * size);
+				m_data = new uint32_t[size];
+				memset(m_data, 0, sizeof(uint32_t) * size);
 			} else
 				m_data = nullptr;
 		}
@@ -406,7 +406,7 @@ namespace Graphics {
 			delete[] m_data;
 		}
 
-		Uint32 *IndexBuffer::Map(BufferMapMode mode)
+		uint32_t *IndexBuffer::Map(BufferMapMode mode)
 		{
 			assert(mode != BUFFER_MAP_NONE); //makes no sense
 			assert(m_mapMode == BUFFER_MAP_NONE); //must not be currently mapped
@@ -414,9 +414,9 @@ namespace Graphics {
 			if (GetUsage() == BUFFER_USAGE_STATIC) {
 				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_buffer);
 				if (mode == BUFFER_MAP_READ)
-					return reinterpret_cast<Uint32 *>(glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_READ_ONLY));
+					return reinterpret_cast<uint32_t *>(glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_READ_ONLY));
 				else if (mode == BUFFER_MAP_WRITE)
-					return reinterpret_cast<Uint32 *>(glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY));
+					return reinterpret_cast<uint32_t *>(glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY));
 			}
 
 			return m_data;
@@ -432,8 +432,8 @@ namespace Graphics {
 			} else {
 				if (m_mapMode == BUFFER_MAP_WRITE) {
 					glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_buffer);
-					glBufferData(GL_ARRAY_BUFFER, sizeof(Uint32) * m_size, 0, GL_DYNAMIC_DRAW);
-					glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, sizeof(Uint32) * m_size, m_data);
+					glBufferData(GL_ARRAY_BUFFER, sizeof(uint32_t) * m_size, 0, GL_DYNAMIC_DRAW);
+					glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, sizeof(uint32_t) * m_size, m_data);
 					glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 				}
 			}
@@ -464,7 +464,7 @@ namespace Graphics {
 		}
 
 		// ------------------------------------------------------------
-		InstanceBuffer::InstanceBuffer(Uint32 size, BufferUsage hint) :
+		InstanceBuffer::InstanceBuffer(uint32_t size, BufferUsage hint) :
 			Graphics::InstanceBuffer(size, hint)
 		{
 			assert(size > 0);

@@ -1,7 +1,7 @@
 #ifndef EXPLORATIONSTATE_H_INCLUDED
 #define EXPLORATIONSTATE_H_INCLUDED
 
-enum ExplorationState {
+enum class ExplorationState {
 	eUNEXPLORED = 0,
 	eEXPLORED_BY_PLAYER = 1,
 	eEXPLORED_AT_START = 2

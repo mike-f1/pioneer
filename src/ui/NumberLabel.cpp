@@ -3,8 +3,8 @@
 
 #include "NumberLabel.h"
 #include "Lang.h"
-#include "StringF.h"
-#include "utils.h"
+#include "libs/StringF.h"
+#include "libs/stringUtils.h"
 
 namespace UI {
 
@@ -27,7 +27,7 @@ namespace UI {
 			break;
 
 		case FORMAT_INTEGER:
-			SetText(to_string(Uint32(v + 0.5), "u"));
+			SetText(to_string(uint32_t(v + 0.5), "u"));
 			break;
 
 		case FORMAT_PERCENT:
@@ -35,7 +35,7 @@ namespace UI {
 			break;
 
 		case FORMAT_PERCENT_INTEGER:
-			SetText(stringf("%0{u}%%", Uint32(v * 100.0 + 0.5)));
+			SetText(stringf("%0{u}%%", uint32_t(v * 100.0 + 0.5)));
 			break;
 
 		case FORMAT_MASS_TONNES:
@@ -43,11 +43,11 @@ namespace UI {
 			break;
 
 		case FORMAT_MONEY:
-			SetText(format_money(Sint64(v * 100)));
+			SetText(stringUtils::format_money(int64_t(v * 100)));
 			break;
 
 		case FORMAT_DISTANCE_M:
-			SetText(format_distance(v, 3));
+			SetText(stringUtils::format_distance(v, 3));
 			break;
 
 		case FORMAT_DISTANCE_LY:

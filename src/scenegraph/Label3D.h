@@ -7,14 +7,16 @@
  * Text geometry node, mostly for ship labels
  */
 #include "Node.h"
-#include "graphics/Material.h"
-#include "graphics/VertexBuffer.h"
-#include "graphics/Material.h"
 #include "text/DistanceFieldFont.h"
+#include <memory>
+#include <string>
 
 namespace Graphics {
+	class Material;
 	class Renderer;
 	class RenderState;
+	class VertexArray;
+	class VertexBuffer;
 }
 
 namespace SceneGraph {
@@ -27,7 +29,7 @@ namespace SceneGraph {
 		virtual const char *GetTypeName() const { return "Label3D"; }
 		void SetText(const std::string &);
 		virtual void Render(const matrix4x4f &trans, const RenderData *rd);
-		virtual void Accept(NodeVisitor &v);
+		virtual void Accept(NodeVisitor &nv);
 
 	private:
 		RefCountedPtr<Graphics::Material> m_material;

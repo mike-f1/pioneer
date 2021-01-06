@@ -1,15 +1,20 @@
 // Copyright © 2008-2019 Pioneer Developers. See AUTHORS.txt for details
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
-#ifdef ENABLE_SERVER_AGENT
 #ifndef SERVERAGENT_H
 #define SERVERAGENT_H
 
-#include "libs.h"
+#include "buildopts.h"
+#ifdef ENABLE_SERVER_AGENT
+
+#include "libs/libs.h"
 #include <curl/curl.h>
-#include <json/json.h>
+#include "Json.h"
 #include <map>
 #include <queue>
+
+#include <SDL_thread.h>
+#include <sigc++/sigc++.h>
 
 class ServerAgent {
 public:
@@ -33,6 +38,7 @@ public:
 
 	virtual void ProcessResponses();
 
+	virtual ~NullServerAgent() {}
 private:
 	struct Response {
 		Response(FailCallback _onFail, void *_userdata) :

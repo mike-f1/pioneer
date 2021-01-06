@@ -12,7 +12,6 @@
 #include "HyperspaceCloud.h"
 #include "InGameViews.h"
 #include "InGameViewsLocator.h"
-#include "KeyBindings.h"
 #include "Lang.h"
 #include "LuaObject.h"
 #include "Orbit.h"
@@ -23,7 +22,6 @@
 #include "ShipCockpit.h"
 #include "SystemView.h"
 #include "ship/PlayerShipController.h"
-#include "StringF.h"
 #include "TransferPlanner.h"
 #include "sound/Sound.h"
 #include "galaxy/SystemBody.h"
@@ -74,6 +72,12 @@ Player::~Player()
 {
 }
 
+void Player::SetInputActive(bool active)
+{
+	PlayerShipController *controller = static_cast<PlayerShipController *>(GetController());
+	if (controller) controller->SetInputActive(active);
+}
+
 void Player::SetShipType(const ShipType::Id &shipId)
 {
 	Ship::SetShipType(shipId);
@@ -81,9 +85,9 @@ void Player::SetShipType(const ShipType::Id &shipId)
 	InitCockpit();
 }
 
-void Player::SaveToJson(Json &jsonObj, Space *space)
+Json Player::SaveToJson(Space *space)
 {
-	Ship::SaveToJson(jsonObj, space);
+	return Ship::SaveToJson(space);
 }
 
 void Player::InitCockpit()

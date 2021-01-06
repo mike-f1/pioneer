@@ -6,8 +6,11 @@
 
 #include "JsonFwd.h"
 #include "LuaWrappable.h"
-#include <SDL_stdinc.h>
 #include <cassert>
+#include <cmath>
+#include <cstdint>
+#include <cstring>
+#include <limits>
 #include <stdexcept>
 
 class SystemPath : public LuaWrappable {
@@ -22,46 +25,26 @@ public:
 		sectorX(0),
 		sectorY(0),
 		sectorZ(0),
-		systemIndex(Uint32(-1)),
-		bodyIndex(Uint32(-1)) {}
+		systemIndex(std::numeric_limits<uint32_t>::max()),
+		bodyIndex(std::numeric_limits<uint32_t>::max())
+	{}
 
-	SystemPath(Sint32 x, Sint32 y, Sint32 z) :
-		sectorX(x),
-		sectorY(y),
-		sectorZ(z),
-		systemIndex(Uint32(-1)),
-		bodyIndex(Uint32(-1)) {}
-	SystemPath(Sint32 x, Sint32 y, Sint32 z, Uint32 si) :
+	SystemPath(int32_t x, int32_t y, int32_t z, uint32_t si = std::numeric_limits<uint32_t>::max(), uint32_t bi = std::numeric_limits<uint32_t>::max()) :
 		sectorX(x),
 		sectorY(y),
 		sectorZ(z),
 		systemIndex(si),
-		bodyIndex(Uint32(-1)) {}
-	SystemPath(Sint32 x, Sint32 y, Sint32 z, Uint32 si, Uint32 bi) :
-		sectorX(x),
-		sectorY(y),
-		sectorZ(z),
-		systemIndex(si),
-		bodyIndex(bi) {}
+		bodyIndex(bi)
+	{}
 
-	SystemPath(const SystemPath &path) :
-		sectorX(path.sectorX),
-		sectorY(path.sectorY),
-		sectorZ(path.sectorZ),
-		systemIndex(path.systemIndex),
-		bodyIndex(path.bodyIndex) {}
-	SystemPath(const SystemPath *path) :
-		sectorX(path->sectorX),
-		sectorY(path->sectorY),
-		sectorZ(path->sectorZ),
-		systemIndex(path->systemIndex),
-		bodyIndex(path->bodyIndex) {}
+	SystemPath(const SystemPath &path) = default;
+	SystemPath &operator=(const SystemPath &path) = default;
 
-	Sint32 sectorX;
-	Sint32 sectorY;
-	Sint32 sectorZ;
-	Uint32 systemIndex;
-	Uint32 bodyIndex;
+	int32_t sectorX;
+	int32_t sectorY;
+	int32_t sectorZ;
+	uint32_t systemIndex;
+	uint32_t bodyIndex;
 
 	friend bool operator==(const SystemPath &a, const SystemPath &b)
 	{
@@ -89,17 +72,17 @@ public:
 
 	static inline double SectorDistance(const SystemPath &a, const SystemPath &b)
 	{
-		const Sint32 x = b.sectorX - a.sectorX;
-		const Sint32 y = b.sectorY - a.sectorY;
-		const Sint32 z = b.sectorZ - b.sectorZ;
+		const int32_t x = b.sectorX - a.sectorX;
+		const int32_t y = b.sectorY - a.sectorY;
+		const int32_t z = b.sectorZ - a.sectorZ;
 		return sqrt(x * x + y * y + z * z); // sqrt is slow
 	}
 
 	static inline double SectorDistanceSqr(const SystemPath &a, const SystemPath &b)
 	{
-		const Sint32 x = b.sectorX - a.sectorX;
-		const Sint32 y = b.sectorY - a.sectorY;
-		const Sint32 z = b.sectorZ - b.sectorZ;
+		const int32_t x = b.sectorX - a.sectorX;
+		const int32_t y = b.sectorY - a.sectorY;
+		const int32_t z = b.sectorZ - a.sectorZ;
 		return (x * x + y * y + z * z); // return the square of the distance
 	}
 
@@ -126,26 +109,26 @@ public:
 
 	bool IsSectorPath() const
 	{
-		return (systemIndex == Uint32(-1) && bodyIndex == Uint32(-1));
+		return (systemIndex == std::numeric_limits<uint32_t>::max() && bodyIndex == std::numeric_limits<uint32_t>::max());
 	}
 
 	bool IsSystemPath() const
 	{
-		return (systemIndex != Uint32(-1) && bodyIndex == Uint32(-1));
+		return (systemIndex != std::numeric_limits<uint32_t>::max() && bodyIndex == std::numeric_limits<uint32_t>::max());
 	}
 	bool HasValidSystem() const
 	{
-		return (systemIndex != Uint32(-1));
+		return (systemIndex != std::numeric_limits<uint32_t>::max());
 	}
 
 	bool IsBodyPath() const
 	{
-		return (systemIndex != Uint32(-1) && bodyIndex != Uint32(-1));
+		return (systemIndex != std::numeric_limits<uint32_t>::max() && bodyIndex != std::numeric_limits<uint32_t>::max());
 	}
 	bool HasValidBody() const
 	{
-		assert((bodyIndex == Uint32(-1)) || (systemIndex != Uint32(-1)));
-		return (bodyIndex != Uint32(-1));
+		assert((bodyIndex == std::numeric_limits<uint32_t>::max()) || (systemIndex != std::numeric_limits<uint32_t>::max()));
+		return (bodyIndex != std::numeric_limits<uint32_t>::max());
 	}
 
 	bool IsSameSector(const SystemPath &b) const
@@ -174,7 +157,7 @@ public:
 
 	SystemPath SystemOnly() const
 	{
-		assert(systemIndex != Uint32(-1));
+		assert(systemIndex != std::numeric_limits<uint32_t>::max());
 		return SystemPath(sectorX, sectorY, sectorZ, systemIndex);
 	}
 
@@ -184,17 +167,17 @@ public:
 	// sometimes it's useful to be able to get the SystemPath data as a blob
 	// (for example, to be used for hashing)
 	// see, LuaObject<SystemPath>::PushToLua in LuaSystemPath.cpp
-	static_assert(sizeof(Sint32) == sizeof(Uint32), "something crazy is going on!");
-	static const size_t SizeAsBlob = 5 * sizeof(Uint32);
+	static_assert(sizeof(int32_t) == sizeof(uint32_t), "something crazy is going on!");
+	static const size_t SizeAsBlob = 5 * sizeof(uint32_t);
 	void SerializeToBlob(char *blob) const
 	{
 		// could just memcpy(blob, this, sizeof(SystemPath))
 		// but that might include packing and/or vtable pointer
-		memcpy(blob + 0 * sizeof(Uint32), &sectorX, sizeof(Uint32));
-		memcpy(blob + 1 * sizeof(Uint32), &sectorY, sizeof(Uint32));
-		memcpy(blob + 2 * sizeof(Uint32), &sectorZ, sizeof(Uint32));
-		memcpy(blob + 3 * sizeof(Uint32), &systemIndex, sizeof(Uint32));
-		memcpy(blob + 4 * sizeof(Uint32), &bodyIndex, sizeof(Uint32));
+		memcpy(blob + 0 * sizeof(uint32_t), &sectorX, sizeof(uint32_t));
+		memcpy(blob + 1 * sizeof(uint32_t), &sectorY, sizeof(uint32_t));
+		memcpy(blob + 2 * sizeof(uint32_t), &sectorZ, sizeof(uint32_t));
+		memcpy(blob + 3 * sizeof(uint32_t), &systemIndex, sizeof(uint32_t));
+		memcpy(blob + 4 * sizeof(uint32_t), &bodyIndex, sizeof(uint32_t));
 	}
 };
 

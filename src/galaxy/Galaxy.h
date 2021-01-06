@@ -8,7 +8,7 @@
 #include "Factions.h"
 #include "GalaxyCache.h"
 #include "JsonFwd.h"
-#include "RefCounted.h"
+#include "libs/RefCounted.h"
 #include <cstdio>
 
 struct SDL_Surface;
@@ -36,7 +36,7 @@ public:
 
 	bool IsInitialized() const { return m_initialized; }
 	/* 0 - 255 */
-	virtual Uint8 GetSectorDensity(const int sx, const int sy, const int sz) const = 0;
+	virtual uint8_t GetSectorDensity(const int sx, const int sy, const int sz) const = 0;
 	FactionsDatabase *GetFactions() { return &m_factions; } // XXX const correctness
 	CustomSystemsDatabase *GetCustomSystems() { return &m_customSystems; } // XXX const correctness
 
@@ -56,7 +56,7 @@ public:
 	std::vector<RefCountedPtr<StarSystem>> GetNearStarSystemLy(const SystemPath &here, const double light_year);
 
 	void FlushCaches();
-	void Dump(FILE *file, Sint32 centerX, Sint32 centerY, Sint32 centerZ, Sint32 radius);
+	void Dump(FILE *file, int32_t centerX, int32_t centerY, int32_t centerZ, int32_t radius);
 
 	RefCountedPtr<GalaxyGenerator> GetGenerator() const;
 	const std::string &GetGeneratorName() const;
@@ -78,11 +78,11 @@ private:
 		float radius, float sol_offset_x, float sol_offset_y, const std::string &factionsDir, const std::string &customSysDir);
 
 public:
-	virtual Uint8 GetSectorDensity(const int sx, const int sy, const int sz) const;
+	virtual uint8_t GetSectorDensity(const int sx, const int sy, const int sz) const override;
 
 private:
 	std::unique_ptr<float[]> m_galaxyMap;
-	Sint32 m_mapWidth, m_mapHeight;
+	int32_t m_mapWidth, m_mapHeight;
 };
 
 #endif /* _GALAXY_H */

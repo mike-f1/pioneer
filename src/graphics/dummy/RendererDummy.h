@@ -53,15 +53,15 @@ namespace Graphics {
 
 		virtual bool SetWireFrameMode(bool enabled) override final { return true; }
 
-		virtual bool SetLights(Uint32 numlights, const Light *l) override final { return true; }
-		virtual Uint32 GetNumLights() const override final { return 1; }
+		virtual bool SetLights(uint32_t numlights, const Light *l) override final { return true; }
+		virtual uint32_t GetNumLights() const override final { return 1; }
 		virtual bool SetAmbientColor(const Color &c) override final { return true; }
 
 		virtual bool SetScissor(bool enabled, const vector2f &pos = vector2f(0.0f), const vector2f &size = vector2f(0.0f)) override final { return true; }
 
 		virtual bool DrawTriangles(const VertexArray *vertices, RenderState *state, Material *material, PrimitiveType type = TRIANGLES) override final { return true; }
-		virtual bool DrawPointSprites(const Uint32 count, const vector3f *positions, RenderState *rs, Material *material, float size) override final { return true; }
-		virtual bool DrawPointSprites(const Uint32 count, const vector3f *positions, const vector2f *offsets, const float *sizes, RenderState *rs, Material *material) override final { return true; }
+		virtual bool DrawPointSprites(const uint32_t count, const vector3f *positions, RenderState *rs, Material *material, float size) override final { return true; }
+		virtual bool DrawPointSprites(const uint32_t count, const vector3f *positions, const vector2f *offsets, const float *sizes, RenderState *rs, Material *material) override final { return true; }
 		virtual bool DrawBuffer(VertexBuffer *, RenderState *, Material *, PrimitiveType) override final { return true; }
 		virtual bool DrawBufferIndexed(VertexBuffer *, IndexBuffer *, RenderState *, Material *, PrimitiveType) override final { return true; }
 		virtual bool DrawBufferInstanced(VertexBuffer *, RenderState *, Material *, InstanceBuffer *, PrimitiveType type = TRIANGLES) override final { return true; }
@@ -72,14 +72,14 @@ namespace Graphics {
 		virtual RenderState *CreateRenderState(const RenderStateDesc &d) override final { return new Graphics::Dummy::RenderState(d); }
 		virtual RenderTarget *CreateRenderTarget(const RenderTargetDesc &d) override final { return new Graphics::Dummy::RenderTarget(d); }
 		virtual VertexBuffer *CreateVertexBuffer(const VertexBufferDesc &d) override final { return new Graphics::Dummy::VertexBuffer(d); }
-		virtual IndexBuffer *CreateIndexBuffer(Uint32 size, BufferUsage bu) override final { return new Graphics::Dummy::IndexBuffer(size, bu); }
-		virtual InstanceBuffer *CreateInstanceBuffer(Uint32 size, BufferUsage bu) override final { return new Graphics::Dummy::InstanceBuffer(size, bu); }
+		virtual IndexBuffer *CreateIndexBuffer(uint32_t size, BufferUsage bu) override final { return new Graphics::Dummy::IndexBuffer(size, bu); }
+		virtual InstanceBuffer *CreateInstanceBuffer(uint32_t size, BufferUsage bu) override final { return new Graphics::Dummy::InstanceBuffer(size, bu); }
 
 		virtual bool ReloadShaders() override final { return true; }
 
 		virtual const matrix4x4f &GetCurrentModelView() const override final { return m_identity; }
 		virtual const matrix4x4f &GetCurrentProjection() const override final { return m_identity; }
-		virtual void GetCurrentViewport(Sint32 *vp) const override final {}
+		virtual void GetCurrentViewport(int32_t *vp) const override final {}
 
 		virtual void SetMatrixMode(MatrixMode mm) override final {}
 		virtual void PushMatrix() override final {}

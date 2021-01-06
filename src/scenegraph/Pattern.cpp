@@ -32,7 +32,7 @@ namespace SceneGraph {
 
 		const std::string patternPath = FileSystem::JoinPathBelow(path, name);
 
-		Graphics::TextureSampleMode sampleMode = smoothPattern ? Graphics::LINEAR_CLAMP : Graphics::NEAREST_CLAMP;
+		Graphics::TextureSampleMode sampleMode = smoothPattern ? Graphics::TextureSampleMode::LINEAR_CLAMP : Graphics::TextureSampleMode::NEAREST_CLAMP;
 		texture.Reset(Graphics::TextureBuilder(patternPath, sampleMode, true, true, false).GetOrCreateTexture(r, std::string("pattern")));
 	}
 

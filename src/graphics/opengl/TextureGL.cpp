@@ -4,7 +4,7 @@
 #include "TextureGL.h"
 #include "RendererGL.h"
 #include "graphics/Renderer.h"
-#include "utils.h"
+#include "libs/utils.h"
 #include <cassert>
 
 static const unsigned int MIN_COMPRESSED_TEXTURE_DIMENSION = 16;
@@ -15,13 +15,13 @@ namespace Graphics {
 		inline GLint GLInternalFormat(TextureFormat format)
 		{
 			switch (format) {
-			case TEXTURE_RGB_888: return GL_RGB;
-			case TEXTURE_RGBA_8888: return GL_RGBA;
-			case TEXTURE_LUMINANCE_ALPHA_88: return GL_RG;
-			case TEXTURE_INTENSITY_8: return GL_RED;
-			case TEXTURE_DXT5: return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
-			case TEXTURE_DXT1: return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
-			case TEXTURE_DEPTH: return GL_DEPTH_COMPONENT;
+			case TextureFormat::RGB_888: return GL_RGB;
+			case TextureFormat::RGBA_8888: return GL_RGBA;
+			case TextureFormat::LUMINANCE_ALPHA_88: return GL_RG;
+			case TextureFormat::INTENSITY_8: return GL_RED;
+			case TextureFormat::DXT5: return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+			case TextureFormat::DXT1: return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+			case TextureFormat::DEPTH: return GL_DEPTH_COMPONENT;
 			default: assert(0); return 0;
 			}
 		}
@@ -31,12 +31,12 @@ namespace Graphics {
 		inline GLint GLCompressedInternalFormat(TextureFormat format)
 		{
 			switch (format) {
-			case TEXTURE_RGBA_8888: return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
-			case TEXTURE_RGB_888: return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
-			case TEXTURE_LUMINANCE_ALPHA_88: return GL_RG;
-			case TEXTURE_INTENSITY_8: return GL_RED;
-			case TEXTURE_DXT5: return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
-			case TEXTURE_DXT1: return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+			case TextureFormat::RGBA_8888: return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+			case TextureFormat::RGB_888: return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+			case TextureFormat::LUMINANCE_ALPHA_88: return GL_RG;
+			case TextureFormat::INTENSITY_8: return GL_RED;
+			case TextureFormat::DXT5: return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+			case TextureFormat::DXT1: return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
 			default: assert(0); return 0;
 			}
 		}
@@ -44,13 +44,13 @@ namespace Graphics {
 		inline GLint GLImageFormat(TextureFormat format)
 		{
 			switch (format) {
-			case TEXTURE_RGBA_8888: return GL_RGBA;
-			case TEXTURE_RGB_888: return GL_RGB;
-			case TEXTURE_LUMINANCE_ALPHA_88: return GL_RG;
-			case TEXTURE_INTENSITY_8: return GL_RED;
-			case TEXTURE_DXT5: return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
-			case TEXTURE_DXT1: return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
-			case TEXTURE_DEPTH: return GL_DEPTH_COMPONENT;
+			case TextureFormat::RGBA_8888: return GL_RGBA;
+			case TextureFormat::RGB_888: return GL_RGB;
+			case TextureFormat::LUMINANCE_ALPHA_88: return GL_RG;
+			case TextureFormat::INTENSITY_8: return GL_RED;
+			case TextureFormat::DXT5: return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+			case TextureFormat::DXT1: return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
+			case TextureFormat::DEPTH: return GL_DEPTH_COMPONENT;
 			default: assert(0); return 0;
 			}
 		}
@@ -58,8 +58,8 @@ namespace Graphics {
 		inline GLint GLTextureType(TextureType type)
 		{
 			switch (type) {
-			case TEXTURE_2D: return GL_TEXTURE_2D;
-			case TEXTURE_CUBE_MAP: return GL_TEXTURE_CUBE_MAP;
+			case TextureType::T_2D: return GL_TEXTURE_2D;
+			case TextureType::T_CUBE_MAP: return GL_TEXTURE_CUBE_MAP;
 			default: assert(0); return 0;
 			}
 		}
@@ -72,15 +72,15 @@ namespace Graphics {
 		inline int GetMinSize(TextureFormat flag)
 		{
 			switch (flag) {
-			case TEXTURE_DXT1: return 8;
-			case TEXTURE_DXT5: return 16;
+			case TextureFormat::DXT1: return 8;
+			case TextureFormat::DXT5: return 16;
 			default: return 1;
 			}
 		}
 
 		inline bool IsCompressed(TextureFormat format)
 		{
-			return (format == TEXTURE_DXT1 || format == TEXTURE_DXT5);
+			return (format == TextureFormat::DXT1 || format == TextureFormat::DXT5);
 		}
 
 		TextureGL::TextureGL(const TextureDescriptor &descriptor, const bool useCompressed, const bool useAnisoFiltering) :
@@ -206,25 +206,25 @@ namespace Graphics {
 			switch (descriptor.sampleMode) {
 			default: // safe default will fall through to LINEAR_CLAMP when run in release builds without assert
 				assert(0);
-			case LINEAR_CLAMP:
+			case TextureSampleMode::LINEAR_CLAMP:
 				magFilter = GL_LINEAR;
 				minFilter = descriptor.generateMipmaps ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR;
 				wrapS = wrapT = GL_CLAMP_TO_EDGE;
 				break;
 
-			case NEAREST_CLAMP:
+			case TextureSampleMode::NEAREST_CLAMP:
 				magFilter = GL_NEAREST;
 				minFilter = descriptor.generateMipmaps ? GL_NEAREST_MIPMAP_NEAREST : GL_NEAREST;
 				wrapS = wrapT = GL_CLAMP_TO_EDGE;
 				break;
 
-			case LINEAR_REPEAT:
+			case TextureSampleMode::LINEAR_REPEAT:
 				magFilter = GL_LINEAR;
 				minFilter = descriptor.generateMipmaps ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR;
 				wrapS = wrapT = GL_REPEAT;
 				break;
 
-			case NEAREST_REPEAT:
+			case TextureSampleMode::NEAREST_REPEAT:
 				magFilter = GL_NEAREST;
 				minFilter = descriptor.generateMipmaps ? GL_NEAREST_MIPMAP_NEAREST : GL_NEAREST;
 				wrapS = wrapT = GL_REPEAT;
@@ -369,22 +369,22 @@ namespace Graphics {
 			switch (mode) {
 			default: // safe default will fall through to LINEAR_CLAMP when run in release builds without assert
 				assert(0);
-			case LINEAR_CLAMP:
+			case TextureSampleMode::LINEAR_CLAMP:
 				magFilter = GL_LINEAR;
 				minFilter = mipmaps ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR;
 				break;
 
-			case NEAREST_CLAMP:
+			case TextureSampleMode::NEAREST_CLAMP:
 				magFilter = GL_NEAREST;
 				minFilter = mipmaps ? GL_NEAREST_MIPMAP_NEAREST : GL_NEAREST;
 				break;
 
-			case LINEAR_REPEAT:
+			case TextureSampleMode::LINEAR_REPEAT:
 				magFilter = GL_LINEAR;
 				minFilter = mipmaps ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR;
 				break;
 
-			case NEAREST_REPEAT:
+			case TextureSampleMode::NEAREST_REPEAT:
 				magFilter = GL_NEAREST;
 				minFilter = mipmaps ? GL_NEAREST_MIPMAP_NEAREST : GL_NEAREST;
 				break;

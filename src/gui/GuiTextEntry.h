@@ -7,6 +7,9 @@
 #include "GuiWidget.h"
 #include <string>
 
+#include "graphics/Drawables.h"
+#include "libs/utils.h"
+
 namespace Text {
 	class TextureFont;
 }
@@ -30,7 +33,7 @@ namespace Gui {
 		void SetCursorPos(int pos) { m_cursPos = Clamp(pos, 0, signed(m_text.size())); }
 		int GetCursorPos() const { return m_cursPos; };
 		virtual bool OnKeyDown(const SDL_Keysym *);
-		virtual void OnTextInput(Uint32 unicode);
+		virtual void OnTextInput(uint32_t unicode);
 		virtual void Show()
 		{
 			GrabFocus();

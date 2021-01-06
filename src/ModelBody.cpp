@@ -3,7 +3,9 @@
 
 #include "ModelBody.h"
 
+#include "Aabb.h"
 #include "Camera.h"
+#include "CollMesh.h"
 #include "Frame.h"
 #include "GameSaveError.h"
 #include "Json.h"
@@ -17,15 +19,14 @@
 #include "scenegraph/Animation.h"
 #include "scenegraph/CollisionGeometry.h"
 #include "scenegraph/NodeVisitor.h"
-#include "scenegraph/SceneGraph.h"
-#include "gameconsts.h"
+#include "scenegraph/MatrixTransform.h"
+#include "scenegraph/Model.h"
+#include "libs/gameconsts.h"
 
 class Space;
 
 class DynGeomFinder : public SceneGraph::NodeVisitor {
 public:
-	std::vector<SceneGraph::CollisionGeometry *> results;
-
 	virtual void ApplyCollisionGeometry(SceneGraph::CollisionGeometry &cg)
 	{
 		if (cg.IsDynamic())
@@ -38,15 +39,13 @@ public:
 			if ((*it)->GetGeomTree() == t) return (*it);
 		return 0;
 	}
+
+	private:
+	std::vector<SceneGraph::CollisionGeometry *> results;
 };
 
 class DynCollUpdateVisitor : public SceneGraph::NodeVisitor {
-private:
-	std::vector<matrix4x4f> m_matrixStack;
-
 public:
-	void Reset() { m_matrixStack.clear(); }
-
 	virtual void ApplyMatrixTransform(SceneGraph::MatrixTransform &m)
 	{
 		matrix4x4f matrix = matrix4x4f::Identity();
@@ -63,20 +62,22 @@ public:
 
 		matrix4x4ftod(m_matrixStack.back(), cg.GetGeom()->m_animTransform);
 	}
+
+private:
+	std::vector<matrix4x4f> m_matrixStack;
 };
 
 ModelBody::ModelBody() :
 	m_isStatic(false),
 	m_colliding(true),
 	m_geom(nullptr),
-	m_model(nullptr)
+	m_idleAnimation(nullptr)
 {
 }
 
 ModelBody::ModelBody(const Json &jsonObj, Space *space) :
 	Body(jsonObj, space),
-	m_geom(nullptr),
-	m_model(nullptr)
+	m_geom(nullptr)
 {
 	Json modelBodyObj = jsonObj["model_body"];
 
@@ -85,6 +86,7 @@ ModelBody::ModelBody(const Json &jsonObj, Space *space) :
 		m_colliding = modelBodyObj["is_colliding"];
 		SetModel(modelBodyObj["model_name"].get<std::string>().c_str());
 	} catch (Json::type_error &) {
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 		throw SavedGameCorruptException();
 	}
 
@@ -96,14 +98,11 @@ ModelBody::~ModelBody()
 {
 	SetFrame(FrameId::Invalid); // Will remove geom from frame if necessary.
 	DeleteGeoms();
-
-	//delete instanced model
-	delete m_model;
 }
 
-void ModelBody::SaveToJson(Json &jsonObj, Space *space)
+Json ModelBody::SaveToJson(Space *space)
 {
-	Body::SaveToJson(jsonObj, space);
+	Json jsonObj = Body::SaveToJson(space);
 
 	Json modelBodyObj = Json::object(); // Create JSON object to contain model body data.
 
@@ -114,6 +113,7 @@ void ModelBody::SaveToJson(Json &jsonObj, Space *space)
 	m_shields->SaveToJson(modelBodyObj);
 
 	jsonObj["model_body"] = modelBodyObj; // Add model body object to supplied object.
+	return jsonObj;
 }
 
 void ModelBody::SetStatic(bool isStatic)
@@ -124,11 +124,11 @@ void ModelBody::SetStatic(bool isStatic)
 
 	Frame *f = Frame::GetFrame(GetFrame());
 	if (m_isStatic) {
-		f->RemoveGeom(m_geom);
-		f->AddStaticGeom(m_geom);
+		f->RemoveGeom(m_geom.get());
+		f->AddStaticGeom(m_geom.get());
 	} else {
-		f->RemoveStaticGeom(m_geom);
-		f->AddGeom(m_geom);
+		f->RemoveStaticGeom(m_geom.get());
+		f->AddGeom(m_geom.get());
 	}
 }
 
@@ -139,6 +139,16 @@ void ModelBody::SetColliding(bool colliding)
 		m_geom->Enable();
 	else
 		m_geom->Disable();
+}
+
+Aabb &ModelBody::GetAabb() const
+{
+	return m_collMesh->GetAabb();
+}
+
+CollMesh *ModelBody::GetCollMesh()
+{
+	return m_collMesh.Get();
 }
 
 void ModelBody::RebuildCollisionMesh()
@@ -153,7 +163,7 @@ void ModelBody::RebuildCollisionMesh()
 	double maxRadius = m_collMesh->GetAabb().GetRadius();
 
 	//static geom
-	m_geom = new Geom(m_collMesh->GetGeomTree(), GetOrient(), GetPosition(), this);
+	m_geom.reset(new Geom(m_collMesh->GetGeomTree(), GetOrient(), GetPosition(), this));
 
 	SetPhysRadius(maxRadius);
 
@@ -163,22 +173,39 @@ void ModelBody::RebuildCollisionMesh()
 
 	//dynamic geoms
 	for (auto it = m_collMesh->GetDynGeomTrees().begin(); it != m_collMesh->GetDynGeomTrees().end(); ++it) {
-		Geom *dynG = new Geom(*it, GetOrient(), GetPosition(), this);
+		std::unique_ptr<Geom> dynG(new Geom(*it, GetOrient(), GetPosition(), this));
 		dynG->m_animTransform = matrix4x4d::Identity();
 		SceneGraph::CollisionGeometry *cg = dgf.GetCgForTree(*it);
 		if (cg)
-			cg->SetGeom(dynG);
-		m_dynGeoms.push_back(dynG);
+			cg->SetGeom(dynG.get());
+		m_dynGeoms.push_back(std::move(dynG));
 	}
 
 	if (f) AddGeomsToFrame(f);
 }
 
+void ModelBody::SetCentralCylinder(std::unique_ptr<CSG_CentralCylinder> centralcylinder)
+{
+	// Copy CSG_CentralCylinder: first one 'sink' in model for debugging
+	// purposes, while second 'sink' in Geoms for actual checks
+	std::unique_ptr<CSG_CentralCylinder> cc2(new CSG_CentralCylinder(*centralcylinder.get()));
+	m_model->SetCentralCylinder(std::move(cc2));
+	m_geom->SetCentralCylinder(std::move(centralcylinder));
+}
+
+void ModelBody::AddBox(std::unique_ptr<CSG_Box> box)
+{
+	// Copy CSG_Box: first one 'sink' in model for debugging
+	// purposes, while second 'sink' in Geoms for actual checks
+	std::unique_ptr<CSG_Box> box2(new CSG_Box(*box.get()));
+	m_geom->AddBox(std::move(box2));
+	m_model->AddBox(std::move(box));
+}
+
 void ModelBody::SetModel(const char *modelName)
 {
 	//remove old instance
-	delete m_model;
-	m_model = 0;
+	m_model.reset();
 
 	m_modelName = modelName;
 
@@ -188,7 +215,7 @@ void ModelBody::SetModel(const char *modelName)
 
 	SetClipRadius(m_model->GetDrawClipRadius());
 
-	m_shields.reset(new Shields(m_model));
+	m_shields.reset(new Shields(m_model.get()));
 
 	RebuildCollisionMesh();
 }
@@ -223,10 +250,6 @@ void ModelBody::SetFrame(FrameId fId)
 
 void ModelBody::DeleteGeoms()
 {
-	delete m_geom;
-	m_geom = nullptr;
-	for (auto it = m_dynGeoms.begin(); it != m_dynGeoms.end(); ++it)
-		delete *it;
 	m_dynGeoms.clear();
 }
 
@@ -237,14 +260,14 @@ void ModelBody::AddGeomsToFrame(Frame *f)
 	m_geom->SetGroup(group);
 
 	if (m_isStatic) {
-		f->AddStaticGeom(m_geom);
+		f->AddStaticGeom(m_geom.get());
 	} else {
-		f->AddGeom(m_geom);
+		f->AddGeom(m_geom.get());
 	}
 
 	for (auto it = m_dynGeoms.begin(); it != m_dynGeoms.end(); ++it) {
 		(*it)->SetGroup(group);
-		f->AddGeom(*it);
+		f->AddGeom((*it).get());
 	}
 }
 
@@ -253,13 +276,13 @@ void ModelBody::RemoveGeomsFromFrame(Frame *f)
 	if (f == nullptr) return;
 
 	if (m_isStatic) {
-		f->RemoveStaticGeom(m_geom);
+		f->RemoveStaticGeom(m_geom.get());
 	} else {
-		f->RemoveGeom(m_geom);
+		f->RemoveGeom(m_geom.get());
 	}
 
 	for (auto it = m_dynGeoms.begin(); it != m_dynGeoms.end(); ++it)
-		f->RemoveGeom(*it);
+		f->RemoveGeom((*it).get());
 }
 
 void ModelBody::MoveGeoms(const matrix4x4d &m, const vector3d &p)

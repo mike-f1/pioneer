@@ -10,6 +10,16 @@ local lui = Lang.GetResource("ui-core");
 local utils = import("utils")
 local Event = import("Event")
 
+local Iframes = import("InputFrames")
+
+local ifr = Iframes.CreateOrUse("luaInputF")
+
+local show_thrust_slider = false
+
+ifr:AddAction("ShowThursterSl", "ShipControls", "ManualControl", "Key1073741882Mod0", function(isUp)
+		if isUp then show_thrust_slider = not show_thrust_slider end
+	end)
+
 local player = nil
 local colors = ui.theme.colors
 local icons = ui.theme.icons
@@ -17,8 +27,6 @@ local icons = ui.theme.icons
 local mainButtonSize = Vector2(32,32) * (ui.screenHeight / 1200)
 local mainButtonFramePadding = 3
 local itemSpacingX = 8 -- imgui default
-
-local show_thrust_slider = false
 
 local function mainMenuButton(icon, selected, tooltip, color)
 	if color == nil then
@@ -98,11 +106,11 @@ end
 local function button_wheelstate()
 	local wheelstate = player:GetWheelState() -- 0.0 is up, 1.0 is down
 	if wheelstate == 0.0 then -- gear is up
-		if mainMenuButton(icons.landing_gear_down, false, lui.HUD_BUTTON_LANDING_GEAR_IS_UP) or (ui.noModifierHeld() and ui.isKeyReleased(ui.keys.f6)) then
+		if mainMenuButton(icons.landing_gear_down, false, lui.HUD_BUTTON_LANDING_GEAR_IS_UP) then
 			player:ToggleWheelState()
 		end
 	elseif wheelstate == 1.0 then -- gear is down
-		if mainMenuButton(icons.landing_gear_up, false, lui.HUD_BUTTON_LANDING_GEAR_IS_DOWN) or (ui.noModifierHeld() and ui.isKeyReleased(ui.keys.f6)) then
+		if mainMenuButton(icons.landing_gear_up, false, lui.HUD_BUTTON_LANDING_GEAR_IS_DOWN) then
 			player:ToggleWheelState()
 		end
 	else
@@ -141,9 +149,6 @@ local function displayShipFunctionWindow()
 								ui.sameLine()
 								button_lowThrustPower()
 								button_thrustIndicator()
-								if ui.noModifierHeld() and ui.isKeyReleased(ui.keys.f8) then
-                                    show_thrust_slider = not show_thrust_slider
-								end
 							end -- current_view == "world"
 	end)
 end

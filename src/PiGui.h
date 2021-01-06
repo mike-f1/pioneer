@@ -5,8 +5,12 @@
 #include "Lua.h"
 #include "LuaRef.h"
 #include "LuaTable.h"
-#include "RefCounted.h"
+#include "libs/RefCounted.h"
+#include "libs/utils.h"
 #include "imgui/imgui.h"
+
+#include <SDL_video.h>
+#include <SDL_events.h>
 
 namespace Graphics {
 	class Texture;
@@ -29,10 +33,10 @@ public:
 		m_sizefactor(sizefactor),
 		m_ranges(ranges) {}
 	const std::string &ttfname() const { return m_ttfname; }
-	const float sizefactor() const { return m_sizefactor; }
+	float sizefactor() const { return m_sizefactor; }
 	const std::vector<std::pair<unsigned short, unsigned short>> &ranges() const { return m_ranges; }
 	const std::vector<std::pair<unsigned short, unsigned short>> &used_ranges() const { return m_used_ranges; }
-	const bool containsGlyph(unsigned short glyph) const;
+	bool containsGlyph(unsigned short glyph) const;
 	void addGlyph(unsigned short glyph);
 	void sortUsedRanges() const;
 };
@@ -44,15 +48,23 @@ class PiFont {
 
 public:
 	PiFont(const std::string &name) :
-		m_name(name) {}
+		m_name(name),
+		m_pixelsize(0)
+	{}
 	PiFont(const std::string &name, const std::vector<PiFace> &faces) :
 		m_name(name),
-		m_faces(faces) {}
+		m_faces(faces),
+		m_pixelsize(0)
+	{}
 	PiFont(const PiFont &other) :
 		m_name(other.name()),
-		m_faces(other.faces()) {}
+		m_faces(other.faces()),
+		m_pixelsize(other.m_pixelsize)
+	{}
 	PiFont() :
-		m_name("unknown") {}
+		m_name("unknown"),
+		m_pixelsize(0)
+	{}
 	const std::vector<PiFace> &faces() const { return m_faces; }
 	std::vector<PiFace> &faces() { return m_faces; }
 	const std::string &name() const { return m_name; }
@@ -67,8 +79,76 @@ public:
 	}
 };
 
+class PiGui;
+
+template <class T = PiGui>
+class PiGuiFrameHelper {
+public:
+	PiGuiFrameHelper(const PiGuiFrameHelper &) = delete;
+	PiGuiFrameHelper &operator=(const PiGuiFrameHelper &) = delete;
+
+	PiGuiFrameHelper(T *pigui, SDL_Window *window, bool skip = true):
+		m_pigui(pigui)
+	{
+		m_pigui->NewFrame(window, skip);
+	}
+	~PiGuiFrameHelper() { m_pigui->EndFrame(); }
+private:
+	T* m_pigui;
+};
+
 /* Class to wrap ImGui. */
 class PiGui : public RefCounted {
+public:
+	PiGui(SDL_Window *window);
+
+	~PiGui();
+
+	LuaRef GetHandlers() const { return m_handlers; }
+
+	PiGui *NewFrame(SDL_Window *window, bool skip = true);
+
+	void EndFrame();
+
+	void Render(double delta, std::string handler = "GAME");
+
+	bool ProcessEvent(SDL_Event *event);
+
+	ImFont *GetFont(const std::string &name, int size);
+
+	ImFont *AddFont(const std::string &name, int size);
+
+	void AddGlyph(ImFont *font, unsigned short glyph);
+
+	ImTextureID RenderSVG(std::string svgFilename, int width, int height);
+
+	void RefreshFontsTexture();
+
+	void DoMouseGrab(bool grab) { m_doingMouseGrab = grab; }
+
+	bool WantCaptureMouse()
+	{
+		return ImGui::GetIO().WantCaptureMouse;
+	}
+
+	bool WantCaptureKeyboard()
+	{
+		return ImGui::GetIO().WantCaptureKeyboard;
+	}
+	static int RadialPopupSelectMenu(const ImVec2 &center, std::string popup_id, int mouse_button, std::vector<ImTextureID> tex_ids, std::vector<std::pair<ImVec2, ImVec2>> uvs, unsigned int size, std::vector<std::string> tooltips);
+	static bool CircularSlider(const ImVec2 &center, float *v, float v_min, float v_max);
+
+	static bool LowThrustButton(const char *label, const ImVec2 &size_arg, int thrust_level, const ImVec4 &bg_col, int frame_padding, ImColor gauge_fg, ImColor gauge_bg);
+	static bool ButtonImageSized(ImTextureID user_texture_id, const ImVec2& size, const ImVec2& imgSize, const ImVec2& uv0, const ImVec2& uv1, int frame_padding, const ImVec4& bg_col, const ImVec4& tint_col);
+
+	static void ThrustIndicator(const std::string &id_string, const ImVec2 &size, const ImVec4 &thrust, const ImVec4 &velocity, const ImVec4 &bg_col, int frame_padding, ImColor vel_fg, ImColor vel_bg, ImColor thrust_fg, ImColor thrust_bg);
+
+private:
+	LuaRef m_handlers;
+	static std::vector<Graphics::Texture *> m_svg_textures;
+
+	bool m_doingMouseGrab;
+
 	std::map<std::pair<std::string, int>, ImFont *> m_fonts;
 	std::map<ImFont *, std::pair<std::string, int>> m_im_fonts;
 	std::map<std::pair<std::string, int>, PiFont> m_pi_fonts;
@@ -81,63 +161,5 @@ class PiGui : public RefCounted {
 	void AddFontDefinition(const PiFont &font) { m_font_definitions[font.name()] = font; }
 	void ClearFonts();
 
-public:
-	PiGui();
-
-	LuaRef GetHandlers() const { return m_handlers; }
-
-	LuaRef GetKeys() const { return m_keys; }
-
-	void Render(double delta, std::string handler = "GAME");
-
-	void Init(SDL_Window *window);
-
-	ImFont *GetFont(const std::string &name, int size);
-
-	void Uninit()
-	{
-		Cleanup();
-		m_handlers.Unref();
-		m_keys.Unref();
-	}
-	ImFont *AddFont(const std::string &name, int size);
-
-	void AddGlyph(ImFont *font, unsigned short glyph);
-
-	static ImTextureID RenderSVG(std::string svgFilename, int width, int height);
-
-	static void NewFrame(SDL_Window *window, bool skip = true);
-
-	static void EndFrame();
-
-	static void RenderImGui();
-
-	static bool ProcessEvent(SDL_Event *event);
-
-	void RefreshFontsTexture();
-
-	static void *makeTexture(unsigned char *pixels, int width, int height);
-
-	static bool WantCaptureMouse()
-	{
-		return ImGui::GetIO().WantCaptureMouse;
-	}
-
-	static bool WantCaptureKeyboard()
-	{
-		return ImGui::GetIO().WantCaptureKeyboard;
-	}
-	static int RadialPopupSelectMenu(const ImVec2 &center, std::string popup_id, int mouse_button, std::vector<ImTextureID> tex_ids, std::vector<std::pair<ImVec2, ImVec2>> uvs, unsigned int size, std::vector<std::string> tooltips);
-	static bool CircularSlider(const ImVec2 &center, float *v, float v_min, float v_max);
-
-	void Cleanup();
-	static bool LowThrustButton(const char *label, const ImVec2 &size_arg, int thrust_level, const ImVec4 &bg_col, int frame_padding, ImColor gauge_fg, ImColor gauge_bg);
-	static bool ButtonImageSized(ImTextureID user_texture_id, const ImVec2& size, const ImVec2& imgSize, const ImVec2& uv0, const ImVec2& uv1, int frame_padding, const ImVec4& bg_col, const ImVec4& tint_col);
-
-	static void ThrustIndicator(const std::string &id_string, const ImVec2 &size, const ImVec4 &thrust, const ImVec4 &velocity, const ImVec4 &bg_col, int frame_padding, ImColor vel_fg, ImColor vel_bg, ImColor thrust_fg, ImColor thrust_bg);
-
-private:
-	LuaRef m_handlers;
-	LuaRef m_keys;
-	static std::vector<Graphics::Texture *> m_svg_textures;
+	void *makeTexture(unsigned char *pixels, int width, int height);
 };

@@ -243,13 +243,8 @@ local function displaySectorViewWindow()
 	if current_view == "sector" then
 		ui.setNextWindowSize(Vector2(ui.screenWidth / 5, ui.screenHeight / 3 * 2.1), "Always")
 		ui.setNextWindowPos(Vector2(10, 10) , "Always")
-		if ui.isKeyReleased(ui.keys.tab) then
-			hideSectorViewWindows = not hideSectorViewWindows;
-		end
-		if not hideSectorViewWindows then
-			showInfoWindow()
-			showFactionLegendWindow()
-		end
+		showInfoWindow()
+		showFactionLegendWindow()
 	end
 end
 

@@ -12,10 +12,11 @@
 #endif
 #include "FileSystem.h"
 #include "Json.h"
-#include "Lang.h"
+#include "JsonUtils.h"
 #include "Random.h"
 #include "RandomSingleton.h"
-#include "utils.h"
+#include "libs/stringUtils.h"
+#include "libs/utils.h"
 #include <algorithm>
 
 // TODO: Fix the horrible control flow that makes this exception type necessary.
@@ -420,7 +421,7 @@ void ShipType::Init()
 	namespace fs = FileSystem;
 	for (fs::FileEnumerator files(fs::gameDataFiles, "ships", fs::FileEnumerator::Recurse); !files.Finished(); files.Next()) {
 		const fs::FileInfo &info = files.Current();
-		if (ends_with_ci(info.GetPath(), ".json")) {
+		if (stringUtils::ends_with_ci(info.GetPath(), ".json")) {
 			const std::string id(info.GetName().substr(0, info.GetName().size() - 5));
 			try {
 				ShipType st = ShipType(id, info.GetPath());

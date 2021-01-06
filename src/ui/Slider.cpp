@@ -3,6 +3,7 @@
 
 #include "Slider.h"
 #include "Context.h"
+#include "libs/utils.h"
 
 namespace UI {
 

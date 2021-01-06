@@ -3,19 +3,10 @@
 
 #include "Body.h"
 
-#include "CargoBody.h"
 #include "Frame.h"
 #include "GameSaveError.h"
-#include "HyperspaceCloud.h"
+#include "JsonUtils.h"
 #include "LuaEvent.h"
-#include "Missile.h"
-#include "Planet.h"
-#include "Player.h"
-#include "Projectile.h"
-#include "Ship.h"
-#include "Space.h"
-#include "SpaceStation.h"
-#include "Star.h"
 
 Body::Body() :
 	PropertiedObject(Lua::manager),
@@ -58,6 +49,7 @@ Body::Body(const Json &jsonObj, Space *space) :
 		m_physRadius = bodyObj["phys_radius"];
 		m_clipRadius = bodyObj["clip_radius"];
 	} catch (Json::type_error &) {
+		Output("Loading error in '%s' in function '%s' \n", __FILE__, __func__);
 		throw SavedGameCorruptException();
 	}
 }
@@ -66,7 +58,7 @@ Body::~Body()
 {
 }
 
-void Body::SaveToJson(Json &jsonObj, Space *space)
+Json Body::SaveToJson(Space *space)
 {
 	Json bodyObj = Json::object(); // Create JSON object to contain body data.
 
@@ -80,68 +72,9 @@ void Body::SaveToJson(Json &jsonObj, Space *space)
 	bodyObj["phys_radius"] = m_physRadius;
 	bodyObj["clip_radius"] = m_clipRadius;
 
-	jsonObj["body"] = bodyObj; // Add body object to supplied object.
-}
-
-void Body::ToJson(Json &jsonObj, Space *space)
-{
-	jsonObj["body_type"] = int(GetType());
-
-	switch (GetType()) {
-	case Object::STAR:
-	case Object::PLANET:
-	case Object::SPACESTATION:
-	case Object::SHIP:
-	case Object::PLAYER:
-	case Object::MISSILE:
-	case Object::CARGOBODY:
-	case Object::PROJECTILE:
-	case Object::HYPERSPACECLOUD:
-		SaveToJson(jsonObj, space);
-		break;
-	default:
-		assert(0);
-	}
-}
-
-Body *Body::FromJson(const Json &jsonObj, Space *space)
-{
-	if (!jsonObj["body_type"].is_number_integer())
-		throw SavedGameCorruptException();
-
-	Object::Type type = Object::Type(jsonObj["body_type"]);
-	switch (type) {
-	case Object::STAR:
-		return new Star(jsonObj, space);
-	case Object::PLANET:
-		return new Planet(jsonObj, space);
-	case Object::SPACESTATION:
-		return new SpaceStation(jsonObj, space);
-	case Object::SHIP: {
-		Ship *s = new Ship(jsonObj, space);
-		// Here because of comments in Ship.cpp on following function
-		s->UpdateLuaStats();
-		return static_cast<Body *>(s);
-	}
-	case Object::PLAYER: {
-		Player *p = new Player(jsonObj, space);
-		// Read comments in Ship.cpp on following function
-		p->UpdateLuaStats();
-		return static_cast<Body *>(p);
-	}
-	case Object::MISSILE:
-		return new Missile(jsonObj, space);
-	case Object::PROJECTILE:
-		return new Projectile(jsonObj, space);
-	case Object::CARGOBODY:
-		return new CargoBody(jsonObj, space);
-	case Object::HYPERSPACECLOUD:
-		return new HyperspaceCloud(jsonObj, space);
-	default:
-		assert(0);
-	}
-
-	return nullptr;
+	Json jsonObj;
+	jsonObj["body"] = bodyObj;
+	return jsonObj; // Add body object to supplied object.
 }
 
 vector3d Body::GetPositionRelTo(FrameId relToId) const

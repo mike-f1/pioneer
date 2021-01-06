@@ -13,7 +13,7 @@ namespace Graphics {
 	class Renderer;
 }
 
-class Player : public Ship {
+class Player final: public Ship {
 public:
 	OBJDEF(Player, Ship, PLAYER);
 	Player() = delete;
@@ -22,15 +22,19 @@ public:
 
 	~Player();
 
-	virtual void SetDockedWith(SpaceStation *, int port) override;
-	virtual bool DoDamage(float kgDamage) override final; // overloaded to add "crush" audio
-	virtual bool OnDamage(Object *attacker, float kgDamage, const CollisionContact &contactData) override;
-	virtual bool SetWheelState(bool down) override; // returns success of state change, NOT state itself
-	virtual Missile *SpawnMissile(ShipType::Id missile_type, int power = -1) override;
-	virtual void SetAlertState(Ship::AlertState as) override;
-	virtual void NotifyRemoved(const Body *const removedBody) override;
+	Json SaveToJson(Space *space) override;
 
-	virtual void SetShipType(const ShipType::Id &shipId) override;
+	void SetInputActive(bool active);
+
+	void SetDockedWith(SpaceStation *, int port) override;
+	bool DoDamage(float kgDamage) override; // overloaded to add "crush" audio
+	bool OnDamage(Object *attacker, float kgDamage, const CollisionContact &contactData) override;
+	bool SetWheelState(bool down) override; // returns success of state change, NOT state itself
+	Missile *SpawnMissile(ShipType::Id missile_type, int power = -1) override;
+	void SetAlertState(Ship::AlertState as) override;
+	void NotifyRemoved(const Body *const removedBody) override;
+
+	void SetShipType(const ShipType::Id &shipId) override;
 
 	PlayerShipController *GetPlayerController() const;
 	//XXX temporary things to avoid causing too many changes right now
@@ -42,15 +46,15 @@ public:
 	void SetSetSpeedTarget(Body *const target);
 	void ChangeSetSpeed(double delta);
 
-	virtual Ship::HyperjumpStatus InitiateHyperjumpTo(const SystemPath &dest, int warmup_time, double duration, const HyperdriveSoundsTable &sounds, LuaRef checks) override;
-	virtual void AbortHyperjump() override;
+	Ship::HyperjumpStatus InitiateHyperjumpTo(const SystemPath &dest, int warmup_time, double duration, const HyperdriveSoundsTable &sounds, LuaRef checks) override;
+	void AbortHyperjump() override;
 
 	// XXX cockpit is here for now because it has a physics component
 	void InitCockpit();
 	ShipCockpit *GetCockpit() const;
 	void OnCockpitActivated();
 
-	virtual void StaticUpdate(const float timeStep) override;
+	void StaticUpdate(const float timeStep) override;
 	virtual vector3d GetManeuverVelocity() const;
 	virtual int GetManeuverTime() const;
 
@@ -58,10 +62,8 @@ public:
 	sigc::signal<void> onPlayerChangeTarget; // navigation or combat
 
 protected:
-	virtual void SaveToJson(Json &jsonObj, Space *space) override;
-
-	virtual void OnEnterSystem() override;
-	virtual void OnEnterHyperspace() override;
+	void OnEnterSystem() override;
+	void OnEnterHyperspace() override;
 
 private:
 	std::unique_ptr<ShipCockpit> m_cockpit;

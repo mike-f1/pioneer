@@ -8,8 +8,13 @@
 #include "FrameId.h"
 #include "graphics/Frustum.h"
 #include "graphics/Light.h"
-#include "matrix4x4.h"
-#include "vector3.h"
+#include "libs/RefCounted.h"
+#include "libs/matrix4x4.h"
+#include "libs/vector3.h"
+
+#include <memory>
+#include <list>
+#include <vector>
 
 class Body;
 class Frame;
@@ -70,6 +75,7 @@ private:
 class Camera {
 public:
 	Camera(RefCountedPtr<CameraContext> context);
+	~Camera();
 
 	RefCountedPtr<CameraContext> GetContext() const { return m_context; }
 
@@ -79,7 +85,7 @@ public:
 	// camera-specific light with attached source body
 	class LightSource {
 	public:
-		LightSource(const Body *b, Graphics::Light &light) :
+		LightSource(const Body *b, const Graphics::Light &light) :
 			m_body(b),
 			m_light(light) {}
 
@@ -92,6 +98,11 @@ public:
 	};
 
 	struct Shadow {
+		Shadow(const vector3d &centre_, float srad_, float lrad_) :
+			centre(centre_),
+			srad(srad_),
+			lrad(lrad_)
+		{}
 		vector3d centre;
 		float srad;
 		float lrad;
@@ -99,15 +110,16 @@ public:
 		bool operator<(const Shadow &other) const { return srad / lrad < other.srad / other.lrad; }
 	};
 
-	void CalcShadows(const int lightNum, const Body *b, std::vector<Shadow> &shadowsOut) const;
 	float ShadowedIntensity(const int lightNum, const Body *b) const;
-	void PrincipalShadows(const Body *b, const int n, std::vector<Shadow> &shadowsOut) const;
+	std::vector<Shadow> PrincipalShadows(const Body *b, const int n) const;
 
 	// lights with properties in camera space
 	const std::vector<LightSource> &GetLightSources() const { return m_lightSources; }
-	const int GetNumLightSources() const { return static_cast<Uint32>(m_lightSources.size()); }
+	int GetNumLightSources() const { return static_cast<uint32_t>(m_lightSources.size()); }
 
 private:
+	const std::vector<Shadow> CalcShadows(const int lightNum, const Body *b) const;
+
 	RefCountedPtr<CameraContext> m_context;
 
 	std::unique_ptr<Graphics::Material> m_billboardMaterial;
@@ -124,7 +136,7 @@ private:
 		double camDist;
 
 		// body flags. DRAW_LAST is the interesting one
-		Uint32 bodyFlags;
+		uint32_t bodyFlags;
 
 		// if true, draw object as billboard of billboardSize at billboardPos
 		bool billboard;

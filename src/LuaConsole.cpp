@@ -4,10 +4,13 @@
 #include "LuaConsole.h"
 
 #include "FileSystem.h"
-#include "KeyBindings.h"
+#include "input/InputFrame.h"
+#include "input/InputFrameStatusTicket.h"
+#include "input/KeyBindings.h"
 #include "LuaManager.h"
 #include "LuaUtils.h"
 #include "Pi.h"
+#include "libs/utils.h"
 #include "text/TextSupport.h"
 #include "text/TextureFont.h"
 #include "ui/Context.h"
@@ -64,18 +67,51 @@ LuaConsole::LuaConsole() :
 
 	m_historyPosition = -1;
 
+	RegisterInputBindings();
+
 	RegisterAutoexec();
 }
 
-void LuaConsole::Toggle()
+void LuaConsole::RegisterInputBindings()
 {
-	if (m_active)
-		Pi::ui->DropLayer();
-	else {
+	using namespace KeyBindings;
+	using namespace std::placeholders;
+
+	m_inputFrame = std::make_unique<InputFrame>("Console");
+
+	auto &page = InputFWD::GetBindingPage("General");
+	auto &group = page.GetBindingGroup("Miscellaneous");
+
+	m_consoleBindings.toggleLuaConsole = m_inputFrame->AddActionBinding("ToggleConsole", group, ActionBinding(SDLK_BACKSLASH));
+	m_inputFrame->SetBTrait("ToggleConsole", BehaviourMod::ALLOW_KEYBOARD_ONLY);
+	m_inputFrame->AddCallbackFunction("ToggleConsole", std::bind(&LuaConsole::OnToggle, this, _1));
+
+	m_inputFrame->SetActive(true);
+}
+
+void LuaConsole::OnToggle(bool down)
+{
+	if (down) return;
+	m_active = !m_active;
+	if (m_active) {
+		m_lockEnabled = InputFWD::DisableAllInputFrameExcept(m_inputFrame.get());
+		m_inputFrame->SetActive(false);
 		Pi::ui->NewLayer()->SetInnerWidget(m_container.Get());
 		Pi::ui->SelectWidget(m_entry);
+	} else {
+		m_lockEnabled.reset();
+		m_inputFrame->SetActive(true);
+		Pi::ui->DropLayer();
 	}
-	m_active = !m_active;
+}
+
+void LuaConsole::Deactivate()
+{
+	if (!m_active) return;
+	m_active = false;
+	m_lockEnabled.reset();
+	m_inputFrame->SetActive(true);
+	Pi::ui->DropLayer();
 }
 
 static int capture_traceback(lua_State *L)
@@ -170,11 +206,12 @@ void LuaConsole::RegisterAutoexec()
 	LUA_DEBUG_END(L, 0);
 }
 
-LuaConsole::~LuaConsole() {}
+LuaConsole::~LuaConsole()
+{
+}
 
 bool LuaConsole::OnKeyDown(const UI::KeyboardEvent &event)
 {
-
 	switch (event.keysym.sym) {
 	case SDLK_ESCAPE: {
 		// pressing the ESC key will drop our layer, but we still have to make sure we are marked as not active anymore

@@ -2,17 +2,16 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "ModelSkin.h"
+
 #include "GameSaveError.h"
 #include "JsonUtils.h"
 #include "Model.h"
 #include "Serializer.h"
-#include "StringF.h"
 #include "graphics/TextureBuilder.h"
 #include "graphics/RendererLocator.h"
+#include "libs/StringF.h"
 
 #include "RandomColor.h"
-
-#include <SDL_stdinc.h>
 
 namespace SceneGraph {
 
@@ -24,7 +23,7 @@ namespace SceneGraph {
 	void ModelSkin::Apply(Model *model) const
 	{
 		model->SetColors(m_colors);
-		for (unsigned int i = 0; i < MAX_DECAL_MATERIALS; i++) {
+		for (unsigned i = 0; i < MAX_DECAL_MATERIALS; i++) {
 			if (m_decals[i].empty())
 				model->ClearDecal(i);
 			else
@@ -61,13 +60,13 @@ namespace SceneGraph {
 		m_colors = RandomColor::GetColors(rand, SCHEME_RANDOM, LUMINOSITY_BRIGHT, 3);
 	}
 
-	void ModelSkin::SetDecal(const std::string &name, unsigned int index)
+	void ModelSkin::SetDecal(const std::string &name, unsigned index)
 	{
 		assert(index < MAX_DECAL_MATERIALS);
 		m_decals[index] = name;
 	}
 
-	void ModelSkin::ClearDecal(unsigned int index)
+	void ModelSkin::ClearDecal(unsigned index)
 	{
 		assert(index < MAX_DECAL_MATERIALS);
 		m_decals[index] = "";
@@ -75,7 +74,7 @@ namespace SceneGraph {
 
 	void ModelSkin::ClearDecals()
 	{
-		for (unsigned int i = 0; i < MAX_DECAL_MATERIALS; i++)
+		for (unsigned i = 0; i < MAX_DECAL_MATERIALS; i++)
 			ClearDecal(i);
 	}
 
@@ -86,12 +85,12 @@ namespace SceneGraph {
 
 	void ModelSkin::Load(Serializer::Reader &rd)
 	{
-		for (unsigned int i = 0; i < 3; i++) {
+		for (unsigned i = 0; i < 3; i++) {
 			m_colors[i].r = rd.Byte();
 			m_colors[i].g = rd.Byte();
 			m_colors[i].b = rd.Byte();
 		}
-		for (unsigned int i = 0; i < MAX_DECAL_MATERIALS; i++)
+		for (unsigned i = 0; i < MAX_DECAL_MATERIALS; i++)
 			m_decals[i] = rd.String();
 		m_label = rd.String();
 	}
@@ -103,14 +102,14 @@ namespace SceneGraph {
 
 			Json colorsArray = modelSkinObj["colors"].get<Json::array_t>();
 			if (colorsArray.size() != 3) throw SavedGameCorruptException();
-			for (unsigned int i = 0; i < 3; i++) {
+			for (unsigned i = 0; i < 3; i++) {
 				Json arrayElem = colorsArray[i];
 				m_colors[i] = arrayElem["color"];
 			}
 
 			Json decalsArray = modelSkinObj["decals"].get<Json::array_t>();
 			if (decalsArray.size() != MAX_DECAL_MATERIALS) throw SavedGameCorruptException();
-			for (unsigned int i = 0; i < MAX_DECAL_MATERIALS; i++) {
+			for (unsigned i = 0; i < MAX_DECAL_MATERIALS; i++) {
 				Json arrayElem = decalsArray[i];
 				m_decals[i] = arrayElem["decal"];
 			}
@@ -123,12 +122,12 @@ namespace SceneGraph {
 
 	void ModelSkin::Save(Serializer::Writer &wr) const
 	{
-		for (unsigned int i = 0; i < 3; i++) {
+		for (unsigned i = 0; i < 3; i++) {
 			wr.Byte(m_colors[i].r);
 			wr.Byte(m_colors[i].g);
 			wr.Byte(m_colors[i].b);
 		}
-		for (unsigned int i = 0; i < MAX_DECAL_MATERIALS; i++)
+		for (unsigned i = 0; i < MAX_DECAL_MATERIALS; i++)
 			wr.String(m_decals[i]);
 		wr.String(m_label);
 	}
@@ -138,7 +137,7 @@ namespace SceneGraph {
 		Json modelSkinObj({}); // Create JSON object to contain model skin data.
 
 		Json colorsArray = Json::array(); // Create JSON array to contain colors data.
-		for (unsigned int i = 0; i < 3; i++) {
+		for (unsigned i = 0; i < 3; i++) {
 			Json arrayElem({});
 			arrayElem["color"] = m_colors[i];
 			colorsArray.push_back(arrayElem);
@@ -147,7 +146,7 @@ namespace SceneGraph {
 		modelSkinObj["colors"] = colorsArray; // Add colors array to model skin object.
 
 		Json decalsArray = Json::array(); // Create JSON array to contain decals data.
-		for (unsigned int i = 0; i < MAX_DECAL_MATERIALS; i++) {
+		for (unsigned i = 0; i < MAX_DECAL_MATERIALS; i++) {
 			Json arrayElem({});
 			arrayElem["decal"] = m_decals[i];
 			decalsArray.push_back(arrayElem);

@@ -16,6 +16,7 @@
 #include "LuaManager.h"
 #include "LuaObject.h"
 #include "LuaPiGui.h"
+#include "LuaPushPull.h"
 #include "LuaUtils.h"
 #include "LuaVector.h"
 #include "LuaVector2.h"
@@ -31,10 +32,13 @@
 #include "galaxy/Faction.h"
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
+#include "scenegraph/Model.h"
 #include "sound/Sound.h"
 #include "sound/SoundMusic.h"
 #include "ui/Context.h"
-#include "utils.h"
+
+#include "SDL_timer.h" // <- Here because there's a need to measure time even outside game
+
 /*
  * Interface: Engine
  *
@@ -808,7 +812,7 @@ static int l_engine_sector_map_add_to_route(lua_State *l)
 	SectorView *sv = InGameViewsLocator::getInGameViews()->GetSectorView();
 	SystemPath *path = LuaObject<SystemPath>::CheckFromLua(1);
 	if (sv) {
-		sv->AddToRoute(path);
+		sv->AddToRoute(*path);
 	}
 	return 0;
 }

@@ -6,7 +6,7 @@
 #include "Shields.h"
 #include "Ship.h"
 #include "scenegraph/Model.h"
-#include "pi_state/PiState.h"
+#include "pi_states/PiState.h"
 
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"

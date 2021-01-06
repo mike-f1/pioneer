@@ -16,7 +16,7 @@
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 #include "graphics/VertexArray.h"
-#include "pi_state/PiState.h"
+#include "pi_states/PiState.h"
 #include "perlin.h"
 
 using namespace Graphics;

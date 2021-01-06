@@ -106,7 +106,7 @@ list(APPEND SRC_FOLDERS
     src/input
 	src/libs
 	src/pigui
-    src/pi_state
+    src/pi_states
 	src/scenegraph
 	src/ship
 	src/sound

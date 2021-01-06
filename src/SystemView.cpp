@@ -28,7 +28,7 @@
 #include "libs/AnimationCurves.h"
 #include "libs/StringF.h"
 #include "libs/stringUtils.h"
-#include "pi_state/PiState.h"
+#include "pi_states/PiState.h"
 
 #include "gui/GuiLabel.h"
 #include "gui/GuiLabelSet.h"

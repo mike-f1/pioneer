@@ -27,8 +27,8 @@ public:
 
 protected:
 	virtual void BuildUI(UI::Single *container);
-	virtual void OnSwitchTo();
-	virtual void OnSwitchFrom();
+	void OnSwitchTo() override;
+	void OnSwitchFrom() override;
 
 	UI::Widget *BuildTemplateUI();
 

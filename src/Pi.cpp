@@ -30,10 +30,10 @@
 #include "LuaVector.h"
 #include "LuaVector2.h"
 #include "OS.h"
-#include "pi_state/PiState.h"
-#include "pi_state/InitState.h"
-#include "pi_state/GameState.h"
-#include "pi_state/MainMenuState.h"
+#include "pi_states/PiState.h"
+#include "pi_states/InitState.h"
+#include "pi_states/GameState.h"
+#include "pi_states/MainMenuState.h"
 
 #if ENABLE_SERVER_AGENT
 #include "LuaServerAgent.h"

@@ -13,16 +13,6 @@
 
 #include <stdexcept>
 
-FixedGuns::FixedGuns(Body* b) :
-	m_cooler_boost(1.0)
-{
-	b->AddFeature(Body::FIXED_GUNS);
-}
-
-FixedGuns::~FixedGuns()
-{
-}
-
 Json FixedGuns::SaveToJson() const
 {
 	Json gunArray = Json::array(); // Create JSON array to contain gun data.

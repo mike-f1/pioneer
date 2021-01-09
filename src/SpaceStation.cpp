@@ -573,9 +573,9 @@ void SpaceStation::DockingUpdate(const double timeStep)
 			dt.ship->SetFlightState(Ship::FLYING);
 			dt.ship->SetAngVelocity(GetAngVelocity());
 			if (m_type->IsSurfaceStation()) {
-				dt.ship->SetThrusterState(1, 1.0); // up
+				dt.ship->SetLinThrusterState(1, 1.0); // up
 			} else {
-				dt.ship->SetThrusterState(2, -1.0); // forward
+				dt.ship->SetLinThrusterState(2, -1.0); // forward
 			}
 			LuaEvent::Queue("onShipUndocked", dt.ship, this);
 		}

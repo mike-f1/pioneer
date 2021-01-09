@@ -77,10 +77,7 @@ public:
 		return tmp;
 	}
 
-	void AddFeature(Feature f) override;
 	void SetDecelerating(bool decel) { m_decelerating = decel; }
-	const Propulsion *GetPropulsion() const;
-	Propulsion *GetPropulsion();
 
 protected:
 	Json SaveToJson(Space *space) const override;
@@ -111,8 +108,6 @@ private:
 	// for time accel reduction fudge
 	vector3d m_lastForce;
 	vector3d m_lastTorque;
-
-	RefCountedPtr<Propulsion> m_propulsion;
 };
 
 #endif /* _DYNAMICBODY_H */

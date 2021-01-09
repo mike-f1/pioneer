@@ -29,7 +29,7 @@ enum Thruster { // <enum scope='Thruster' name=ShipTypeThruster prefix=THRUSTER_
 	THRUSTER_MAX // <enum skip>
 };
 
-class Propulsion : public RefCounted {
+class Propulsion {
 public:
 	// Inits:
 	Propulsion();
@@ -38,8 +38,8 @@ public:
 	void Init(DynamicBody *b, SceneGraph::Model *m, const int tank_mass, const double effExVel, const float lin_Thrust[], const float ang_Thrust);
 	void Init(DynamicBody *b, SceneGraph::Model *m, const int tank_mass, const double effExVel, const float lin_Thrust[], const float ang_Thrust, const float lin_AccelerationCap[]);
 
-	virtual void SaveToJson(Json &jsonObj, Space *space) const;
-	virtual void LoadFromJson(const Json &jsonObj, Space *space);
+	virtual Json SaveToJson() const;
+	virtual void LoadFromJson(const Json &jsonObj);
 
 	// Bonus:
 	void SetThrustPowerMult(double p, const float lin_Thrust[], const float ang_Thrust);

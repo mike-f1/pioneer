@@ -19,8 +19,7 @@ static const float KINETIC_ENERGY_MULT = 0.00001f;
 const double DynamicBody::DEFAULT_DRAG_COEFF = 0.1; // 'smooth sphere'
 
 DynamicBody::DynamicBody() :
-	ModelBody(),
-	m_propulsion(nullptr)
+	ModelBody()
 {
 	m_dragCoeff = DEFAULT_DRAG_COEFF;
 	m_flags = Body::FLAG_CAN_MOVE_FRAME;
@@ -50,8 +49,7 @@ DynamicBody::DynamicBody(const Json &jsonObj, Space *space) :
 	m_atmosForce(vector3d(0.0)),
 	m_gravityForce(vector3d(0.0)),
 	m_lastForce(vector3d(0.0)),
-	m_lastTorque(vector3d(0.0)),
-	m_propulsion(nullptr)
+	m_lastTorque(vector3d(0.0))
 {
 	m_flags = Body::FLAG_CAN_MOVE_FRAME;
 	m_oldPos = GetPosition();
@@ -105,15 +103,6 @@ void DynamicBody::PostLoadFixup(Space *space)
 
 DynamicBody::~DynamicBody()
 {
-	m_propulsion.Reset();
-}
-
-void DynamicBody::AddFeature(Feature f)
-{
-	Body::AddFeature(f);
-	if (f == Feature::PROPULSION && m_propulsion == nullptr) {
-		m_propulsion.Reset(new Propulsion());
-	}
 }
 
 void DynamicBody::SetForce(const vector3d &f)
@@ -139,18 +128,6 @@ void DynamicBody::AddRelForce(const vector3d &f)
 void DynamicBody::AddRelTorque(const vector3d &t)
 {
 	m_torque += GetOrient() * t;
-}
-
-const Propulsion *DynamicBody::GetPropulsion() const
-{
-	assert(m_propulsion != nullptr);
-	return m_propulsion.Get();
-}
-
-Propulsion *DynamicBody::GetPropulsion()
-{
-	assert(m_propulsion != nullptr);
-	return m_propulsion.Get();
 }
 
 void DynamicBody::SetTorque(const vector3d &t)

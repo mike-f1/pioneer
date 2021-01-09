@@ -51,7 +51,6 @@ const double Ship::DEFAULT_LIFT_TO_DRAG_RATIO = 0.001;
 
 Ship::Ship(const ShipType::Id &shipId) :
 	DynamicBody(),
-	FixedGuns(this),
 	m_controller(0),
 	m_flightState(FLYING),
 	m_alertState(ALERT_NONE),
@@ -60,9 +59,6 @@ Ship::Ship(const ShipType::Id &shipId) :
 	/*
 		THIS CODE DOES NOT RUN WHEN LOADING SAVEGAMES!!
 	*/
-
-	AddFeature(Feature::PROPULSION); // add component propulsion
-
 	Properties().Set("flightState", EnumStrings::GetString("ShipFlightState", m_flightState));
 	Properties().Set("alertStatus", EnumStrings::GetString("ShipAlertStatus", m_alertState));
 
@@ -124,15 +120,12 @@ Ship::Ship(const ShipType::Id &shipId) :
 }
 
 Ship::Ship(const Json &jsonObj, Space *space) :
-	DynamicBody(jsonObj, space),
-	FixedGuns(this)
+	DynamicBody(jsonObj, space)
 {
-	AddFeature(Feature::PROPULSION); // add component propulsion
-
 	try {
 		Json shipObj = jsonObj["ship"];
 
-		GetPropulsion()->LoadFromJson(shipObj, space);
+		Propulsion::LoadFromJson(shipObj["propulsion"]);
 
 		SetShipId(shipObj["ship_type_id"]); // XXX handle missing thirdparty ship
 		SetModel(m_type->modelName.c_str());
@@ -143,8 +136,8 @@ Ship::Ship(const Json &jsonObj, Space *space) :
 		FixedGuns::GetGunsTags(GetModel());
 		FixedGuns::LoadFromJson(shipObj["guns"]);
 
-		GetPropulsion()->SetFuelTankMass(GetShipType()->fuelTankMass);
-		m_stats.fuel_tank_mass_left = GetPropulsion()->FuelTankMassLeft();
+		Propulsion::SetFuelTankMass(GetShipType()->fuelTankMass);
+		m_stats.fuel_tank_mass_left = Propulsion::FuelTankMassLeft();
 
 		m_skin.LoadFromJson(shipObj);
 		m_skin.Apply(GetModel());
@@ -243,7 +236,7 @@ void Ship::Init()
 	p.Set("fuelMassLeft", m_stats.fuel_tank_mass_left);
 
 	// Init of Propulsion:
-	GetPropulsion()->Init(this, GetModel(), m_type->fuelTankMass, m_type->effectiveExhaustVelocity, m_type->linThrust, m_type->angThrust, m_type->linAccelerationCap);
+	Propulsion::Init(this, GetModel(), m_type->fuelTankMass, m_type->effectiveExhaustVelocity, m_type->linThrust, m_type->angThrust, m_type->linAccelerationCap);
 
 	p.Set("shipName", m_shipName);
 
@@ -279,7 +272,7 @@ Json Ship::SaveToJson(Space *space) const
 	Json shipObj;
 
 	shipObj["guns"] = FixedGuns::SaveToJson();
-	GetPropulsion()->SaveToJson(shipObj, space);
+	shipObj["propulsion"] =Propulsion::SaveToJson();
 
 	m_skin.SaveToJson(shipObj);
 	shipObj["wheel_transition"] = m_wheelTransition;
@@ -386,7 +379,7 @@ void Ship::SetPercentHull(float p)
 
 void Ship::UpdateMass()
 {
-	SetMass(((double)m_stats.static_mass + GetPropulsion()->FuelTankMassLeft()) * 1000);
+	SetMass(((double)m_stats.static_mass + Propulsion::FuelTankMassLeft()) * 1000);
 }
 
 template <typename T>
@@ -666,7 +659,7 @@ void Ship::UpdateEquipStats()
 	unsigned int thruster_power_cap = 0;
 	Properties().Get("thruster_power_cap", thruster_power_cap);
 	const double power_mul = m_type->thrusterUpgrades[Clamp(thruster_power_cap, 0U, 3U)];
-	GetPropulsion()->SetThrustPowerMult(power_mul, m_type->linThrust, m_type->angThrust);
+	Propulsion::SetThrustPowerMult(power_mul, m_type->linThrust, m_type->angThrust);
 
 	m_stats.hyperspace_range = m_stats.hyperspace_range_max = 0;
 	p.Set("hyperspaceRange", m_stats.hyperspace_range);
@@ -705,7 +698,7 @@ void Ship::UpdateGunsStats()
 
 void Ship::UpdateFuelStats()
 {
-	m_stats.fuel_tank_mass_left = GetPropulsion()->FuelTankMassLeft();
+	m_stats.fuel_tank_mass_left = Propulsion::FuelTankMassLeft();
 	Properties().Set("fuelMassLeft", m_stats.fuel_tank_mass_left);
 
 	UpdateMass();
@@ -886,7 +879,7 @@ void Ship::Blastoff()
 	SetFlightState(FLYING);
 
 	SetPosition(up * planetRadius - GetAabb().min.y * up);
-	SetThrusterState(1, 1.0); // thrust upwards
+	Propulsion::SetLinThrusterState(1, 1.0); // thrust upwards
 
 	LuaEvent::Queue("onShipTakeOff", this, f->GetBody());
 }
@@ -957,9 +950,9 @@ void Ship::TimeStepUpdate(const float timeStep)
 	// If docked, station is responsible for updating position/orient of ship
 	// but we call this crap anyway and hope it doesn't do anything bad
 
-	const vector3d thrust = GetPropulsion()->GetActualLinThrust();
+	const vector3d thrust = Propulsion::GetActualLinThrust();
 	AddRelForce(thrust);
-	AddRelTorque(GetPropulsion()->GetActualAngThrust());
+	AddRelTorque(Propulsion::GetActualAngThrust());
 
 	//apply extra atmospheric flight forces
 	AddTorque(CalcAtmoTorque());
@@ -987,14 +980,14 @@ void Ship::DoThrusterSounds() const
 	float v_env = (InGameViewsLocator::getInGameViews()->GetWorldView()->shipView.GetCameraController()->IsExternal() ? 1.0f : 0.5f) * Sound::GetSfxVolume();
 	static Sound::Event sndev;
 	float volBoth = 0.0f;
-	volBoth += 0.5f * fabs(GetPropulsion()->GetLinThrusterState().y);
-	volBoth += 0.5f * fabs(GetPropulsion()->GetLinThrusterState().z);
+	volBoth += 0.5f * fabs(Propulsion::GetLinThrusterState().y);
+	volBoth += 0.5f * fabs(Propulsion::GetLinThrusterState().z);
 
 	float targetVol[2] = { volBoth, volBoth };
-	if (GetPropulsion()->GetLinThrusterState().x > 0.0)
-		targetVol[0] += 0.5f * float(GetPropulsion()->GetLinThrusterState().x);
+	if (Propulsion::GetLinThrusterState().x > 0.0)
+		targetVol[0] += 0.5f * float(Propulsion::GetLinThrusterState().x);
 	else
-		targetVol[1] += -0.5f * float(GetPropulsion()->GetLinThrusterState().x);
+		targetVol[1] += -0.5f * float(Propulsion::GetLinThrusterState().x);
 
 	targetVol[0] = v_env * Clamp(targetVol[0], 0.0f, 1.0f);
 	targetVol[1] = v_env * Clamp(targetVol[1], 0.0f, 1.0f);
@@ -1003,7 +996,7 @@ void Ship::DoThrusterSounds() const
 		sndev.Play("Thruster_large", 0.0f, 0.0f, Sound::OP_REPEAT);
 		sndev.VolumeAnimate(targetVol, dv_dt);
 	}
-	float angthrust = 0.1f * v_env * float(GetPropulsion()->GetAngThrusterState().Length());
+	float angthrust = 0.1f * v_env * float(Propulsion::GetAngThrusterState().Length());
 
 	static Sound::Event angThrustSnd;
 	if (!angThrustSnd.VolumeAnimate(angthrust, angthrust, 5.0f, 5.0f)) {
@@ -1152,12 +1145,12 @@ void Ship::UpdateAlertState()
 
 void Ship::UpdateFuel(const float timeStep)
 {
-	GetPropulsion()->UpdateFuel(timeStep);
+	Propulsion::UpdateFuel(timeStep);
 	UpdateFuelStats();
 	Properties().Set("fuel", GetFuel() * 100); // XXX to match SetFuelPercent
 
-	if (GetPropulsion()->IsFuelStateChanged())
-		LuaEvent::Queue("onShipFuelChanged", this, EnumStrings::GetString("PropulsionFuelStatus", static_cast<std::underlying_type<Propulsion::FuelState>::type>(GetPropulsion()->GetFuelState())));
+	if (Propulsion::IsFuelStateChanged())
+		LuaEvent::Queue("onShipFuelChanged", this, EnumStrings::GetString("PropulsionFuelStatus", static_cast<std::underlying_type<Propulsion::FuelState>::type>(Propulsion::GetFuelState())));
 }
 
 void Ship::StaticUpdate(const float timeStep)
@@ -1392,7 +1385,7 @@ void Ship::Render(const Camera *camera, const vector3d &viewCoords, const matrix
 {
 	if (IsDead()) return;
 
-	GetPropulsion()->Render(camera, viewCoords, viewTransform);
+	Propulsion::Render(camera, viewCoords, viewTransform);
 
 	matrix3x3f mt;
 	matrix3x3dtof(viewTransform.Inverse().GetOrient(), mt);

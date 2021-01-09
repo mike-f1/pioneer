@@ -371,11 +371,11 @@ void PlayerShipController::PollControls(const float timeStep, const bool force_r
 		}
 
 		if (m_inputFrame->IsActive(m_inputBindings.thrustForward))
-			m_ship->SetThrusterState(2, -linearThrustPower * m_inputFrame->GetValue(m_inputBindings.thrustForward));
+			m_ship->SetLinThrusterState(2, -linearThrustPower * m_inputFrame->GetValue(m_inputBindings.thrustForward));
 		if (m_inputFrame->IsActive(m_inputBindings.thrustUp))
-			m_ship->SetThrusterState(1, linearThrustPower * m_inputFrame->GetValue(m_inputBindings.thrustUp));
+			m_ship->SetLinThrusterState(1, linearThrustPower * m_inputFrame->GetValue(m_inputBindings.thrustUp));
 		if (m_inputFrame->IsActive(m_inputBindings.thrustLeft))
-			m_ship->SetThrusterState(0, -linearThrustPower * m_inputFrame->GetValue(m_inputBindings.thrustLeft));
+			m_ship->SetLinThrusterState(0, -linearThrustPower * m_inputFrame->GetValue(m_inputBindings.thrustLeft));
 
 		auto fire = InputFWD::GetMouseMotion(MouseMotionBehaviour::Fire);
 		if (m_inputFrame->IsActive(m_inputBindings.primaryFire) || std::get<0>(fire)) {

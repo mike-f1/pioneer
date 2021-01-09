@@ -35,9 +35,10 @@ typedef int MountId;
 
 class FixedGuns {
 public:
-	FixedGuns() = delete;
-	FixedGuns(Body *b);
-	~FixedGuns();
+	FixedGuns() :
+		m_cooler_boost(1.0)
+	{}
+	~FixedGuns() = default;
 
 	Json SaveToJson() const;
 	void LoadFromJson(const Json &jsonObj);

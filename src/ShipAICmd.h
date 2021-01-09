@@ -65,7 +65,7 @@ public:
 
 protected:
 	DynamicBody *m_dBody;
-	RefCountedPtr<Propulsion> m_prop;
+	Propulsion *m_prop;
 	FixedGuns *m_fguns;
 
 	std::unique_ptr<AICommand> m_child;

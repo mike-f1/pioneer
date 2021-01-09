@@ -5,11 +5,12 @@
 #define _MISSILE_H
 
 #include "DynamicBody.h"
+#include "ship/Propulsion.h"
 #include "ShipType.h"
 
 class AICommand;
 
-class Missile final: public DynamicBody {
+class Missile final: public DynamicBody, public Propulsion {
 public:
 	OBJDEF(Missile, DynamicBody, MISSILE);
 	Missile() = delete;

@@ -15,19 +15,17 @@
 
 #include "Object.h" // <- here only for comment in AIFaceDirection (line 320)
 
-void Propulsion::SaveToJson(Json &jsonObj, Space *space) const
+Json Propulsion::SaveToJson() const
 {
-	//Json PropulsionObj(Json::objectValue); // Create JSON object to contain propulsion data.
+	Json jsonObj;
 	jsonObj["ang_thrusters"] = m_angThrusters;
 	jsonObj["thrusters"] = m_linThrusters;
 	jsonObj["thruster_fuel"] = m_thrusterFuel;
 	jsonObj["reserve_fuel"] = m_reserveFuel;
-	// !!! These are commented to avoid savegame bumps:
-	//jsonObj["tank_mass"] = m_fuelTankMass;
-	//jsonObj["propulsion"] = PropulsionObj;
+	return jsonObj;
 }
 
-void Propulsion::LoadFromJson(const Json &jsonObj, Space *space)
+void Propulsion::LoadFromJson(const Json &jsonObj)
 {
 	try {
 		SetAngThrusterState(jsonObj["ang_thrusters"]);

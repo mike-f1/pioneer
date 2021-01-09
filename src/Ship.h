@@ -49,7 +49,7 @@ struct HyperdriveSoundsTable {
 	std::string abort_sound;
 };
 
-class Ship : public DynamicBody, public FixedGuns {
+class Ship : public DynamicBody, public FixedGuns, public Propulsion {
 	friend class ShipController; //only controllers need access to AITimeStep
 	friend class PlayerShipController;
 
@@ -309,22 +309,6 @@ private:
 	std::unordered_map<Body *, uint8_t> m_relationsMap;
 
 	std::string m_shipName;
-
-public:
-	void ClearAngThrusterState() { GetPropulsion()->ClearAngThrusterState(); }
-	void ClearLinThrusterState() { GetPropulsion()->ClearLinThrusterState(); }
-	double GetAccelFwd() { return GetPropulsion()->GetAccelFwd(); }
-	void SetAngThrusterState(const vector3d &levels) { GetPropulsion()->SetAngThrusterState(levels); }
-	double GetFuel() const { return GetPropulsion()->GetFuel(); }
-	double GetAccel(Thruster thruster) const { return GetPropulsion()->GetAccel(thruster); }
-	void SetFuel(const double f) { GetPropulsion()->SetFuel(f); }
-	void SetFuelReserve(const double f) { GetPropulsion()->SetFuelReserve(f); }
-
-	bool AIMatchVel(const vector3d &vel) { return GetPropulsion()->AIMatchVel(vel); }
-	double AIFaceDirection(const vector3d &dir, double av = 0) { return GetPropulsion()->AIFaceDirection(dir, av); }
-	void AIMatchAngVelObjSpace(const vector3d &angvel) { return GetPropulsion()->AIMatchAngVelObjSpace(angvel); }
-	void SetThrusterState(int axis, double level) { return GetPropulsion()->SetLinThrusterState(axis, level); }
-	void AIModelCoordsMatchAngVel(const vector3d &desiredAngVel, double softness) { return GetPropulsion()->AIModelCoordsMatchAngVel(desiredAngVel, softness); }
 };
 
 #endif /* _SHIP_H */

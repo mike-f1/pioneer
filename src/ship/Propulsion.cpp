@@ -15,7 +15,7 @@
 
 #include "Object.h" // <- here only for comment in AIFaceDirection (line 320)
 
-void Propulsion::SaveToJson(Json &jsonObj, Space *space)
+void Propulsion::SaveToJson(Json &jsonObj, Space *space) const
 {
 	//Json PropulsionObj(Json::objectValue); // Create JSON object to contain propulsion data.
 	jsonObj["ang_thrusters"] = m_angThrusters;

@@ -77,7 +77,7 @@ DynamicBody::DynamicBody(const Json &jsonObj, Space *space) :
 	m_decelerating = false;
 }
 
-Json DynamicBody::SaveToJson(Space *space)
+Json DynamicBody::SaveToJson(Space *space) const
 {
 	Json jsonObj = ModelBody::SaveToJson(space);
 

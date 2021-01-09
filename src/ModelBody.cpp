@@ -100,7 +100,7 @@ ModelBody::~ModelBody()
 	DeleteGeoms();
 }
 
-Json ModelBody::SaveToJson(Space *space)
+Json ModelBody::SaveToJson(Space *space) const
 {
 	Json jsonObj = Body::SaveToJson(space);
 

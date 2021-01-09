@@ -85,7 +85,7 @@ void Player::SetShipType(const ShipType::Id &shipId)
 	InitCockpit();
 }
 
-Json Player::SaveToJson(Space *space)
+Json Player::SaveToJson(Space *space) const
 {
 	return Ship::SaveToJson(space);
 }

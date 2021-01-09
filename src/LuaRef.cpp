@@ -101,7 +101,7 @@ void LuaRef::PushCopyToStack() const
 	lua_remove(m_lua, -2);
 }
 
-void LuaRef::SaveToJson(Json &jsonObj)
+Json LuaRef::SaveToJson() const
 {
 	assert(m_lua && m_id != LUA_NOREF);
 
@@ -113,16 +113,18 @@ void LuaRef::SaveToJson(Json &jsonObj)
 
 	if (!serializer) {
 		LUA_DEBUG_END(m_lua, 0);
-		return;
+		return {};
 	}
 
 	Json out;
 	PushCopyToStack();
 	LuaSerializer::pickle_json(m_lua, -1, out);
 	lua_pop(m_lua, 1);
+	Json jsonObj;
 	jsonObj["lua_ref_json"] = out;
 
 	LUA_DEBUG_END(m_lua, 0);
+	return jsonObj;
 }
 
 void LuaRef::LoadFromJson(const Json &jsonObj)

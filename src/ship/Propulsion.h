@@ -38,7 +38,7 @@ public:
 	void Init(DynamicBody *b, SceneGraph::Model *m, const int tank_mass, const double effExVel, const float lin_Thrust[], const float ang_Thrust);
 	void Init(DynamicBody *b, SceneGraph::Model *m, const int tank_mass, const double effExVel, const float lin_Thrust[], const float ang_Thrust, const float lin_AccelerationCap[]);
 
-	virtual void SaveToJson(Json &jsonObj, Space *space);
+	virtual void SaveToJson(Json &jsonObj, Space *space) const;
 	virtual void LoadFromJson(const Json &jsonObj, Space *space);
 
 	// Bonus:

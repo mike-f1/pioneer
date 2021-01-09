@@ -15,7 +15,7 @@ public:
 	CargoBody(const LuaRef &cargo, float selfdestructTimer = 86400.0f); // default to 24 h lifetime
 	CargoBody(const Json &jsonObj, Space *space);
 
-	Json SaveToJson(Space *space) override;
+	Json SaveToJson(Space *space) const override;
 
 	LuaRef GetCargoType() const { return m_cargo; }
 	void SetLabel(const std::string &label) override;

@@ -83,7 +83,7 @@ public:
 	Propulsion *GetPropulsion();
 
 protected:
-	Json SaveToJson(Space *space) override;
+	Json SaveToJson(Space *space) const override;
 
 	static const double DEFAULT_DRAG_COEFF;
 

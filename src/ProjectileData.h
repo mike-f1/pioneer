@@ -42,7 +42,7 @@ struct ProjectileData {
 			throw SavedGameCorruptException();
 		}
 	}
-	Json SaveToJson()
+	Json SaveToJson() const
 	{
 		Json jsonObj;
 		jsonObj["life_span"] = lifespan;

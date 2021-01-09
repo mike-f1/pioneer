@@ -50,7 +50,7 @@ protected:
 
 	void InitTerrainBody();
 
-	Json SaveToJson(Space *space) override;
+	Json SaveToJson(Space *space) const override;
 
 private:
 	double m_mass;

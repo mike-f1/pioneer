@@ -5,6 +5,7 @@
 
 #include "LuaSerializer.h"
 #include "LuaUtils.h"
+#include "Json.h"
 
 PropertyMap::PropertyMap(LuaManager *lua)
 {
@@ -30,9 +31,9 @@ void PropertyMap::PushLuaTable()
 	m_table.PushCopyToStack();
 }
 
-void PropertyMap::SaveToJson(Json &jsonObj)
+Json PropertyMap::SaveToJson() const
 {
-	m_table.SaveToJson(jsonObj);
+	return m_table.SaveToJson();
 }
 
 void PropertyMap::LoadFromJson(const Json &jsonObj)

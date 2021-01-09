@@ -74,7 +74,7 @@ void HyperspaceCloud::SetIsArrival(bool isArrival)
 	SetLabel(isArrival ? Lang::HYPERSPACE_ARRIVAL_CLOUD : Lang::HYPERSPACE_DEPARTURE_CLOUD);
 }
 
-Json HyperspaceCloud::SaveToJson(Space *space)
+Json HyperspaceCloud::SaveToJson(Space *space) const
 {
 	Json jsonObj = Body::SaveToJson(space);
 

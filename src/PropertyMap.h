@@ -34,7 +34,7 @@ public:
 		return m_signals[k].connect(fn);
 	}
 
-	void SaveToJson(Json &jsonObj);
+	Json SaveToJson() const;
 	void LoadFromJson(const Json &jsonObj);
 
 private:

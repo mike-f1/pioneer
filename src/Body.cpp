@@ -38,7 +38,7 @@ Body::Body(const Json &jsonObj, Space *space) :
 	try {
 		Json bodyObj = jsonObj["body"];
 
-		Properties().LoadFromJson(bodyObj);
+		Properties().LoadFromJson(bodyObj["properties"]);
 		m_frame = bodyObj["index_for_frame"];
 		m_label = bodyObj["label"];
 		Properties().Set("label", m_label);
@@ -58,11 +58,11 @@ Body::~Body()
 {
 }
 
-Json Body::SaveToJson(Space *space)
+Json Body::SaveToJson(Space *space) const
 {
 	Json bodyObj = Json::object(); // Create JSON object to contain body data.
 
-	Properties().SaveToJson(bodyObj);
+	bodyObj["properties"] = Properties().SaveToJson();
 	bodyObj["index_for_frame"] = m_frame.id();
 	bodyObj["label"] = m_label;
 	bodyObj["dead"] = m_dead;

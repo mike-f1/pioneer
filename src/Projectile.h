@@ -29,7 +29,7 @@ public:
 	Projectile(const Json &jsonObj, Space *space);
 	virtual ~Projectile();
 
-	Json SaveToJson(Space *space) override;
+	Json SaveToJson(Space *space) const override;
 
 	void Render(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform) override;
 	void TimeStepUpdate(const float timeStep) override;

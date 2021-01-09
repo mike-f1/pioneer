@@ -34,7 +34,7 @@ CargoBody::CargoBody(const Json &jsonObj, Space *space) :
 	try {
 		Json cargoBodyObj = jsonObj["cargo_body"];
 
-		m_cargo.LoadFromJson(cargoBodyObj);
+		m_cargo.LoadFromJson(cargoBodyObj["cargo"]);
 		Init();
 		m_hitpoints = cargoBodyObj["hit_points"];
 		m_selfdestructTimer = cargoBodyObj["self_destruct_timer"];
@@ -45,13 +45,13 @@ CargoBody::CargoBody(const Json &jsonObj, Space *space) :
 	}
 }
 
-Json CargoBody::SaveToJson(Space *space)
+Json CargoBody::SaveToJson(Space *space) const
 {
 	Json jsonObj = DynamicBody::SaveToJson(space);
 
 	Json cargoBodyObj = Json::object(); // Create JSON object to contain cargo body data.
 
-	m_cargo.SaveToJson(cargoBodyObj);
+	cargoBodyObj["cargo"] = m_cargo.SaveToJson();
 	cargoBodyObj["hit_points"] = m_hitpoints;
 	cargoBodyObj["self_destruct_timer"] = m_selfdestructTimer;
 	cargoBodyObj["has_self_destruct"] = m_hasSelfdestruct;

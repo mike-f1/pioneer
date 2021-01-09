@@ -60,7 +60,7 @@ public:
 	Ship(const ShipType::Id &shipId);
 	virtual ~Ship();
 
-	Json SaveToJson(Space *space) override;
+	Json SaveToJson(Space *space) const override;
 
 	void SetFrame(FrameId fId) override;
 

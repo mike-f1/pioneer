@@ -38,7 +38,7 @@ void TerrainBody::InitTerrainBody()
 	m_maxFeatureHeight = (m_baseSphere->GetMaxFeatureHeight() + 1.0) * SystemBodyWrapper::GetSystemBodyRadius();
 }
 
-Json TerrainBody::SaveToJson(Space *space)
+Json TerrainBody::SaveToJson(Space *space) const
 {
 	Json jsonObj = Body::SaveToJson(space);
 

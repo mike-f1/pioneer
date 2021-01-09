@@ -37,7 +37,7 @@ public:
 	SpaceStation(const SystemBody *);
 	SpaceStation(const Json &jsonObj, Space *space);
 
-	Json SaveToJson(Space *space) override;
+	Json SaveToJson(Space *space) const override;
 
 	virtual ~SpaceStation();
 	virtual vector3d GetAngVelocity() const { return vector3d(0, m_type->AngVel(), 0); }

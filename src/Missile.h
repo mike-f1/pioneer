@@ -17,7 +17,7 @@ public:
 	Missile(const Json &jsonObj, Space *space);
 	virtual ~Missile();
 
-	Json SaveToJson(Space *space) override;
+	Json SaveToJson(Space *space) const override;
 
 	void StaticUpdate(const float timeStep) override;
 	void TimeStepUpdate(const float timeStep) override;

@@ -74,7 +74,7 @@ Missile::Missile(const Json &jsonObj, Space *space) :
 	GetPropulsion()->Init(this, GetModel(), m_type->fuelTankMass, m_type->effectiveExhaustVelocity, m_type->linThrust, m_type->angThrust);
 }
 
-Json Missile::SaveToJson(Space *space)
+Json Missile::SaveToJson(Space *space) const
 {
 	Json jsonObj = DynamicBody::SaveToJson(space);
 	GetPropulsion()->SaveToJson(jsonObj, space);

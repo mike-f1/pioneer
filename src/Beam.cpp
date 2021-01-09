@@ -165,7 +165,7 @@ Beam::~Beam()
 {
 }
 
-Json Beam::SaveToJson(Space *space)
+Json Beam::SaveToJson(Space *space) const
 {
 	Json jsonObj = Body::SaveToJson(space);
 

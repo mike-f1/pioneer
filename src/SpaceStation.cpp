@@ -102,11 +102,11 @@ void SpaceStation::Init()
 	SpaceStationType::Init();
 }
 
-Json SpaceStation::SaveToJson(Space *space)
+Json SpaceStation::SaveToJson(Space *space) const
 {
 	Json jsonObj = ModelBody::SaveToJson(space);
 
-	Json spaceStationObj({}); // Create JSON object to contain space station data.
+	Json spaceStationObj;
 
 	Json shipDockingArray = Json::array(); // Create JSON array to contain ship docking data.
 	for (uint32_t i = 0; i < m_shipDocking.size(); i++) {
@@ -126,7 +126,7 @@ Json SpaceStation::SaveToJson(Space *space)
 	// store each of the port details and bay IDs
 	Json portArray = Json::array(); // Create JSON array to contain port data.
 	for (uint32_t i = 0; i < m_ports.size(); i++) {
-		Json portArrayEl({}); // Create JSON object to contain port.
+		Json portArrayEl;
 
 		if (m_ports[i].inUse)
 			portArrayEl["in_use"] = m_ports[i].inUse;

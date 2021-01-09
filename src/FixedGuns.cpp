@@ -23,7 +23,7 @@ FixedGuns::~FixedGuns()
 {
 }
 
-Json FixedGuns::SaveToJson()
+Json FixedGuns::SaveToJson() const
 {
 	Json gunArray = Json::array(); // Create JSON array to contain gun data.
 
@@ -495,7 +495,7 @@ FixedGuns::GunData::GunData(const Json &jsonObj)
 	}
 }
 
-Json FixedGuns::GunData::SaveToJson()
+Json FixedGuns::GunData::SaveToJson() const
 {
 	Json jsonObj;
 	jsonObj["gd_name"] = gun_name;

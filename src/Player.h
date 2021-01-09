@@ -22,7 +22,7 @@ public:
 
 	~Player();
 
-	Json SaveToJson(Space *space) override;
+	Json SaveToJson(Space *space) const override;
 
 	void SetInputActive(bool active);
 

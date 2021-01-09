@@ -30,7 +30,7 @@ public:
 	Body(const Json &jsonObj, Space *space);
 	virtual ~Body();
 
-	virtual Json SaveToJson(Space *space);
+	virtual Json SaveToJson(Space *space) const;
 	virtual void PostLoadFixup(Space *space){};
 
 	virtual void SetPosition(const vector3d &p) { m_pos = p; }

@@ -39,7 +39,7 @@ public:
 	FixedGuns(Body *b);
 	~FixedGuns();
 
-	Json SaveToJson();
+	Json SaveToJson() const;
 	void LoadFromJson(const Json &jsonObj);
 
 	/* Reset&copy Mounts from a model
@@ -150,7 +150,7 @@ private:
 			projData(gd.projData)
 		{}
 		GunData(const Json &jsonObj);
-		Json SaveToJson();
+		Json SaveToJson() const;
 		std::string gun_name;
 		std::string sound;
 		float recharge;

@@ -272,7 +272,7 @@ void Ship::PostLoadFixup(Space *space)
 	m_controller->PostLoadFixup(space);
 }
 
-Json Ship::SaveToJson(Space *space)
+Json Ship::SaveToJson(Space *space) const
 {
 	Json jsonObj = DynamicBody::SaveToJson(space);
 

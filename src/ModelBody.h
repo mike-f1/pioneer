@@ -57,7 +57,7 @@ public:
 	void TimeStepUpdate(const float timeStep) override;
 
 protected:
-	Json SaveToJson(Space *space) override;
+	Json SaveToJson(Space *space) const override;
 
 	void SetLighting(const Camera *camera, std::vector<Graphics::Light> &oldLights, Color &oldAmbient);
 	void ResetLighting(const std::vector<Graphics::Light> &oldLights, const Color &oldAmbient);

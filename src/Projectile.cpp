@@ -163,7 +163,7 @@ Projectile::~Projectile()
 {
 }
 
-Json Projectile::SaveToJson(Space *space)
+Json Projectile::SaveToJson(Space *space) const
 {
 	Json jsonObj = Body::SaveToJson(space);
 

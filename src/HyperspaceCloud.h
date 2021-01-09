@@ -24,7 +24,7 @@ public:
 	HyperspaceCloud(const Json &jsonObj, Space *space);
 	virtual ~HyperspaceCloud();
 
-	Json SaveToJson(Space *space) override;
+	Json SaveToJson(Space *space) const override;
 
 	void SetVelocity(const vector3d &v) override { m_vel = v; }
 	vector3d GetVelocity() const override { return m_vel; }

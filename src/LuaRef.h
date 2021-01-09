@@ -27,7 +27,7 @@ public:
 
 	bool IsValid() const { return m_lua && m_id != LUA_NOREF; }
 
-	void SaveToJson(Json &jsonObj);
+	Json SaveToJson() const;
 	void LoadFromJson(const Json &jsonObj);
 	void Unref();
 

@@ -41,6 +41,7 @@ local mainButtonFontSize = 24 * (ui.screenHeight / 1200)
 local showQuitConfirm = false
 local quitConfirmMsg
 local max_flavours = 22
+local canContinue = false
 
 local startLocations = {
 	{['name']=lui.START_AT_MARS,
@@ -191,7 +192,7 @@ local function quitGame()
 end
 
 local function continueGame()
-	Game.LoadGame("_exit")
+	Game.LoadGame(canContinue)
 end
 
 local function startAtLocation(location)
@@ -208,7 +209,7 @@ local function startAtLocation(location)
 end
 
 local function mainMenu()
-	local canContinue = Game.CanLoadGame('_exit')
+	canContinue = Game.FindMostRecentSaveGame()
 	local buttons = 4
 
 	ui.withStyleColors({["WindowBg"] = colors.lightBlackBackground}, function()
@@ -258,6 +259,8 @@ local function callModules(mode)
 end
 
 local function showMainMenu()
+	canContinue = Game.FindMostRecentSaveGame()
+
 	ui.setNextWindowPos(Vector2(110,65),'Always')
 	ui.withStyleColors({["WindowBg"]=colors.transparent}, function()
 		ui.window("headingWindow", {"NoTitleBar","NoResize","NoFocusOnAppearing","NoBringToFrontOnFocus","AlwaysAutoResize"}, function()

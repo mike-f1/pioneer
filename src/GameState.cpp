@@ -57,6 +57,30 @@ Json GameStateStatic::LoadGameToJson(const std::string &filename)
 	return rootNode;
 }
 
+std::string GameStateStatic::FindMostRecentSaveGame()
+{
+	// Ensure save dir exist
+	if (!FileSystem::userFiles.MakeDirectory(GameConfSingleton::GetSaveDir())) {
+		throw CouldNotOpenFileException();
+	}
+
+	std::vector<FileSystem::FileInfo> files;
+	FileSystem::userFiles.ReadDirectory(GameConfSingleton::GetSaveDir(), files);
+
+	std::copy_if(begin(files), end(files), begin(files), [](const FileSystem::FileInfo &fi) {
+		if (!fi.IsFile()) return false;
+		return CanLoadGame(fi.GetName());
+	});
+
+	std::vector<FileSystem::FileInfo>::iterator min_el = std::min_element(
+		begin(files), end(files), [](const FileSystem::FileInfo &first, const FileSystem::FileInfo &second) {
+		return first.GetModificationTime() > second.GetModificationTime();
+	});
+
+	if (min_el == files.end()) return {};
+	return (*min_el).GetName();
+}
+
 void GameStateStatic::LoadGame(const std::string &filename)
 {
 	Output("Game::LoadGame('%s')\n", filename.c_str());

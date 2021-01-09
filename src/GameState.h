@@ -18,6 +18,7 @@ public:
 			const unsigned int cacheRadius = sectorRadius);
 
 	static Json LoadGameToJson(const std::string &filename);
+	static std::string FindMostRecentSaveGame();
 	// LoadGame and SaveGame throw exceptions on failure
 	static void LoadGame(const std::string &filename);
 	static bool CanLoadGame(const std::string &filename);

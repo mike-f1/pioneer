@@ -21,6 +21,16 @@
 
 static const int s_saveVersion = 90;
 
+bool canLoadGame(const std::string &filename)
+{
+	auto file = FileSystem::userFiles.ReadFile(FileSystem::JoinPathBelow(GameConfSingleton::GetSaveDir(), filename));
+	if (!file)
+		return false;
+
+	return true;
+	// file data is freed here
+}
+
 void GameStateStatic::MakeNewGame(const SystemPath &path,
 		const double startDateTime,
 		const unsigned int sectorRadius_)
@@ -57,7 +67,7 @@ Json GameStateStatic::LoadGameToJson(const std::string &filename)
 	return rootNode;
 }
 
-std::string GameStateStatic::FindMostRecentSaveGame()
+std::optional<std::vector<FileSystem::FileInfo>> readFilesaveDir()
 {
 	// Ensure save dir exist
 	if (!FileSystem::userFiles.MakeDirectory(GameConfSingleton::GetSaveDir())) {
@@ -69,16 +79,37 @@ std::string GameStateStatic::FindMostRecentSaveGame()
 
 	std::copy_if(begin(files), end(files), begin(files), [](const FileSystem::FileInfo &fi) {
 		if (!fi.IsFile()) return false;
-		return CanLoadGame(fi.GetName());
+		return canLoadGame(fi.GetName());
 	});
 
+	if (files.size() == 0) return {};
+	return files;
+}
+
+std::optional<std::string> GameStateStatic::FindMostRecentSaveGame()
+{
+	std::optional<std::vector<FileSystem::FileInfo>> files = readFilesaveDir();
+
+	if (!files) return {};
+
 	std::vector<FileSystem::FileInfo>::iterator min_el = std::min_element(
-		begin(files), end(files), [](const FileSystem::FileInfo &first, const FileSystem::FileInfo &second) {
+		begin((*files)), end((*files)), [](const FileSystem::FileInfo &first, const FileSystem::FileInfo &second) {
 		return first.GetModificationTime() > second.GetModificationTime();
 	});
 
-	if (min_el == files.end()) return {};
 	return (*min_el).GetName();
+}
+
+std::optional<std::vector<FileSystem::FileInfo>> GameStateStatic::CollectSaveGames()
+{
+	std::optional<std::vector<FileSystem::FileInfo>> files = readFilesaveDir();
+
+	if (!files) return {};
+
+	std::sort(begin((*files)), end((*files)), [] (const FileSystem::FileInfo &first, const FileSystem::FileInfo &second) {
+		return first.GetModificationTime() > second.GetModificationTime();
+	});
+	return files;
 }
 
 void GameStateStatic::LoadGame(const std::string &filename)
@@ -115,16 +146,6 @@ void GameStateStatic::LoadGame(const std::string &filename)
 	}
 
 	GameLocator::provideGame(game);
-}
-
-bool GameStateStatic::CanLoadGame(const std::string &filename)
-{
-	auto file = FileSystem::userFiles.ReadFile(FileSystem::JoinPathBelow(GameConfSingleton::GetSaveDir(), filename));
-	if (!file)
-		return false;
-
-	return true;
-	// file data is freed here
 }
 
 void GameStateStatic::SaveGame(const std::string &filename)

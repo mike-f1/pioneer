@@ -8,7 +8,6 @@ local Event = import('Event')
 local Lang = import("Lang")
 local lc = Lang.GetResource("core")
 local lui = Lang.GetResource("ui-core")
-local FileSystem = import("FileSystem")
 local Format = import("Format")
 
 local utils = import("utils")
@@ -72,28 +71,23 @@ local function getSaveTooltip(name)
 end
 
 local function showSaveFiles()
-	local ok, files, _ = pcall(FileSystem.ReadDirectory, "USER","savefiles")
-	if not ok then
-		print('Error: ' .. files)
-		saveFileCache = {}
-	else
-		table.sort(files, function(a,b) return (a.mtime.timestamp > b.mtime.timestamp) end)
-		ui.columns(2,"##saved_games",true)
-		for _,f in pairs(files) do
-			if ui.selectable(f.name, f.name == selectedSave, {"SpanAllColumns"}) then
-				selectedSave = f.name
-			end
-			if Engine.pigui.IsItemHovered() then
-				local tooltip = getSaveTooltip(f.name)
-				Engine.pigui.SetTooltip(tooltip)
-			end
-
-			ui.nextColumn()
-			ui.text(Format.Date(f.mtime.timestamp))
-			ui.nextColumn()
+	local files = Game.CollectSaveGames()
+	if not files then return end
+	ui.columns(2,"##saved_games",true)
+	for _,f in ipairs(files) do
+		if ui.selectable(f.name, f.name == selectedSave, {"SpanAllColumns"}) then
+			selectedSave = f.name
 		end
-		ui.columns(1,"",false)
+		if Engine.pigui.IsItemHovered() then
+			local tooltip = getSaveTooltip(f.name)
+			Engine.pigui.SetTooltip(tooltip)
+		end
+
+		ui.nextColumn()
+		ui.text(Format.Date(f.mtime.timestamp))
+		ui.nextColumn()
 	end
+	ui.columns(1,"",false)
 end
 
 local function closeAndClearCache()

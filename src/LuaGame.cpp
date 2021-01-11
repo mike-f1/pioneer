@@ -185,40 +185,6 @@ static int l_game_load_game(lua_State *l)
 }
 
 /*
- * Function: CanLoadGame
- *
- * Does file exist for loading.
- *
- * > Game.CanLoadGame(filename)
- *
- * Parameters:
- *
- *   filename - Filename to find.
- *
- * Return:
- *
- *   bool - can the filename be found to load
- *
- * Availability:
- *
- *   YYYY - MM - DD
- *   2016 - 06 - 25
- *
- * Status:
- *
- *   experimental
- */
-static int l_game_can_load_game(lua_State *l)
-{
-	const std::string filename(luaL_checkstring(l, 1));
-
-	bool success = GameStateStatic::CanLoadGame(filename);
-	lua_pushboolean(l, success);
-
-	return 1;
-}
-
-/*
  * Function: GetMostRecentSaveGame
  *
  * Get the name of the most recent savegame or a boolean false if
@@ -244,11 +210,72 @@ static int l_game_can_load_game(lua_State *l)
  */
 static int l_game_most_recent_file_name(lua_State *l)
 {
-	const std::string filename = GameStateStatic::FindMostRecentSaveGame();
+	const auto filename = GameStateStatic::FindMostRecentSaveGame();
 
-	if (filename.empty()) lua_pushboolean(l, false);
-	else lua_pushlstring(l, filename.c_str(), filename.size());
+	if (!filename) lua_pushboolean(l, false);
+	else lua_pushlstring(l, filename.value().c_str(), filename.value().size());
 
+	return 1;
+}
+
+/*
+ * Function: CollectSaveGames
+ *
+ * Get the list of savegames which are in default folder
+ *
+ * > Game.CollectSaveGames()
+ *
+ * Parameters:
+ *
+ *   -
+ *
+ * Return:
+ *
+ *   table of strings representing filenames or false
+ *
+ * Availability:
+ *
+ *   Gen 2020
+ *
+ * Status:
+ *
+ *   experimental
+ */
+
+static void push_date_time(lua_State *l, const Time::DateTime &dt)
+{
+	int year, month, day, hour, minute, second;
+	dt.GetDateParts(&year, &month, &day);
+	dt.GetTimeParts(&hour, &minute, &second);
+
+	lua_newtable(l);
+	pi_lua_settable(l, "year", year);
+	pi_lua_settable(l, "month", month);
+	pi_lua_settable(l, "day", day);
+	pi_lua_settable(l, "hour", hour);
+	pi_lua_settable(l, "minute", minute);
+	pi_lua_settable(l, "second", second);
+	pi_lua_settable(l, "timestamp", dt.ToGameTime());
+}
+void pi_lua_generic_push(lua_State *l, const Time::DateTime dt) { push_date_time(l, dt); }
+
+static int l_game_collect_savegames(lua_State *l)
+{
+	const auto filenames = GameStateStatic::CollectSaveGames();
+
+	if (!filenames) lua_pushboolean(l, false);
+	else {
+		LuaTable result(l, 0, (*filenames).size());
+		int index = 1;
+		for (const auto &fileInfo : (*filenames)) {
+			LuaTable fi(l, 0, 2);
+			fi.Set("name", fileInfo.GetName());
+			fi.Set("mtime", fileInfo.GetModificationTime());
+			result.Set(index++, fi);
+			lua_pop(l,1);
+		}
+		LuaPush(l, result);
+	}
 	return 1;
 }
 
@@ -659,8 +686,8 @@ void LuaGame::Register()
 	static const luaL_Reg l_methods[] = {
 		{ "StartGame", l_game_start_game },
 		{ "LoadGame", l_game_load_game },
-		{ "CanLoadGame", l_game_can_load_game },
 		{ "FindMostRecentSaveGame", l_game_most_recent_file_name },
+		{ "CollectSaveGames", l_game_collect_savegames },
 		{ "SaveGame", l_game_save_game },
 		{ "EndGame", l_game_end_game },
 		{ "InHyperspace", l_game_in_hyperspace },

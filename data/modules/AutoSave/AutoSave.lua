@@ -1,18 +1,14 @@
 local Game = import("Game")
 local Engine = import("Engine")
 local Event = import("Event")
-local FileSystem = import("FileSystem")
 
 local max_autosaves = 9
 
 local function PickNextAutosave()
-	local ok, files, _ = pcall(FileSystem.ReadDirectory, 'USER', 'savefiles')
-	if not ok then
-		print('Error picking auto-save')
-		return '_autosave1'
-	end
+	local files = Game.CollectSaveGames()
+	if not files then return '_autosave1' end
 
-	-- find the most recent autosave
+-- find the most recent autosave
 	local next_save_number = 1
 	local best_tstamp
 	for i = 1, #files do

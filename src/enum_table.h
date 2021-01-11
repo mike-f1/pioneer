@@ -18,7 +18,6 @@ struct EnumTable {
 
 extern const struct EnumItem ENUM_ShipAIError[];
 extern const struct EnumItem ENUM_DetailLevel[];
-extern const struct EnumItem ENUM_FileSystemRoot[];
 extern const struct EnumItem ENUM_PhysicsObjectType[];
 extern const struct EnumItem ENUM_PolitEcon[];
 extern const struct EnumItem ENUM_PolitGovType[];

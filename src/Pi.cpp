@@ -13,7 +13,6 @@
 #include "LuaConstants.h"
 #include "LuaDev.h"
 #include "LuaEngine.h"
-#include "LuaFileSystem.h"
 #include "LuaFormat.h"
 #include "LuaGame.h"
 #include "input/LuaInput.h"
@@ -248,7 +247,6 @@ void Pi::LuaInit()
 	LuaLang::Register();
 	LuaEngine::Register();
 	LuaInput::Register();
-	LuaFileSystem::Register();
 	LuaJson::Register();
 #ifdef ENABLE_SERVER_AGENT
 	LuaServerAgent::Register();

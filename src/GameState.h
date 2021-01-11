@@ -1,8 +1,10 @@
 #ifndef GAMESTATE_H
 #define GAMESTATE_H
 
+#include "FileSystem.h"
 #include "JsonFwd.h"
 #include <string>
+#include <optional>
 
 class SystemPath;
 
@@ -18,10 +20,10 @@ public:
 			const unsigned int cacheRadius = sectorRadius);
 
 	static Json LoadGameToJson(const std::string &filename);
-	static std::string FindMostRecentSaveGame();
+	static std::optional<std::string> FindMostRecentSaveGame();
+	static std::optional<std::vector<FileSystem::FileInfo>> CollectSaveGames();
 	// LoadGame and SaveGame throw exceptions on failure
 	static void LoadGame(const std::string &filename);
-	static bool CanLoadGame(const std::string &filename);
 	static void SaveGame(const std::string &filename);
 
 protected:

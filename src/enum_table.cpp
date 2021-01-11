@@ -7,7 +7,6 @@
 #include "enum_table.h"
 #include "DynamicBody.h"
 #include "LuaEngine.h"
-#include "LuaFileSystem.h"
 #include "Object.h"
 #include "Ship.h"
 #include "ShipAICmd.h"
@@ -44,12 +43,6 @@ const struct EnumItem ENUM_DetailLevel[] = {
 	{ "MEDIUM", int(LuaEngine::DETAIL_MEDIUM) },
 	{ "HIGH", int(LuaEngine::DETAIL_HIGH) },
 	{ "VERY_HIGH", int(LuaEngine::DETAIL_VERY_HIGH) },
-	{ 0, 0 },
-};
-
-const struct EnumItem ENUM_FileSystemRoot[] = {
-	{ "USER", int(LuaFileSystem::ROOT_USER) },
-	{ "DATA", int(LuaFileSystem::ROOT_DATA) },
 	{ 0, 0 },
 };
 
@@ -487,7 +480,6 @@ const struct EnumItem ENUM_UIFont[] = {
 const struct EnumTable ENUM_TABLES[] = {
 	{ "ShipAIError", ENUM_ShipAIError },
 	{ "DetailLevel", ENUM_DetailLevel },
-	{ "FileSystemRoot", ENUM_FileSystemRoot },
 	{ "PhysicsObjectType", ENUM_PhysicsObjectType },
 	{ "PolitEcon", ENUM_PolitEcon },
 	{ "PolitGovType", ENUM_PolitGovType },
@@ -532,7 +524,6 @@ const struct EnumTable ENUM_TABLES[] = {
 const struct EnumTable ENUM_TABLES_PUBLIC[] = {
 	{ "ShipAIError", ENUM_ShipAIError },
 	{ "DetailLevel", ENUM_DetailLevel },
-	{ "FileSystemRoot", ENUM_FileSystemRoot },
 	{ "PhysicsObjectType", ENUM_PhysicsObjectType },
 	{ "PolitEcon", ENUM_PolitEcon },
 	{ "PolitGovType", ENUM_PolitGovType },

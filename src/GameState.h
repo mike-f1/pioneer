@@ -1,6 +1,7 @@
 #ifndef GAMESTATE_H
 #define GAMESTATE_H
 
+#include "DateTime.h"
 #include "FileSystem.h"
 #include "JsonFwd.h"
 #include <string>
@@ -29,6 +30,9 @@ public:
 protected:
 
 private:
+	static std::optional<std::vector<FileSystem::FileInfo>> ReadFilesaveDir();
+	inline static std::vector<FileSystem::FileInfo> m_savefiles;
+	inline static Time::DateTime m_last_access_to_saves;
 };
 
 #endif // GAMESTATE_H

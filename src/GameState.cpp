@@ -67,28 +67,43 @@ Json GameStateStatic::LoadGameToJson(const std::string &filename)
 	return rootNode;
 }
 
-std::optional<std::vector<FileSystem::FileInfo>> readFilesaveDir()
+std::vector<FileSystem::FileInfo> updateFilesaveDir()
+{
+	std::vector<FileSystem::FileInfo> files;
+	FileSystem::userFiles.ReadDirectory(GameConfSingleton::GetSaveDir(), files);
+	return files;
+}
+
+std::optional<std::vector<FileSystem::FileInfo>> GameStateStatic::ReadFilesaveDir()
 {
 	// Ensure save dir exist
 	if (!FileSystem::userFiles.MakeDirectory(GameConfSingleton::GetSaveDir())) {
 		throw CouldNotOpenFileException();
 	}
 
-	std::vector<FileSystem::FileInfo> files;
-	FileSystem::userFiles.ReadDirectory(GameConfSingleton::GetSaveDir(), files);
+	FileSystem::FileInfo filesave_dir = FileSystem::userFiles.Lookup(GameConfSingleton::GetSaveDir());
+	if (filesave_dir.GetModificationTime() != m_last_access_to_saves) {
+		m_last_access_to_saves = filesave_dir.GetModificationTime();
 
-	std::copy_if(begin(files), end(files), begin(files), [](const FileSystem::FileInfo &fi) {
-		if (!fi.IsFile()) return false;
-		return canLoadGame(fi.GetName());
-	});
+		//TODO: Better algorithm here, there's need to check for differencse instead of discarding
+		// the old list...
+		m_savefiles = updateFilesaveDir();
 
-	if (files.size() == 0) return {};
-	return files;
+		std::copy_if(begin(m_savefiles), end(m_savefiles), begin(m_savefiles), [](const FileSystem::FileInfo &fi) {
+			if (!fi.IsFile()) return false;
+			return canLoadGame(fi.GetName());
+		});
+	} else {
+		//Output("No updates, keep the same files...\n");
+	}
+
+	if (m_savefiles.empty()) return {};
+	return m_savefiles;
 }
 
 std::optional<std::string> GameStateStatic::FindMostRecentSaveGame()
 {
-	std::optional<std::vector<FileSystem::FileInfo>> files = readFilesaveDir();
+	std::optional<std::vector<FileSystem::FileInfo>> files = ReadFilesaveDir();
 
 	if (!files) return {};
 
@@ -102,7 +117,7 @@ std::optional<std::string> GameStateStatic::FindMostRecentSaveGame()
 
 std::optional<std::vector<FileSystem::FileInfo>> GameStateStatic::CollectSaveGames()
 {
-	std::optional<std::vector<FileSystem::FileInfo>> files = readFilesaveDir();
+	std::optional<std::vector<FileSystem::FileInfo>> files = ReadFilesaveDir();
 
 	if (!files) return {};
 

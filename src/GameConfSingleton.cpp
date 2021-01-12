@@ -15,7 +15,7 @@ bool GameConfSingleton::hudTrailsDisplayed = false;
 bool GameConfSingleton::bRefreshBackgroundStars = true;
 float GameConfSingleton::amountOfBackgroundStarsDisplayed = 1.0f;
 
-const char GameConfSingleton::SAVE_DIR_NAME[] = "savefiles";
+constexpr char GameConfSingleton::SAVE_DIR_NAME[] = "savefiles";
 
 void GameConfSingleton::Init(const GameConfig::map_string &override_)
 {

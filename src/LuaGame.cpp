@@ -103,7 +103,7 @@ static int l_game_savegame_stats(lua_State *l)
 	std::string filename = LuaPull<std::string>(l, 1);
 
 	try {
-		Json rootNode = GameStateStatic::LoadGameToJson(filename);
+		Json rootNode = GameStateStatic::PickJsonLoadGame(filename);
 
 		LuaTable t(l, 0, 3);
 

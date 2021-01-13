@@ -27,6 +27,7 @@ namespace JsonUtils {
 	// files with the the name <filename>.patch as Json Merge Patch (RFC 7386) files
 	Json LoadJsonDataFile(const std::string &filename, bool with_merge = true);
 	// Loads an optionally-gzipped, optionally-CBOR encoded JSON file from the specified source.
+	Json LoadJsonSaveFile(RefCountedPtr<FileSystem::FileData> fd);
 	Json LoadJsonSaveFile(const std::string &filename, FileSystem::FileSource &source);
 } // namespace JsonUtils
 

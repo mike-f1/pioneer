@@ -193,6 +193,7 @@ endif (MSVC)
 
 find_package(Freetype REQUIRED)
 find_package(OpenGL REQUIRED)
+find_package(Threads)
 
 add_subdirectory(contrib/lz4)
 
@@ -287,7 +288,7 @@ if (WIN32)
 	list(APPEND winLibs shlwapi)
 endif (WIN32)
 
-target_link_libraries(${PROJECT_NAME} LINK_PRIVATE ${pioneerLibs} ${winLibs})
+target_link_libraries(${PROJECT_NAME} LINK_PRIVATE ${pioneerLibs} ${winLibs}  ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(modelcompiler LINK_PRIVATE ${pioneerLibs} ${winLibs})
 target_link_libraries(savegamedump LINK_PRIVATE ${SDL2_LIBRARIES} ${SDL2_IMAGE_LIBRARIES} profiler lz4 ${winLibs})
 

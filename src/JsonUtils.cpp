@@ -72,8 +72,14 @@ namespace JsonUtils {
 	Json LoadJsonSaveFile(const std::string &filename, FileSystem::FileSource &source)
 	{
 		auto file = source.ReadFile(filename);
-		if (!file) return nullptr;
-		const auto file_data = std::string(file->GetData(), file->GetSize());
+		if (!file) return {};
+		return LoadJsonSaveFile(file);
+	}
+
+	Json LoadJsonSaveFile(RefCountedPtr<FileSystem::FileData> fd)
+	{
+		if (!fd) return {};
+		const auto file_data = std::string(fd->GetData(), fd->GetSize());
 		const unsigned char *dataPtr = reinterpret_cast<const unsigned char *>(&file_data[0]);
 		try {
 			std::string plain_data;
@@ -91,11 +97,11 @@ namespace JsonUtils {
 				else
 					return Json::from_cbor(plain_data);
 			} catch (Json::parse_error &e) {
-				Output("error in JSON file '%s': %s\n", file->GetInfo().GetPath().c_str(), e.what());
-				return nullptr;
+				Output("error in JSON file '%s': %s\n", fd->GetInfo().GetPath().c_str(), e.what());
+				return {};
 			}
 		} catch (gzip::DecompressionFailedException) {
-			return nullptr;
+			return {};
 		}
 	}
 } // namespace JsonUtils

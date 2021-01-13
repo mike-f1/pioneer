@@ -12,6 +12,7 @@
 #include "GZipFormat.h"
 #include "InGameViews.h"
 #include "InGameViewsLocator.h"
+#include "Json.h"
 #include "input/Input.h"
 #include "input/InputLocator.h"
 #include "Player.h"
@@ -19,17 +20,75 @@
 #include "galaxy/StarSystem.h"
 #include "libs/utils.h"
 
+#include <chrono>
+
 static const int s_saveVersion = 90;
 
-bool canLoadGame(const std::string &filename)
-{
-	auto file = FileSystem::userFiles.ReadFile(FileSystem::JoinPathBelow(GameConfSingleton::GetSaveDir(), filename));
-	if (!file)
-		return false;
+struct {
+	bool operator()(const FileSystem::FileInfo& a, const FileSystem::FileInfo& b) const {
+		return a.GetModificationTime() > b.GetModificationTime();
+	}
+} saves_modtime_comparator;
 
-	return true;
-	// file data is freed here
+GameStateStatic::jsonSave canLoadGame(const FileSystem::FileInfo &fi)
+{
+	Json rootNode = JsonUtils::LoadJsonSaveFile(fi.Read());
+
+	if (!rootNode.is_object()) return { {}, false };
+	if (!rootNode["version"].is_number_integer() || rootNode["version"].get<int>() != s_saveVersion) return { {}, false };
+
+	return { rootNode, true };
 }
+
+GameStateStatic::AutoThread::AutoThread() : m_active(true),
+	m_savefiles_watcher([&]() {
+		while (m_active) {
+			std::this_thread::sleep_for(std::chrono::seconds(1));
+
+			if (!FileSystem::userFiles.MakeDirectory(GameConfSingleton::GetSaveDir())) {
+				throw CouldNotOpenFileException();
+			}
+
+			t_vec_fileinfo files;
+			FileSystem::userFiles.ReadDirectory(GameConfSingleton::GetSaveDir(), files);
+
+			m_preloaded_savefiles_lock.store(true);
+			// Remove erased files:
+			for (auto it = begin(m_preloaded_savefiles); it != end(m_preloaded_savefiles);/*nothing*/) {
+				const auto &found = find_if(begin(files), end(files), [&it](const auto &new_fi) {
+					return (it->first.GetName() == new_fi.GetName());
+				});
+				if (found == files.end()) {
+					it = m_preloaded_savefiles.erase(it);
+				} else {
+					it++;
+				}
+			}
+			// Look for added or changed files:
+			std::for_each(begin(files), end(files), [&](const auto &new_fi) {
+				const auto found = find_if(begin(m_preloaded_savefiles), end(m_preloaded_savefiles), [&new_fi](const auto &pair) {
+					return (pair.first.GetName() == new_fi.GetName());
+				});
+				if (found == m_preloaded_savefiles.end()) {
+					// No same name found, try loading and store
+					m_preloaded_savefiles[new_fi] = canLoadGame(new_fi);
+				} else {
+					// Name is equal,it's an overwrite?
+					if ((*found).first.GetModificationTime() != new_fi.GetModificationTime()) {
+						m_preloaded_savefiles.erase(found);
+						m_preloaded_savefiles[new_fi] = canLoadGame(new_fi);
+					}
+				}
+			});
+			m_preloaded_savefiles_lock.store(false);
+		};
+		Output("Exiting savefiles monitor...\n");
+	})
+{
+	Output("Savefiles monitor up and running...\n");
+}
+
+GameStateStatic::AutoThread GameStateStatic::savefiles_watcher;
 
 void GameStateStatic::MakeNewGame(const SystemPath &path,
 		const double startDateTime,
@@ -44,7 +103,7 @@ void GameStateStatic::MakeNewGame(const SystemPath &path,
 
 	InputLocator::getInput()->InitGame();
 
-	// Sub optimal: need a better way to couple inGameViews to game
+	// TODO: Sub optimal: need a better way to couple inGameViews to game
 	InGameViewsLocator::NewInGameViews(new InGameViews(game, path, sectorRadius_));
 
 	// Here because 'l_game_attr_player' would have
@@ -53,96 +112,58 @@ void GameStateStatic::MakeNewGame(const SystemPath &path,
 	game->EmitPauseState(game->IsPaused());
 }
 
-Json GameStateStatic::LoadGameToJson(const std::string &filename)
+const Json GameStateStatic::PickJsonLoadGame(const std::string &filename)
 {
-	Json rootNode = JsonUtils::LoadJsonSaveFile(FileSystem::JoinPathBelow(GameConfSingleton::GetSaveDir(), filename), FileSystem::userFiles);
-	if (!rootNode.is_object()) {
-		Output("Loading saved game '%s' failed.\n", filename.c_str());
-		throw SavedGameCorruptException();
-	}
-	if (!rootNode["version"].is_number_integer() || rootNode["version"].get<int>() != s_saveVersion) {
-		Output("Loading saved game '%s' failed: wrong save file version.\n", filename.c_str());
-		throw SavedGameCorruptException();
-	}
-	return rootNode;
+	const auto found = std::find_if(begin(m_preloaded_savefiles), end(m_preloaded_savefiles), [&filename](const auto &pair) {
+		return (pair.first.GetName() == filename);
+	});
+
+	if (found != m_preloaded_savefiles.end()) return (*found).second.value;
+	else return {};
 }
 
-std::vector<FileSystem::FileInfo> updateFilesaveDir()
+t_vec_fileinfo GameStateStatic::ReadFilesaveDir()
 {
-	std::vector<FileSystem::FileInfo> files;
-	FileSystem::userFiles.ReadDirectory(GameConfSingleton::GetSaveDir(), files);
-	return files;
-}
-
-std::optional<std::vector<FileSystem::FileInfo>> GameStateStatic::ReadFilesaveDir()
-{
-	// Ensure save dir exist
-	if (!FileSystem::userFiles.MakeDirectory(GameConfSingleton::GetSaveDir())) {
-		throw CouldNotOpenFileException();
+	while (m_preloaded_savefiles_lock.load()) {
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	}
+	t_vec_fileinfo savefiles;
+	savefiles.reserve(m_preloaded_savefiles.size());
 
-	FileSystem::FileInfo filesave_dir = FileSystem::userFiles.Lookup(GameConfSingleton::GetSaveDir());
-	if (filesave_dir.GetModificationTime() != m_last_access_to_saves) {
-		m_last_access_to_saves = filesave_dir.GetModificationTime();
+	std::for_each(begin(m_preloaded_savefiles), end(m_preloaded_savefiles), [&savefiles](const auto &pair) {
+		if (pair.second.valid) savefiles.push_back(pair.first);
+	});
 
-		//TODO: Better algorithm here, there's need to check for differencse instead of discarding
-		// the old list...
-		m_savefiles = updateFilesaveDir();
-
-		std::copy_if(begin(m_savefiles), end(m_savefiles), begin(m_savefiles), [](const FileSystem::FileInfo &fi) {
-			if (!fi.IsFile()) return false;
-			return canLoadGame(fi.GetName());
-		});
-	} else {
-		//Output("No updates, keep the same files...\n");
-	}
-
-	if (m_savefiles.empty()) return {};
-	return m_savefiles;
+	return savefiles;
 }
 
 std::optional<std::string> GameStateStatic::FindMostRecentSaveGame()
 {
-	std::optional<std::vector<FileSystem::FileInfo>> files = ReadFilesaveDir();
+	t_vec_fileinfo savefiles = ReadFilesaveDir();
 
-	if (!files) return {};
+	if (savefiles.empty()) return {};
 
-	std::vector<FileSystem::FileInfo>::iterator min_el = std::min_element(
-		begin((*files)), end((*files)), [](const FileSystem::FileInfo &first, const FileSystem::FileInfo &second) {
-		return first.GetModificationTime() > second.GetModificationTime();
-	});
+	const auto most_recent = std::min_element(begin(savefiles), end(savefiles), saves_modtime_comparator);
 
-	return (*min_el).GetName();
+	return (*most_recent).GetName();
 }
 
-std::optional<std::vector<FileSystem::FileInfo>> GameStateStatic::CollectSaveGames()
+std::optional<t_vec_fileinfo> GameStateStatic::CollectSaveGames()
 {
-	std::optional<std::vector<FileSystem::FileInfo>> files = ReadFilesaveDir();
+	t_vec_fileinfo savefiles = ReadFilesaveDir();
 
-	if (!files) return {};
+	if (savefiles.empty()) return {};
 
-	std::sort(begin((*files)), end((*files)), [] (const FileSystem::FileInfo &first, const FileSystem::FileInfo &second) {
-		return first.GetModificationTime() > second.GetModificationTime();
-	});
-	return files;
+	std::sort(begin(savefiles), end(savefiles), saves_modtime_comparator);
+
+	return savefiles;
 }
 
 void GameStateStatic::LoadGame(const std::string &filename)
 {
 	Output("Game::LoadGame('%s')\n", filename.c_str());
 
-	Json rootNode = LoadGameToJson(filename);
-
-	try {
-		int version = rootNode["version"];
-		Output("savefile version: %d\n", version);
-		if (version != s_saveVersion) {
-			Output("can't load savefile, expected version: %d\n", s_saveVersion);
-			throw SavedGameWrongVersionException();
-		}
-	} catch (Json::type_error &) {
-		throw SavedGameCorruptException();
-	}
+	Json rootNode = PickJsonLoadGame(filename);
 
 	Game *game = nullptr;
 
@@ -202,6 +223,7 @@ void GameStateStatic::SaveGame(const std::string &filename)
 		jsonData = Json::to_cbor(rootNode); // Convert the JSON data to CBOR.
 	}
 
+	auto save = [&filename, &jsonData]() {
 	FILE *f = FileSystem::userFiles.OpenWriteStream(FileSystem::JoinPathBelow(GameConfSingleton::GetSaveDir(), filename));
 	if (!f) throw CouldNotOpenFileException();
 
@@ -217,7 +239,8 @@ void GameStateStatic::SaveGame(const std::string &filename)
 		fclose(f);
 		throw CouldNotWriteToFileException();
 	}
-
+	};
+	save();
 #ifdef PIONEER_PROFILER
 	Profiler::dumphtml(profilerPath.c_str());
 #endif

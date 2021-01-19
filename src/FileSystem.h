@@ -210,9 +210,9 @@ namespace FileSystem {
 		explicit FileSourceFS(const std::string &root, bool trusted = false);
 		~FileSourceFS();
 
-		virtual FileInfo Lookup(const std::string &path) override;
-		virtual RefCountedPtr<FileData> ReadFile(const std::string &path) override;
-		virtual bool ReadDirectory(const std::string &path, std::vector<FileInfo> &output) override;
+		FileInfo Lookup(const std::string &path) override;
+		RefCountedPtr<FileData> ReadFile(const std::string &path) override;
+		bool ReadDirectory(const std::string &path, std::vector<FileInfo> &output) override;
 
 		bool MakeDirectory(const std::string &path);
 
@@ -238,10 +238,10 @@ namespace FileSystem {
 		void AppendSource(FileSource *fs);
 		void RemoveSource(FileSource *fs);
 
-		virtual FileInfo Lookup(const std::string &path) override;
+		FileInfo Lookup(const std::string &path) override;
 		std::vector<FileInfo> LookupAll(const std::string &path);
-		virtual RefCountedPtr<FileData> ReadFile(const std::string &path) override;
-		virtual bool ReadDirectory(const std::string &path, std::vector<FileInfo> &output) override;
+		RefCountedPtr<FileData> ReadFile(const std::string &path) override;
+		bool ReadDirectory(const std::string &path, std::vector<FileInfo> &output) override;
 
 	private:
 		std::vector<FileSource *> m_sources;

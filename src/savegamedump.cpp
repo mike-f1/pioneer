@@ -2,7 +2,7 @@
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "FileSystem.h"
-#include "GZipFormat.h"
+#include "LZ4Format.h"
 #include "Json.h"
 #include <SDL.h>
 
@@ -12,7 +12,8 @@ extern "C" int main(int argc, char **argv)
 		printf(
 			"savegamedump - Dump saved games to JSON for easy inspection.\n"
 			"All paths are relative to the pioneer data folder.\n"
-			"USAGE: savegamedump <input> [output]\n");
+			"USAGE: savegamedump <input> [output]\n"
+			"EXAMPLE savefiles/_quicksave , where savefiles is default save dir\n");
 		return 1;
 	}
 	std::string filename = argv[1];
@@ -34,7 +35,7 @@ extern "C" int main(int argc, char **argv)
 	const auto compressed_data = file->AsByteRange();
 	Json rootNode;
 	try {
-		const std::string plain_data = gzip::DecompressDeflateOrGZip(reinterpret_cast<const unsigned char *>(compressed_data.begin), compressed_data.Size());
+		const std::string plain_data = lz4::DecompressLZ4(compressed_data.begin, compressed_data.Size());
 		try {
 			// Allow loading files in JSON format as well as CBOR
 			if (plain_data[0] == '{')
@@ -50,7 +51,7 @@ extern "C" int main(int argc, char **argv)
 			printf("Saved game's root is not a JSON object.\n");
 			return 2;
 		}
-	} catch (gzip::DecompressionFailedException) {
+	} catch (std::runtime_error &e) {
 		printf("Decompressing saved data failed - saved game is corrupt.\n");
 		return 3;
 	}

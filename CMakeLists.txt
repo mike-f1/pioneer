@@ -193,7 +193,7 @@ endif (MSVC)
 
 find_package(Freetype REQUIRED)
 find_package(OpenGL REQUIRED)
-find_package(Threads)
+find_package(Threads REQUIRED)
 
 add_subdirectory(contrib/lz4)
 
@@ -254,7 +254,7 @@ add_executable(savegamedump WIN32
 	src/libs/utils.cpp
 	src/libs/StringF.cpp
 	src/libs/stringUtils.cpp
-	src/GZipFormat.cpp
+    src/LZ4Format.cpp
 	src/DateTime.cpp
 	src/Lang.cpp
 	${FILESYSTEM_CXX_FILES}

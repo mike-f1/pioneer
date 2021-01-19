@@ -9,7 +9,7 @@
 #include "GameConfSingleton.h"
 #include "GameLocator.h"
 #include "GameSaveError.h"
-#include "GZipFormat.h"
+#include "LZ4Format.h"
 #include "InGameViews.h"
 #include "InGameViewsLocator.h"
 #include "Json.h"
@@ -22,7 +22,7 @@
 
 #include <chrono>
 
-static const int s_saveVersion = 90;
+static const int s_saveVersion = 91;
 
 struct {
 	bool operator()(const FileSystem::FileInfo& a, const FileSystem::FileInfo& b) const {
@@ -223,24 +223,22 @@ void GameStateStatic::SaveGame(const std::string &filename)
 		jsonData = Json::to_cbor(rootNode); // Convert the JSON data to CBOR.
 	}
 
-	auto save = [&filename, &jsonData]() {
+	size_t outSize = 0;
 	FILE *f = FileSystem::userFiles.OpenWriteStream(FileSystem::JoinPathBelow(GameConfSingleton::GetSaveDir(), filename));
 	if (!f) throw CouldNotOpenFileException();
 
 	try {
-		// Compress the CBOR data.
-		const std::string comressed_data = gzip::CompressGZip(
-			std::string(reinterpret_cast<const char *>(jsonData.data()), jsonData.size()),
-			filename + ".json");
-		size_t nwritten = fwrite(comressed_data.data(), comressed_data.size(), 1, f);
+		const std::string input_string = std::string(reinterpret_cast<const char*>(jsonData.data()), jsonData.size());
+		std::unique_ptr<char[]> compressedData = lz4::CompressLZ4(input_string, 6, outSize);
+		Output("Compressed save (%s): %.2f KB -> %.2f KB\n", filename.c_str(), input_string.size() / 1024.f, outSize / 1024.f);
+		size_t nwritten = fwrite(compressedData.get(), outSize, 1, f);
 		fclose(f);
 		if (nwritten != 1) throw CouldNotWriteToFileException();
-	} catch (gzip::CompressionFailedException) {
-		fclose(f);
+	} catch (std::runtime_error &e) {
+		Warning("Error saving savefile: %s\n", e.what());
 		throw CouldNotWriteToFileException();
 	}
-	};
-	save();
+
 #ifdef PIONEER_PROFILER
 	Profiler::dumphtml(profilerPath.c_str());
 #endif

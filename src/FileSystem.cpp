@@ -192,9 +192,7 @@ namespace FileSystem {
 
 	FileInfo FileSourceUnion::Lookup(const std::string &path)
 	{
-		for (std::vector<FileSource *>::const_iterator
-				 it = m_sources.begin();
-			 it != m_sources.end(); ++it) {
+		for (std::vector<FileSource *>::const_iterator it = m_sources.begin(); it != m_sources.end(); ++it) {
 			FileInfo info = (*it)->Lookup(path);
 			if (info.Exists()) {
 				return info;

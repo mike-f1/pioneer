@@ -151,11 +151,11 @@ void BinaryConverter::Save(const std::string &filename, const std::string &savep
 
 	// compress in memory, write to open file
 	size_t outSize = 0;
-	const std::string &data = wr.GetData();
+	const lz4::bytes data = wr.GetDataAsVector();
 	try {
-		std::unique_ptr<char[]> compressedData = lz4::CompressLZ4(data, 6, outSize);
-		Output("Compressed model (%s): %.2f KB -> %.2f KB\n", filename.c_str(), data.size() / 1024.f, outSize / 1024.f);
-		fwrite(compressedData.get(), outSize, 1, f);
+		lz4::bytes compressedData = lz4::CompressLZ4(data, 6);
+		Output("Compressed model (%s): %.2f KB -> %.2f KB\n", filename.c_str(), data.size() / 1024.f, compressedData.size() / 1024.f);
+		fwrite(compressedData.data(), compressedData.size(), 1, f);
 		fclose(f);
 	} catch (std::runtime_error &e) {
 		Warning("Error saving SGM model: %s\n", e.what());
@@ -178,9 +178,10 @@ Model *BinaryConverter::Load(const std::string &name, RefCountedPtr<FileSystem::
 	const ByteRange bin = binfile->AsByteRange();
 	if (lz4::IsLZ4Format(bin.begin, bin.Size())) {
 		try {
-			std::string decompressedData = lz4::DecompressLZ4(bin.begin, bin.Size());
+			lz4::bytes decompressedData = lz4::DecompressLZ4(bin.begin, bin.Size());
 			Output("decompressed model file %s (%.2f KB) -> %.2f KB\n", name.c_str(), binfile->GetSize() / 1024.f, decompressedData.size() / 1024.f);
-			Serializer::Reader rd(ByteRange(decompressedData.data(), decompressedData.size()));
+			// TODO: remove this 'reinterpret_cast', use std::byte on shared data instead
+			Serializer::Reader rd(ByteRange(reinterpret_cast<const char*>(decompressedData.data()), decompressedData.size()));
 			model = CreateModel(name, rd);
 		} catch (std::runtime_error &e) {
 			Warning("Error loading SGM model: %s\n", e.what());

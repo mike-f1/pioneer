@@ -23,7 +23,7 @@ static void checkError(std::size_t errorCode)
 	}
 }
 
-std::string lz4::DecompressLZ4(const char *data, size_t length)
+lz4::bytes lz4::DecompressLZ4(const char *data, size_t length)
 {
 	PROFILE_SCOPED()
 	LZ4F_dctx *_tmp;
@@ -41,39 +41,39 @@ std::string lz4::DecompressLZ4(const char *data, size_t length)
 	checkError<lz4::DecompressionFailedException>(nextLen);
 
 	const std::size_t buffer_len = 1 << 16;
-	std::unique_ptr<char[]> decompress_buffer(new char[buffer_len]);
-
-	std::string out;
+	lz4::bytes decompress_buffer;
+	decompress_buffer.reserve(buffer_len);
+	bytes out;
 
 	while (nextLen != 0) {
 		read_ptr += read_len;
 		read_len = length - (read_ptr - data);
 		write_len = buffer_len;
 
-		nextLen = LZ4F_decompress(dctx.get(), decompress_buffer.get(), &write_len, read_ptr, &read_len, NULL);
+		nextLen = LZ4F_decompress(dctx.get(), decompress_buffer.data(), &write_len, read_ptr, &read_len, NULL);
 		checkError<lz4::DecompressionFailedException>(nextLen);
 
-		out.append(decompress_buffer.get(), write_len);
+		out.insert(out.end(), decompress_buffer.begin(), decompress_buffer.begin() + write_len);
 	}
 
-	decompress_buffer.reset();
 	dctx.reset();
 
 	return out;
 }
 
-std::unique_ptr<char[]> lz4::CompressLZ4(const std::string &data, const int lz4_preset, std::size_t &outSize)
+lz4::bytes lz4::CompressLZ4(const lz4::bytes &data, const int lz4_preset)
 {
 	PROFILE_SCOPED()
 	LZ4F_preferences_t pref = LZ4F_INIT_PREFERENCES;
 	pref.compressionLevel = lz4_preset;
 
 	std::size_t compressBound = LZ4F_compressFrameBound(data.size(), &pref);
-	std::unique_ptr<char[]> out(new char[compressBound]);
+	std::unique_ptr<char[]> buffer = std::make_unique<char[]>(compressBound);
 
-	std::size_t _size = LZ4F_compressFrame(out.get(), compressBound, data.data(), data.size(), &pref);
+	std::size_t _size = LZ4F_compressFrame(buffer.get(), compressBound, data.data(), data.size(), &pref);
 	checkError<lz4::CompressionFailedException>(_size);
 
-	outSize = _size;
-	return std::move(out);
+	lz4::bytes out;
+	out.assign(buffer.get(), buffer.get() + _size);
+	return out;
 }

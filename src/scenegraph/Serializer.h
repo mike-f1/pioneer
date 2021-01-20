@@ -11,6 +11,7 @@
 #include "libs/vector3.h"
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 #if (__GNUC__ && (__BYTE_ORDER_ == __ORDER_BIG_ENDIAN__)) || (__clang__ && __BIG_ENDIAN__)
 #error Serializer.h is incompatible with big-endian architectures!
@@ -36,6 +37,8 @@ namespace Serializer {
 	public:
 		Writer() {}
 		const std::string &GetData() const { return m_str; }
+		// TODO: Here because of a better (?) usage of buffer, but slow because of a copy
+		const std::vector<uint8_t> GetDataAsVector() const { return std::vector<uint8_t>(m_str.begin(), m_str.end()); }
 
 		template <typename T>
 		void writeObject(const T &obj)

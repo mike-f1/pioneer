@@ -8,7 +8,6 @@
 #include "JsonUtils.h"
 
 #include "FileSystem.h"
-#include "LZ4Format.h"
 #include "base64/base64.hpp"
 #include "libs/utils.h"
 #include "libs/stringUtils.h"
@@ -69,37 +68,6 @@ namespace JsonUtils {
 		return out;
 	}
 
-	Json LoadJsonSaveFile(const std::string &filename, FileSystem::FileSource &source)
-	{
-		auto file = source.ReadFile(filename);
-		if (!file) return {};
-		return LoadJsonSaveFile(file);
-	}
-
-	Json LoadJsonSaveFile(RefCountedPtr<FileSystem::FileData> fd)
-	{
-		if (!fd) return {};
-		try {
-			const ByteRange bin = fd->AsByteRange();
-			if (!lz4::IsLZ4Format(bin.begin, bin.Size())) return {};
-			std::string plain_data = lz4::DecompressLZ4(bin.begin, bin.Size());
-			Output("decompressed save file %s (%.2f KB) -> %.2f KB\n", fd->GetInfo().GetName().c_str(), fd->GetSize() / 1024.f, plain_data.size() / 1024.f);
-
-			Json rootNode;
-			try {
-				// Allow loading files in JSON format as well as CBOR
-				if (plain_data[0] == '{')
-					return Json::parse(plain_data);
-				else
-					return Json::from_cbor(plain_data);
-			} catch (Json::parse_error &e) {
-				Output("error in JSON file '%s': %s\n", fd->GetInfo().GetPath().c_str(), e.what());
-			}
-		} catch (std::runtime_error &e) {
-			Warning("Error loading save: %s\n", e.what());
-		}
-		return {};
-	}
 } // namespace JsonUtils
 
 #define USE_STRING_VERSIONS

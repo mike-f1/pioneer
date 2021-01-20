@@ -30,9 +30,34 @@ struct {
 	}
 } saves_modtime_comparator;
 
+Json LoadJsonSaveFile(RefCountedPtr<FileSystem::FileData> fd)
+{
+	if (!fd) return {};
+	try {
+		const ByteRange bin = fd->AsByteRange();
+		if (!lz4::IsLZ4Format(bin.begin, bin.Size())) return {};
+		lz4::bytes plain_data = lz4::DecompressLZ4(bin.begin, bin.Size());
+		Output("decompressed save file %s (%.2f KB) -> %.2f KB\n", fd->GetInfo().GetName().c_str(), fd->GetSize() / 1024.f, plain_data.size() / 1024.f);
+
+		Json rootNode;
+		try {
+			// Allow loading files in JSON format as well as CBOR
+			if (plain_data[0] == '{')
+				return Json::parse(plain_data);
+			else
+				return Json::from_cbor(plain_data);
+		} catch (Json::parse_error &e) {
+			Output("error in JSON file '%s': %s\n", fd->GetInfo().GetPath().c_str(), e.what());
+		}
+	} catch (std::runtime_error &e) {
+		Warning("Error loading save: %s\n", e.what());
+	}
+	return {};
+}
+
 GameStateStatic::jsonSave canLoadGame(const FileSystem::FileInfo &fi)
 {
-	Json rootNode = JsonUtils::LoadJsonSaveFile(fi.Read());
+	Json rootNode = LoadJsonSaveFile(fi.Read());
 
 	if (!rootNode.is_object()) return { {}, false };
 	if (!rootNode["version"].is_number_integer() || rootNode["version"].get<int>() != s_saveVersion) return { {}, false };
@@ -229,9 +254,9 @@ void GameStateStatic::SaveGame(const std::string &filename)
 
 	try {
 		const std::string input_string = std::string(reinterpret_cast<const char*>(jsonData.data()), jsonData.size());
-		std::unique_ptr<char[]> compressedData = lz4::CompressLZ4(input_string, 6, outSize);
-		Output("Compressed save (%s): %.2f KB -> %.2f KB\n", filename.c_str(), input_string.size() / 1024.f, outSize / 1024.f);
-		size_t nwritten = fwrite(compressedData.get(), outSize, 1, f);
+		lz4::bytes compressedData = lz4::CompressLZ4(jsonData, 6);
+		Output("Compressed save (%s): %.2f KB -> %.2f KB\n", filename.c_str(), input_string.size() / 1024.f, compressedData.size() / 1024.f);
+		size_t nwritten = fwrite(compressedData.data(), compressedData.size(), 1, f);
 		fclose(f);
 		if (nwritten != 1) throw CouldNotWriteToFileException();
 	} catch (std::runtime_error &e) {

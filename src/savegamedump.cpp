@@ -35,7 +35,7 @@ extern "C" int main(int argc, char **argv)
 	const auto compressed_data = file->AsByteRange();
 	Json rootNode;
 	try {
-		const std::string plain_data = lz4::DecompressLZ4(compressed_data.begin, compressed_data.Size());
+		const lz4::bytes plain_data = lz4::DecompressLZ4(compressed_data.begin, compressed_data.Size());
 		try {
 			// Allow loading files in JSON format as well as CBOR
 			if (plain_data[0] == '{')

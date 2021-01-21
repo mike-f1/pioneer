@@ -67,13 +67,13 @@ namespace {
 			// extract the fragment and remember it
 			switch (i) {
 			case eCPU:
-				cpuOut = ceil_pow2(Clamp(atoi(spec.substr(start, (end == std::string::npos) ? std::string::npos : end - start).c_str()), 64, 4096));
+				cpuOut = ceil_pow2(std::clamp(atoi(spec.substr(start, (end == std::string::npos) ? std::string::npos : end - start).c_str()), 64, 4096));
 				break;
 			case eGPU:
-				gpuOut = ceil_pow2(Clamp(atoi(spec.substr(start, (end == std::string::npos) ? std::string::npos : end - start).c_str()), 64, 4096));
+				gpuOut = ceil_pow2(std::clamp(atoi(spec.substr(start, (end == std::string::npos) ? std::string::npos : end - start).c_str()), 64, 4096));
 				break;
 			case eOCTAVES:
-				octavesOut = Clamp(atoi(spec.substr(start, (end == std::string::npos) ? std::string::npos : end - start).c_str()), 1, 16);
+				octavesOut = std::clamp(atoi(spec.substr(start, (end == std::string::npos) ? std::string::npos : end - start).c_str()), 1, 16);
 				break;
 			default:
 				assert(false);
@@ -806,7 +806,7 @@ void GasGiant::Init(int detail)
 	cfg.Read(FileSystem::gameDataFiles, "configs/GasGiants.ini");
 	// NB: limit the ranges of all values loaded from the file
 	// NB: round to the nearest power of 2 for all texture sizes
-	s_texture_size_small = ceil_pow2(Clamp(cfg.Int("texture_size_small", 16), 16, 64));
+	s_texture_size_small = ceil_pow2(std::clamp(cfg.Int("texture_size_small", 16), 16, 64));
 
 	SplitData(cfg.String("texture_size_0"), s_texture_size_cpu[0], s_texture_size_gpu[0], s_noiseOctaves[0]);
 	SplitData(cfg.String("texture_size_1"), s_texture_size_cpu[1], s_texture_size_gpu[1], s_noiseOctaves[1]);
@@ -814,8 +814,8 @@ void GasGiant::Init(int detail)
 	SplitData(cfg.String("texture_size_3"), s_texture_size_cpu[3], s_texture_size_gpu[3], s_noiseOctaves[3]);
 	SplitData(cfg.String("texture_size_4"), s_texture_size_cpu[4], s_texture_size_gpu[4], s_noiseOctaves[4]);
 
-	s_initialCPUDelayTime = Clamp(cfg.Float("cpu_delay_time", 60.0f), 0.0f, 120.0f);
-	s_initialGPUDelayTime = Clamp(cfg.Float("gpu_delay_time", 5.0f), 0.0f, 120.0f);
+	s_initialCPUDelayTime = std::clamp(cfg.Float("cpu_delay_time", 60.0f), 0.0f, 120.0f);
+	s_initialGPUDelayTime = std::clamp(cfg.Float("gpu_delay_time", 5.0f), 0.0f, 120.0f);
 
 	if (s_patchContext.Get() == nullptr) {
 		s_patchContext.Reset(new GasPatchContext(127));

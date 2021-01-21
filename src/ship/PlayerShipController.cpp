@@ -41,7 +41,7 @@ PlayerShipController::PlayerShipController() :
 	m_mouseDir(0.0)
 {
 	const float deadzone = GameConfSingleton::getInstance().Float("JoystickDeadzone");
-	m_joystickDeadzone = Clamp(deadzone, 0.01f, 1.0f); // do not use (deadzone * deadzone) as values are 0<>1 range, aka: 0.1 * 0.1 = 0.01 or 1% deadzone!!! Not what player asked for!
+	m_joystickDeadzone = std::clamp(deadzone, 0.01f, 1.0f); // do not use (deadzone * deadzone) as values are 0<>1 range, aka: 0.1 * 0.1 = 0.01 or 1% deadzone!!! Not what player asked for!
 	m_fovY = GameConfSingleton::getInstance().Float("FOVVertical");
 	m_lowThrustPower = GameConfSingleton::getInstance().Float("DefaultLowThrustPower");
 
@@ -330,7 +330,7 @@ void PlayerShipController::PollControls(const float timeStep, const bool force_r
 
 			const double radiansPerPixel = 0.00002 * m_fovY;
 			const int maxMotion = std::max(abs(mouseMotion[0]), abs(mouseMotion[1]));
-			const double accel = Clamp(maxMotion / 4.0, 0.0, 90.0 / m_fovY);
+			const double accel = std::clamp(maxMotion / 4.0, 0.0, 90.0 / m_fovY);
 
 			m_mouseX += mouseMotion[0] * accel * radiansPerPixel;
 			double modx = clipmouse(objDir.x, m_mouseX);
@@ -358,7 +358,7 @@ void PlayerShipController::PollControls(const float timeStep, const bool force_r
 			if (!stickySpeedKey) {
 				const double MAX_SPEED = 300000000;
 				m_setSpeed += m_inputFrame->GetValue(m_inputBindings.speedControl) * std::max(std::abs(m_setSpeed) * 0.05, 1.0);
-				m_setSpeed = Clamp(m_setSpeed, -MAX_SPEED, MAX_SPEED);
+				m_setSpeed = std::clamp(m_setSpeed, -MAX_SPEED, MAX_SPEED);
 
 				if (((oldSpeed < 0.0) && (m_setSpeed >= 0.0)) ||
 					((oldSpeed > 0.0) && (m_setSpeed <= 0.0))) {

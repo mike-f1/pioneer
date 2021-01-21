@@ -12,6 +12,8 @@
 #include "graphics/VertexBuffer.h"
 #include "libs/StringF.h"
 
+#include "profiler/Profiler.h"
+
 namespace SceneGraph {
 
 	LOD::LOD() :

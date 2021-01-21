@@ -2,14 +2,14 @@
 
 #include "AtmosphereParameters.h"
 #include "SystemBody.h"
-#include "libs/utils.h"
+
+#include <stdexcept>
 
 SystemBodyWrapper::SystemBodyWrapper(const SystemBody *sb) :
 	m_sbody(sb)
 {
 	#ifndef NDEBUG
-		if (m_sbody == nullptr) {
-			Output("SystemBodyWrapper *needs* a non null SystemBody: check your design\n");
+		if (m_sbody == nullptr) throw std::logic_error { "SystemBodyWrapper *needs* a non null SystemBody: check your design\n" };
 			abort();
 		}
 	#endif // NDEBUG

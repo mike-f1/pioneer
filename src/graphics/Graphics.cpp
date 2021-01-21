@@ -7,6 +7,7 @@
 #include "OS.h"
 #include "Renderer.h"
 #include "libs/StringF.h"
+#include "libs/utils.h"
 #include <iterator>
 #include <sstream>
 

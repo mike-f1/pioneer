@@ -5,9 +5,13 @@
 #define _STRINGF_H
 
 #include "fixed.h"
-#include "libs/utils.h"
 
 #include <string>
+
+// Own  local version, avoiding 'utils.h' being included in an header
+template <typename T, size_t N>
+char (&COUNTOF_Helper(T (&array)[N]))[N];
+#define COUNTOF(array) (sizeof(COUNTOF_Helper(array)))
 
 //   provides (for integer types, floating point types, const char* and std::string):
 //

@@ -52,9 +52,9 @@ GeoPatch::GeoPatch(const RefCountedPtr<GeoPatchContext> &ctx, GeoSphere *gs,
 	m_clipRadius = std::max(m_clipRadius, (m_v3 - m_clipCentroid).Length());
 	double distMult;
 	if (m_geosphere->GetSystemBodyType() < GalaxyEnums::BodyType::TYPE_PLANET_ASTEROID) {
-		distMult = 10.0 / Clamp(m_depth, 1, 10);
+		distMult = 10.0 / std::clamp(m_depth, 1, 10);
 	} else {
-		distMult = 5.0 / Clamp(m_depth, 1, 5);
+		distMult = 5.0 / std::clamp(m_depth, 1, 5);
 	}
 	m_roughLength = GEOPATCH_SUBDIVIDE_AT_CAMDIST / pow(2.0, m_depth) * distMult;
 	m_needUpdateVBOs = false;

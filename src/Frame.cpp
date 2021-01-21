@@ -524,3 +524,8 @@ void Frame::UpdateRootRelativeVars()
 		m_rootOrient = parent->m_rootOrient * m_orient;
 	}
 }
+
+void Frame::pass_Error(const char *func, FrameId id)
+{
+	Error("In '%s': fId is valid but out of range (%i)...\n", func, id.id());
+}

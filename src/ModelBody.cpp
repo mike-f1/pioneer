@@ -22,6 +22,7 @@
 #include "scenegraph/MatrixTransform.h"
 #include "scenegraph/Model.h"
 #include "libs/gameconsts.h"
+#include "libs/utils.h"
 
 class Space;
 
@@ -374,7 +375,7 @@ void ModelBody::CalcLighting(double &ambient, double &direct, const Camera *came
 		const double critAngle = -sqrt(dist * dist - planetRadius * planetRadius) / dist;
 
 		//0 to 1 as sunangle goes from critAngle to 1.0
-		double sunAngle2 = (Clamp(sunAngle, critAngle, 1.0) - critAngle) / (1.0 - critAngle);
+		double sunAngle2 = (std::clamp(sunAngle, critAngle, 1.0) - critAngle) / (1.0 - critAngle);
 
 		// angle at which light begins to fade on Earth
 		const double surfaceStartAngle = 0.3;
@@ -384,7 +385,7 @@ void ModelBody::CalcLighting(double &ambient, double &direct, const Camera *came
 		const double start = std::min((surfaceStartAngle * opticalThicknessFraction), 1.0);
 		const double end = std::max((surfaceEndAngle * opticalThicknessFraction), -0.2);
 
-		sunAngle = (Clamp(sunAngle - critAngle, end, start) - end) / (start - end);
+		sunAngle = (std::clamp(sunAngle - critAngle, end, start) - end) / (start - end);
 
 		light += sunAngle;
 		light_clamped += sunAngle2;
@@ -394,17 +395,17 @@ void ModelBody::CalcLighting(double &ambient, double &direct, const Camera *came
 	light /= lightSources.size();
 
 	// brightness depends on optical depth and intensity of light from all the stars
-	direct = 1.0 - Clamp((1.0 - light), 0.0, 1.0) * Clamp(opticalThicknessFraction, 0.0, 1.0);
+	direct = 1.0 - std::clamp((1.0 - light), 0.0, 1.0) * std::clamp(opticalThicknessFraction, 0.0, 1.0);
 
 	// ambient light fraction
 	// alter ratio between directly and ambiently lit portions towards ambiently lit as sun sets
-	const double fraction = (0.2 + 0.8 * (1.0 - light_clamped)) * Clamp(opticalThicknessFraction, 0.0, 1.0);
+	const double fraction = (0.2 + 0.8 * (1.0 - light_clamped)) * std::clamp(opticalThicknessFraction, 0.0, 1.0);
 
 	// fraction of light left over to be lit directly
 	direct = (1.0 - fraction) * direct;
 
 	// scale ambient by amount of light
-	ambient = fraction * (Clamp((light), 0.0, 1.0)) * 0.25;
+	ambient = fraction * (std::clamp((light), 0.0, 1.0)) * 0.25;
 
 	ambient = std::max(minAmbient, ambient);
 }

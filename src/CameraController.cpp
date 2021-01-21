@@ -210,7 +210,7 @@ void ExternalCameraController::Update()
 	if (ship->IsType(Object::PLAYER)) {
 		if (ship->GetFlightState() == Ship::LANDED ||
 			ship->GetFlightState() == Ship::DOCKED) {
-			m_rotX = Clamp(m_rotX, DEG2RAD(-170.0), DEG2RAD(-10.0));
+			m_rotX = std::clamp(m_rotX, DEG2RAD(-170.0), DEG2RAD(-10.0));
 		}
 	}
 

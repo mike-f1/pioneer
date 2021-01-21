@@ -6,7 +6,8 @@
 #include "BaseLoader.h"
 #include "NodeCopyCache.h"
 #include "NodeVisitor.h"
-#include "libs/utils.h"
+
+#include "profiler/Profiler.h"
 
 namespace SceneGraph {
 

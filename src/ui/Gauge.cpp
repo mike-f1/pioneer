@@ -5,7 +5,6 @@
 
 #include "Context.h"
 #include "Skin.h"
-#include "libs/utils.h"
 
 namespace UI {
 
@@ -42,14 +41,14 @@ namespace UI {
 
 	Gauge *Gauge::SetWarningLevel(float v)
 	{
-		m_warningLevel = Clamp(v * m_mult, 0.0f, 1.0f);
+		m_warningLevel = std::clamp(v * m_mult, 0.0f, 1.0f);
 		UpdateStyle();
 		return this;
 	}
 
 	Gauge *Gauge::SetCriticalLevel(float v)
 	{
-		m_criticalLevel = Clamp(v * m_mult, 0.0f, 1.0f);
+		m_criticalLevel = std::clamp(v * m_mult, 0.0f, 1.0f);
 		UpdateStyle();
 		return this;
 	}
@@ -63,7 +62,7 @@ namespace UI {
 
 	void Gauge::SetValue(float v)
 	{
-		m_value = Clamp(v * m_mult, 0.0f, 1.0f);
+		m_value = std::clamp(v * m_mult, 0.0f, 1.0f);
 		UpdateStyle();
 	}
 
@@ -121,7 +120,7 @@ namespace UI {
 	{
 		double v = 0.0;
 		p.Get(k, v);
-		SetValue(Clamp(v, 0.0, 100.0) * 0.01);
+		SetValue(std::clamp(v, 0.0, 100.0) * 0.01);
 	}
 
 } // namespace UI

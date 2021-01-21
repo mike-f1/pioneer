@@ -4,7 +4,6 @@
 #include "Animation.h"
 
 #include <SDL_timer.h>
-#include "libs/utils.h"
 
 namespace UI {
 
@@ -161,7 +160,7 @@ namespace UI {
 		if (m_continuous)
 			pos = m_completed ? m_duration : fmodf(time, m_duration);
 		else
-			pos = m_completed ? m_duration : Clamp(time, 0.0f, m_duration);
+			pos = m_completed ? m_duration : std::clamp(time, 0.0f, m_duration);
 
 		m_targetFunc(m_wrapFunc(m_easingFunc, pos, m_duration));
 

@@ -38,7 +38,7 @@ void GameConfSingleton::SetAmountBackgroundStars(const float amount)
 	m_gConfig->SetFloat("AmountOfBackgroundStars", amount);
 	m_gConfig->Save();
 
-	amountOfBackgroundStarsDisplayed = Clamp(amount, 0.01f, 1.0f);
+	amountOfBackgroundStarsDisplayed = std::clamp(amount, 0.01f, 1.0f);
 	bRefreshBackgroundStars = true;
 }
 

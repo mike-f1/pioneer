@@ -322,10 +322,10 @@ void StarSystemLegacyGeneratorBase::PickRings(SystemBody *sbody, bool forceRings
 		double rings_die = ringRng.Double();
 		if (forceRings || (rings_die < 0.5)) {
 			const unsigned char *const baseCol = RANDOM_RING_COLORS[ringRng.Int32(COUNTOF(RANDOM_RING_COLORS))];
-			sbody->m_rings.baseColor.r = Clamp(baseCol[0] + ringRng.Int32(-20, 20), 0, 255);
-			sbody->m_rings.baseColor.g = Clamp(baseCol[1] + ringRng.Int32(-20, 20), 0, 255);
-			sbody->m_rings.baseColor.b = Clamp(baseCol[2] + ringRng.Int32(-20, 10), 0, 255);
-			sbody->m_rings.baseColor.a = Clamp(baseCol[3] + ringRng.Int32(-5, 5), 0, 255);
+			sbody->m_rings.baseColor.r = std::clamp(baseCol[0] + ringRng.Int32(-20, 20), 0, 255);
+			sbody->m_rings.baseColor.g = std::clamp(baseCol[1] + ringRng.Int32(-20, 20), 0, 255);
+			sbody->m_rings.baseColor.b = std::clamp(baseCol[2] + ringRng.Int32(-20, 10), 0, 255);
+			sbody->m_rings.baseColor.a = std::clamp(baseCol[3] + ringRng.Int32(-5, 5), 0, 255);
 
 			// from wikipedia: http://en.wikipedia.org/wiki/Roche_limit
 			// basic Roche limit calculation assuming a rigid satellite
@@ -1389,10 +1389,10 @@ void PopulateStarSystemGenerator::PopulateStage1(SystemBody *sbody, StarSystem *
 	StarSystemWriter syswrt(system);
 
 	if (sbody->GetLifeAsFixed() > fixed(9, 10)) {
-		sbody->m_agricultural = Clamp(fixed(1, 1) - fixed(CELSIUS + 25 - sbody->GetAverageTemp(), 40), fixed(), fixed(1, 1));
+		sbody->m_agricultural = std::clamp(fixed(1, 1) - fixed(CELSIUS + 25 - sbody->GetAverageTemp(), 40), fixed(), fixed(1, 1));
 		syswrt.SetAgricultural(system->GetAgricultural() + 2 * sbody->m_agricultural);
 	} else if (sbody->GetLifeAsFixed() > fixed(1, 2)) {
-		sbody->m_agricultural = Clamp(fixed(1, 1) - fixed(CELSIUS + 30 - sbody->GetAverageTemp(), 50), fixed(), fixed(1, 1));
+		sbody->m_agricultural = std::clamp(fixed(1, 1) - fixed(CELSIUS + 30 - sbody->GetAverageTemp(), 50), fixed(), fixed(1, 1));
 		syswrt.SetAgricultural(system->GetAgricultural() + 1 * sbody->m_agricultural);
 	} else {
 		// don't bother populating crap planets

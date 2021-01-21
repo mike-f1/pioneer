@@ -5,6 +5,8 @@
 #include "TerrainFeature.h"
 #include "TerrainNoise.h"
 
+#include <cassert>
+
 using namespace TerrainNoise;
 
 namespace TerrainFeature {

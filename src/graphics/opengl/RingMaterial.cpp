@@ -8,7 +8,9 @@
 #include "graphics/Graphics.h"
 #include "libs/StringF.h"
 
-#include "libs/utils.h"
+#include "profiler/Profiler.h"
+
+#include <algorithm>
 
 namespace Graphics {
 	namespace OGL {
@@ -17,7 +19,7 @@ namespace Graphics {
 		{
 			assert(desc.textures == 1);
 			//pick light count and some defines
-			unsigned int numLights = Clamp(desc.dirLights, 1u, 4u);
+			unsigned int numLights = std::clamp(desc.dirLights, 1u, 4u);
 			std::string defines = stringf("#define NUM_LIGHTS %0{u}\n", numLights);
 			return new Program("planetrings", defines);
 		}

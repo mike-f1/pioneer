@@ -590,7 +590,7 @@ void SpaceStation::DockingUpdate(const double timeStep)
 		}
 	}
 
-	m_doorAnimationState = Clamp(m_doorAnimationState + m_doorAnimationStep * timeStep, 0.0, 1.0);
+	m_doorAnimationState = std::clamp(m_doorAnimationState + m_doorAnimationStep * timeStep, 0.0, 1.0);
 	if (m_doorAnimation)
 		m_doorAnimation->SetProgress(m_doorAnimationState);
 }

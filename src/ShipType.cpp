@@ -204,7 +204,7 @@ ShipType::ShipType(const Id &_id, const std::string &path)
 		thrusterUpgrades[it] = 1.0 + (double(it) / 10.0);
 	for (Json::iterator slot = data["thrust_upgrades"].begin(); slot != data["thrust_upgrades"].end(); ++slot) {
 		const std::string slotname = slot.key();
-		const int index = Clamp(atoi(&slotname.c_str()[9]), 1, 3);
+		const int index = std::clamp(atoi(&slotname.c_str()[9]), 1, 3);
 		thrusterUpgrades[index] = data["thrust_upgrades"].value(slotname, 0);
 	}
 
@@ -213,7 +213,7 @@ ShipType::ShipType(const Id &_id, const std::string &path)
 	{
 		const auto it = slots.find("engine");
 		if (it != slots.end()) {
-			it->second = Clamp(it->second, 0, 1);
+			it->second = std::clamp(it->second, 0, 1);
 		}
 	}
 
@@ -316,7 +316,7 @@ int _define_ship(lua_State *L, ShipType::Tag tag, std::vector<ShipType::Id> *lis
 	{
 		const auto it = s.slots.find("engine");
 		if (it != s.slots.end()) {
-			it->second = Clamp(it->second, 0, 1);
+			it->second = std::clamp(it->second, 0, 1);
 		}
 	}
 

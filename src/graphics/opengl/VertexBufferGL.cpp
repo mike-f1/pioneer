@@ -1,9 +1,10 @@
-// Copyright © 2008-2019 Pioneer Developers. See AUTHORS.txt for details
+// Copyright Â© 2008-2019 Pioneer Developers. See AUTHORS.txt for details
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
 
 #include "graphics/opengl/VertexBufferGL.h"
 #include "graphics/VertexArray.h"
-#include "libs/utils.h"
+
+#include "profiler/Profiler.h"
 
 namespace Graphics {
 	namespace OGL {

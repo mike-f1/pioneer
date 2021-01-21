@@ -74,7 +74,7 @@ namespace UI {
 	{
 		double v = 0.0;
 		p.Get(k, v);
-		SetValue(Clamp(v, 0.0, 100.0) * 0.01);
+		SetValue(std::clamp(v, 0.0, 100.0) * 0.01);
 	}
 
 } // namespace UI

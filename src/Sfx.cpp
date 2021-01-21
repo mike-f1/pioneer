@@ -3,6 +3,7 @@
 
 #include "Sfx.h"
 
+#include "Aabb.h"
 #include "Body.h"
 #include "FileSystem.h"
 #include "Frame.h"
@@ -22,6 +23,8 @@
 #include "graphics/TextureBuilder.h"
 #include "libs/StringF.h"
 
+#include "profiler/Profiler.h"
+
 using namespace Graphics;
 
 namespace {
@@ -29,7 +32,7 @@ namespace {
 	{
 		//some hand-tweaked scaling, to make the lights seem larger from distance (final size is in pixels)
 		// gl_PointSize = pixels_per_radian * point_diameter / distance( camera, pointcenter );
-		const float pixrad = Clamp(Graphics::GetScreenHeight() / trans.Length(), 0.1f, 50.0f);
+		const float pixrad = std::clamp(Graphics::GetScreenHeight() / trans.Length(), 0.1f, 50.0f);
 		return (size * Graphics::GetFovFactor()) * pixrad;
 	}
 } // namespace
@@ -283,7 +286,7 @@ void SfxManager::RenderAll(FrameId fId, FrameId camFrameId)
 					material = damageParticle.get();
 					break;
 				case TYPE_SMOKE:
-					speed = Clamp(SizeToPixels(pos, (inst.m_speed * inst.m_age)), 0.1f, 50.0f);
+					speed = std::clamp(SizeToPixels(pos, (inst.m_speed * inst.m_age)), 0.1f, 50.0f);
 					rs = SfxManager::alphaState;
 					material = smokeParticle.get();
 					break;

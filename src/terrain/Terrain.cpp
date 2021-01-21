@@ -6,9 +6,9 @@
 #include "FileSystem.h"
 #include "GameConfig.h"
 #include "perlin.h"
-#include "libs/utils.h"
 #include "galaxy/SystemBody.h"
 #include "libs/FloatComparison.h"
+#include "libs/utils.h"
 
 // static instancer. selects the best height and color classes for the body
 Terrain *Terrain::InstanceTerrain(const SystemBody *body)
@@ -457,9 +457,9 @@ Terrain::Terrain(const SystemBody *body) :
 		}
 	}
 
-	m_sealevel = Clamp(body->GetVolatileLiquid(), 0.0, 1.0);
-	m_icyness = Clamp(body->GetVolatileIces(), 0.0, 1.0);
-	m_volcanic = Clamp(body->GetVolcanicity(), 0.0, 1.0); // height scales with volcanicity as well
+	m_sealevel = std::clamp(body->GetVolatileLiquid(), 0.0, 1.0);
+	m_icyness = std::clamp(body->GetVolatileIces(), 0.0, 1.0);
+	m_volcanic = std::clamp(body->GetVolcanicity(), 0.0, 1.0); // height scales with volcanicity as well
 	m_surfaceEffects = 0;
 
 	const double rad = m_minBody.m_radius;
@@ -648,8 +648,8 @@ double Terrain::BiCubicInterpolation(const vector3d &p) const
 	const double py = ((m_heightMapSizeY - 1) * (latitude + 0.5 * M_PI)) / M_PI;
 	int ix = int(floor(px));
 	int iy = int(floor(py));
-	ix = Clamp(ix, 0, m_heightMapSizeX - 1);
-	iy = Clamp(iy, 0, m_heightMapSizeY - 1);
+	ix = std::clamp(ix, 0, m_heightMapSizeX - 1);
+	iy = std::clamp(iy, 0, m_heightMapSizeY - 1);
 	const double dx = px - ix;
 	const double dy = py - iy;
 
@@ -661,7 +661,7 @@ double Terrain::BiCubicInterpolation(const vector3d &p) const
 	const double *pHMap = m_heightMap.get();
 	for (int x = -1; x < 3; x++) {
 		for (int y = -1; y < 3; y++) {
-			map[x + 1][y + 1] = pHMap[Clamp(iy + y, 0, m_heightMapSizeY - 1) * m_heightMapSizeX + Clamp(ix + x, 0, m_heightMapSizeX - 1)];
+			map[x + 1][y + 1] = pHMap[std::clamp(iy + y, 0, m_heightMapSizeY - 1) * m_heightMapSizeX + std::clamp(ix + x, 0, m_heightMapSizeX - 1)];
 		}
 	}
 

@@ -519,8 +519,8 @@ void WorldView::UpdateIndicator(Indicator &indicator, const vector3d &cameraSpac
 			break;
 		}
 
-		pos[0] = Clamp(pos[0] + indicator.pos.x, BORDER, screen_w - BORDER - labelSize[0]);
-		pos[1] = Clamp(pos[1] + indicator.pos.y, BORDER, screen_h - BORDER_BOTTOM - labelSize[1]);
+		pos[0] = std::clamp(pos[0] + indicator.pos.x, BORDER, screen_w - BORDER - labelSize[0]);
+		pos[1] = std::clamp(pos[1] + indicator.pos.y, BORDER, screen_h - BORDER_BOTTOM - labelSize[1]);
 	}
 }
 

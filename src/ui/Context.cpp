@@ -5,7 +5,6 @@
 
 #include "FileSystem.h"
 #include "Lua.h"
-#include "libs/utils.h"
 #include "text/FontConfig.h"
 #include <typeinfo>
 
@@ -235,8 +234,8 @@ namespace UI {
 			newScissorPos = Point(std::max(m_drawWidgetPosition.x, currentScissorPos.x), std::max(m_drawWidgetPosition.y, currentScissorPos.y));
 
 			newScissorSize = Point(
-				Clamp(std::min(newScissorPos.x + size.x, currentScissorPos.x + currentScissorSize.x) - newScissorPos.x, 0, m_width),
-				Clamp(std::min(newScissorPos.y + size.y, currentScissorPos.y + currentScissorSize.y) - newScissorPos.y, 0, m_height));
+				std::clamp(std::min(newScissorPos.x + size.x, currentScissorPos.x + currentScissorSize.x) - newScissorPos.x, 0, m_width),
+				std::clamp(std::min(newScissorPos.y + size.y, currentScissorPos.y + currentScissorSize.y) - newScissorPos.y, 0, m_height));
 		}
 
 		m_scissorStack.push(std::make_pair(newScissorPos, newScissorSize));

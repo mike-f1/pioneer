@@ -10,10 +10,10 @@
 
 inline Color4ub ColorClamp(float r, float g, float b, float a)
 {
-	r = std::max(std::min(r, 255.0f), 0.0f);
-	g = std::max(std::min(g, 255.0f), 0.0f);
-	b = std::max(std::min(b, 255.0f), 0.0f);
-	a = std::max(std::min(a, 255.0f), 0.0f);
+	r = std::clamp(r, 0.0f, 255.0f);
+	g = std::clamp(g, 0.0f, 255.0f);
+	b = std::clamp(b, 0.0f, 255.0f);
+	a = std::clamp(a, 0.0f, 255.0f);
 	return Color4ub(r, g, b, a);
 }
 

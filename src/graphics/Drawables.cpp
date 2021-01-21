@@ -646,7 +646,7 @@ namespace Graphics {
 			m_material = mat;
 			m_renderState = state;
 
-			subdivs = Clamp(subdivs, 0, 4);
+			subdivs = std::clamp(subdivs, 0, 4);
 			scale = fabs(scale);
 			matrix4x4f trans = matrix4x4f::Identity();
 			trans.Scale(scale, scale, scale);

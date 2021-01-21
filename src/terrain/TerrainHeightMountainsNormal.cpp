@@ -44,15 +44,15 @@ double TerrainHeightFractal<TerrainHeightMountainsNormal>::GetHeight(const vecto
 
 		// This smoothes edges near the coast, we cant have vertical terrain its not handled correctly.
 		if (n < 0.4) {
-			n += n * 1.25 * ridged_octavenoise(GetFracDef(6), Clamp(h * 0.00002, 0.3, 0.7) * ridged_octavenoise(GetFracDef(5), 0.5, p), p);
+			n += n * 1.25 * ridged_octavenoise(GetFracDef(6), std::clamp(h * 0.00002, 0.3, 0.7) * ridged_octavenoise(GetFracDef(5), 0.5, p), p);
 		} else {
-			n += 0.5 * ridged_octavenoise(GetFracDef(6), Clamp(h * 0.00002, 0.3, 0.7) * ridged_octavenoise(GetFracDef(5), 0.5, p), p);
+			n += 0.5 * ridged_octavenoise(GetFracDef(6), std::clamp(h * 0.00002, 0.3, 0.7) * ridged_octavenoise(GetFracDef(5), 0.5, p), p);
 		}
 
 		if (n < 0.2) {
-			n += n * 15.0 * river_octavenoise(GetFracDef(6), Clamp(h * 0.00002, 0.5, 0.7), p);
+			n += n * 15.0 * river_octavenoise(GetFracDef(6), std::clamp(h * 0.00002, 0.5, 0.7), p);
 		} else {
-			n += 3.0 * river_octavenoise(GetFracDef(6), Clamp(h * 0.00002, 0.5, 0.7), p);
+			n += 3.0 * river_octavenoise(GetFracDef(6), std::clamp(h * 0.00002, 0.5, 0.7), p);
 		}
 		n *= 0.33333333333;
 
@@ -74,29 +74,29 @@ double TerrainHeightFractal<TerrainHeightMountainsNormal>::GetHeight(const vecto
 
 		//jagged surface for mountains
 		//This is probably using far too much noise, some of it is just not needed
-		// More specifically this: Clamp(h*0.0002*octavenoise(GetFracDef(5), 0.5, p),
+		// More specifically this: std::clamp(h*0.0002*octavenoise(GetFracDef(5), 0.5, p),
 		//		 0.5*octavenoise(GetFracDef(3), 0.5, p),
 		//		 0.5*octavenoise(GetFracDef(3), 0.5, p))
-		//should probably be: Clamp(h*0.0002*octavenoise(GetFracDef(5), 0.5, p),
+		//should probably be: std::clamp(h*0.0002*octavenoise(GetFracDef(5), 0.5, p),
 		//		 0.1,
 		//		 0.5)  But I have no time for testing
 		if (n > 0.25) {
-			n += (n - 0.25) * 0.1 * octavenoise(GetFracDef(3), Clamp(h * 0.0002 * octavenoise(GetFracDef(5), 0.5, p), 0.5 * octavenoise(GetFracDef(3), 0.5, p), 0.5 * octavenoise(GetFracDef(3), 0.5, p)), p); //[4]?
+			n += (n - 0.25) * 0.1 * octavenoise(GetFracDef(3), std::clamp(h * 0.0002 * octavenoise(GetFracDef(5), 0.5, p), 0.5 * octavenoise(GetFracDef(3), 0.5, p), 0.5 * octavenoise(GetFracDef(3), 0.5, p)), p); //[4]?
 		}
 
 		if (n > 0.2 && n <= 0.25) {
-			n += (0.25 - n) * 0.2 * ridged_octavenoise(GetFracDef(3), Clamp(h * 0.0002 * octavenoise(GetFracDef(5), 0.5, p), 0.5 * octavenoise(GetFracDef(3), 0.5, p), 0.5 * octavenoise(GetFracDef(4), 0.5, p)), p);
+			n += (0.25 - n) * 0.2 * ridged_octavenoise(GetFracDef(3), std::clamp(h * 0.0002 * octavenoise(GetFracDef(5), 0.5, p), 0.5 * octavenoise(GetFracDef(3), 0.5, p), 0.5 * octavenoise(GetFracDef(4), 0.5, p)), p);
 		} else if (n > 0.05) {
-			n += ((n - 0.05) / 15) * ridged_octavenoise(GetFracDef(3), Clamp(h * 0.0002 * octavenoise(GetFracDef(5), 0.5, p), 0.5 * octavenoise(GetFracDef(3), 0.5, p), 0.5 * octavenoise(GetFracDef(4), 0.5, p)), p);
+			n += ((n - 0.05) / 15) * ridged_octavenoise(GetFracDef(3), std::clamp(h * 0.0002 * octavenoise(GetFracDef(5), 0.5, p), 0.5 * octavenoise(GetFracDef(3), 0.5, p), 0.5 * octavenoise(GetFracDef(4), 0.5, p)), p);
 		}
 		n = n * 0.2;
 
 		if (n < 0.01) {
-			n += n * voronoiscam_octavenoise(GetFracDef(3), Clamp(h * 0.00002, 0.5, 0.5), p);
+			n += n * voronoiscam_octavenoise(GetFracDef(3), std::clamp(h * 0.00002, 0.5, 0.5), p);
 		} else if (n < 0.02) {
-			n += 0.01 * voronoiscam_octavenoise(GetFracDef(3), Clamp(h * 0.00002, 0.5, 0.5), p);
+			n += 0.01 * voronoiscam_octavenoise(GetFracDef(3), std::clamp(h * 0.00002, 0.5, 0.5), p);
 		} else {
-			n += (0.02 / n) * 0.01 * voronoiscam_octavenoise(GetFracDef(3), Clamp(h * 0.00002, 0.5, 0.5), p);
+			n += (0.02 / n) * 0.01 * voronoiscam_octavenoise(GetFracDef(3), std::clamp(h * 0.00002, 0.5, 0.5), p);
 		}
 
 		if (n < 0.001) {
@@ -120,7 +120,7 @@ double TerrainHeightFractal<TerrainHeightMountainsNormal>::GetHeight(const vecto
 		} else if (n < 0.2) {
 			n += 0.005 * dunes_octavenoise(GetFracDef(2), ((n * n * 10.0) + (3 * (n - 0.1))) * river_octavenoise(GetFracDef(2), 0.5, p), p);
 		} else {
-			n += (0.2 / n) * 0.005 * dunes_octavenoise(GetFracDef(2), Clamp(0.7 - (1 - (5 * n)), 0.0, 0.7) * river_octavenoise(GetFracDef(2), 0.5, p), p);
+			n += (0.2 / n) * 0.005 * dunes_octavenoise(GetFracDef(2), std::clamp(0.7 - (1 - (5 * n)), 0.0, 0.7) * river_octavenoise(GetFracDef(2), 0.5, p), p);
 		}
 
 		//terrain is too mountainous, so we reduce the height

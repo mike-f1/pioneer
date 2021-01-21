@@ -8,6 +8,8 @@
 #include "JsonUtils.h"
 #include "LuaEvent.h"
 
+#include "libs/utils.h"
+
 Body::Body() :
 	PropertiedObject(Lua::manager),
 	m_flags(0),

@@ -3,8 +3,9 @@
 
 #include "Stats.h"
 
-#include "libs/utils.h"
 #include <cassert>
+#include  <algorithm>
+#include <cstring>
 
 namespace Graphics {
 
@@ -31,6 +32,6 @@ namespace Graphics {
 
 	const Stats::TFrameData &Stats::FrameStatsPrevious() const
 	{
-		return m_frameStats[Clamp(m_currentFrame - 1, 0U, MAX_FRAMES_STORE - 1)];
+		return m_frameStats[std::clamp(m_currentFrame - 1, 0U, MAX_FRAMES_STORE - 1)];
 	}
 } // namespace Graphics

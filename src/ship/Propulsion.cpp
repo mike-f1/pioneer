@@ -9,7 +9,6 @@
 #include "GameSaveError.h"
 #include "Json.h"
 #include "JsonUtils.h"
-#include "libs/utils.h"
 #include "scenegraph/Model.h"
 #include <limits>
 
@@ -96,15 +95,15 @@ void Propulsion::SetAngThrusterState(const vector3d &levels)
 	if (m_thrusterFuel <= 0.f) {
 		m_angThrusters = vector3d(0.0);
 	} else {
-		m_angThrusters.x = Clamp(levels.x, -1.0, 1.0);
-		m_angThrusters.y = Clamp(levels.y, -1.0, 1.0);
-		m_angThrusters.z = Clamp(levels.z, -1.0, 1.0);
+		m_angThrusters.x = std::clamp(levels.x, -1.0, 1.0);
+		m_angThrusters.y = std::clamp(levels.y, -1.0, 1.0);
+		m_angThrusters.z = std::clamp(levels.z, -1.0, 1.0);
 	}
 }
 
 double Propulsion::ClampLinThrusterState(int axis, double level) const
 {
-	level = Clamp(level, -1.0, 1.0);
+	level = std::clamp(level, -1.0, 1.0);
 	Thruster thruster;
 
 	if (axis == 0) {
@@ -124,15 +123,15 @@ vector3d Propulsion::ClampLinThrusterState(const vector3d &levels) const
 	Thruster thruster;
 
 	thruster = (clamped.x > 0) ? THRUSTER_RIGHT : THRUSTER_LEFT;
-	clamped.x = Clamp(clamped.x, -1.0, 1.0);
+	clamped.x = std::clamp(clamped.x, -1.0, 1.0);
 	clamped.x *= GetThrust(thruster) / m_linThrust[thruster];
 
 	thruster = (clamped.y > 0) ? THRUSTER_UP : THRUSTER_DOWN;
-	clamped.y = Clamp(clamped.y, -1.0, 1.0);
+	clamped.y = std::clamp(clamped.y, -1.0, 1.0);
 	clamped.y *= GetThrust(thruster) / m_linThrust[thruster];
 
 	thruster = (clamped.z > 0) ? THRUSTER_REVERSE : THRUSTER_FORWARD;
-	clamped.z = Clamp(clamped.z, -1.0, 1.0);
+	clamped.z = std::clamp(clamped.z, -1.0, 1.0);
 	clamped.z *= GetThrust(thruster) / m_linThrust[thruster];
 
 	return clamped;
@@ -141,7 +140,7 @@ vector3d Propulsion::ClampLinThrusterState(const vector3d &levels) const
 void Propulsion::SetLinThrusterState(int axis, double level)
 {
 	if (m_thrusterFuel <= 0.f) level = 0.0;
-	m_linThrusters[axis] = ClampLinThrusterState(axis, level);
+	m_linThrusters[axis] =ClampLinThrusterState(axis, level);
 }
 
 void Propulsion::SetLinThrusterState(const vector3d &levels)
@@ -149,7 +148,7 @@ void Propulsion::SetLinThrusterState(const vector3d &levels)
 	if (m_thrusterFuel <= 0.f) {
 		m_linThrusters = vector3d(0.0);
 	} else {
-		m_linThrusters = ClampLinThrusterState(levels);
+		m_linThrusters =ClampLinThrusterState(levels);
 	}
 }
 
@@ -403,7 +402,7 @@ double Propulsion::AIFaceUpdir(const vector3d &updir, double av)
 
 	double ang = 0.0, dav = 0.0;
 	if (uphead.y < 0.99999999) {
-		ang = acos(Clamp(uphead.y, -1.0, 1.0)); // scalar angle from head to curhead
+		ang = acos(std::clamp(uphead.y, -1.0, 1.0)); // scalar angle from head to curhead
 		double iangvel = av + calc_ivel_pos(ang, 0.0, maxAccel); // ideal angvel at current time
 
 		dav = uphead.x > 0 ? -iangvel : iangvel;
@@ -429,7 +428,7 @@ double Propulsion::AIFaceDirection(const vector3d &dir, double av)
 
 	double ang = 0.0;
 	if (head.z > -0.99999999) {
-		ang = acos(Clamp(-head.z, -1.0, 1.0)); // scalar angle from head to curhead
+		ang = acos(std::clamp(-head.z, -1.0, 1.0)); // scalar angle from head to curhead
 		double iangvel = av + calc_ivel_pos(ang, 0.0, maxAccel); // ideal angvel at current time
 
 		// Normalize (head.x, head.y) to give desired angvel direction

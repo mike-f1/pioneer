@@ -264,8 +264,8 @@ public:
 	virtual void Order(Job *job) override
 	{
 		auto x = m_jobs.insert(m_queue->Queue(job, this));
-		if (x.second) Output("Job already queued\n");
 		assert(x.second);
+		x.second;
 	}
 	virtual void RemoveJob(Job::Handle *handle) override { m_jobs.erase(*handle); }
 

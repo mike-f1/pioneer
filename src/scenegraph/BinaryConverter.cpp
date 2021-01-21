@@ -10,12 +10,15 @@
 #include "Parser.h"
 #include "libs/StringF.h"
 #include "libs/stringUtils.h"
+#include "libs/utils.h"
 #include "scenegraph/Animation.h"
 #include "scenegraph/Label3D.h"
 #include "scenegraph/LoaderDefinitions.h"
 #include "scenegraph/MatrixTransform.h"
 #include "scenegraph/Model.h"
 #include "scenegraph/Serializer.h"
+
+#include "profiler/Profiler.h"
 
 #ifdef __GNUC__
 #pragma GCC diagnostic push

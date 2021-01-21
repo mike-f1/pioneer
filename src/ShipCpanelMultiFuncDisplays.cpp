@@ -288,7 +288,7 @@ void RadarWidget::Update()
 			} else {
 				m_manualRange = m_currentRange;
 			}
-			m_manualRange = Clamp(m_manualRange * 1.15f, RADAR_RANGE_MIN, RADAR_RANGE_MAX);
+			m_manualRange = std::clamp(m_manualRange * 1.15f, RADAR_RANGE_MIN, RADAR_RANGE_MAX);
 		} else if (m_inputFrame->GetValue(m_radarWidgetBindings.changeScanRange) < 0.0) {
 			if (m_mode == RadarMode::MODE_AUTO) {
 				m_manualRange = m_targetRange;
@@ -296,23 +296,23 @@ void RadarWidget::Update()
 			} else {
 				m_manualRange = m_currentRange;
 			}
-			m_manualRange = Clamp(m_manualRange * 0.85f, RADAR_RANGE_MIN, RADAR_RANGE_MAX);
+			m_manualRange = std::clamp(m_manualRange * 0.85f, RADAR_RANGE_MIN, RADAR_RANGE_MAX);
 		}
 	}
 
 	if (m_mode == RadarMode::MODE_AUTO) {
 		switch (range_type) {
 		case RANGE_COMBAT:
-			m_targetRange = Clamp(combat_dist * A_BIT, RADAR_RANGE_MIN, RADAR_RANGE_MAX);
+			m_targetRange = std::clamp(combat_dist * A_BIT, RADAR_RANGE_MIN, RADAR_RANGE_MAX);
 			break;
 		case RANGE_FAR_SHIP:
-			m_targetRange = Clamp(far_ship_dist * A_BIT, RADAR_RANGE_MIN, RADAR_RANGE_MAX);
+			m_targetRange = std::clamp(far_ship_dist * A_BIT, RADAR_RANGE_MIN, RADAR_RANGE_MAX);
 			break;
 		case RANGE_NAV:
-			m_targetRange = Clamp(nav_dist * A_BIT, RADAR_RANGE_MIN, RADAR_RANGE_MAX);
+			m_targetRange = std::clamp(nav_dist * A_BIT, RADAR_RANGE_MIN, RADAR_RANGE_MAX);
 			break;
 		case RANGE_FAR_OTHER:
-			m_targetRange = Clamp(far_other_dist * A_BIT, RADAR_RANGE_MIN, RADAR_RANGE_MAX);
+			m_targetRange = std::clamp(far_other_dist * A_BIT, RADAR_RANGE_MIN, RADAR_RANGE_MAX);
 			break;
 		default:
 			m_targetRange = RADAR_RANGE_MAX;
@@ -502,9 +502,9 @@ void RadarWidget::TimeStepUpdate(float step)
 {
 	PROFILE_SCOPED()
 	if (m_targetRange < m_currentRange)
-		m_currentRange = Clamp(m_currentRange - (m_currentRange * step), m_targetRange, RADAR_RANGE_MAX);
+		m_currentRange = std::clamp(m_currentRange - (m_currentRange * step), m_targetRange, RADAR_RANGE_MAX);
 	else if (m_targetRange > m_currentRange)
-		m_currentRange = Clamp(m_currentRange + (m_currentRange * step), RADAR_RANGE_MIN, m_targetRange);
+		m_currentRange = std::clamp(m_currentRange + (m_currentRange * step), RADAR_RANGE_MIN, m_targetRange);
 
 	m_scale = RADAR_SCALE * (RADAR_RANGE_MAX / m_currentRange);
 }

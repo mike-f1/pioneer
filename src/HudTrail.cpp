@@ -9,6 +9,8 @@
 #include "graphics/Renderer.h"
 #include "graphics/RendererLocator.h"
 
+#include "profiler/Profiler.h"
+
 const float UPDATE_INTERVAL = 0.1f;
 const uint16_t MAX_POINTS = 100;
 

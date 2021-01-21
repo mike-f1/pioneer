@@ -46,8 +46,8 @@ double TerrainHeightFractal<TerrainHeightHillsRivers>::GetHeight(const vector3d 
 		n += m * continents * 100.0f;
 	else
 		n += m;
-	n += continents * Clamp(0.5 - m, 0.0, 0.5) * 0.2 * river_octavenoise(GetFracDef(6), 0.6 * distrib, p);
-	n += continents * Clamp(0.05 - n, 0.0, 0.01) * 0.2 * dunes_octavenoise(GetFracDef(2), Clamp(0.5 - n, 0.0, 0.5), p);
+	n += continents * std::clamp(0.5 - m, 0.0, 0.5) * 0.2 * river_octavenoise(GetFracDef(6), 0.6 * distrib, p);
+	n += continents * std::clamp(0.05 - n, 0.0, 0.01) * 0.2 * dunes_octavenoise(GetFracDef(2), std::clamp(0.5 - n, 0.0, 0.5), p);
 	n *= m_maxHeight;
 	return (n > 0.0 ? n : 0.0);
 }

@@ -6,7 +6,6 @@
 #include "LuaRef.h"
 #include "LuaTable.h"
 #include "libs/RefCounted.h"
-#include "libs/utils.h"
 #include "imgui/imgui.h"
 
 #include <SDL_video.h>
@@ -70,13 +69,7 @@ public:
 	const std::string &name() const { return m_name; }
 	int pixelsize() const { return m_pixelsize; }
 	void setPixelsize(int pixelsize) { m_pixelsize = pixelsize; }
-	void describe() const
-	{
-		Output("font %s:\n", name().c_str());
-		for (const PiFace &face : faces()) {
-			Output("- %s %f\n", face.ttfname().c_str(), face.sizefactor());
-		}
-	}
+	void describe() const;
 };
 
 class PiGui;

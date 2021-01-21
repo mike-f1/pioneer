@@ -371,7 +371,7 @@ void Space::GetRandomOrbitFromDirection(const SystemPath &source, const SystemPa
 		(max_orbit_vel * max_orbit_vel);
 
 	// ensure an absolute minimum and an absolute maximum distance
-	dist = Clamp(dist, 0.2 * AU, std::max(primary->GetSystemBody()->GetRadius() * 1.1, 100 * AU));
+	dist = std::clamp(dist, 0.2 * AU, std::max(primary->GetSystemBody()->GetRadius() * 1.1, 100 * AU));
 
 	// point velocity vector along the line from source to dest,
 	// make exit position perpendicular to it,

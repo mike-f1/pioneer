@@ -856,8 +856,8 @@ void SystemView::Update(const float frameTime)
 	m_plannerRadialDvText->SetText(m_planner->printDv(RADIAL));
 
 	// TODO: add "true" lower/upper bounds to m_zoomTo / m_zoom
-	m_zoomTo = Clamp(m_zoomTo, MIN_ZOOM, MAX_ZOOM);
-	m_zoom = Clamp(m_zoom, MIN_ZOOM, MAX_ZOOM);
+	m_zoomTo = std::clamp(m_zoomTo, MIN_ZOOM, MAX_ZOOM);
+	m_zoom = std::clamp(m_zoom, MIN_ZOOM, MAX_ZOOM);
 	// Since m_zoom changes over multiple orders of magnitude, any fixed linear factor will not be appropriate
 	// at some of them.
 	AnimationCurves::Approach(m_zoom, m_zoomTo, frameTime, 10.f, m_zoomTo / 60.f);

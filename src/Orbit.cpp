@@ -4,7 +4,8 @@
 #include "Orbit.h"
 
 #include "libs/gameconsts.h"
-#include "libs/utils.h"
+
+#include <algorithm>
 
 #ifdef _MSC_VER
 #include "win32/WinMath.h"
@@ -320,8 +321,8 @@ Orbit Orbit::FromBodyState(const vector3d &pos, const vector3d &vel, double cent
 	//	1. Trajectory follows Kepler's law and vector {-r cos(v), -r sin(v), 0}, r(t) and v(t) are parameters.
 	//	2. Correct transformation must transform {0,0,LL} to ang and {-r_now cos(orbitalPhaseAtStart), -r_now sin(orbitalPhaseAtStart), 0} to pos.
 	//  3. orbitalPhaseAtStart (=offset) is calculated from r = a ((e^2 - 1)/(1 + e cos(v) ))
-	const double angle1 = acos(Clamp(ang.z / LL, -1 + 1e-6, 1 - 1e-6)) * (ang.x > 0 ? -1 : 1);
-	const double angle2 = asin(Clamp(ang.y / (LL * sqrt(1.0 - ang.z * ang.z / LLSqr)), -1 + 1e-6, 1 - 1e-6)) * (ang.x > 0 ? -1 : 1);
+	const double angle1 = acos(std::clamp(ang.z / LL, -1 + 1e-6, 1 - 1e-6)) * (ang.x > 0 ? -1 : 1);
+	const double angle2 = asin(std::clamp(ang.y / (LL * sqrt(1.0 - ang.z * ang.z / LLSqr)), -1 + 1e-6, 1 - 1e-6)) * (ang.x > 0 ? -1 : 1);
 
 	// There are two possible solutions of the equation and the only way how to find the correct one
 	// I know about is to try both and check if the position is transformed correctly. We minimize the difference
@@ -338,7 +339,7 @@ Orbit Orbit::FromBodyState(const vector3d &pos, const vector3d &vel, double cent
 		}
 
 		// correct sign of offset is given by sign pos.Dot(vel) (heading towards apohelion or perihelion?]
-		off = Clamp(off / (r_now * ret.m_eccentricity), -1 + 1e-6, 1 - 1e-6);
+		off = std::clamp(off / (r_now * ret.m_eccentricity), -1 + 1e-6, 1 - 1e-6);
 		off = -pos.Dot(vel) / fabs(pos.Dot(vel)) * acos(off);
 
 		ccc = acos(-pos.z / r_now / sin(angle1)) * i;

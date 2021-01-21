@@ -5,8 +5,9 @@
 #include "RendererGL.h"
 #include "TextureGL.h"
 #include "graphics/Graphics.h"
-#include "libs/StringF.h"
 #include <sstream>
+
+#include "profiler/Profiler.h"
 
 namespace Graphics {
 	namespace OGL {

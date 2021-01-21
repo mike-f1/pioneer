@@ -167,8 +167,8 @@ namespace Sound {
 		} else {
 			(*volLeftOut) = (*volRightOut) = vol;
 		}
-		(*volLeftOut) = Clamp((*volLeftOut), 0.0f, 1.0f);
-		(*volRightOut) = Clamp((*volRightOut), 0.0f, 1.0f);
+		(*volLeftOut) = std::clamp((*volLeftOut), 0.0f, 1.0f);
+		(*volRightOut) = std::clamp((*volRightOut), 0.0f, 1.0f);
 	}
 
 	eventid BodyMakeNoise(const Body *b, const char *sfx, float vol)
@@ -457,7 +457,7 @@ namespace Sound {
 		/* Convert float sample buffer to int16_t samples the hardware likes */
 		for (int pos = 0; pos < len_in_floats; pos++) {
 			const float val = m_masterVol * tmpbuf[pos];
-			(reinterpret_cast<int16_t *>(dsp_buf))[pos] = int16_t(Clamp(val, -32768.0f, 32767.0f));
+			(reinterpret_cast<int16_t *>(dsp_buf))[pos] = int16_t(std::clamp(val, -32768.0f, 32767.0f));
 		}
 	}
 

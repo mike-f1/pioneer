@@ -10,6 +10,8 @@
 
 #include "profiler/Profiler.h"
 
+#include <SDL_stdinc.h>
+
 namespace stringUtils {
 
 	std::string format_money(double cents, bool showCents)

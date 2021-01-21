@@ -241,12 +241,12 @@ void AmbientSounds::Update()
 			static_cast<const Planet *>(astro)->GetAtmosphericState(dist, &pressure, &density);
 			// maximum volume at around 2km/sec at earth density, pressure
 			const float pressureVolume = float(density * GameLocator::getGame()->GetPlayer()->GetVelocity().Length() * 0.0005);
-			//volume = Clamp(volume, 0.0f, 1.0f) * v_env;
+			//volume = std::clamp(volume, 0.0f, 1.0f) * v_env;
 			std::array<float, eMaxNumAtmosphereSounds> volumes;
 			for (int i = 0; i < eMaxNumAtmosphereSounds; i++) {
 				const float beg = s_rangeTable[i][0];
 				const float inv = s_rangeTable[i][1];
-				volumes[i] = Clamp((pressureVolume - beg) * inv, 0.0f, 1.0f) * v_env;
+				volumes[i] = std::clamp((pressureVolume - beg) * inv, 0.0f, 1.0f) * v_env;
 			}
 
 			for (int i = 0; i < eMaxNumAtmosphereSounds; i++) {

@@ -540,7 +540,7 @@ static int l_engine_set_display_hud_trails(lua_State *l)
 
 static int l_engine_set_amount_stars(lua_State *l)
 {
-	const float amount = Clamp(luaL_checknumber(l, 1), 0.01, 1.0);
+	const float amount = std::clamp(luaL_checknumber(l, 1), 0.01, 1.0);
 	GameConfSingleton::SetAmountBackgroundStars(amount);
 	return 0;
 }
@@ -600,7 +600,7 @@ static int l_engine_get_master_volume(lua_State *l)
 
 static int l_engine_set_master_volume(lua_State *l)
 {
-	const float volume = Clamp(luaL_checknumber(l, 1), 0.0, 1.0);
+	const float volume = std::clamp(luaL_checknumber(l, 1), 0.0, 1.0);
 	set_master_volume(GameConfSingleton::getInstance().Int("MasterMuted") != 0, volume);
 	return 0;
 }
@@ -628,7 +628,7 @@ static int l_engine_get_effects_volume(lua_State *l)
 
 static int l_engine_set_effects_volume(lua_State *l)
 {
-	const float volume = Clamp(luaL_checknumber(l, 1), 0.0, 1.0);
+	const float volume = std::clamp(luaL_checknumber(l, 1), 0.0, 1.0);
 	set_effects_volume(GameConfSingleton::getInstance().Int("SfxMuted") != 0, volume);
 	return 0;
 }
@@ -656,7 +656,7 @@ static int l_engine_get_music_volume(lua_State *l)
 
 static int l_engine_set_music_volume(lua_State *l)
 {
-	const float volume = Clamp(luaL_checknumber(l, 1), 0.0, 1.0);
+	const float volume = std::clamp(luaL_checknumber(l, 1), 0.0, 1.0);
 	set_music_volume(GameConfSingleton::getInstance().Int("MusicMuted") != 0, volume);
 	return 0;
 }

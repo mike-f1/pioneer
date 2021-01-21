@@ -38,9 +38,9 @@ double TerrainHeightFractal<TerrainHeightHillsNormal>::GetHeight(const vector3d 
 	double m = 0.5 * GetFracDef(3).amplitude * octavenoise(GetFracDef(4), 0.55 * distrib, p) * GetFracDef(5).amplitude;
 	m += 0.25 * billow_octavenoise(GetFracDef(5), 0.55 * distrib, p);
 	//hill footings
-	m -= octavenoise(GetFracDef(2), 0.6 * (1.0 - distrib), p) * Clamp(0.05 - m, 0.0, 0.05) * Clamp(0.05 - m, 0.0, 0.05);
+	m -= octavenoise(GetFracDef(2), 0.6 * (1.0 - distrib), p) * std::clamp(0.05 - m, 0.0, 0.05) * std::clamp(0.05 - m, 0.0, 0.05);
 	//hill footings
-	m += voronoiscam_octavenoise(GetFracDef(6), 0.765 * distrib, p) * Clamp(0.025 - m, 0.0, 0.025) * Clamp(0.025 - m, 0.0, 0.025);
+	m += voronoiscam_octavenoise(GetFracDef(6), 0.765 * distrib, p) * std::clamp(0.025 - m, 0.0, 0.025) * std::clamp(0.025 - m, 0.0, 0.025);
 	// cliffs at shore
 	if (continents < 0.01)
 		n += m * continents * 100.0f;

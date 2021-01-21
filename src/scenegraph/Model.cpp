@@ -231,7 +231,7 @@ namespace SceneGraph {
 
 	RefCountedPtr<Graphics::Material> Model::GetMaterialByIndex(const int i) const
 	{
-		return m_materials.at(Clamp(i, 0, int(m_materials.size()) - 1)).second;
+		return m_materials.at(std::clamp(i, 0, int(m_materials.size()) - 1)).second;
 	}
 
 	const MatrixTransform *Model::GetTagByIndex(const unsigned int i) const

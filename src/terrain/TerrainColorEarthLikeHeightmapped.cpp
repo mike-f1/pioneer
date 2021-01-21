@@ -33,7 +33,7 @@ vector3d TerrainColorFractal<TerrainColorEarthLikeHeightmapped>::GetColor(const 
 
 	if (n > 0) {
 		// ice on mountains
-		if (flatness > 0.6 / Clamp(n * m_icyness + (m_icyness * 0.5) + (fabs(p.y * p.y * p.y * 0.38)), 0.1, 1.0)) {
+		if (flatness > 0.6 / std::clamp(n * m_icyness + (m_icyness * 0.5) + (fabs(p.y * p.y * p.y * 0.38)), 0.1, 1.0)) {
 			col = interpolate_color(terrain_colournoise_rock, color_cliffs, m_rockColor[5]);
 			col = interpolate_color(flatness, col, vector3d(1, 1, 1));
 			return col;

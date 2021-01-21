@@ -8,6 +8,7 @@
 #include "graphics/Graphics.h"
 #include "libs/StringF.h"
 #include "libs/StringRange.h"
+#include "libs/utils.h"
 
 #include <set>
 

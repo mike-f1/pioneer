@@ -14,6 +14,7 @@
 #include "scenegraph/ModelSkin.h"
 
 #include <algorithm>
+#include "libs/utils.h"
 
 using namespace PiGUI;
 

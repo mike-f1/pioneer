@@ -3,7 +3,6 @@
 
 #include "Slider.h"
 #include "Context.h"
-#include "libs/utils.h"
 
 namespace UI {
 
@@ -98,7 +97,7 @@ namespace UI {
 
 	void Slider::SetValue(float v)
 	{
-		m_value = Clamp(v, m_rangeMin, m_rangeMax);
+		m_value = std::clamp(v, m_rangeMin, m_rangeMax);
 		onValueChanged.emit(m_value);
 		UpdateButton();
 	}
@@ -109,7 +108,7 @@ namespace UI {
 		if (!is_equal_exact(m_rangeMin, min) || !is_equal_exact(m_rangeMax, max)) {
 			m_rangeMin = min;
 			m_rangeMax = max;
-			m_value = Clamp(m_value, m_rangeMin, m_rangeMax);
+			m_value = std::clamp(m_value, m_rangeMin, m_rangeMax);
 			onValueChanged.emit(m_value);
 			UpdateButton();
 		}
@@ -160,7 +159,7 @@ namespace UI {
 				const Skin::RectElement &buttonRect = skin.SliderHorizontalButtonNormal();
 
 				const int effectiveLength = GetActiveArea().x - gutterRect.edgeWidth * 2 - buttonRect.size.x;
-				const int pos = Clamp(event.pos.x - int(gutterRect.edgeWidth) - buttonRect.size.x / 2 - GetActiveOffset().x, 0, effectiveLength);
+				const int pos = std::clamp(event.pos.x - int(gutterRect.edgeWidth) - buttonRect.size.x / 2 - GetActiveOffset().x, 0, effectiveLength);
 
 				travel = float(pos) / effectiveLength;
 			}
@@ -170,7 +169,7 @@ namespace UI {
 				const Skin::RectElement &buttonRect = skin.SliderVerticalButtonNormal();
 
 				const int effectiveLength = GetActiveArea().y - gutterRect.edgeWidth * 2 - buttonRect.size.y;
-				const int pos = Clamp(event.pos.y - int(gutterRect.edgeWidth) - buttonRect.size.y / 2 - GetActiveOffset().y, 0, effectiveLength);
+				const int pos = std::clamp(event.pos.y - int(gutterRect.edgeWidth) - buttonRect.size.y / 2 - GetActiveOffset().y, 0, effectiveLength);
 
 				travel = float(pos) / effectiveLength;
 			}

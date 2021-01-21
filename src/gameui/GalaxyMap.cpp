@@ -110,7 +110,7 @@ namespace GameUI {
 
 	GalaxyMap *GalaxyMap::SetZoom(float v)
 	{
-		m_zoom = Clamp(v, 0.5f, 20.0f);
+		m_zoom = std::clamp(v, 0.5f, 20.0f);
 		return this;
 	}
 

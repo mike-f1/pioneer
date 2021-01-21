@@ -8,7 +8,6 @@
 #include <string>
 
 #include "graphics/Drawables.h"
-#include "libs/utils.h"
 
 namespace Text {
 	class TextureFont;
@@ -30,7 +29,7 @@ namespace Gui {
 		virtual bool OnMouseDown(MouseButtonEvent *e);
 		void SetText(const std::string &text);
 		std::string GetText() const { return m_text; }
-		void SetCursorPos(int pos) { m_cursPos = Clamp(pos, 0, signed(m_text.size())); }
+		void SetCursorPos(int pos) { m_cursPos = std::clamp(pos, 0, signed(m_text.size())); }
 		int GetCursorPos() const { return m_cursPos; };
 		virtual bool OnKeyDown(const SDL_Keysym *);
 		virtual void OnTextInput(uint32_t unicode);

@@ -6,7 +6,9 @@
 #include "Node.h"
 #include "MatrixTransform.h"
 
-#include "libs/utils.h"
+#include "profiler/Profiler.h"
+
+#include <algorithm>
 
 namespace SceneGraph {
 
@@ -64,7 +66,7 @@ namespace SceneGraph {
 					const RotationKey &b = chan->rotationKeys[frame + 1];
 					double diffTime = b.time - a.time;
 					assert(diffTime > 0.0);
-					const float factor = Clamp(float((mtime - a.time) / diffTime), 0.f, 1.f);
+					const float factor = std::clamp(float((mtime - a.time) / diffTime), 0.f, 1.f);
 					trans = quaternionf::Slerp(a.rotation, b.rotation, factor).ToMatrix3x3<float>();
 				} else {
 					trans = a.rotation.ToMatrix3x3<float>();
@@ -90,7 +92,7 @@ namespace SceneGraph {
 					const ScaleKey &b = chan->scaleKeys[frame + 1];
 					double diffTime = b.time - a.time;
 					assert(diffTime > 0.0);
-					const float factor = Clamp(float((mtime - a.time) / diffTime), 0.f, 1.f);
+					const float factor = std::clamp(float((mtime - a.time) / diffTime), 0.f, 1.f);
 					out = a.scale + (b.scale - a.scale) * factor;
 				} else {
 					out = a.scale;
@@ -113,7 +115,7 @@ namespace SceneGraph {
 					const PositionKey &b = chan->positionKeys[frame + 1];
 					double diffTime = b.time - a.time;
 					assert(diffTime > 0.0);
-					const float factor = Clamp(float((mtime - a.time) / diffTime), 0.f, 1.f);
+					const float factor = std::clamp(float((mtime - a.time) / diffTime), 0.f, 1.f);
 					out = a.position + (b.position - a.position) * factor;
 				} else {
 					out = a.position;
@@ -132,7 +134,7 @@ namespace SceneGraph {
 
 	void Animation::SetProgress(double prog)
 	{
-		m_time = Clamp(prog, 0.0, 1.0) * m_duration;
+		m_time = std::clamp(prog, 0.0, 1.0) * m_duration;
 	}
 
 } // namespace SceneGraph

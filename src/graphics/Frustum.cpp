@@ -18,7 +18,7 @@ namespace Graphics {
 	Frustum::Frustum(float width, float height, float fovAng, float znear, float zfar)
 	{
 		//http://www.opengl.org/resources/faq/technical/transformations.htm
-		const float fov = tan(DEG2RAD(Clamp(fovAng, FOV_MIN, FOV_MAX) / 2.0f));
+		const float fov = tan(DEG2RAD(std::clamp(fovAng, FOV_MIN, FOV_MAX) / 2.0f));
 
 		const float aspect = width / height;
 		const float top = znear * fov;

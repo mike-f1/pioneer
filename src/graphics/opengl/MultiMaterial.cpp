@@ -10,15 +10,16 @@
 #include "graphics/Material.h"
 #include "libs/StringF.h"
 #include <sstream>
+#include <algorithm>
 
-#include "libs/utils.h"
+#include "profiler/Profiler.h"
 
 namespace Graphics {
 	namespace OGL {
 
 		MultiProgram::MultiProgram(const MaterialDescriptor &desc, int numLights)
 		{
-			numLights = Clamp(numLights, 1, 4);
+			numLights = std::clamp(numLights, 1, 4);
 
 			//build some defines
 			std::stringstream ss;

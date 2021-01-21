@@ -4,10 +4,11 @@
 #include "TextureGL.h"
 #include "RendererGL.h"
 #include "graphics/Renderer.h"
-#include "libs/utils.h"
 #include <cassert>
 
-static const unsigned int MIN_COMPRESSED_TEXTURE_DIMENSION = 16;
+#include "profiler/Profiler.h"
+
+constexpr unsigned int MIN_COMPRESSED_TEXTURE_DIMENSION = 16;
 
 namespace Graphics {
 	namespace OGL {

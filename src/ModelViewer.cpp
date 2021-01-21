@@ -20,6 +20,7 @@
 #include "graphics/opengl/RendererGL.h"
 #include "libs/stringUtils.h"
 #include "libs/StringF.h"
+#include "libs/utils.h"
 #include "scenegraph/Animation.h"
 #include "scenegraph/BinaryConverter.h"
 #include "scenegraph/DumpVisitor.h"
@@ -420,7 +421,7 @@ void ModelViewer::ToggleViewControlMode()
 	RendererLocator::getRenderer()->SetGrab(m_options.mouselookEnabled);
 
 	if (m_options.mouselookEnabled) {
-		m_viewRot = matrix3x3f::RotateY(DEG2RAD(m_rotY)) * matrix3x3f::RotateX(DEG2RAD(Clamp(m_rotX, -90.0f, 90.0f)));
+		m_viewRot = matrix3x3f::RotateY(DEG2RAD(m_rotY)) * matrix3x3f::RotateX(DEG2RAD(std::clamp(m_rotX, -90.0f, 90.0f)));
 		m_viewPos = zoom_distance(m_baseDistance, m_zoom) * m_viewRot.VectorZ();
 	} else {
 		// XXX re-initialise the turntable style view position from the current mouselook view
@@ -607,7 +608,7 @@ void ModelViewer::MainLoop()
 			if (m_options.mouselookEnabled) {
 				mv = m_viewRot.Transpose() * matrix4x4f::Translation(-m_viewPos);
 			} else {
-				m_rotX = Clamp(m_rotX, -90.0f, 90.0f);
+				m_rotX = std::clamp(m_rotX, -90.0f, 90.0f);
 				matrix4x4f rot = matrix4x4f::Identity();
 				rot.RotateX(DEG2RAD(-m_rotX));
 				rot.RotateY(DEG2RAD(-m_rotY));
@@ -1287,7 +1288,7 @@ void ModelViewer::UpdateCamera()
 		if (m_mouseWheelUp) m_zoom -= BASE_ZOOM_RATE;
 		if (m_mouseWheelDown) m_zoom += BASE_ZOOM_RATE;
 
-		m_zoom = Clamp(m_zoom, -10.0f, 10.0f); // distance range: [baseDistance * 1/1024, baseDistance * 1024]
+		m_zoom = std::clamp(m_zoom, -10.0f, 10.0f); // distance range: [baseDistance * 1/1024, baseDistance * 1024]
 
 		//rotate
 		if (m_keyStates[SDLK_UP]) m_rotX += rotateRate;

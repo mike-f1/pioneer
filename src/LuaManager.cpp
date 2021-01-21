@@ -5,17 +5,14 @@
 
 #include "LuaUtils.h"
 
-#include "libs/utils.h"
+#include <stdexcept>
 
 bool instantiated = false;
 
 LuaManager::LuaManager() :
 	m_lua(0)
 {
-	if (instantiated) {
-		Output("Can't instantiate more than one LuaManager");
-		abort();
-	}
+	if (instantiated) throw std::logic_error { "Can't instantiate more than one LuaManager" };
 
 	m_lua = luaL_newstate();
 	pi_lua_open_standard_base(m_lua);

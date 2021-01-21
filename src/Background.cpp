@@ -236,17 +236,17 @@ namespace Background {
 		IniConfig cfg;
 		cfg.Read(FileSystem::gameDataFiles, "configs/Starfield.ini");
 		// NB: limit the ranges of all values loaded from the file
-		m_rMin = Clamp(cfg.Float("rMin", 0.2), 0.2f, 1.0f);
-		m_rMax = Clamp(cfg.Float("rMax", 0.9), 0.2f, 1.0f);
-		m_gMin = Clamp(cfg.Float("gMin", 0.2), 0.2f, 1.0f);
-		m_gMax = Clamp(cfg.Float("gMax", 0.9), 0.2f, 1.0f);
-		m_bMin = Clamp(cfg.Float("bMin", 0.2), 0.2f, 1.0f);
-		m_bMax = Clamp(cfg.Float("bMax", 0.9), 0.2f, 1.0f);
+		m_rMin = std::clamp(cfg.Float("rMin", 0.2), 0.2f, 1.0f);
+		m_rMax = std::clamp(cfg.Float("rMax", 0.9), 0.2f, 1.0f);
+		m_gMin = std::clamp(cfg.Float("gMin", 0.2), 0.2f, 1.0f);
+		m_gMax = std::clamp(cfg.Float("gMax", 0.9), 0.2f, 1.0f);
+		m_bMin = std::clamp(cfg.Float("bMin", 0.2), 0.2f, 1.0f);
+		m_bMax = std::clamp(cfg.Float("bMax", 0.9), 0.2f, 1.0f);
 	}
 
 	void Starfield::Fill(Random &rand, float amountOfBackgroundStars)
 	{
-		const uint32_t NUM_BG_STARS = Clamp(uint32_t(amountOfBackgroundStars * BG_STAR_MAX), BG_STAR_MIN, BG_STAR_MAX);
+		const uint32_t NUM_BG_STARS = std::clamp(uint32_t(amountOfBackgroundStars * BG_STAR_MAX), BG_STAR_MIN, BG_STAR_MAX);
 		m_hyperVtx.reset(new vector3f[BG_STAR_MAX * 3]);
 		m_hyperCol.reset(new Color[BG_STAR_MAX * 3]);
 
@@ -298,9 +298,9 @@ namespace Background {
 
 							// grab the approximate real colour
 							Color col = GalaxyEnums::starRealColors[ss->GetStarType(0)];
-							col.r = Clamp(col.r, uint8_t(m_rMin * 255), uint8_t(m_rMax * 255));
-							col.g = Clamp(col.g, uint8_t(m_gMin * 255), uint8_t(m_gMax * 255));
-							col.b = Clamp(col.b, uint8_t(m_bMin * 255), uint8_t(m_bMax * 255));
+							col.r = std::clamp(col.r, uint8_t(m_rMin * 255), uint8_t(m_rMax * 255));
+							col.g = std::clamp(col.g, uint8_t(m_gMin * 255), uint8_t(m_gMax * 255));
+							col.b = std::clamp(col.b, uint8_t(m_bMin * 255), uint8_t(m_bMax * 255));
 							//const Color col(Color::PINK); // debug pink
 
 							// copy the data
@@ -521,7 +521,7 @@ namespace Background {
 	void Container::SetIntensity(float intensity)
 	{
 		PROFILE_SCOPED()
-		intensity = Clamp(intensity, 0.0f, 1.0f);
+		intensity = std::clamp(intensity, 0.0f, 1.0f);
 		m_universeBox.SetIntensity(intensity);
 		m_starField.SetIntensity(intensity);
 		m_milkyWay.SetIntensity(intensity);

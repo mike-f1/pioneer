@@ -6,7 +6,7 @@
 
 #include "FracDef.h"
 #include "perlin.h"
-#include "libs/utils.h"
+#include <algorithm>
 
 namespace TerrainNoise {
 
@@ -173,7 +173,7 @@ namespace TerrainNoise {
 	// not really a noise function but no better place for it
 	inline vector3d interpolate_color(const double n, const vector3d &start, const vector3d &end)
 	{
-		const double nClamped = Clamp(n, 0.0, 1.0);
+		const double nClamped = std::clamp(n, 0.0, 1.0);
 		return start * (1.0 - nClamped) + end * nClamped;
 	}
 

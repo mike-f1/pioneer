@@ -193,7 +193,7 @@ void ObjectViewerView::Update(const float frameTime)
 	} else {
 		min_distance = m_lastTarget->GetClipRadius() * 0.5;
 	}
-	m_viewingDist = Clamp(m_viewingDist, min_distance, 1e12f);
+	m_viewingDist = std::clamp(m_viewingDist, min_distance, 1e12f);
 	m_zoomChange = Zooming::NONE;
 
 	if (m_inputFrame->IsActive(m_objectViewerBindings.resetZoom) && m_lastTarget != nullptr) {
@@ -212,7 +212,7 @@ void ObjectViewerView::Update(const float frameTime)
 	case RotateLight::RIGHT : m_lightAngle -= move * 30.0; break;
 	default: break;
 	}
-	m_lightAngle = Clamp(m_lightAngle, float(-DEG2RAD(180.0)), float(DEG2RAD(180.0)));
+	m_lightAngle = std::clamp(m_lightAngle, float(-DEG2RAD(180.0)), float(DEG2RAD(180.0)));
 	m_lightRotate = RotateLight::NONE;
 
 	if (m_inputFrame->IsActive(m_objectViewerBindings.rotateUpDown)) {
@@ -357,17 +357,17 @@ void ObjectViewerView::DrawAdditionalUIForSysBodies()
 	const int step = 1, step_fast = 10;
 	ImGui::InputScalar("Integer seed", ImGuiDataType_U32, &m_sbSeed, &step, &step_fast, "%u");
 	ImGui::InputFloat("Volatile gases (>= 0)", &m_sbVolatileGas, 0.01f, 0.1f, "%.4f");
-	m_sbVolatileGas = Clamp(m_sbVolatileGas, 0.0f, 10.0f);
+	m_sbVolatileGas = std::clamp(m_sbVolatileGas, 0.0f, 10.0f);
 	ImGui::InputFloat("Volatile liquid (0-1)", &m_sbVolatileLiquid, 0.01f, 0.1f, "%.4f");
-	m_sbVolatileLiquid = Clamp(m_sbVolatileLiquid, 0.0f, 1.0f);
+	m_sbVolatileLiquid = std::clamp(m_sbVolatileLiquid, 0.0f, 1.0f);
 	ImGui::InputFloat("Volatile ices (0-1)", &m_sbVolatileIces, 0.01f, 0.1f, "%.4f");
-	m_sbVolatileIces = Clamp(m_sbVolatileIces, 0.0f, 1.0f);
+	m_sbVolatileIces = std::clamp(m_sbVolatileIces, 0.0f, 1.0f);
 	ImGui::InputFloat("Life (0-1)", &m_sbLife, 0.01f, 0.1f, "%.4f");
-	m_sbLife = Clamp(m_sbLife, 0.0f, 1.0f);
+	m_sbLife = std::clamp(m_sbLife, 0.0f, 1.0f);
 	ImGui::InputFloat("Volcanicity (0-1)", &m_sbVolcanicity, 0.01f, 1.0f, "%.4f");
-	m_sbVolcanicity = Clamp(m_sbVolcanicity, 0.0f, 1.0f);
+	m_sbVolcanicity = std::clamp(m_sbVolcanicity, 0.0f, 1.0f);
 	ImGui::InputFloat("Crust metallicity (0-1)", &m_sbMetallicity, 0.01f, 1.0f, "%.4f");
-	m_sbMetallicity = Clamp(m_sbMetallicity, 0.0f, 1.0f);
+	m_sbMetallicity = std::clamp(m_sbMetallicity, 0.0f, 1.0f);
 
 	ImGui::Button("Prev Seed");
 	if (ImGui::IsItemClicked(0)) OnPrevSeed();

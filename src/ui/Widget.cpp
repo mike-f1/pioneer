@@ -4,7 +4,6 @@
 #include "Widget.h"
 #include "Container.h"
 #include "Context.h"
-#include "libs/utils.h"
 
 namespace UI {
 
@@ -93,7 +92,7 @@ namespace UI {
 
 	void Widget::SetActiveArea(const Point &activeArea, const Point &activeOffset)
 	{
-		m_activeArea = Point(Clamp(activeArea.x, 0, GetSize().x), Clamp(activeArea.y, 0, GetSize().y));
+		m_activeArea = Point(std::clamp(activeArea.x, 0, GetSize().x), std::clamp(activeArea.y, 0, GetSize().y));
 		m_activeOffset = activeOffset;
 	}
 

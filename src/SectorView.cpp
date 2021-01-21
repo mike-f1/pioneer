@@ -64,7 +64,7 @@ SectorView::SectorView(const SystemPath &path, RefCountedPtr<Galaxy> galaxy, uns
 
 	// XXX I have no idea if this is correct,
 	// I just copied it from the one other place m_zoomClamped is set
-	m_zoomClamped = Clamp(m_zoom, 1.f, FAR_LIMIT);
+	m_zoomClamped = std::clamp(m_zoom, 1.f, FAR_LIMIT);
 
 	m_inSystem = true;
 
@@ -108,7 +108,7 @@ SectorView::SectorView(const Json &jsonObj, RefCountedPtr<Galaxy> galaxy, unsign
 		m_zoom = m_zoomMovingTo = sectorViewObj["zoom"];
 		// XXX I have no idea if this is correct,
 		// I just copied it from the one other place m_zoomClamped is set
-		m_zoomClamped = Clamp(m_zoom, 1.f, FAR_LIMIT);
+		m_zoomClamped = std::clamp(m_zoom, 1.f, FAR_LIMIT);
 		m_inSystem = sectorViewObj["in_system"];
 		m_current = SystemPath::FromJson(sectorViewObj["current"]);
 		m_selected = SystemPath::FromJson(sectorViewObj["selected"]);
@@ -172,8 +172,8 @@ void SectorView::InitDefaults()
 	m_rotXDefault = GameConfSingleton::getInstance().Float("SectorViewXRotation");
 	m_rotZDefault = GameConfSingleton::getInstance().Float("SectorViewZRotation");
 	m_zoomDefault = GameConfSingleton::getInstance().Float("SectorViewZoom");
-	m_rotXDefault = Clamp(m_rotXDefault, -170.0f, -10.0f);
-	m_zoomDefault = Clamp(m_zoomDefault, 0.1f, 5.0f);
+	m_rotXDefault = std::clamp(m_rotXDefault, -170.0f, -10.0f);
+	m_zoomDefault = std::clamp(m_zoomDefault, 0.1f, 5.0f);
 	m_previousSearch = "";
 
 	m_secPosFar = vector3f(INT_MAX, INT_MAX, INT_MAX);
@@ -280,7 +280,7 @@ void SectorView::Draw3D()
 
 	// units are lightyears, my friend
 	matrix4x4f modelview = matrix4x4f::Identity();
-	modelview.Translate(0.f, 0.f, -10.f - 10.f * m_zoom); // not zoomClamped, let us zoom out a bit beyond what we're drawing
+	modelview.Translate(0.f, 0.f, -10.f - 10.f * m_zoom); // not zoomstd::clamped, let us zoom out a bit beyond what we're drawing
 	modelview.Rotate(DEG2RAD(m_rotX), 1.f, 0.f, 0.f);
 	modelview.Rotate(DEG2RAD(m_rotZ), 0.f, 0.f, 1.f);
 	modelview.Translate(-FFRAC(m_pos.x) * Sector::SIZE, -FFRAC(m_pos.y) * Sector::SIZE, -FFRAC(m_pos.z) * Sector::SIZE);
@@ -1247,7 +1247,7 @@ void SectorView::Update(const float frameTime)
 	if (m_inputFrame->IsActive(m_sectorBindings.mapViewZoom)) {
 		m_zoomMovingTo -= m_inputFrame->GetValue(m_sectorBindings.mapViewZoom) * move * 5.0f;
 	}
-	m_zoomMovingTo = Clamp(m_zoomMovingTo, 0.1f, FAR_MAX);
+	m_zoomMovingTo = std::clamp(m_zoomMovingTo, 0.1f, FAR_MAX);
 
 	if (m_inputFrame->IsActive(m_sectorBindings.mapViewRotateLeftRight)) {
 		if (m_inputFrame->GetValue(m_sectorBindings.mapViewRotateLeftRight) < 0.0) m_rotZMovingTo -= ROTATION_SPEED_FACTOR * moveSpeed;
@@ -1262,7 +1262,7 @@ void SectorView::Update(const float frameTime)
 	m_rotXMovingTo += ROTATION_SPEED_FACTOR * float(std::get<2>(motion));
 	m_rotZMovingTo += ROTATION_SPEED_FACTOR * float(std::get<1>(motion));
 
-	m_rotXMovingTo = Clamp(m_rotXMovingTo, -170.0f, -10.0f);
+	m_rotXMovingTo = std::clamp(m_rotXMovingTo, -170.0f, -10.0f);
 
 	{
 		vector3f diffPos = m_posMovingTo - m_pos;
@@ -1292,7 +1292,7 @@ void SectorView::Update(const float frameTime)
 			m_zoom = m_zoomMovingTo;
 		else
 			m_zoom = m_zoom + travelZoom;
-		m_zoomClamped = Clamp(m_zoom, 1.f, FAR_LIMIT);
+		m_zoomClamped = std::clamp(m_zoom, 1.f, FAR_LIMIT);
 	}
 
 	if (m_automaticSystemSelection) {
@@ -1385,7 +1385,7 @@ void SectorView::ZoomIn()
 	const float moveSpeed = InputFWD::GetMoveSpeedShiftModifier();
 	float move = moveSpeed * m_lastFrameTime;
 	m_zoomMovingTo -= move;
-	m_zoomMovingTo = Clamp(m_zoomMovingTo, 0.1f, FAR_MAX);
+	m_zoomMovingTo = std::clamp(m_zoomMovingTo, 0.1f, FAR_MAX);
 }
 
 void SectorView::ZoomOut()
@@ -1393,7 +1393,7 @@ void SectorView::ZoomOut()
 	const float moveSpeed = InputFWD::GetMoveSpeedShiftModifier();
 	float move = moveSpeed * m_lastFrameTime;
 	m_zoomMovingTo += move;
-	m_zoomMovingTo = Clamp(m_zoomMovingTo, 0.1f, FAR_MAX);
+	m_zoomMovingTo = std::clamp(m_zoomMovingTo, 0.1f, FAR_MAX);
 }
 
 vector3f SectorView::GetCenterSector()

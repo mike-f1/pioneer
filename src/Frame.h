@@ -8,7 +8,6 @@
 
 #include "JsonFwd.h"
 #include "collider/CollisionCallbackFwd.h"
-#include "libs/utils.h"
 #include "libs/IterationProxy.h"
 #include "libs/matrix3x3.h"
 #include "libs/matrix4x4.h"
@@ -66,7 +65,7 @@ public:
 	{
 		if (fId.valid()) {
 			if (unsigned(fId.id()) < s_frames.size()) return &s_frames[fId];
-			Error("In '%s': fId is valid but out of range (%i)...\n",__func__, fId.id());
+			pass_Error(__func__, fId);
 			return nullptr;
 		}
 		return nullptr;
@@ -195,6 +194,8 @@ private:
 	};
 
 	Dummy d;
+
+	static void pass_Error(const char *func, FrameId id);
 };
 
 #endif /* _FRAME_H */

@@ -5,7 +5,6 @@
 
 #include "Context.h"
 #include "graphics/RendererLocator.h"
-#include "libs/utils.h"
 #include "text/TextSupport.h"
 #include "text/TextureFont.h"
 
@@ -93,7 +92,7 @@ namespace UI {
 	{
 		bool atEnd = m_label->GetText().size() == m_cursor;
 		m_label->SetText(text);
-		m_cursor = atEnd ? uint32_t(text.size()) : Clamp(m_cursor, uint32_t(0), uint32_t(text.size()));
+		m_cursor = atEnd ? uint32_t(text.size()) : std::clamp(m_cursor, uint32_t(0), uint32_t(text.size()));
 		GetContext()->RequestLayout();
 		return this;
 	}

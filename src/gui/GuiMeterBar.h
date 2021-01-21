@@ -7,7 +7,6 @@
 #include "Color.h"
 #include "GuiFixed.h"
 #include "GuiLabel.h"
-#include "libs/utils.h"
 
 namespace Graphics {
 	namespace Drawables {
@@ -24,7 +23,7 @@ namespace Gui {
 		virtual ~MeterBar();
 		virtual void Draw();
 		virtual void GetSizeRequested(float size[2]);
-		void SetValue(float v) { m_barValue = Clamp(v, 0.0f, 1.0f); }
+		void SetValue(float v) { m_barValue = std::clamp(v, 0.0f, 1.0f); }
 		void SetColor(const ::Color &c) { m_barColor = c; }
 
 	private:

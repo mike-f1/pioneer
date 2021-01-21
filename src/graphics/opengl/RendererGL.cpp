@@ -733,7 +733,7 @@ namespace Graphics {
 		if (count == 0 || !material || !material->texture0)
 			return false;
 
-		size = Clamp(size, 0.1f, FLT_MAX);
+		size = std::clamp(size, 0.1f, FLT_MAX);
 
 #pragma pack(push, 4)
 		struct PosNormVert {
@@ -823,7 +823,7 @@ namespace Graphics {
 		assert(drawVB->GetDesc().stride == sizeof(PosNormVert));
 		for (uint32_t i = 0; i < count; i++) {
 			vtxPtr[i].pos = positions[i];
-			vtxPtr[i].norm = vector3f(offsets[i], Clamp(sizes[i], 0.1f, FLT_MAX));
+			vtxPtr[i].norm = vector3f(offsets[i], std::clamp(sizes[i], 0.1f, FLT_MAX));
 		}
 		drawVB->Unmap();
 

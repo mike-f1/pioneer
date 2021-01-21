@@ -36,9 +36,6 @@ void Warning(const char *format, ...) __attribute((format(printf, 1, 2)));
 void Output(const char *format, ...) __attribute((format(printf, 1, 2)));
 void OpenGLDebugMsg(const char *format, ...) __attribute((format(printf, 1, 2)));
 
-template <class T>
-inline const T &Clamp(const T &x, const T &min, const T &max) { return x > max ? max : (x < min ? min : x); }
-
 constexpr double _deg2radFactor = M_PI / 180.;
 constexpr double _rad2degFactor = 180 / M_PI;
 

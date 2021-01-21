@@ -16,6 +16,7 @@
 #include "graphics/VertexBuffer.h"
 
 #include "libs/utils.h"
+#include "profiler/Profiler.h"
 
 namespace SceneGraph {
 
@@ -106,7 +107,7 @@ namespace SceneGraph {
 		vector3f cdir = vector3f(trans * -m_dir).Normalized();
 		vector3f vdir = vector3f(trans[2], trans[6], -trans[10]).Normalized();
 		// XXX check this for transition to new colors.
-		m_glowMat->diffuse.a = Easing::Circ::EaseIn(Clamp(vdir.Dot(cdir), 0.f, 1.f), 0.f, 1.f, 1.f) * 255;
+		m_glowMat->diffuse.a = Easing::Circ::EaseIn(std::clamp(vdir.Dot(cdir), 0.f, 1.f), 0.f, 1.f, 1.f) * 255;
 		m_tMat->diffuse.a = 255 - m_glowMat->diffuse.a;
 
 		Graphics::Renderer *r = RendererLocator::getRenderer();

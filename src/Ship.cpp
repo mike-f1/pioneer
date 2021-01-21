@@ -372,7 +372,7 @@ float Ship::GetPercentShields() const
 
 void Ship::SetPercentHull(float p)
 {
-	m_stats.hull_mass_left = 0.01f * Clamp(p, 0.0f, 100.0f) * float(m_type->hullMass);
+	m_stats.hull_mass_left = 0.01f * std::clamp(p, 0.0f, 100.0f) * float(m_type->hullMass);
 	Properties().Set("hullMassLeft", m_stats.hull_mass_left);
 	Properties().Set("hullPercent", 100.0f * (m_stats.hull_mass_left / float(m_type->hullMass)));
 }
@@ -658,7 +658,7 @@ void Ship::UpdateEquipStats()
 
 	unsigned int thruster_power_cap = 0;
 	Properties().Get("thruster_power_cap", thruster_power_cap);
-	const double power_mul = m_type->thrusterUpgrades[Clamp(thruster_power_cap, 0U, 3U)];
+	const double power_mul = m_type->thrusterUpgrades[std::clamp(thruster_power_cap, 0U, 3U)];
 	Propulsion::SetThrustPowerMult(power_mul, m_type->linThrust, m_type->angThrust);
 
 	m_stats.hyperspace_range = m_stats.hyperspace_range_max = 0;
@@ -989,8 +989,8 @@ void Ship::DoThrusterSounds() const
 	else
 		targetVol[1] += -0.5f * float(Propulsion::GetLinThrusterState().x);
 
-	targetVol[0] = v_env * Clamp(targetVol[0], 0.0f, 1.0f);
-	targetVol[1] = v_env * Clamp(targetVol[1], 0.0f, 1.0f);
+	targetVol[0] = v_env * std::clamp(targetVol[0], 0.0f, 1.0f);
+	targetVol[1] = v_env * std::clamp(targetVol[1], 0.0f, 1.0f);
 	float dv_dt[2] = { 4.0f, 4.0f };
 	if (!sndev.VolumeAnimate(targetVol, dv_dt)) {
 		sndev.Play("Thruster_large", 0.0f, 0.0f, Sound::OP_REPEAT);
@@ -1275,13 +1275,13 @@ void Ship::StaticUpdate(const float timeStep)
 		float booster = 1.0f;
 		Properties().Get("shield_energy_booster_cap", booster);
 		recharge_rate *= booster;
-		m_stats.shield_mass_left = Clamp(m_stats.shield_mass_left + m_stats.shield_mass * recharge_rate * timeStep, 0.0f, m_stats.shield_mass);
+		m_stats.shield_mass_left = std::clamp(m_stats.shield_mass_left + m_stats.shield_mass * recharge_rate * timeStep, 0.0f, m_stats.shield_mass);
 		Properties().Set("shieldMassLeft", m_stats.shield_mass_left);
 	}
 
 	if (m_wheelTransition) {
 		m_wheelState += m_wheelTransition * 0.3f * timeStep;
-		m_wheelState = Clamp(m_wheelState, 0.0f, 1.0f);
+		m_wheelState = std::clamp(m_wheelState, 0.0f, 1.0f);
 		if (is_equal_exact(m_wheelState, 0.0f) || is_equal_exact(m_wheelState, 1.0f))
 			m_wheelTransition = 0;
 	}
@@ -1391,7 +1391,7 @@ void Ship::Render(const Camera *camera, const vector3d &viewCoords, const matrix
 	matrix3x3dtof(viewTransform.Inverse().GetOrient(), mt);
 	s_heatGradientParams.heatingMatrix = mt;
 	s_heatGradientParams.heatingNormal = vector3f(GetVelocity().Normalized());
-	s_heatGradientParams.heatingAmount = Clamp(GetHullTemperature(), 0.0, 1.0);
+	s_heatGradientParams.heatingAmount = std::clamp(GetHullTemperature(), 0.0, 1.0);
 
 	// This has to be done per-model with a shield and just before it's rendered
 	const bool shieldsVisible = m_shieldCooldown > 0.01f && m_stats.shield_mass_left > (m_stats.shield_mass / 100.0f);

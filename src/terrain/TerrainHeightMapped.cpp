@@ -50,10 +50,10 @@ double TerrainHeightFractal<TerrainHeightMapped>::GetHeight(const vector3d &p) c
 			100.0 * ridged_octavenoise(GetFracDef(5), 0.5, p);
 	}
 	//high altitude detail/mountains
-	//v += Clamp(h, 0.0, 0.5)*octavenoise(GetFracDef(2-m_fracnum), 0.5, p);
+	//v += std::clamp(h, 0.0, 0.5)*octavenoise(GetFracDef(2-m_fracnum), 0.5, p);
 
 	//low altitude detail/dunes
-	//v += h*0.000003*ridged_octavenoise(GetFracDef(2-m_fracnum), Clamp(1.0-h*0.002, 0.0, 0.5), p);
+	//v += h*0.000003*ridged_octavenoise(GetFracDef(2-m_fracnum), std::clamp(1.0-h*0.002, 0.0, 0.5), p);
 	if (v < 10.0) {
 		v += 2.0 * v * dunes_octavenoise(GetFracDef(6), 0.5, p) * octavenoise(GetFracDef(6), 0.5, p);
 	} else if (v < 50.0) {
@@ -65,18 +65,18 @@ double TerrainHeightFractal<TerrainHeightMapped>::GetHeight(const vector3d &p) c
 		//v = v;
 	} else if (v < 60.0) {
 		v += (v - 40.0) * billow_octavenoise(GetFracDef(5), 0.5, p);
-		//Output("V/height: %f\n", Clamp(v-20.0, 0.0, 1.0));
+		//Output("V/height: %f\n", std::clamp(v-20.0, 0.0, 1.0));
 	} else {
 		v += (30.0 / v) * (30.0 / v) * (30.0 / v) * 20.0 * billow_octavenoise(GetFracDef(5), 0.5, p);
 	}
 
 	//ridges and bumps
-	//v += h*0.1*ridged_octavenoise(GetFracDef(6-m_fracnum), Clamp(h*0.0002, 0.3, 0.5), p)
-	//	* Clamp(h*0.0002, 0.1, 0.5);
-	v += h * 0.2 * voronoiscam_octavenoise(GetFracDef(5), Clamp(1.0 - (h * 0.0002), 0.0, 0.6), p) * Clamp(1.0 - (h * 0.0006), 0.0, 1.0);
+	//v += h*0.1*ridged_octavenoise(GetFracDef(6-m_fracnum), std::clamp(h*0.0002, 0.3, 0.5), p)
+	//	* std::clamp(h*0.0002, 0.1, 0.5);
+	v += h * 0.2 * voronoiscam_octavenoise(GetFracDef(5), std::clamp(1.0 - (h * 0.0002), 0.0, 0.6), p) * std::clamp(1.0 - (h * 0.0006), 0.0, 1.0);
 	//polar ice caps with cracks
 	if ((m_icyness * 0.5) + (fabs(p.y * p.y * p.y * 0.38)) > 0.6) {
-		h = Clamp(1.0 - (v * 10.0), 0.0, 1.0) * voronoiscam_octavenoise(GetFracDef(5), 0.5, p);
+		h = std::clamp(1.0 - (v * 10.0), 0.0, 1.0) * voronoiscam_octavenoise(GetFracDef(5), 0.5, p);
 		h *= h * h * 2.0;
 		h -= 3.0;
 		v += h;

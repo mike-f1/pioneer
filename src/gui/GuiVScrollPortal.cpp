@@ -94,7 +94,7 @@ namespace Gui {
 		if (e->button == MouseButtonEvent::BUTTON_WHEELUP || e->button == MouseButtonEvent::BUTTON_WHEELDOWN) {
 			float change = e->button == MouseButtonEvent::BUTTON_WHEELUP ? -0.1 : 0.1;
 			float pos = vscrollAdjust.GetValue();
-			vscrollAdjust.SetValue(Clamp(pos + change, 0.0f, 1.0f));
+			vscrollAdjust.SetValue(std::clamp(pos + change, 0.0f, 1.0f));
 			return false;
 		}
 

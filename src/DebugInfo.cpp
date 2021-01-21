@@ -17,7 +17,6 @@
 #include "graphics/Light.h"
 #include "graphics/Stats.h"
 #include "libs/StringF.h"
-#include "libs/utils.h"
 #include "text/TextureFont.h"
 
 void DebugInfo::NewCycle()

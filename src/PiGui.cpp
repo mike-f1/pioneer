@@ -25,6 +25,9 @@
 #define NANOSVGRAST_IMPLEMENTATION
 #include "nanosvg/nanosvgrast.h"
 
+#include "libs/utils.h"
+#include "profiler/Profiler.h"
+
 std::vector<Graphics::Texture *> PiGui::m_svg_textures;
 
 ImTextureID PiGui::RenderSVG(std::string svgFilename, int width, int height)
@@ -769,4 +772,12 @@ void PiFace::sortUsedRanges() const
 	if (current.first != 0xffff && current.second != 0xffff)
 		merged.push_back(current);
 	m_used_ranges.assign(merged.begin(), merged.end());
+}
+
+void PiFont::describe() const
+{
+	Output("font %s:\n", name().c_str());
+	for (const PiFace &face : faces()) {
+		Output("- %s %f\n", face.ttfname().c_str(), face.sizefactor());
+	}
 }

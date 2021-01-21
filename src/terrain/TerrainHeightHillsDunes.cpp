@@ -36,8 +36,8 @@ double TerrainHeightFractal<TerrainHeightHillsDunes>::GetHeight(const vector3d &
 	double n = continents;
 	double distrib = dunes_octavenoise(GetFracDef(4), 0.4, p);
 	distrib *= distrib * distrib;
-	double m = octavenoise(GetFracDef(7), 0.5, p) * dunes_octavenoise(GetFracDef(7), 0.5, p) * Clamp(0.2 - distrib, 0.0, 0.05);
-	m += octavenoise(GetFracDef(2), 0.5, p) * dunes_octavenoise(GetFracDef(2), 0.5 * octavenoise(GetFracDef(6), 0.5 * distrib, p), p) * Clamp(1.0 - distrib, 0.0, 0.0005);
+	double m = octavenoise(GetFracDef(7), 0.5, p) * dunes_octavenoise(GetFracDef(7), 0.5, p) * std::clamp(0.2 - distrib, 0.0, 0.05);
+	m += octavenoise(GetFracDef(2), 0.5, p) * dunes_octavenoise(GetFracDef(2), 0.5 * octavenoise(GetFracDef(6), 0.5 * distrib, p), p) * std::clamp(1.0 - distrib, 0.0, 0.0005);
 	double mountains = ridged_octavenoise(GetFracDef(5), 0.5 * distrib, p) * octavenoise(GetFracDef(4), 0.5 * distrib, p) * octavenoise(GetFracDef(6), 0.5, p) * distrib;
 	mountains *= mountains;
 	m += mountains;
@@ -50,6 +50,6 @@ double TerrainHeightFractal<TerrainHeightHillsDunes>::GetHeight(const vector3d &
 	else
 		n += m;
 	//n += continents*Clamp(0.5-m, 0.0, 0.5)*0.2*dunes_octavenoise(GetFracDef(6), 0.6*distrib, p);
-	//n += continents*Clamp(0.05-n, 0.0, 0.01)*0.2*dunes_octavenoise(GetFracDef(2), Clamp(0.5-n, 0.0, 0.5), p);
+	//n += continents*Clamp(0.05-n, 0.0, 0.01)*0.2*dunes_octavenoise(GetFracDef(2), std::clamp(0.5-n, 0.0, 0.5), p);
 	return (n > 0.0 ? n * m_maxHeight : 0.0);
 }

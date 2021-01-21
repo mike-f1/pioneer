@@ -10,6 +10,7 @@
 #include "JoyStick.h"
 #include "Lang.h"
 #include "libs/StringF.h"
+#include "libs/utils.h"
 
 #include <sstream>
 #include <string>

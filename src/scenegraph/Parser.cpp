@@ -6,10 +6,12 @@
 #include "LoaderDefinitions.h"
 
 #include "FileSystem.h"
-#include "libs/utils.h"
+#include "libs/FloatComparison.h"
 #include "libs/StringF.h"
 #include "libs/StringRange.h"
 #include <sstream>
+
+#include "profiler/Profiler.h"
 
 namespace SceneGraph {
 
@@ -105,9 +107,9 @@ namespace SceneGraph {
 	{
 		float r, g, b;
 		ss >> r >> g >> b;
-		color.r = Clamp(r, 0.f, 1.f) * 255;
-		color.g = Clamp(g, 0.f, 1.f) * 255;
-		color.b = Clamp(b, 0.f, 1.f) * 255;
+		color.r = std::clamp(r, 0.f, 1.f) * 255;
+		color.g = std::clamp(g, 0.f, 1.f) * 255;
+		color.b = std::clamp(b, 0.f, 1.f) * 255;
 		color.a = 255; //alpha comes from opacity statement
 		return true;
 	}
@@ -205,12 +207,12 @@ namespace SceneGraph {
 					else if (match(token, "shininess")) {
 						int shininess;
 						ss >> shininess;
-						m_curMat->shininess = Clamp(shininess, 0, 128);
+						m_curMat->shininess = std::clamp(shininess, 0, 128);
 						return true;
 					} else if (match(token, "opacity")) {
 						int opacity;
 						ss >> opacity;
-						m_curMat->opacity = Clamp(opacity, 0, 100);
+						m_curMat->opacity = std::clamp(opacity, 0, 100);
 						return true;
 					} else if (match(token, "alpha_test")) {
 						m_curMat->alpha_test = true;

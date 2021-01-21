@@ -82,7 +82,7 @@ void SpeedLines::Update(float time)
 	//rate of change (incl. time acceleration)
 	float d = absVel * time * mult;
 
-	m_lineLength = Clamp(absVel * 0.1f, 2.f, 100.f);
+	m_lineLength = std::clamp(absVel * 0.1f, 2.f, 100.f);
 	m_dir = vel.Normalized();
 
 	vel = vel * time * mult;
@@ -124,7 +124,7 @@ void SpeedLines::Render()
 	//distance fade
 	Color col(Color::GRAY);
 	for (auto it = m_points.begin(); it != m_points.end(); ++it) {
-		col.a = Clamp((1.f - it->Length() / BOUNDS), 0.f, 1.f) * 255;
+		col.a = std::clamp((1.f - it->Length() / BOUNDS), 0.f, 1.f) * 255;
 
 		m_varray->Set(vtx, *it - dir, col);
 		m_varray->Set(vtx + 1, *it + dir, col);
@@ -161,8 +161,8 @@ void SpeedLines::Init()
 	cfg.Read(FileSystem::gameDataFiles, "configs/SpeedLines.ini");
 
 	// NB: limit the ranges of all values loaded from the file
-	BOUNDS = Clamp(cfg.Float("bounds", 2000.0f), 100.0f, 4000.0f);
-	DEPTH = Clamp(cfg.Int("depth", 9), 1, 32);
-	SPACING = Clamp(cfg.Float("spacing", 750.0f), 250.0f, 2000.0f);
-	MAX_VEL = Clamp(cfg.Float("max_vel", 100.0f), 50.0f, 200.0f);
+	BOUNDS = std::clamp(cfg.Float("bounds", 2000.0f), 100.0f, 4000.0f);
+	DEPTH = std::clamp(cfg.Int("depth", 9), 1, 32);
+	SPACING = std::clamp(cfg.Float("spacing", 750.0f), 250.0f, 2000.0f);
+	MAX_VEL = std::clamp(cfg.Float("max_vel", 100.0f), 50.0f, 200.0f);
 }

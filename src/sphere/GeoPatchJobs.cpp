@@ -189,7 +189,6 @@ QuadPatchJob::~QuadPatchJob()
 void SQuadSplitRequest::GenerateBorderedData()
 {
 	const int borderedEdgeLen = (edgeLen * 2) + (BORDER_SIZE * 2) - 1;
-	const int numBorderedVerts = borderedEdgeLen * borderedEdgeLen;
 
 	// generate heights plus a N=BORDER_SIZE unit border
 	unsigned count = 0;

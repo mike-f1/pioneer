@@ -45,7 +45,6 @@ namespace GasGiantJobs {
 	void STextureFaceRequest::OnRun()
 	{
 		PROFILE_SCOPED()
-		//MsgTimer timey;
 
 		assert(corners != nullptr);
 		double fracStep = 1.0 / double(UVDims() - 1);
@@ -68,8 +67,6 @@ namespace GasGiantJobs {
 				col[0].a = 255;
 			}
 		}
-
-		//timey.Mark("SingleTextureFaceCPUJob::OnRun");
 	}
 
 	// ********************************************************************************
@@ -238,7 +235,6 @@ namespace GasGiantJobs {
 	void SingleGPUGenJob::OnRun() // Runs in the main thread, may trash the GPU state
 	{
 		PROFILE_SCOPED()
-		//MsgTimer timey;
 
 		RendererLocator::getRenderer()->SetViewport(0, 0, mData->UVDims(), mData->UVDims());
 		RendererLocator::getRenderer()->SetTransform(matrix4x4f::Identity());
@@ -282,8 +278,6 @@ namespace GasGiantJobs {
 
 		// store the result
 		mpResults = sr;
-
-		//timey.Mark("SingleGPUGenJob::OnRun");
 	}
 
 	void SingleGPUGenJob::OnFinish() // runs in primary thread of the context

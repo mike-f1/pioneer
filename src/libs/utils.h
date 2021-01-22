@@ -50,25 +50,7 @@ template <typename T, size_t N>
 char (&COUNTOF_Helper(T (&array)[N]))[N];
 #define COUNTOF(array) (sizeof(COUNTOF_Helper(array)))
 
-// Helper for timing functions with multiple stages
-// Used on a branch to help time loading.
-struct MsgTimer {
-	MsgTimer() { mTimer.Start(); }
-	~MsgTimer() {}
-
-	void Mark(const char *identifier)
-	{
-		mTimer.SoftStop();
-		const double lastTiming = mTimer.avgms();
-		mTimer.SoftReset();
-		Output("(%lf) avgms in %s\n", lastTiming, identifier);
-	}
-
-protected:
-	Profiler::Timer mTimer;
-};
-
-static inline int64_t isqrt(int64_t a)
+inline int64_t isqrt(int64_t a)
 {
 	// replace with cast from sqrt below which is between x7.3 (win32, Debug) & x15 (x64, Release) times faster
 	return static_cast<int64_t>(sqrt(static_cast<double>(a)));
@@ -78,18 +60,18 @@ static inline int64_t isqrt(int64_t a)
 #if defined(_MSC_VER) && (_MSC_VER < 1800)
 
 // round & roundf. taken from http://cgit.freedesktop.org/mesa/mesa/tree/src/gallium/auxiliary/util/u_math.h
-static inline double round(double x)
+constexpr double round(double x)
 {
 	return x >= 0.0 ? floor(x + 0.5) : ceil(x - 0.5);
 }
 
-static inline float roundf(float x)
+constexpr float roundf(float x)
 {
 	return x >= 0.0f ? floorf(x + 0.5f) : ceilf(x - 0.5f);
 }
 #endif /* _MSC_VER < 1800 */
 
-static inline uint32_t ceil_pow2(uint32_t v)
+constexpr uint32_t ceil_pow2(uint32_t v)
 {
 	v--;
 	v |= v >> 1;

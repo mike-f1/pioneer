@@ -200,9 +200,9 @@ void GameStateStatic::LoadGame(const std::string &filename)
 		// Sub optimal: need a better way to couple inGameViews to game
 		const SystemPath &path = game->GetSpace()->GetStarSystem()->GetPath();
 		InGameViewsLocator::NewInGameViews(new InGameViews(rootNode, game, path, sectorRadius + 2));
-	} catch (Json::type_error) {
+	} catch (Json::type_error &te) {
 		throw SavedGameCorruptException();
-	} catch (Json::out_of_range) {
+	} catch (Json::out_of_range &oor) {
 		throw SavedGameCorruptException();
 	}
 
@@ -248,7 +248,6 @@ void GameStateStatic::SaveGame(const std::string &filename)
 		jsonData = Json::to_cbor(rootNode); // Convert the JSON data to CBOR.
 	}
 
-	size_t outSize = 0;
 	FILE *f = FileSystem::userFiles.OpenWriteStream(FileSystem::JoinPathBelow(GameConfSingleton::GetSaveDir(), filename));
 	if (!f) throw CouldNotOpenFileException();
 

@@ -48,7 +48,7 @@ if (CMAKE_COMPILER_IS_GNUCXX)
     if (NOT IS_TRAVIS)
         add_compile_options(-fdiagnostics-color)
     endif()
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fpermissive -Wall")
 endif (CMAKE_COMPILER_IS_GNUCXX)
 
 include(CheckSymbolExists)

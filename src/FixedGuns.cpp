@@ -126,7 +126,7 @@ bool FixedGuns::MountGun(MountId num, const std::string &name, const std::string
 bool FixedGuns::UnMountGun(MountId num)
 {
 	// Check mount (num) is valid
-	if (m_mounts.empty() || (num >= m_mounts.size())) {
+	if (m_mounts.empty() || (size_t(num) >= m_mounts.size())) {
 		Output("Mount identifier (%i) is out of bounds (max is %lu) in 'UnMountGun'\n", num, m_mounts.size());
 		return false;
 	}

@@ -104,8 +104,8 @@ namespace Graphics {
 	// ------------------------------------------------------------
 	InstanceBuffer::InstanceBuffer(uint32_t size, BufferUsage usage) :
 		Mappable(size),
-		m_usage(usage),
-		m_instanceCount(0)
+		m_instanceCount(0),
+		m_usage(usage)
 	{
 	}
 

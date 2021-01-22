@@ -92,8 +92,6 @@ const char *LuaObject<InputFrame>::s_type = "InputFrames";
 template <>
 void LuaObject<InputFrame>::RegisterClass()
 {
-	lua_State *l = Lua::manager->GetLuaState();
-
 	static const luaL_Reg l_methods[] = {
 		{ "CreateOrUse", l_inputFrame_create_or_use },
 		{ "AddAction", l_inputFrame_add_action },
@@ -106,10 +104,4 @@ void LuaObject<InputFrame>::RegisterClass()
 	// expected
 	//static void CreateClass(const char *type, const char *parent, const luaL_Reg *methods, const luaL_Reg *attrs, const luaL_Reg *meta);
 	LuaObjectBase::CreateClass(s_type, 0, l_methods, nullptr, nullptr);
-/*
-	lua_getfield(l, LUA_REGISTRYINDEX, "CoreImports");
-	LuaObjectBase::CreateObject(l_methods, 0, 0);
-	lua_setfield(l, -2, "InputFrames");
-	lua_pop(l, 1);
-*/
 }

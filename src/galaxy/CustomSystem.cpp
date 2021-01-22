@@ -16,9 +16,9 @@ CustomSystem::CustomSystem() :
 	seed(0),
 	want_rand_explored(true),
 	explored(true),
+	want_rand_lawlessness(true),
 	faction(nullptr),
-	govType(Polit::GOV_INVALID),
-	want_rand_lawlessness(true)
+	govType(Polit::GOV_INVALID)
 {
 	for (int i = 0; i < 4; ++i)
 		primaryType[i] = GalaxyEnums::BodyType::TYPE_GRAVPOINT;

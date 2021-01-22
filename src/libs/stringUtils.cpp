@@ -291,40 +291,6 @@ namespace stringUtils {
 	};
 	#endif // USE_HEX_FLOATS
 
-	std::string FloatToStr(float val)
-	{
-		PROFILE_SCOPED()
-	#ifdef USE_HEX_FLOATS
-		char hex[32]; // Probably don't need such a large char array.
-		std::sprintf(hex, "%a", val);
-		return hex;
-	#else
-		// Exact representation (but not human readable).
-		static_assert(sizeof(float) == 4, "float isn't 4bytes");
-		fu32 uval(val);
-		char str[64];
-		SDL_itoa(uval.u, str, 10);
-		return str;
-	#endif
-	}
-
-	std::string DoubleToStr(double val)
-	{
-		PROFILE_SCOPED()
-	#ifdef USE_HEX_FLOATS
-		char hex[64]; // Probably don't need such a large char array.
-		std::sprintf(hex, "%la", val);
-		return hex;
-	#else
-		// Exact representation (but not human readable).
-		static_assert(sizeof(double) == 8, "double isn't 8 bytes");
-		fu64 uval(val);
-		char str[128];
-		SDL_ulltoa(uval.u, str, 10);
-		return str;
-	#endif
-	}
-
 	void Vector3fToStr(const vector3f &val, char *out, size_t size)
 	{
 		PROFILE_SCOPED()
@@ -332,12 +298,14 @@ namespace stringUtils {
 	#ifdef USE_HEX_FLOATS
 		const int amt = std::sprintf(out, "%a,%a,%a", val.x, val.y, val.z);
 		assert(static_cast<size_t>(amt) <= size);
+		(void)(amt);
 	#else
 		fu32 a(val.x);
 		fu32 b(val.y);
 		fu32 c(val.z);
 		const int amt = sprintf(out, "(%" PRIu32 ",%" PRIu32 ",%" PRIu32 ")", a.u, b.u, c.u);
 		assert(static_cast<size_t>(amt) <= size);
+		(void)(amt);
 	#endif
 	}
 
@@ -348,12 +316,14 @@ namespace stringUtils {
 	#ifdef USE_HEX_FLOATS
 		const int amt = std::sprintf(out, "%la,%la,%la", val.x, val.y, val.z);
 		assert(static_cast<size_t>(amt) <= size);
+		(void)(amt);
 	#else
 		fu64 a(val.x);
 		fu64 b(val.y);
 		fu64 c(val.z);
 		const int amt = sprintf(out, "(%" PRIu64 ",%" PRIu64 ",%" PRIu64 ")", a.u, b.u, c.u);
 		assert(static_cast<size_t>(amt) <= size);
+		(void)(amt);
 	#endif
 	}
 
@@ -364,6 +334,7 @@ namespace stringUtils {
 	#ifdef USE_HEX_FLOATS
 		const int amt = std::sprintf(out, "%a,%a,%a,%a,%a,%a,%a,%a,%a", val[0], val[1], val[2], val[3], val[4], val[5], val[6], val[7], val[8]);
 		assert(static_cast<size_t>(amt) <= size);
+		(void)(amt);
 	#else
 		fu32 fuvals[9];
 		for (int i = 0; i < 9; i++)
@@ -376,6 +347,7 @@ namespace stringUtils {
 			fuvals[3].u, fuvals[4].u, fuvals[5].u,
 			fuvals[6].u, fuvals[7].u, fuvals[8].u);
 		assert(static_cast<size_t>(amt) <= size);
+		(void)(amt);
 	#endif
 	}
 
@@ -386,6 +358,7 @@ namespace stringUtils {
 	#ifdef USE_HEX_FLOATS
 		const int amt = std::sprintf(out, "%a,%a,%a,%a,%a,%a,%a,%a,%a", val[0], val[1], val[2], val[3], val[4], val[5], val[6], val[7], val[8]);
 		assert(static_cast<size_t>(amt) <= size);
+		(void)(amt);
 	#else
 		fu64 fuvals[9];
 		for (int i = 0; i < 9; i++)
@@ -398,6 +371,7 @@ namespace stringUtils {
 			fuvals[3].u, fuvals[4].u, fuvals[5].u,
 			fuvals[6].u, fuvals[7].u, fuvals[8].u);
 		assert(static_cast<size_t>(amt) <= size);
+		(void)(amt);
 	#endif
 	}
 
@@ -408,6 +382,7 @@ namespace stringUtils {
 	#ifdef USE_HEX_FLOATS
 		const int amt = std::sprintf(out, "%a,%a,%a,%a,%a,%a,%a,%a,%a,%a,%a,%a,%a,%a,%a,%a", val[0], val[1], val[2], val[3], val[4], val[5], val[6], val[7], val[8], val[9], val[10], val[11], val[12], val[13], val[14], val[15]);
 		assert(static_cast<size_t>(amt) <= size);
+		(void)(amt);
 	#else
 		fu32 fuvals[16];
 		for (int i = 0; i < 16; i++)
@@ -422,6 +397,7 @@ namespace stringUtils {
 			fuvals[8].u, fuvals[9].u, fuvals[10].u, fuvals[11].u,
 			fuvals[12].u, fuvals[13].u, fuvals[14].u, fuvals[15].u);
 		assert(static_cast<size_t>(amt) <= size);
+		(void)(amt);
 	#endif
 	}
 
@@ -432,6 +408,7 @@ namespace stringUtils {
 	#ifdef USE_HEX_FLOATS
 		const int amt = std::sprintf(out, "%a,%a,%a,%a,%a,%a,%a,%a,%a,%a,%a,%a,%a,%a,%a,%a", val[0], val[1], val[2], val[3], val[4], val[5], val[6], val[7], val[8], val[9], val[10], val[11], val[12], val[13], val[14], val[15]);
 		assert(static_cast<size_t>(amt) <= size);
+		(void)(amt);
 	#else
 		fu64 fuvals[16];
 		for (int i = 0; i < 16; i++)
@@ -446,6 +423,7 @@ namespace stringUtils {
 			fuvals[8].u, fuvals[9].u, fuvals[10].u, fuvals[11].u,
 			fuvals[12].u, fuvals[13].u, fuvals[14].u, fuvals[15].u);
 		assert(static_cast<size_t>(amt) <= size);
+		(void)(amt);
 	#endif
 	}
 
@@ -463,16 +441,6 @@ namespace stringUtils {
 		return str;
 	}
 
-	std::string AutoToStr(float val)
-	{
-		return FloatToStr(val);
-	}
-
-	std::string AutoToStr(double val)
-	{
-		return DoubleToStr(val);
-	}
-
 	int64_t StrToSInt64(const std::string &str)
 	{
 		int64_t val;
@@ -487,41 +455,6 @@ namespace stringUtils {
 		return val;
 	}
 
-	float StrToFloat(const std::string &str)
-	{
-		PROFILE_SCOPED()
-	#ifdef USE_HEX_FLOATS
-		float val;
-		std::sscanf(str.c_str(), "%a", &val);
-		return val;
-	#else
-		// Exact representation (but not human readable).
-		static_assert(sizeof(float) == 4, "float isn't 4 bytes");
-		fu32 uval;
-		const int amt = sscanf(str.c_str(), "%" SCNu32, &uval.u);
-		assert(amt == 1);
-		return uval.f;
-	#endif
-	}
-
-	double StrToDouble(const std::string &str)
-	{
-		PROFILE_SCOPED()
-	#ifdef USE_HEX_FLOATS
-		double val;
-		std::sscanf(str.c_str(), "%la", &val);
-		return val;
-	#else
-		// Exact representation (but not human readable).
-		static_assert(sizeof(double) == 8, "double isn't 8 bytes");
-		static_assert(sizeof(long long) == sizeof(uint64_t), "long long isn't equal in size to uint64_t");
-		fu64 uval;
-		const int amt = sscanf(str.c_str(), "%" SCNu64, &uval.u);
-		assert(amt == 1);
-		return uval.d;
-	#endif
-	}
-
 	void StrToAuto(int32_t *pVal, const std::string &str)
 	{
 		sscanf(str.c_str(), "%" SCNd32, pVal);
@@ -532,26 +465,18 @@ namespace stringUtils {
 		sscanf(str.c_str(), "%" SCNd64, pVal);
 	}
 
-	void StrToAuto(float *pVal, const std::string &str)
-	{
-		*pVal = StrToFloat(str);
-	}
-
-	void StrToAuto(double *pVal, const std::string &str)
-	{
-		*pVal = StrToDouble(str);
-	}
-
 	void StrToVector3f(const char *str, vector3f &val)
 	{
 		PROFILE_SCOPED()
 	#ifdef USE_HEX_FLOATS
 		const int amt = std::sscanf(str, "%a,%a,%a", &val.x, &val.y, &val.z);
 		assert(amt == 3);
+		(void)(amt);
 	#else
 		fu32 a, b, c;
 		const int amt = std::sscanf(str, "(%" SCNu32 ",%" SCNu32 ",%" SCNu32 ")", &a.u, &b.u, &c.u);
 		assert(amt == 3);
+		(void)(amt);
 		val.x = a.f;
 		val.y = b.f;
 		val.z = c.f;
@@ -564,10 +489,12 @@ namespace stringUtils {
 	#ifdef USE_HEX_FLOATS
 		const int amt = std::sscanf(str, "%la,%la,%la", &val.x, &val.y, &val.z);
 		assert(amt == 3);
+		(void)(amt);
 	#else
 		fu64 a, b, c;
 		const int amt = std::sscanf(str, "(%" SCNu64 ",%" SCNu64 ",%" SCNu64 ")", &a.u, &b.u, &c.u);
 		assert(amt == 3);
+		(void)(amt);
 		val.x = a.d;
 		val.y = b.d;
 		val.z = c.d;
@@ -580,6 +507,7 @@ namespace stringUtils {
 	#ifdef USE_HEX_FLOATS
 		const int amt = std::sscanf(str, "%a,%a,%a,%a,%a,%a,%a,%a,%a", &val[0], &val[1], &val[2], &val[3], &val[4], &val[5], &val[6], &val[7], &val[8]);
 		assert(amt == 9);
+		(void)(amt);
 	#else
 		fu32 fu[9];
 		const int amt = std::sscanf(str, "(%" SCNu32 ",%" SCNu32 ",%" SCNu32 ",%" SCNu32 ",%" SCNu32 ",%" SCNu32 ",%" SCNu32 ",%" SCNu32 ",%" SCNu32 ")",
@@ -587,6 +515,7 @@ namespace stringUtils {
 			&fu[3].u, &fu[4].u, &fu[5].u,
 			&fu[6].u, &fu[7].u, &fu[8].u);
 		assert(amt == 9);
+		(void)(amt);
 		for (int i = 0; i < 9; i++)
 			val[i] = fu[i].f;
 	#endif
@@ -598,6 +527,7 @@ namespace stringUtils {
 	#ifdef USE_HEX_FLOATS
 		const int amt = std::sscanf(str, "%la,%la,%la,%la,%la,%la,%la,%la,%la", &val[0], &val[1], &val[2], &val[3], &val[4], &val[5], &val[6], &val[7], &val[8]);
 		assert(amt == 9);
+		(void)(amt);
 	#else
 		fu64 fu[9];
 		const int amt = std::sscanf(str, "(%" SCNu64 ",%" SCNu64 ",%" SCNu64 ",%" SCNu64 ",%" SCNu64 ",%" SCNu64 ",%" SCNu64 ",%" SCNu64 ",%" SCNu64 ")",
@@ -605,6 +535,7 @@ namespace stringUtils {
 			&fu[3].u, &fu[4].u, &fu[5].u,
 			&fu[6].u, &fu[7].u, &fu[8].u);
 		assert(amt == 9);
+		(void)(amt);
 		for (int i = 0; i < 9; i++)
 			val[i] = fu[i].d;
 	#endif
@@ -616,6 +547,7 @@ namespace stringUtils {
 	#ifdef USE_HEX_FLOATS
 		const int amt = std::sscanf(str, "%a,%a,%a,%a,%a,%a,%a,%a,%a,%a,%a,%a,%a,%a,%a,%a", &val[0], &val[1], &val[2], &val[3], &val[4], &val[5], &val[6], &val[7], &val[8], &val[9], &val[10], &val[11], &val[12], &val[13], &val[14], &val[15]);
 		assert(amt == 16);
+		(void)(amt);
 	#else
 		fu32 fu[16];
 		const int amt = std::sscanf(str, "(%" SCNu32 ",%" SCNu32 ",%" SCNu32 ",%" SCNu32 ",%" SCNu32 ",%" SCNu32 ",%" SCNu32 ",%" SCNu32 ",%" SCNu32 ",%" SCNu32 ",%" SCNu32 ",%" SCNu32 ",%" SCNu32 ",%" SCNu32 ",%" SCNu32 ",%" SCNu32 ")",
@@ -624,6 +556,7 @@ namespace stringUtils {
 			&fu[8].u, &fu[9].u, &fu[10].u, &fu[11].u,
 			&fu[12].u, &fu[13].u, &fu[14].u, &fu[15].u);
 		assert(amt == 16);
+		(void)(amt);
 		for (int i = 0; i < 16; i++)
 			val[i] = fu[i].f;
 	#endif
@@ -635,6 +568,7 @@ namespace stringUtils {
 	#ifdef USE_HEX_FLOATS
 		const int amt = std::sscanf(str, "%la,%la,%la,%la,%la,%la,%la,%la,%la,%la,%la,%la,%la,%la,%la,%la", &val[0], &val[1], &val[2], &val[3], &val[4], &val[5], &val[6], &val[7], &val[8], &val[9], &val[10], &val[11], &val[12], &val[13], &val[14], &val[15]);
 		assert(amt == 16);
+		(void)(amt);
 	#else
 		fu64 fu[16];
 		const int amt = std::sscanf(str, "(%" SCNu64 ",%" SCNu64 ",%" SCNu64 ",%" SCNu64 ",%" SCNu64 ",%" SCNu64 ",%" SCNu64 ",%" SCNu64 ",%" SCNu64 ",%" SCNu64 ",%" SCNu64 ",%" SCNu64 ",%" SCNu64 ",%" SCNu64 ",%" SCNu64 ",%" SCNu64 ")",
@@ -643,6 +577,7 @@ namespace stringUtils {
 			&fu[8].u, &fu[9].u, &fu[10].u, &fu[11].u,
 			&fu[12].u, &fu[13].u, &fu[14].u, &fu[15].u);
 		assert(amt == 16);
+		(void)(amt);
 		for (int i = 0; i < 16; i++)
 			val[i] = fu[i].d;
 	#endif

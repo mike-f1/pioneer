@@ -1180,10 +1180,10 @@ AICmdDock::AICmdDock(DynamicBody *dBody, SpaceStation *target) :
 	m_target(target),
 	m_state(eDockGetDataStart)
 {
-	Ship *ship = nullptr;
 	if (!dBody->IsType(Object::SHIP)) return;
-	ship = static_cast<Ship *>(dBody);
+	Ship *ship = static_cast<Ship *>(dBody);
 	assert(ship != nullptr);
+	(void)(ship);
 
 	m_prop = dynamic_cast<Propulsion*>(m_dBody);
 	assert(m_prop != nullptr);

@@ -19,6 +19,8 @@ extern "C" {
 #ifdef __GNUC__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wattributes"
+#pragma GCC diagnostic ignored "-Wunused-function"
+#pragma GCC diagnostic ignored "-Wmisleading-indentation"
 #endif
 #include "miniz/miniz.h"
 #ifdef __GNUC__

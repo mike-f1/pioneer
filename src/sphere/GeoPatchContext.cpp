@@ -60,6 +60,7 @@ void GeoPatchContext::GenerateIndices()
 		VertexCacheOptimizerUInt vco;
 		VertexCacheOptimizerUInt::Result res = vco.Optimize(&pl_short[0], tri_count);
 		assert(0 == res);
+		(void)(res);
 		//create buffer & copy
 		m_indices.Reset(RendererLocator::getRenderer()->CreateIndexBuffer(pl_short.size(), Graphics::BUFFER_USAGE_STATIC));
 		uint32_t *idxPtr = m_indices->Map(Graphics::BUFFER_MAP_WRITE);

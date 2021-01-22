@@ -19,10 +19,10 @@
 std::unique_ptr<InputFrame> InGameViews::m_inputFrame;
 
 InGameViews::InGameViews(Game *game, const SystemPath &path, unsigned int cacheRadius) :
-	m_shouldDrawGui(true),
-	m_shouldDrawLabels(true),
 	m_currentView(nullptr),
 	m_currentViewType(ViewType::NONE),
+	m_shouldDrawGui(true),
+	m_shouldDrawLabels(true),
 	m_sectorView(std::make_unique<SectorView>(path, game->GetGalaxy(), cacheRadius)),
 	m_galacticView(std::make_unique<UIView>("GalacticView")),
 	m_systemInfoView(std::make_unique<SystemInfoView>(game)),
@@ -40,12 +40,12 @@ InGameViews::InGameViews(Game *game, const SystemPath &path, unsigned int cacheR
 }
 
 InGameViews::InGameViews(const Json &jsonObj, Game *game, const SystemPath &path, unsigned int cacheRadius) :
-	m_shouldDrawGui(true),
-	m_shouldDrawLabels(true),
 	m_currentView(nullptr),
-	m_currentViewType(ViewType::NONE)
+	m_currentViewType(ViewType::NONE),
+	m_shouldDrawGui(true),
+	m_shouldDrawLabels(true)
 {
-	// Not loaded first as it should diminish initialization issue
+	// Not loaded in initialization as it should diminish initialization issue
 	m_galacticView = std::make_unique<UIView>("GalacticView");
 	m_systemView = std::make_unique<SystemView>();
 	m_systemInfoView  = std::make_unique<SystemInfoView>(game);

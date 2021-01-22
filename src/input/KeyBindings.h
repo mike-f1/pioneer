@@ -129,7 +129,7 @@ namespace KeyBindings {
 		bool Matches(const SDL_JoyHatEvent &joy) const;
 		bool Matches(const SDL_MouseWheelEvent &mwe) const;
 
-		void Clear() { memset(this, 0, sizeof(*this)); type = BindType::BINDING_DISABLED; }
+		void Clear() { m_mod = KMOD_NONE; type = BindType::BINDING_DISABLED; }
 
 		bool Enabled() const { return (type != BindType::BINDING_DISABLED); }
 

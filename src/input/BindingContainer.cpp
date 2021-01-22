@@ -29,8 +29,8 @@ BindingContainer::~BindingContainer()
 
 ActionId BindingContainer::AddActionBinding(std::string &id, BindingGroup &group, KeyBindings::ActionBinding binding)
 {
-	for (int i = 0; i < m_actions.size(); i++) {
-		if (id == m_actions[i].name) throw std::runtime_error{"AddActionBinding of '" + id + "' is already in '"  + m_name + "'!\n"};
+	for (const auto &action : m_actions) {
+		if (id == action.name) throw std::runtime_error{"AddActionBinding of '" + id + "' is already in '"  + m_name + "'!\n"};
 	}
 	KeyBindings::ActionBinding *actionBind = InputLocator::getInput()->AddActionBinding(id, group, binding);
 	actionBind->Enable(true);
@@ -40,8 +40,8 @@ ActionId BindingContainer::AddActionBinding(std::string &id, BindingGroup &group
 
 AxisId BindingContainer::AddAxisBinding(std::string &id, BindingGroup &group, KeyBindings::AxisBinding binding)
 {
-	for (int i = 0; i < m_axes.size(); i++) {
-		if (id == m_axes[i].name) throw std::runtime_error{"AddAxisBinding of '" + id + "' is already in '"  + m_name + "'!\n"};
+	for (const auto &axis : m_axes) {
+		if (id == axis.name) throw std::runtime_error{"AddAxisBinding of '" + id + "' is already in '"  + m_name + "'!\n"};
 	}
 	KeyBindings::AxisBinding *axisBind = InputLocator::getInput()->AddAxisBinding(id, group, binding);
 	axisBind->Enable(true);
@@ -51,7 +51,7 @@ AxisId BindingContainer::AddAxisBinding(std::string &id, BindingGroup &group, Ke
 
 ActionId BindingContainer::GetActionBinding(const std::string &id)
 {
-	for (int i = 0; i < m_actions.size(); i++) {
+	for (size_t i = 0; i < m_actions.size(); i++) {
 		if (id == m_actions[i].name) return i;
 	}
 	throw std::runtime_error{"GetActionBinding of '" + id + "' isn't present in '" + m_name + "'!\n"};
@@ -59,7 +59,7 @@ ActionId BindingContainer::GetActionBinding(const std::string &id)
 
 AxisId BindingContainer::GetAxisBinding(const std::string &id)
 {
-	for (int i = 0; i < m_axes.size(); i++) {
+	for (size_t i = 0; i < m_axes.size(); i++) {
 		if (id == m_axes[i].name) return i;
 	}
 	throw std::runtime_error{"GetAxisBinding of '" + id + "' isn't in '" + m_name + "'!\n"};

@@ -22,7 +22,6 @@ SDLSurfacePtr LoadSurfaceFromFile(const std::string &fname, FileSystem::FileSour
 		Output("LoadSurfaceFromFile failed: %s: %s\n", fname.c_str(), IMG_GetError());
 		return SDLSurfacePtr();
 	}
-	Output("LoadSurfaceFromFile: %s: %s\n", fname.c_str(), IMG_GetError());
 	return SDLSurfacePtr::WrapNew(surface);
 }
 

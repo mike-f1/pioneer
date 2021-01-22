@@ -130,12 +130,12 @@ static int l_game_savegame_stats(lua_State *l)
 		const std::string message = stringf(Lang::COULD_NOT_OPEN_FILENAME, formatarg("path", filename));
 		lua_pushlstring(l, message.c_str(), message.size());
 		return lua_error(l);
-	} catch (Json::type_error) {
+	} catch (Json::type_error &te) {
 		luaL_error(l, Lang::GAME_LOAD_CORRUPT);
 		return 0;
-	} catch (Json::out_of_range) {
+	} catch (Json::out_of_range &oor) {
 		return luaL_error(l, Lang::GAME_LOAD_CORRUPT);
-	} catch (SavedGameCorruptException) {
+	} catch (SavedGameCorruptException &sgce) {
 		luaL_error(l, Lang::GAME_LOAD_CORRUPT);
 		return 0;
 	}

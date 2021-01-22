@@ -136,12 +136,8 @@ namespace stringUtils {
 	std::string format_speed(double speed, int precision = 2);
 
 	// 'Numeric type' to string conversions.
-	std::string FloatToStr(float val);
-	std::string DoubleToStr(double val);
 	std::string AutoToStr(int32_t val);
 	std::string AutoToStr(int64_t val);
-	std::string AutoToStr(float val);
-	std::string AutoToStr(double val);
 
 	void Vector3fToStr(const vector3f &val, char *out, size_t size);
 	void Vector3dToStr(const vector3d &val, char *out, size_t size);
@@ -153,12 +149,8 @@ namespace stringUtils {
 	// String to 'Numeric type' conversions.
 	int64_t StrToSInt64(const std::string &str);
 	uint64_t StrToUInt64(const std::string &str);
-	float StrToFloat(const std::string &str);
-	double StrToDouble(const std::string &str);
 	void StrToAuto(int32_t *pVal, const std::string &str);
 	void StrToAuto(int64_t *pVal, const std::string &str);
-	void StrToAuto(float *pVal, const std::string &str);
-	void StrToAuto(double *pVal, const std::string &str);
 
 	void StrToVector3f(const char *str, vector3f &val);
 	void StrToVector3d(const char *str, vector3d &val);

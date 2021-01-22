@@ -1086,6 +1086,7 @@ void pi_lua_stacktrace(lua_State *l)
 	while (lua_getstack(l, depth, &entry)) {
 		int status = lua_getinfo(l, "Sln", &entry);
 		assert(status);
+		(void)(status);
 
 		Output("%s(%d): %s\n", entry.short_src, entry.currentline, entry.name ? entry.name : "?");
 		depth++;

@@ -23,6 +23,8 @@
 #ifdef __GNUC__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wattributes"
+#pragma GCC diagnostic ignored "-Wunused-function"
+#pragma GCC diagnostic ignored "-Wmisleading-indentation"
 #endif
 extern "C" {
 #include <miniz/miniz.h>
@@ -153,7 +155,6 @@ void BinaryConverter::Save(const std::string &filename, const std::string &savep
 		wr.String(m->GetTagByIndex(i)->GetName().c_str());
 
 	// compress in memory, write to open file
-	size_t outSize = 0;
 	const lz4::bytes data = wr.GetDataAsVector();
 	try {
 		lz4::bytes compressedData = lz4::CompressLZ4(data, 6);

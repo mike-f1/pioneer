@@ -265,7 +265,7 @@ public:
 	{
 		auto x = m_jobs.insert(m_queue->Queue(job, this));
 		assert(x.second);
-		x.second;
+		(void)(x.second);
 	}
 	virtual void RemoveJob(Job::Handle *handle) override { m_jobs.erase(*handle); }
 

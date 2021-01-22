@@ -905,7 +905,6 @@ namespace KeyBindings {
 	InputResponse AxisBinding::CheckSDLEventAndDispatch(const SDL_Event &event)
 	{
 		if (m_disableBindings || m_disabled) return InputResponse::NOMATCH;
-		float value = GetValue();
 		switch (event.type) {
 		case SDL_KEYDOWN:
 		case SDL_KEYUP: {

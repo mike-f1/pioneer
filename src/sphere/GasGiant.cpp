@@ -175,6 +175,7 @@ public:
 		VertexCacheOptimizerUInt vco;
 		VertexCacheOptimizerUInt::Result res = vco.Optimize(&pl_short[0], tri_count);
 		assert(0 == res);
+		(void)(res);
 
 		//create buffer & copy
 		indexBuffer.Reset(RendererLocator::getRenderer()->CreateIndexBuffer(pl_short.size(), Graphics::BUFFER_USAGE_STATIC));
@@ -485,6 +486,7 @@ bool GasGiant::AddGPUGenResult(GasGiantJobs::SGPUGenResult *res)
 	assert(!m_gpuJob.HasJob());
 	const int32_t uvDims = res->data().uvDims;
 	assert(uvDims > 0 && uvDims <= 4096);
+	(void)(uvDims);
 
 #if DUMP_TO_TEXTURE
 	for (int iFace = 0; iFace < NUM_PATCHES; iFace++) {

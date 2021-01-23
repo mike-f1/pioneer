@@ -31,7 +31,7 @@ namespace SceneGraph {
 
 		explicit DumpVisitor(const Model *m);
 
-		std::string GetModelStatistics();
+		std::vector<std::string> GetModelStatistics();
 
 		virtual void ApplyNode(Node &) override;
 		virtual void ApplyGroup(Group &) override;

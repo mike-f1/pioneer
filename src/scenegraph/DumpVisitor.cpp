@@ -24,9 +24,9 @@ namespace SceneGraph {
 		m_modelStats.materialCount = m->GetNumMaterials();
 	}
 
-	std::string DumpVisitor::GetModelStatistics()
+	std::vector<std::string> DumpVisitor::GetModelStatistics()
 	{
-		std::ostringstream ss;
+		std::vector<std::string> lines;
 
 		// Print collected statistics per lod
 		if (m_lodStats.empty())
@@ -35,19 +35,19 @@ namespace SceneGraph {
 		std::vector<LodStatistics>::iterator it = m_lodStats.begin();
 		unsigned int idx = 1;
 		while (it != m_lodStats.end()) {
-			ss << "\nLOD " << idx << '\n';
-			ss << "Nodes: " << it->nodeCount << '\n';
-			ss << "Geoms: " << it->opaqueGeomCount << " opaque, " << it->transGeomCount << " transparent\n";
-			ss << "Triangles: " << it->triangles << '\n';
+			lines.emplace_back("LOD " + std::to_string(idx));
+			lines.emplace_back("  Nodes: " + std::to_string(it->nodeCount));
+			lines.emplace_back(std::string("  Geoms: ") + std::to_string(it->opaqueGeomCount) + " opaque," + std::to_string(it->transGeomCount) + "  transparent");
+			lines.emplace_back("  Triangles: " + std::to_string(it->triangles));
 			++it;
 			idx++;
 		};
 
-		ss << '\n';
-		ss << "Materials: " << m_modelStats.materialCount << '\n';
-		ss << "Collision triangles: " << m_modelStats.collTriCount << '\n';
+		lines.emplace_back("");
+		lines.emplace_back("Materials: " + std::to_string(m_modelStats.materialCount));
+		lines.emplace_back("Collision triangles: " + std::to_string(m_modelStats.collTriCount));
 
-		return ss.str();
+		return lines;
 	}
 
 	void DumpVisitor::ApplyNode(Node &n)

@@ -6,6 +6,7 @@
 #include "Animation.h"
 #include "CollisionVisitor.h"
 #include "CollMesh.h"
+#include "DumpVisitor.h"
 #include "FindNodeVisitor.h"
 #include "Label3D.h"
 #include "MatrixTransform.h"
@@ -528,4 +529,12 @@ namespace SceneGraph {
 	void Model::AddBox(std::unique_ptr<CSG_Box> box) {
 		m_Boxes.push_back(*box.get());
 	}
+
+	std::vector<std::string> ModelDump(Model *model)
+	{
+		SceneGraph::DumpVisitor d(model);
+		model->GetRoot()->Accept(d);
+		return d.GetModelStatistics();
+	}
+
 } // namespace SceneGraph

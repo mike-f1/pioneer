@@ -50,12 +50,15 @@ private:
 	bool m_showWireFrame = false;
 	bool m_showTags = false;
 	bool m_showDocking = false;
+	bool m_showStat = false;
 
 	bool m_showSingleBBox = false;
 	bool m_showNearestBBox = false;
 	bool m_showBoundSphere = false;
 
 	SceneGraph::DebugFlags m_debugFlags;
+
+	std::vector<std::string> m_stats;
 
 	GSDebugFlags m_planetDebugFlags;
 

@@ -65,7 +65,7 @@ ObjectViewerView::ObjectViewerView() :
 	const float fovY = GameConfSingleton::getInstance().Float("FOVVertical");
 	RefCountedPtr<CameraContext> cameraContext;
 	cameraContext.Reset(new CameraContext(Graphics::GetScreenWidth(), Graphics::GetScreenHeight(), fovY, znear, zfar));
-	m_camera.reset(new Camera(cameraContext));
+	m_camera = std::make_unique<Camera>(cameraContext);
 
 	cameraContext->SetCameraFrame(Frame::GetRootFrameId());
 	cameraContext->SetCameraPosition(vector3d(0.0));
@@ -158,6 +158,9 @@ void ObjectViewerView::Update(const float frameTime)
 		TerrainBody *newTb = dynamic_cast<TerrainBody *>(m_newTarget);
 		if (newTb) m_planetDebugFlags = newTb->GetDebugFlags();
 		else m_planetDebugFlags = GSDebugFlags::NONE;
+
+		m_stats.clear();
+		m_showBoundSphere = false;
 
 		m_lastTarget = m_newTarget;
 		// Reset view parameter for new target.
@@ -294,10 +297,9 @@ void ObjectViewerView::DrawUI(const float frameTime)
 		pathStr << "<no object>";
 	}
 
-	char buf[128];
-	snprintf(buf, sizeof(buf), "View dist: %s     Object: %s\nSystemPath: %s",
-		stringUtils::format_distance(m_viewingDist).c_str(), (m_lastTarget ? m_lastTarget->GetLabel().c_str() : "<none>"),
-		pathStr.str().c_str());
+	std::string text;
+	text.reserve(128);
+	text = "View dist: " + stringUtils::format_distance(m_viewingDist) + "Object: " + (m_lastTarget ? m_lastTarget->GetLabel() : "<none>") + pathStr.str();
 
 	vector2f screen(Graphics::GetScreenWidth(), Graphics::GetScreenHeight());
 	if (!(screen == m_screen)) {
@@ -316,7 +318,7 @@ void ObjectViewerView::DrawUI(const float frameTime)
 					| ImGuiWindowFlags_NoBringToFrontOnFocus
 					);
 
-	ImGui::TextUnformatted(buf);
+	ImGui::TextUnformatted(text.c_str());
 
 	if (m_lastTarget) {
 		ImGui::Separator();
@@ -420,8 +422,9 @@ void ObjectViewerView::DrawAdditionalUIForBodies()
 	ImGui::Checkbox("Display WireFrame", &m_showWireFrame);
 	ImGui::SameLine();
 	ImGui::Checkbox("Display Tags", &m_showTags);
-	ImGui::SameLine();
 	ImGui::Checkbox("Display Docking", &m_showDocking);
+	ImGui::SameLine();
+	ImGui::Checkbox("Display Stats", &m_showStat);
 
 	SceneGraph::DebugFlags debug = (m_showBBox ? SceneGraph::DebugFlags::BBOX : SceneGraph::DebugFlags::NONE) |
 		(m_showCollMesh ? SceneGraph::DebugFlags::COLLMESH : SceneGraph::DebugFlags::NONE) |
@@ -430,7 +433,22 @@ void ObjectViewerView::DrawAdditionalUIForBodies()
 		(m_showDocking ? SceneGraph::DebugFlags::DOCKING : SceneGraph::DebugFlags::NONE);
 
 	ModelBody *mb = dynamic_cast<ModelBody *>(m_lastTarget);
+
 	if (mb) mb->GetModel()->SetDebugFlags(debug);
+
+	if (m_showStat) {
+		if (m_stats.empty() && mb) {
+			m_stats = SceneGraph::ModelDump(mb->GetModel());
+		}
+
+		ImGui::BeginChild("Stats", ImVec2(ImGui::GetWindowContentRegionWidth() * 1.0f, 260), false, ImGuiWindowFlags_HorizontalScrollbar);
+		for (const auto &line : m_stats) {
+			ImGui::TextUnformatted(line.c_str());
+		}
+		ImGui::EndChild();
+	} else {
+		m_stats.clear();
+	}
 }
 
 void ObjectViewerView::OnResetViewParams()

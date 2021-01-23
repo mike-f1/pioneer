@@ -979,7 +979,10 @@ void ModelViewer::SetModel(const std::string &filename)
 
 		SceneGraph::DumpVisitor d(m_model);
 		m_model->GetRoot()->Accept(d);
-		AddLog(d.GetModelStatistics());
+		auto vectorOfString = d.GetModelStatistics();
+		for (auto &line : vectorOfString) {
+			AddLog(line);
+		}
 
 		// If we've got the tag_landing set then use it for an offset otherwise grab the AABB
 		const SceneGraph::MatrixTransform *mt = m_model->FindTagByName("tag_landing");

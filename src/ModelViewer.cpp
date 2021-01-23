@@ -970,8 +970,6 @@ void ModelViewer::SetModel(const std::string &filename)
 			}
 		}
 
-		Shields::ReparentShieldNodes(m_model);
-
 		//set decal textures, max 4 supported.
 		//Identical texture at the moment
 		OnDecalChanged(0, "pioneer");
@@ -979,9 +977,10 @@ void ModelViewer::SetModel(const std::string &filename)
 
 		SceneGraph::DumpVisitor d(m_model);
 		m_model->GetRoot()->Accept(d);
-		auto vectorOfString = d.GetModelStatistics();
+		auto vectorOfString = d.GetModelStatistics(true);
 		for (auto &line : vectorOfString) {
 			AddLog(line);
+			Output("%s\n", line.c_str());
 		}
 
 		// If we've got the tag_landing set then use it for an offset otherwise grab the AABB

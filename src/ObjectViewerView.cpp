@@ -437,10 +437,12 @@ void ObjectViewerView::DrawAdditionalUIForBodies()
 	if (mb) mb->GetModel()->SetDebugFlags(debug);
 
 	if (m_showStat) {
-		if (m_stats.empty() && mb) {
-			m_stats = SceneGraph::ModelDump(mb->GetModel());
-		}
+		bool previous = m_showTree;
+		ImGui::Checkbox("Dump Tree", &m_showTree);
 
+		if ((m_stats.empty() || m_showTree != previous) && mb ) {
+			m_stats = SceneGraph::ModelDump(mb->GetModel(), m_showTree);
+		}
 		ImGui::BeginChild("Stats", ImVec2(ImGui::GetWindowContentRegionWidth() * 1.0f, 260), false, ImGuiWindowFlags_HorizontalScrollbar);
 		for (const auto &line : m_stats) {
 			ImGui::TextUnformatted(line.c_str());
@@ -448,6 +450,7 @@ void ObjectViewerView::DrawAdditionalUIForBodies()
 		ImGui::EndChild();
 	} else {
 		m_stats.clear();
+		m_showTree = false;
 	}
 }
 

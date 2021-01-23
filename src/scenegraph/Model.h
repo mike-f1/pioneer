@@ -223,7 +223,7 @@ namespace SceneGraph {
 		GunMounts m_mounts;
 	};
 
-	std::vector<std::string> ModelDump(Model *model);
+	std::vector<std::string> ModelDump(Model *model, bool with_tree = false);
 
 } // namespace SceneGraph
 

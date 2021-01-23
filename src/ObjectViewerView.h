@@ -51,6 +51,7 @@ private:
 	bool m_showTags = false;
 	bool m_showDocking = false;
 	bool m_showStat = false;
+	bool m_showTree = false;
 
 	bool m_showSingleBBox = false;
 	bool m_showNearestBBox = false;

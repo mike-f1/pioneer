@@ -10,7 +10,6 @@
 #include "Node.h"
 #include "StaticGeometry.h"
 #include "graphics/VertexBuffer.h"
-#include "libs/utils.h"
 #include <iostream>
 #include <sstream>
 
@@ -24,9 +23,14 @@ namespace SceneGraph {
 		m_modelStats.materialCount = m->GetNumMaterials();
 	}
 
-	std::vector<std::string> DumpVisitor::GetModelStatistics()
+	std::vector<std::string> DumpVisitor::GetModelStatistics(bool with_tree)
 	{
 		std::vector<std::string> lines;
+
+		if (with_tree) {
+			lines.insert(lines.end(), m_treeStructure.begin(), m_treeStructure.end());
+			lines.push_back("");
+		}
 
 		// Print collected statistics per lod
 		if (m_lodStats.empty())
@@ -52,16 +56,14 @@ namespace SceneGraph {
 
 	void DumpVisitor::ApplyNode(Node &n)
 	{
-		PutIndent();
-		PutNodeName(n);
+		StoreNodeName(n);
 
 		m_stats.nodeCount++;
 	}
 
 	void DumpVisitor::ApplyGroup(Group &g)
 	{
-		PutIndent();
-		PutNodeName(g);
+		StoreNodeName(g);
 
 		m_level++;
 		g.Traverse(*this);
@@ -96,17 +98,18 @@ namespace SceneGraph {
 		ApplyNode(static_cast<Node &>(g));
 	}
 
-	void DumpVisitor::PutIndent() const
+	void DumpVisitor::StoreNodeName(const Node &g)
 	{
-		for (unsigned int i = 0; i < m_level; i++)
-			Output("  ");
+		if (g.GetName().empty()) {
+			std::string line(m_level * 2, ' ');
+			line += g.GetTypeName();
+			m_treeStructure.push_back(line);
+		} else {
+			std::string line(m_level * 2, ' ');
+			line += g.GetTypeName();
+			line += " " + g.GetName();
+			m_treeStructure.push_back(line);
+		}
 	}
 
-	void DumpVisitor::PutNodeName(const Node &g) const
-	{
-		if (g.GetName().empty())
-			Output("%s\n", g.GetTypeName());
-		else
-			Output("%s - %s\n", g.GetTypeName(), g.GetName().c_str());
-	}
 } // namespace SceneGraph

@@ -530,11 +530,11 @@ namespace SceneGraph {
 		m_Boxes.push_back(*box.get());
 	}
 
-	std::vector<std::string> ModelDump(Model *model)
+	std::vector<std::string> ModelDump(Model *model, bool with_tree)
 	{
 		SceneGraph::DumpVisitor d(model);
 		model->GetRoot()->Accept(d);
-		return d.GetModelStatistics();
+		return d.GetModelStatistics(with_tree);
 	}
 
 } // namespace SceneGraph

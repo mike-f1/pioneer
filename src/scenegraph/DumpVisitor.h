@@ -31,7 +31,7 @@ namespace SceneGraph {
 
 		explicit DumpVisitor(const Model *m);
 
-		std::vector<std::string> GetModelStatistics();
+		std::vector<std::string> GetModelStatistics(bool with_tree = false);
 
 		virtual void ApplyNode(Node &) override;
 		virtual void ApplyGroup(Group &) override;
@@ -39,13 +39,13 @@ namespace SceneGraph {
 		virtual void ApplyStaticGeometry(StaticGeometry &) override;
 
 	private:
-		void PutIndent() const;
-		void PutNodeName(const Node &) const;
+		void StoreNodeName(const Node &);
 
 		unsigned int m_level;
 		ModelStatistics m_modelStats;
 		LodStatistics m_stats;
 		std::vector<LodStatistics> m_lodStats;
+		std::vector<std::string> m_treeStructure;
 	};
 
 } // namespace SceneGraph

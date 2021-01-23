@@ -3,12 +3,9 @@
 
 #include "ModelCache.h"
 
-#include "Shields.h"
 #include "scenegraph/Loader.h"
 #include "scenegraph/Model.h"
 #include "libs/utils.h"
-
-ModelCache::ModelMap ModelCache::s_models;
 
 void ModelCache::Init(const ShipType::t_mapTypes &types)
 {
@@ -28,7 +25,6 @@ SceneGraph::Model *ModelCache::findmodel(const std::string &name)
 		try {
 			SceneGraph::Loader loader;
 			SceneGraph::Model *m = loader.LoadModel(name);
-			Shields::ReparentShieldNodes(m);
 			s_models[name] = m;
 			return m;
 		} catch (SceneGraph::LoadingError &) {
@@ -53,7 +49,6 @@ SceneGraph::Model *ModelCache::FindModel(const std::string &name, bool allowPlac
 			}
 		}
 	}
-
 	return m;
 }
 

@@ -164,7 +164,7 @@ void ModelBody::RebuildCollisionMesh()
 	double maxRadius = m_collMesh->GetAabb().GetRadius();
 
 	//static geom
-	m_geom.reset(new Geom(m_collMesh->GetGeomTree(), GetOrient(), GetPosition(), this));
+	m_geom = std::make_unique<Geom>(m_collMesh->GetGeomTree(), GetOrient(), GetPosition(), this);
 
 	SetPhysRadius(maxRadius);
 
@@ -174,7 +174,7 @@ void ModelBody::RebuildCollisionMesh()
 
 	//dynamic geoms
 	for (auto it = m_collMesh->GetDynGeomTrees().begin(); it != m_collMesh->GetDynGeomTrees().end(); ++it) {
-		std::unique_ptr<Geom> dynG(new Geom(*it, GetOrient(), GetPosition(), this));
+		std::unique_ptr<Geom> dynG = std::make_unique<Geom>(*it, GetOrient(), GetPosition(), this);
 		dynG->m_animTransform = matrix4x4d::Identity();
 		SceneGraph::CollisionGeometry *cg = dgf.GetCgForTree(*it);
 		if (cg)
@@ -189,7 +189,7 @@ void ModelBody::SetCentralCylinder(std::unique_ptr<CSG_CentralCylinder> centralc
 {
 	// Copy CSG_CentralCylinder: first one 'sink' in model for debugging
 	// purposes, while second 'sink' in Geoms for actual checks
-	std::unique_ptr<CSG_CentralCylinder> cc2(new CSG_CentralCylinder(*centralcylinder.get()));
+	std::unique_ptr<CSG_CentralCylinder> cc2 = std::make_unique<CSG_CentralCylinder>(*centralcylinder.get());
 	m_model->SetCentralCylinder(std::move(cc2));
 	m_geom->SetCentralCylinder(std::move(centralcylinder));
 }
@@ -198,7 +198,7 @@ void ModelBody::AddBox(std::unique_ptr<CSG_Box> box)
 {
 	// Copy CSG_Box: first one 'sink' in model for debugging
 	// purposes, while second 'sink' in Geoms for actual checks
-	std::unique_ptr<CSG_Box> box2(new CSG_Box(*box.get()));
+	std::unique_ptr<CSG_Box> box2 = std::make_unique<CSG_Box>(*box.get());
 	m_geom->AddBox(std::move(box2));
 	m_model->AddBox(std::move(box));
 }
@@ -216,7 +216,7 @@ void ModelBody::SetModel(const char *modelName)
 
 	SetClipRadius(m_model->GetDrawClipRadius());
 
-	m_shields.reset(new Shields(m_model.get()));
+	m_shields = std::make_unique<Shields>(m_model.get());
 
 	RebuildCollisionMesh();
 }

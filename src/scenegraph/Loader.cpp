@@ -14,6 +14,7 @@
 #include "Label3D.h"
 #include "Model.h"
 #include "MatrixTransform.h"
+#include "ShieldHelper.h"
 #include "libs/utils.h"
 #include "libs/StringF.h"
 #include "libs/stringUtils.h"
@@ -143,6 +144,7 @@ namespace SceneGraph {
 		PROFILE_SCOPED()
 		Model *m = LoadModel(filename, "models");
 		ParseGunTags(m);
+		ShieldHelper::ReparentShieldNodes(m);
 		return m;
 	}
 
@@ -1032,4 +1034,5 @@ namespace SceneGraph {
 			m->m_mounts.push_back(mount);
 		});
 	}
+
 } // namespace SceneGraph

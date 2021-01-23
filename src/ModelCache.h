@@ -38,7 +38,7 @@ private:
 	static SceneGraph::Model *findmodel(const std::string &name);
 
 	typedef std::map<std::string, SceneGraph::Model *> ModelMap;
-	static ModelMap s_models;
+	inline static ModelMap s_models;
 };
 
 #endif

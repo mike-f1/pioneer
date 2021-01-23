@@ -1,21 +1,18 @@
 #ifndef SHIELDHELPER_H
 #define SHIELDHELPER_H
 
+#include <string>
+
+namespace SceneGraph {
+	class Model;
+}
+
 namespace ShieldHelper
 {
+	static const std::string s_shieldGroupName("Shields");
+	static const std::string s_matrixTransformName("_accMtx4");
 
-class ShieldHelper
-{
-private:
-	ShieldHelper(const ShieldHelper& rhs);
-	ShieldHelper& operator=(const ShieldHelper& rhs);
-
-public:
-	ShieldHelper();
-	~ShieldHelper();
-
-};
-
+	void ReparentShieldNodes(SceneGraph::Model *model);
 }
 
 #endif // SHIELDHELPER_H

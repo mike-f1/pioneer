@@ -41,7 +41,6 @@ public:
 	void AddHit(const vector3d &hitPos);
 
 	static void Init();
-	static void ReparentShieldNodes(SceneGraph::Model *);
 	static void Uninit();
 
 	SceneGraph::StaticGeometry *GetFirstShieldMesh();

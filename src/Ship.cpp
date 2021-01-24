@@ -87,11 +87,11 @@ Ship::Ship(const ShipType::Id &shipId) :
 	m_aiMessage = AIERROR_NONE;
 	m_decelerating = false;
 
-	InitEquipSet();
-
 	SetModel(m_type->modelName.c_str());
 
 	GetGunsTags(GetModel());
+
+	InitEquipSet();
 
 	// Setting thrusters colors
 	if (m_type->isGlobalColorDefined) GetModel()->SetThrusterColor(m_type->globalThrusterColor);
@@ -660,6 +660,14 @@ void Ship::UpdateEquipStats()
 	Properties().Get("thruster_power_cap", thruster_power_cap);
 	const double power_mul = m_type->thrusterUpgrades[std::clamp(thruster_power_cap, 0U, 3U)];
 	Propulsion::SetThrustPowerMult(power_mul, m_type->linThrust, m_type->angThrust);
+	switch (thruster_power_cap) {
+		case 1: GetModel()->SetThrusterColor(Color(255, 51, 51, 255)); break;
+		case 2: GetModel()->SetThrusterColor(Color(255, 127, 51, 255)); break;
+		case 3: GetModel()->SetThrusterColor(Color(10, 51, 255, 255)); break;
+		case 0: /* Don't set thruster color when no upgrade is mounted */
+		default:
+		break;
+	}
 
 	m_stats.hyperspace_range = m_stats.hyperspace_range_max = 0;
 	p.Set("hyperspaceRange", m_stats.hyperspace_range);

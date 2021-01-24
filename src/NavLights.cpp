@@ -95,9 +95,10 @@ NavLights::NavLights(SceneGraph::Model *model, float period) :
 	using SceneGraph::Billboard;
 	using SceneGraph::MatrixTransform;
 	using SceneGraph::Node;
+	using SceneGraph::FindNodeVisitor;
 
 	//This will find all matrix transforms meant for navlights.
-	SceneGraph::FindNodeVisitor lightFinder(SceneGraph::FindNodeVisitor::MATCH_NAME_STARTSWITH, "navlight_");
+	FindNodeVisitor lightFinder(FindNodeVisitor::Criteria::MATCH_NAME_STARTSWITH, "navlight_");
 	model->GetRoot()->Accept(lightFinder);
 	const std::vector<Node *> &results = lightFinder.GetResults();
 

@@ -193,7 +193,7 @@ function LaserType:Install(ship, num, slot)
 
 	local mount = ship:MountGun(first_free, self.l10n_key, self.laser_stats)
 
-	if mount then 
+	if mount then
 		if LaserType.Super().Install(self, ship, num, slot) < 1 then
 			return 0
 		else
@@ -993,7 +993,7 @@ laser.pulsecannon_20mw = LaserType.New({
 	l10n_key="PULSECANNON_20MW", price=12000, capabilities={mass=65},
 	slots = {"laser_front", "laser_rear"}, laser_stats = {
 		lifespan=8, speed=1000, damage=20000, rechargeTime=0.25, length=30, sound="Pulse_Laser",
-		width=5, beam=0, dual=0, mining=0, rgba_r = 0.1, rgba_g = 51, rgba_b = 255, rgba_a = 255
+		width=5, beam=0, dual=0, mining=0, rgba_r = 1, rgba_g = 51, rgba_b = 255, rgba_a = 255
 	}, purchasable=true, tech_level="MILITARY"
 })
 laser.miningcannon_17mw = LaserType.New({

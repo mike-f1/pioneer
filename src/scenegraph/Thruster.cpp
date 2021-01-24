@@ -22,14 +22,14 @@ namespace SceneGraph {
 
 	static const std::string thrusterTextureFilename("textures/thruster.dds");
 	static const std::string thrusterGlowTextureFilename("textures/halo.dds");
-	static Color baseColor(178, 153, 255, 255);
+	static const Color baseColor(178, 153, 255, 255);
 
 	Thruster::Thruster(bool linear, const vector3f &pos, const vector3f &dir) :
 		Node(NODE_TRANSPARENT),
-		linearOnly(linear),
+		m_linearOnly(linear),
 		m_dir(dir),
 		m_pos(pos),
-		currentColor(baseColor)
+		m_currentColor(baseColor)
 	{
 		//set up materials
 		Graphics::MaterialDescriptor desc;
@@ -56,10 +56,10 @@ namespace SceneGraph {
 		Node(thruster, cache),
 		m_tMat(thruster.m_tMat),
 		m_renderState(thruster.m_renderState),
-		linearOnly(thruster.linearOnly),
+		m_linearOnly(thruster.m_linearOnly),
 		m_dir(thruster.m_dir),
 		m_pos(thruster.m_pos),
-		currentColor(thruster.currentColor)
+		m_currentColor(thruster.m_currentColor)
 	{
 	}
 
@@ -78,7 +78,7 @@ namespace SceneGraph {
 		PROFILE_SCOPED()
 		float power = -m_dir.Dot(vector3f(rd->linthrust));
 
-		if (!linearOnly) {
+		if (!m_linearOnly) {
 			// pitch X
 			// yaw   Y
 			// roll  Z
@@ -101,7 +101,7 @@ namespace SceneGraph {
 		}
 		if (power < 0.001f) return;
 
-		m_tMat->diffuse = m_glowMat->diffuse = currentColor * power;
+		m_tMat->diffuse = m_glowMat->diffuse = m_currentColor * power;
 
 		//directional fade
 		vector3f cdir = vector3f(trans * -m_dir).Normalized();
@@ -124,7 +124,7 @@ namespace SceneGraph {
 	void Thruster::Save(NodeDatabase &db)
 	{
 		Node::Save(db);
-		db.wr->Bool(linearOnly);
+		db.wr->Bool(m_linearOnly);
 		db.wr->Vector3f(m_dir);
 		db.wr->Vector3f(m_pos);
 	}

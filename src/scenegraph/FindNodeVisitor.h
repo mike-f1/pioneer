@@ -15,11 +15,11 @@ namespace SceneGraph {
 
 	class FindNodeVisitor : public NodeVisitor {
 	public:
-		enum Criteria { //or criterion. whatever.
+		enum class Criteria { //or criterion. whatever.
 			MATCH_NAME_FULL,
 			MATCH_NAME_STARTSWITH,
-			MATCH_NAME_ENDSWITH
-			//match type etc.
+			MATCH_NAME_ENDSWITH,
+			MATCH_TYPE
 		};
 		FindNodeVisitor(Criteria crit, const std::string &searchstring);
 		virtual void ApplyNode(Node &) final;

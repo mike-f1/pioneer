@@ -16,17 +16,24 @@ namespace SceneGraph {
 
 	void FindNodeVisitor::ApplyNode(Node &n)
 	{
-		if (m_criteria == MATCH_NAME_STARTSWITH) {
-			if (!n.GetName().empty() && stringUtils::starts_with(n.GetName(), m_string.c_str()))
-				m_results.push_back(&n);
-		} else if (m_criteria == MATCH_NAME_ENDSWITH) {
-			if (!n.GetName().empty() && stringUtils::ends_with(n.GetName(), m_string.c_str()))
-				m_results.push_back(&n);
-		} else {
-			if (!n.GetName().empty() && n.GetName() == m_string)
-				m_results.push_back(&n);
+		switch (m_criteria) {
+			case Criteria::MATCH_NAME_STARTSWITH:
+				if (!n.GetName().empty() && stringUtils::starts_with(n.GetName(), m_string.c_str()))
+					m_results.push_back(&n);
+			break;
+			case Criteria::MATCH_NAME_ENDSWITH:
+				if (!n.GetName().empty() && stringUtils::ends_with(n.GetName(), m_string.c_str()))
+					m_results.push_back(&n);
+			break;
+			case Criteria::MATCH_NAME_FULL:
+				if (!n.GetName().empty() && n.GetName() == m_string)
+					m_results.push_back(&n);
+			break;
+			case Criteria::MATCH_TYPE:
+				if (n.GetTypeName() == m_string)
+					m_results.push_back(&n);
+			break;
 		}
-
 		n.Traverse(*this);
 	}
 

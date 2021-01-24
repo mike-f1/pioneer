@@ -373,17 +373,13 @@ namespace SceneGraph {
 	{
 		assert(m_root != nullptr);
 
-		FindNodeVisitor thrusterFinder(FindNodeVisitor::MATCH_NAME_FULL, "thrusters");
+		FindNodeVisitor thrusterFinder(FindNodeVisitor::Criteria::MATCH_TYPE, "Thruster");
 		m_root->Accept(thrusterFinder);
 		const std::vector<Node *> &results = thrusterFinder.GetResults();
-		Group *thrusters = static_cast<Group *>(results.at(0));
-
-		for (unsigned int i = 0; i < thrusters->GetNumChildren(); i++) {
-			MatrixTransform *mt = static_cast<MatrixTransform *>(thrusters->GetChildAt(i));
-			Thruster *my_thruster = static_cast<Thruster *>(mt->GetChildAt(0));
-			if (my_thruster == nullptr) continue;
-			float dot = my_thruster->GetDirection().Dot(dir);
-			if (dot > 0.99) my_thruster->SetColor(color);
+		for (auto *node : results) {
+			Thruster *thruster = static_cast<Thruster *>(node);
+			float dot = thruster->GetDirection().Dot(dir);
+			if (dot > 0.99) thruster->SetColor(color);
 		}
 	}
 
@@ -391,7 +387,7 @@ namespace SceneGraph {
 	{
 		assert(m_root != nullptr);
 
-		FindNodeVisitor thrusterFinder(FindNodeVisitor::MATCH_NAME_FULL, name);
+		FindNodeVisitor thrusterFinder(FindNodeVisitor::Criteria::MATCH_NAME_FULL, name);
 		m_root->Accept(thrusterFinder);
 		const std::vector<Node *> &results = thrusterFinder.GetResults();
 
@@ -404,16 +400,12 @@ namespace SceneGraph {
 	{
 		assert(m_root != nullptr);
 
-		FindNodeVisitor thrusterFinder(FindNodeVisitor::MATCH_NAME_FULL, "thrusters");
+		FindNodeVisitor thrusterFinder(FindNodeVisitor::Criteria::MATCH_TYPE, "Thruster");
 		m_root->Accept(thrusterFinder);
 		const std::vector<Node *> &results = thrusterFinder.GetResults();
-		Group *thrusters = static_cast<Group *>(results.at(0));
-
-		for (unsigned int i = 0; i < thrusters->GetNumChildren(); i++) {
-			MatrixTransform *mt = static_cast<MatrixTransform *>(thrusters->GetChildAt(i));
-			Thruster *my_thruster = static_cast<Thruster *>(mt->GetChildAt(0));
-			assert(my_thruster != nullptr);
-			my_thruster->SetColor(color);
+		for (auto *node : results) {
+			Thruster *thruster = static_cast<Thruster *>(node);
+			thruster->SetColor(color);
 		}
 	}
 

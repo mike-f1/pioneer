@@ -77,9 +77,10 @@ Shields::Shields(SceneGraph::Model *model) :
 	using SceneGraph::MatrixTransform;
 	using SceneGraph::Node;
 	using SceneGraph::StaticGeometry;
+	using SceneGraph::FindNodeVisitor;
 
 	//This will find all matrix transforms meant for shields.
-	SceneGraph::FindNodeVisitor shieldFinder(SceneGraph::FindNodeVisitor::MATCH_NAME_ENDSWITH, ShieldHelper::s_matrixTransformName);
+	FindNodeVisitor shieldFinder(FindNodeVisitor::Criteria::MATCH_NAME_ENDSWITH, ShieldHelper::s_matrixTransformName);
 	model->GetRoot()->Accept(shieldFinder);
 	const std::vector<Node *> &results = shieldFinder.GetResults();
 

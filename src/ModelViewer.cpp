@@ -1192,7 +1192,7 @@ void ModelViewer::SetupUI()
 	//// Thrust sliders
 	bool supportsThrusters = false;
 	{
-		SceneGraph::FindNodeVisitor fivi(SceneGraph::FindNodeVisitor::MATCH_NAME_STARTSWITH, "thruster_");
+		SceneGraph::FindNodeVisitor fivi(SceneGraph::FindNodeVisitor::Criteria::MATCH_NAME_STARTSWITH, "thruster_");
 		m_model->GetRoot()->Accept(fivi);
 		supportsThrusters = !fivi.GetResults().empty();
 	}

@@ -53,7 +53,7 @@ namespace ShieldHelper {
 		using SceneGraph::Group;
 
 		//This will find all matrix transforms meant for navlights.
-		FindNodeVisitor shieldFinder(FindNodeVisitor::MATCH_NAME_ENDSWITH, "_shield");
+		FindNodeVisitor shieldFinder(FindNodeVisitor::Criteria::MATCH_NAME_ENDSWITH, "_shield");
 		model->GetRoot()->Accept(shieldFinder);
 		const std::vector<Node *> &results = shieldFinder.GetResults();
 

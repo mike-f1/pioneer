@@ -17,14 +17,14 @@ namespace Graphics {
 
 namespace SceneGraph {
 
-	class Billboard : public Node {
+	class Billboard final : public Node {
 	public:
 		Billboard(Graphics::VertexArray &bbVA, float size);
 		Billboard(const Billboard &, NodeCopyCache *cache = 0);
-		virtual Node *Clone(NodeCopyCache *cache = 0) override;
-		virtual void Accept(NodeVisitor &nv) override;
-		virtual const char *GetTypeName() const override { return "Billboard"; }
-		virtual void Render(const matrix4x4f &trans, const RenderData *rd) override;
+		Node *Clone(NodeCopyCache *cache = 0) override;
+		void Accept(NodeVisitor &nv) override;
+		const char *GetTypeName() const override { return "Billboard"; }
+		void Render(const matrix4x4f &trans, const RenderData *rd) override;
 		void SetColorUVoffset(const vector2f &c) { m_colorUVoffset = c; }
 
 	private:

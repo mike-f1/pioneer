@@ -23,12 +23,12 @@ namespace SceneGraph {
 	class MatrixTransform;
 	class StaticGeometry;
 
-	class CollisionVisitor : public NodeVisitor {
+	class CollisionVisitor final: public NodeVisitor {
 	public:
 		CollisionVisitor();
-		virtual void ApplyStaticGeometry(StaticGeometry &);
-		virtual void ApplyMatrixTransform(MatrixTransform &);
-		virtual void ApplyCollisionGeometry(CollisionGeometry &);
+		void ApplyStaticGeometry(StaticGeometry &) override;
+		void ApplyMatrixTransform(MatrixTransform &) override;
+		void ApplyCollisionGeometry(CollisionGeometry &) override;
 		//call after traversal complete
 		RefCountedPtr<CollMesh> CreateCollisionMesh();
 		float GetBoundingRadius() const { return m_boundingRadius; }

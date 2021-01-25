@@ -21,7 +21,7 @@ namespace Graphics {
 
 namespace SceneGraph {
 
-	class Thruster : public Node {
+	class Thruster final : public Node {
 	public:
 		Thruster(bool linear, const vector3f &pos, const vector3f &dir);
 		Thruster(const Thruster &, NodeCopyCache *cache = 0);

@@ -244,44 +244,46 @@ namespace SceneGraph {
 		//"mesh" here refers to a "mesh xxx.yyy"
 		//defined in the .model
 		std::map<std::string, RefCountedPtr<Node>> meshCache;
-		LOD *lodNode = 0;
+		LOD *lodNode = nullptr;
 		if (def.lodDefs.size() > 1) { //don't bother with a lod node if only one level
 			lodNode = new LOD;
 			model->GetRoot()->AddChild(lodNode);
 		}
-		for (std::vector<LodDefinition>::const_iterator lod = def.lodDefs.begin();
-			 lod != def.lodDefs.end(); ++lod) {
-			m_mostDetailedLod = (lod == def.lodDefs.end() - 1);
+		// find max lod:
+		const auto max_lod = std::max_element(begin(def.lodDefs), end(def.lodDefs), [](const auto &lod_a, const auto &lod_b) {
+			return lod_a.pixelSize < lod_b.pixelSize;
+		});
+		for (const auto &lod : def.lodDefs) {
+			m_mostDetailedLod = (lod.pixelSize == (*max_lod).pixelSize);
 
 			//does a detail level have multiple meshes? If so, we need a Group.
-			Group *group = 0;
-			if (lodNode && (*lod).meshNames.size() > 1) {
+			Group *group = nullptr;
+			if (lodNode && lod.meshNames.size() > 1) {
 				group = new Group;
-				lodNode->AddLevel((*lod).pixelSize, group);
+				lodNode->AddLevel(lod.pixelSize, group);
 			}
-			for (std::vector<std::string>::const_iterator it = (*lod).meshNames.begin();
-				 it != (*lod).meshNames.end(); ++it) {
+			for (const auto &meshName: lod.meshNames) {
 				try {
 					//multiple lods might use the same mesh
 					RefCountedPtr<Node> mesh;
-					std::map<std::string, RefCountedPtr<Node>>::iterator cacheIt = meshCache.find((*it));
+					std::map<std::string, RefCountedPtr<Node>>::iterator cacheIt = meshCache.find(meshName);
 					if (cacheIt != meshCache.end())
 						mesh = (*cacheIt).second;
 					else {
 						try {
-							mesh = LoadMesh(*it, def.animDefs);
+							mesh = LoadMesh(meshName, def.animDefs);
 						} catch (LoadingError &err) {
 							//append filename - easiest to do here
-							throw(LoadingError(stringf("%0:\n%1", *it, err.what())));
+							throw(LoadingError(stringf("%0:\n%1", meshName, err.what())));
 						}
-						meshCache[*(it)] = mesh;
+						meshCache[meshName] = mesh;
 					}
 					assert(mesh.Valid());
 
 					if (group)
 						group->AddChild(mesh.Get());
 					else if (lodNode) {
-						lodNode->AddLevel((*lod).pixelSize, mesh.Get());
+						lodNode->AddLevel(lod.pixelSize, mesh.Get());
 					} else
 						model->GetRoot()->AddChild(mesh.Get());
 				} catch (LoadingError &err) {
@@ -306,12 +308,11 @@ namespace SceneGraph {
 
 		// Load collision meshes
 		// They are added at the top level of the model root as CollisionGeometry nodes
-		for (std::vector<std::string>::const_iterator it = def.collisionDefs.begin();
-			 it != def.collisionDefs.end(); ++it) {
+		for (const auto &collision :  def.collisionDefs) {
 			try {
-				LoadCollision(*it);
+				LoadCollision(collision);
 			} catch (LoadingError &err) {
-				throw(LoadingError(stringf("%0:\n%1", *it, err.what())));
+				throw(LoadingError(stringf("%0:\n%1", collision, err.what())));
 			}
 		}
 

@@ -21,15 +21,15 @@ namespace Graphics {
 
 namespace SceneGraph {
 
-	class Label3D : public Node {
+	class Label3D final: public Node {
 	public:
 		Label3D(RefCountedPtr<Text::DistanceFieldFont>);
 		Label3D(const Label3D &, NodeCopyCache *cache = 0);
-		virtual Node *Clone(NodeCopyCache *cache = 0);
-		virtual const char *GetTypeName() const { return "Label3D"; }
+		Node *Clone(NodeCopyCache *cache = 0) override;
+		const char *GetTypeName() const override { return "Label3D"; }
 		void SetText(const std::string &);
-		virtual void Render(const matrix4x4f &trans, const RenderData *rd);
-		virtual void Accept(NodeVisitor &nv);
+		void Render(const matrix4x4f &trans, const RenderData *rd) override;
+		void Accept(NodeVisitor &nv) override;
 
 	private:
 		RefCountedPtr<Graphics::Material> m_material;

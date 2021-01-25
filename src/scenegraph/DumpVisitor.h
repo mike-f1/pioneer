@@ -14,7 +14,7 @@ namespace SceneGraph {
 
 	class Model;
 
-	class DumpVisitor : public NodeVisitor {
+	class DumpVisitor final: public NodeVisitor {
 	public:
 		struct LodStatistics {
 			unsigned int nodeCount;
@@ -33,10 +33,10 @@ namespace SceneGraph {
 
 		std::vector<std::string> GetModelStatistics(bool with_tree = false);
 
-		virtual void ApplyNode(Node &) override;
-		virtual void ApplyGroup(Group &) override;
-		virtual void ApplyLOD(LOD &) override;
-		virtual void ApplyStaticGeometry(StaticGeometry &) override;
+		void ApplyNode(Node &) override;
+		void ApplyGroup(Group &) override;
+		void ApplyLOD(LOD &) override;
+		void ApplyStaticGeometry(StaticGeometry &) override;
 
 	private:
 		void StoreNodeName(const Node &);

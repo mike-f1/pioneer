@@ -22,7 +22,7 @@ namespace SceneGraph {
 
 	class NodeVisitor;
 
-	class StaticGeometry : public Node {
+	class StaticGeometry final: public Node {
 	public:
 		struct Mesh {
 			RefCountedPtr<Graphics::VertexBuffer> vertexBuffer;
@@ -31,13 +31,13 @@ namespace SceneGraph {
 		};
 		StaticGeometry();
 		StaticGeometry(const StaticGeometry &, NodeCopyCache *cache = 0);
-		virtual Node *Clone(NodeCopyCache *cache = 0) override;
-		virtual const char *GetTypeName() const override { return "StaticGeometry"; }
-		virtual void Accept(NodeVisitor &nv) override;
-		virtual void Render(const matrix4x4f &trans, const RenderData *rd) override;
-		virtual void Render(const std::vector<matrix4x4f> &trans, const RenderData *rd) override;
+		Node *Clone(NodeCopyCache *cache = 0) override;
+		const char *GetTypeName() const override { return "StaticGeometry"; }
+		void Accept(NodeVisitor &nv) override;
+		void Render(const matrix4x4f &trans, const RenderData *rd) override;
+		void Render(const std::vector<matrix4x4f> &trans, const RenderData *rd) override;
 
-		virtual void Save(NodeDatabase &) override;
+		void Save(NodeDatabase &) override;
 		static StaticGeometry *Load(NodeDatabase &);
 
 		void AddMesh(RefCountedPtr<Graphics::VertexBuffer>,

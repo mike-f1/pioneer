@@ -13,7 +13,7 @@
 
 namespace SceneGraph {
 
-	class FindNodeVisitor : public NodeVisitor {
+	class FindNodeVisitor final : public NodeVisitor {
 	public:
 		enum class Criteria { //or criterion. whatever.
 			MATCH_NAME_FULL,
@@ -22,7 +22,7 @@ namespace SceneGraph {
 			MATCH_TYPE
 		};
 		FindNodeVisitor(Criteria crit, const std::string &searchstring);
-		virtual void ApplyNode(Node &) final;
+		void ApplyNode(Node &) override final;
 
 		const std::vector<Node *> &GetResults() { return m_results; }
 

@@ -18,14 +18,12 @@ namespace SceneGraph {
 
 	LOD::LOD() :
 		Group()
-	{
-	}
+	{}
 
 	LOD::LOD(const LOD &lod, NodeCopyCache *cache) :
 		Group(lod, cache),
 		m_pixelSizes(lod.m_pixelSizes)
-	{
-	}
+	{}
 
 	Node *LOD::Clone(NodeCopyCache *cache)
 	{
@@ -49,12 +47,14 @@ namespace SceneGraph {
 	void LOD::Render(const matrix4x4f &trans, const RenderData *rd)
 	{
 		PROFILE_SCOPED()
+		if (m_pixelSizes.empty() || !RendererLocator::getRenderer())
+			return;
+
 		//figure out approximate pixel size of object's bounding radius
 		//on screen and pick a child to render
 		const vector3f cameraPos(-trans[12], -trans[13], -trans[14]);
 		//fov is vertical, so using screen height
 		const float pixrad = Graphics::GetScreenHeight() * rd->boundingRadius / (cameraPos.Length() * Graphics::GetFovFactor());
-		if (m_pixelSizes.empty()) return;
 		unsigned int lod = m_children.size() - 1;
 		for (unsigned int i = m_pixelSizes.size(); i > 0; i--) {
 			if (pixrad < m_pixelSizes[i - 1]) lod = i - 1;
@@ -64,45 +64,43 @@ namespace SceneGraph {
 
 	void LOD::Render(const std::vector<matrix4x4f> &trans, const RenderData *rd)
 	{
+		PROFILE_SCOPED()
 		// anything to draw?
-		if (m_pixelSizes.empty())
+		if (m_pixelSizes.empty() || !RendererLocator::getRenderer())
 			return;
 
 		// got something to draw with
-		Graphics::Renderer *r = RendererLocator::getRenderer();
-		if (r != nullptr) {
-			const size_t count = m_pixelSizes.size();
-			const size_t tsize = trans.size();
+		const size_t pixel_size = m_pixelSizes.size();
+		const size_t tsize = trans.size();
 
-			// transformation buffers
-			std::vector<std::vector<matrix4x4f>> transform;
-			transform.resize(count);
-			for (uint32_t i = 0; i < count; i++) {
-				transform[i].reserve(tsize);
+		// transformation buffers
+		std::vector<std::vector<matrix4x4f>> transform;
+		transform.resize(pixel_size);
+		for (uint32_t i = 0; i < pixel_size; i++) {
+			transform[i].reserve(tsize);
+		}
+
+		// separate out the transformations basing on which lod they need
+		for (const auto &mt : trans) {
+			//figure out approximate pixel size of object's bounding radius
+			//on screen and pick a child to render
+			const vector3f cameraPos(-mt[12], -mt[13], -mt[14]);
+			//fov is vertical, so using screen height
+			const float pixrad = Graphics::GetScreenHeight() * rd->boundingRadius / (cameraPos.Length() * Graphics::GetFovFactor());
+			unsigned int lod = m_children.size() - 1;
+			for (unsigned int i = pixel_size; i > 0; i--) {
+				if (pixrad < m_pixelSizes[i - 1]) {
+					lod = i - 1;
+				}
 			}
 
-			// seperate out the transformations
-			for (auto mt : trans) {
-				//figure out approximate pixel size of object's bounding radius
-				//on screen and pick a child to render
-				const vector3f cameraPos(-mt[12], -mt[13], -mt[14]);
-				//fov is vertical, so using screen height
-				const float pixrad = Graphics::GetScreenHeight() * rd->boundingRadius / (cameraPos.Length() * Graphics::GetFovFactor());
-				unsigned int lod = m_children.size() - 1;
-				for (unsigned int i = m_pixelSizes.size(); i > 0; i--) {
-					if (pixrad < m_pixelSizes[i - 1]) {
-						lod = i - 1;
-					}
-				}
+			transform[lod].push_back(mt);
+		}
 
-				transform[lod].push_back(mt);
-			}
-
-			// now render each of the buffers for each of the lods
-			for (uint32_t inst = 0; inst < transform.size(); inst++) {
-				if (!transform[inst].empty()) {
-					m_children[inst]->Render(transform[inst], rd);
-				}
+		// now render each of the buffers for each of the lods
+		for (uint32_t inst = 0; inst < transform.size(); inst++) {
+			if (!transform[inst].empty()) {
+				m_children[inst]->Render(transform[inst], rd);
 			}
 		}
 	}

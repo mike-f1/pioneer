@@ -19,9 +19,10 @@ namespace SceneGraph {
 		m_totalTris(0)
 	{
 		m_collMesh.Reset(new CollMesh());
-		m_vertices.reserve(300);
-		m_indices.reserve(300 * 3);
-		m_flags.reserve(300);
+		m_vertices.reserve(500);
+		m_indices.reserve(500 * 3);
+		m_flags.reserve(500);
+		m_matrixStack.reserve(10);
 	}
 
 	void CollisionVisitor::ApplyStaticGeometry(StaticGeometry &g)
@@ -61,21 +62,24 @@ namespace SceneGraph {
 
 		//copy data (with index offset)
 		int idxOffset = m_vertices.size();
+		m_vertices.reserve(m_vertices.size() + cg.GetVertices().size());
 		for (vector<vector3f>::const_iterator it = cg.GetVertices().begin(); it != cg.GetVertices().end(); ++it) {
 			const vector3f pos = matrix * (*it);
-			m_vertices.push_back(pos);
+			m_vertices.emplace_back(pos);
 			m_collMesh->GetAabb().Update(pos.x, pos.y, pos.z);
 		}
 
+		m_indices.reserve(m_indices.size() + cg.GetIndices().size());
 		for (vector<uint32_t>::const_iterator it = cg.GetIndices().begin(); it != cg.GetIndices().end(); ++it)
-			m_indices.push_back(*it + idxOffset);
+			m_indices.emplace_back(*it + idxOffset);
 
 		//at least some of the geoms should be default collision
 		if (cg.GetTriFlag() == 0)
 			m_properData = true;
 
+		m_flags.reserve(m_flags.size() + cg.GetIndices().size() / 3);
 		for (unsigned int i = 0; i < cg.GetIndices().size() / 3; i++)
-			m_flags.push_back(cg.GetTriFlag());
+			m_flags.emplace_back(cg.GetTriFlag());
 	}
 
 	void CollisionVisitor::ApplyDynamicCollisionGeometry(CollisionGeometry &cg)
@@ -177,8 +181,8 @@ namespace SceneGraph {
 	RefCountedPtr<CollMesh> CollisionVisitor::CreateCollisionMesh()
 	{
 		PROFILE_SCOPED()
-		Profiler::Timer timer;
-		timer.Start();
+		//Profiler::Timer timer;
+		//timer.Start();
 
 		//convert from model AABB if no collisiongeoms found
 		if (!m_properData)
@@ -220,7 +224,7 @@ namespace SceneGraph {
 		m_indices.clear();
 		m_flags.clear();
 
-		timer.Stop();
+		//timer.Stop();
 		//Output(" - CreateCollisionMesh took: %lf milliseconds\n", timer.millicycles());
 
 		return m_collMesh;

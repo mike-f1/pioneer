@@ -225,6 +225,7 @@ namespace SceneGraph {
 		if (def.matDefs.empty()) return 0;
 		if (def.lodDefs.empty()) return 0;
 
+		// TODO: a memory safer approach ?
 		Model *model = new Model(def.name);
 		m_model = model;
 		bool patternsUsed = false;
@@ -266,7 +267,7 @@ namespace SceneGraph {
 				try {
 					//multiple lods might use the same mesh
 					RefCountedPtr<Node> mesh;
-					std::map<std::string, RefCountedPtr<Node>>::iterator cacheIt = meshCache.find(meshName);
+					auto cacheIt = meshCache.find(meshName);
 					if (cacheIt != meshCache.end())
 						mesh = (*cacheIt).second;
 					else {
@@ -955,7 +956,9 @@ namespace SceneGraph {
 			throw LoadingError("No geometry found");
 
 		std::vector<uint32_t> indices;
+		indices.reserve(500);
 		std::vector<vector3f> vertices;
+		vertices.reserve(500);
 		uint32_t indexOffset = 0;
 
 		for (uint32_t i = 0; i < scene->mNumMeshes; i++) {

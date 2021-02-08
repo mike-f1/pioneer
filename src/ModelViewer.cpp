@@ -30,6 +30,7 @@
 #include "scenegraph/Model.h"
 #include "scenegraph/ModelNode.h"
 #include "scenegraph/ModelSkin.h"
+#include "scenegraph/StaticGeometry.h"
 #include <sstream>
 
 //default options

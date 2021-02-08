@@ -8,10 +8,14 @@
  * It's pretty bad, someone please redesign.
  */
 
-#include "FileSystem.h"
 #include "Color.h"
+#include "libs/RefCounted.h"
 #include <stdexcept>
 
+namespace FileSystem {
+	class FileData;
+	class FileSource;
+}
 namespace SceneGraph {
 
 	class ModelDefinition;

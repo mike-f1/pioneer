@@ -12,14 +12,12 @@
  */
 
 #include "BaseLoader.h"
-#include "Billboard.h"
-#include "CollisionGeometry.h"
-#include "FileSystem.h"
-#include "LOD.h"
-#include "LoaderDefinitions.h"
-#include "StaticGeometry.h"
-#include "Thruster.h"
 #include <functional>
+
+namespace FileSystem {
+	class FileInfo;
+	class FileData;
+}
 
 namespace Serializer {
 	class Reader;
@@ -27,8 +25,12 @@ namespace Serializer {
 } // namespace Serializer
 
 namespace SceneGraph {
+	class Group;
 	class Label3D;
 	class Model;
+	class ModelDefinition;
+	class Node;
+	class NodeDatabase;
 
 	class BinaryConverter : public BaseLoader {
 	public:
@@ -36,14 +38,15 @@ namespace SceneGraph {
 		void Save(const std::string &filename, Model *m);
 		void Save(const std::string &filename, const std::string &savepath, Model *m, const bool bInPlace);
 		Model *Load(const std::string &filename);
-		Model *Load(const std::string &filename, const std::string &path);
-		Model *Load(const std::string &filename, RefCountedPtr<FileSystem::FileData> binfile);
 
 		//if you implement any new node types, you must also register a loader function
 		//before calling Load.
 		void RegisterLoader(const std::string &typeName, const std::function<Node *(NodeDatabase &)> &);
 
 	private:
+		Model *Load(const std::string &filename, const std::string &path);
+		Model *Load(const std::string &filename, RefCountedPtr<FileSystem::FileData> binfile);
+
 		Model *CreateModel(const std::string &filename, Serializer::Reader &);
 		void SaveMaterials(Serializer::Writer &, Model *m);
 		void LoadMaterials(Serializer::Reader &);

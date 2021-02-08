@@ -1,5 +1,6 @@
 // Copyright © 2008-2019 Pioneer Developers. See AUTHORS.txt for details
 // Licensed under the terms of the GPL v3. See licenses/GPL-3.txt
+
 #include "BinaryConverter.h"
 
 #include "CollMesh.h"
@@ -8,15 +9,19 @@
 #include "LZ4Format.h"
 #include "NodeVisitor.h"
 #include "Parser.h"
-#include "libs/StringF.h"
 #include "libs/stringUtils.h"
 #include "libs/utils.h"
-#include "scenegraph/Animation.h"
-#include "scenegraph/Label3D.h"
-#include "scenegraph/LoaderDefinitions.h"
-#include "scenegraph/MatrixTransform.h"
-#include "scenegraph/Model.h"
-#include "scenegraph/Serializer.h"
+
+#include "Animation.h"
+#include "CollisionGeometry.h"
+#include "Label3D.h"
+#include "LoaderDefinitions.h"
+#include "LOD.h"
+#include "MatrixTransform.h"
+#include "Model.h"
+#include "Serializer.h"
+#include "StaticGeometry.h"
+#include "Thruster.h"
 
 #include "profiler/Profiler.h"
 
@@ -174,6 +179,37 @@ Model *BinaryConverter::Load(const std::string &filename)
 	return m;
 }
 
+Model *BinaryConverter::Load(const std::string &shortname, const std::string &basepath)
+{
+	PROFILE_SCOPED()
+	FileSystem::FileSource &fileSource = FileSystem::gameDataFiles;
+	for (FileSystem::FileEnumerator files(fileSource, basepath, FileSystem::FileEnumerator::Recurse); !files.Finished(); files.Next()) {
+		const FileSystem::FileInfo &info = files.Current();
+		const std::string &fpath = info.GetPath();
+
+		//check it's the expected type
+		if (info.IsFile() && stringUtils::ends_with_ci(fpath, SGM_EXTENSION)) {
+			//check it's the wanted name & load it
+			const std::string name = info.GetName();
+
+			if (shortname == name.substr(0, name.length() - SGM_EXTENSION.length())) {
+				//curPath is used to find textures, patterns,
+				//possibly other data files for this model.
+				//Strip trailing slash
+				m_curPath = info.GetDir();
+				if (m_curPath[m_curPath.length() - 1] == '/')
+					m_curPath = m_curPath.substr(0, m_curPath.length() - 1);
+
+				RefCountedPtr<FileSystem::FileData> binfile = info.Read();
+				if (binfile.Valid()) return Load(name, binfile);
+			}
+		}
+	}
+
+	throw(LoadingError("File not found"));
+	return nullptr;
+}
+
 Model *BinaryConverter::Load(const std::string &name, RefCountedPtr<FileSystem::FileData> binfile)
 {
 	PROFILE_SCOPED()
@@ -209,37 +245,6 @@ Model *BinaryConverter::Load(const std::string &name, RefCountedPtr<FileSystem::
 	}
 
 	return model;
-}
-
-Model *BinaryConverter::Load(const std::string &shortname, const std::string &basepath)
-{
-	PROFILE_SCOPED()
-	FileSystem::FileSource &fileSource = FileSystem::gameDataFiles;
-	for (FileSystem::FileEnumerator files(fileSource, basepath, FileSystem::FileEnumerator::Recurse); !files.Finished(); files.Next()) {
-		const FileSystem::FileInfo &info = files.Current();
-		const std::string &fpath = info.GetPath();
-
-		//check it's the expected type
-		if (info.IsFile() && stringUtils::ends_with_ci(fpath, SGM_EXTENSION)) {
-			//check it's the wanted name & load it
-			const std::string name = info.GetName();
-
-			if (shortname == name.substr(0, name.length() - SGM_EXTENSION.length())) {
-				//curPath is used to find textures, patterns,
-				//possibly other data files for this model.
-				//Strip trailing slash
-				m_curPath = info.GetDir();
-				if (m_curPath[m_curPath.length() - 1] == '/')
-					m_curPath = m_curPath.substr(0, m_curPath.length() - 1);
-
-				RefCountedPtr<FileSystem::FileData> binfile = info.Read();
-				if (binfile.Valid()) return Load(name, binfile);
-			}
-		}
-	}
-
-	throw(LoadingError("File not found"));
-	return nullptr;
 }
 
 Model *BinaryConverter::CreateModel(const std::string &filename, Serializer::Reader &rd)

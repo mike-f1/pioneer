@@ -15,6 +15,8 @@
 #include "Model.h"
 #include "MatrixTransform.h"
 #include "ShieldHelper.h"
+#include "StaticGeometry.h"
+#include "Thruster.h"
 #include "libs/utils.h"
 #include "libs/StringF.h"
 #include "libs/stringUtils.h"

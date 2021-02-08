@@ -7,9 +7,9 @@
  * Model loader using Assimp
  */
 #include "BaseLoader.h"
-#include "CollisionGeometry.h"
-#include "StaticGeometry.h"
 #include "LoaderDefinitions.h"
+
+#include "libs/matrix4x4.h"
 
 #include <assimp/types.h>
 
@@ -20,9 +20,12 @@ struct aiNodeAnim;
 
 namespace SceneGraph {
 
-	class Model;
-	class Group;
 	class Animation;
+	class CollisionGeometry;
+	class Group;
+	class Model;
+	class Node;
+	class StaticGeometry;
 
 	class Loader : public BaseLoader {
 	public:

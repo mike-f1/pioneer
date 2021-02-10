@@ -956,8 +956,26 @@ void ModelViewer::SetModel(const std::string &filename)
 		if (stringUtils::ends_with_ci(filename, ".sgm")) {
 			//binary loader expects extension-less name. Might want to change this.
 			m_modelName = filename.substr(0, filename.size() - 4);
+
+			/* FIXME: This is a workaround: it seems "FileSystem::FileSource::Lookup" is not working as expected (or I'm unable to get it work...)...
+			 * Thus we are forced to 'enumerate' files instead
+			*/
+			std::vector<FileSystem::FileInfo> list_sgm;
+			FileSystem::FileSource &fileSource = FileSystem::gameDataFiles;
+			for (FileSystem::FileEnumerator files(fileSource, "models", FileSystem::FileEnumerator::Recurse); !files.Finished(); files.Next()) {
+				const FileSystem::FileInfo &info = files.Current();
+				const std::string &fpath = info.GetPath();
+
+				//check it's the expected type
+				if (info.IsFile() && stringUtils::ends_with_ci(fpath, ".sgm") && (fpath.find(filename) != std::string::npos)) { // store only the shortname for ".sgm" files.
+					list_sgm.push_back(info);
+				}
+			}
+			//const FileSystem::FileInfo fi = fileSource.Lookup(filename);
+
 			SceneGraph::BinaryConverter bc;
-			m_model = bc.Load(m_modelName);
+			if (list_sgm.empty()) throw SceneGraph::LoadingError("File not found");
+			m_model = bc.Load(list_sgm.front());
 		} else {
 			m_modelName = filename;
 			SceneGraph::Loader loader(true);

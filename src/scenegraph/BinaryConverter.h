@@ -37,14 +37,14 @@ namespace SceneGraph {
 		BinaryConverter();
 		void Save(const std::string &filename, Model *m);
 		void Save(const std::string &filename, const std::string &savepath, Model *m, const bool bInPlace);
-		Model *Load(const std::string &filename);
+
+		Model *Load(const FileSystem::FileInfo &fi);
 
 		//if you implement any new node types, you must also register a loader function
 		//before calling Load.
 		void RegisterLoader(const std::string &typeName, const std::function<Node *(NodeDatabase &)> &);
 
 	private:
-		Model *Load(const std::string &filename, const std::string &path);
 		Model *Load(const std::string &filename, RefCountedPtr<FileSystem::FileData> binfile);
 
 		Model *CreateModel(const std::string &filename, Serializer::Reader &);

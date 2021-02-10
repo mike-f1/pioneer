@@ -156,7 +156,7 @@ namespace SceneGraph {
 		m_logMessages.clear();
 
 		std::vector<std::string> list_model;
-		std::vector<std::string> list_sgm;
+		std::vector<std::pair<std::string, FileSystem::FileInfo>> list_sgm;
 		FileSystem::FileSource &fileSource = FileSystem::gameDataFiles;
 		for (FileSystem::FileEnumerator files(fileSource, basepath, FileSystem::FileEnumerator::Recurse); !files.Finished(); files.Next()) {
 			const FileSystem::FileInfo &info = files.Current();
@@ -167,17 +167,16 @@ namespace SceneGraph {
 				if (stringUtils::ends_with_ci(fpath, ".model")) { // store the path for ".model" files
 					list_model.push_back(fpath);
 				} else if (m_loadSGMs & stringUtils::ends_with_ci(fpath, ".sgm")) { // store only the shortname for ".sgm" files.
-					list_sgm.push_back(info.GetName().substr(0, info.GetName().size() - 4));
+					list_sgm.push_back({info.GetName().substr(0, info.GetName().size() - 4), info});
 				}
 			}
 		}
 
 		if (m_loadSGMs) {
 			for (auto &sgmname : list_sgm) {
-				if (sgmname == shortname) {
-					//binary loader expects extension-less name. Might want to change this.
+				if (sgmname.first == shortname) {
 					SceneGraph::BinaryConverter bc;
-					m_model = bc.Load(shortname);
+					m_model = bc.Load(sgmname.second);
 					if (m_model)
 						return m_model;
 					else

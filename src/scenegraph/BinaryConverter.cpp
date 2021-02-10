@@ -168,44 +168,26 @@ void BinaryConverter::Save(const std::string &filename, const std::string &savep
 		fclose(f);
 	} catch (std::runtime_error &e) {
 		Warning("Error saving SGM model: %s\n", e.what());
+		fclose(f);
 		throw CouldNotWriteToFileException();
 	}
 }
 
-Model *BinaryConverter::Load(const std::string &filename)
+Model *BinaryConverter::Load(const FileSystem::FileInfo &fi)
 {
-	PROFILE_SCOPED()
-	Model *m = Load(filename, "models");
-	return m;
-}
+	if (fi.IsFile() && stringUtils::ends_with_ci(fi.GetName(), SGM_EXTENSION)) {
+		const std::string shortname = fi.GetName().substr(0, fi.GetName().length() - SGM_EXTENSION.length());
 
-Model *BinaryConverter::Load(const std::string &shortname, const std::string &basepath)
-{
-	PROFILE_SCOPED()
-	FileSystem::FileSource &fileSource = FileSystem::gameDataFiles;
-	for (FileSystem::FileEnumerator files(fileSource, basepath, FileSystem::FileEnumerator::Recurse); !files.Finished(); files.Next()) {
-		const FileSystem::FileInfo &info = files.Current();
-		const std::string &fpath = info.GetPath();
+		//m_curPath is used to find textures, patterns,
+		//possibly other data files for this model.
+		//Strip trailing slash
+		m_curPath = fi.GetDir();
+		if (m_curPath[m_curPath.length() - 1] == '/')
+			m_curPath = m_curPath.substr(0, m_curPath.length() - 1);
 
-		//check it's the expected type
-		if (info.IsFile() && stringUtils::ends_with_ci(fpath, SGM_EXTENSION)) {
-			//check it's the wanted name & load it
-			const std::string name = info.GetName();
-
-			if (shortname == name.substr(0, name.length() - SGM_EXTENSION.length())) {
-				//curPath is used to find textures, patterns,
-				//possibly other data files for this model.
-				//Strip trailing slash
-				m_curPath = info.GetDir();
-				if (m_curPath[m_curPath.length() - 1] == '/')
-					m_curPath = m_curPath.substr(0, m_curPath.length() - 1);
-
-				RefCountedPtr<FileSystem::FileData> binfile = info.Read();
-				if (binfile.Valid()) return Load(name, binfile);
-			}
-		}
+		RefCountedPtr<FileSystem::FileData> binfile = fi.Read();
+		if (binfile.Valid()) return Load(shortname, binfile);
 	}
-
 	throw(LoadingError("File not found"));
 	return nullptr;
 }

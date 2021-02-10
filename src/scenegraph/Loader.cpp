@@ -196,24 +196,19 @@ namespace SceneGraph {
 			const FileSystem::FileInfo &info = filedata->GetInfo();
 			const std::string name = info.GetName();
 			if (name.substr(0, name.length() - 6) == shortname) {
-				ModelDefinition modelDefinition;
 				try {
-					//curPath is used to find textures, patterns,
-					//possibly other data files for this model.
-					//Strip trailing slash
+					Parser p(info);
+					ModelDefinition modelDefinition = p.Parse();
+					modelDefinition.name = shortname;
 					m_curPath = info.GetDir();
-					assert(!m_curPath.empty());
+					// strip trailing slash
 					if (m_curPath[m_curPath.length() - 1] == '/')
 						m_curPath = m_curPath.substr(0, m_curPath.length() - 1);
-
-					Parser p(fileSource, fpath, m_curPath);
-					p.Parse(&modelDefinition);
+					return CreateModel(modelDefinition);
 				} catch (ParseError &err) {
 					Output("%s\n", err.what());
 					throw LoadingError(err.what());
 				}
-				modelDefinition.name = shortname;
-				return CreateModel(modelDefinition);
 			}
 		}
 		throw(LoadingError("File not found"));

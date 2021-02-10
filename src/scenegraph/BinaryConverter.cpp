@@ -407,18 +407,14 @@ ModelDefinition BinaryConverter::FindModelDefinition(const std::string &shortnam
 			const std::string name = info.GetName();
 
 			if (shortname == name.substr(0, name.length() - 6)) {
-				ModelDefinition modelDefinition;
 				try {
-					//curPath is used to find textures, patterns,
-					//possibly other data files for this model.
-					//Strip trailing slash
 					m_curPath = info.GetDir();
-					assert(!m_curPath.empty());
+					//Strip trailing slash
 					if (m_curPath[m_curPath.length() - 1] == '/')
 						m_curPath = m_curPath.substr(0, m_curPath.length() - 1);
 
-					Parser p(fileSource, fpath, m_curPath);
-					p.Parse(&modelDefinition);
+					Parser p(info);
+					ModelDefinition modelDefinition = p.Parse();
 					return modelDefinition;
 				} catch (ParseError &err) {
 					Output("%s\n", err.what());

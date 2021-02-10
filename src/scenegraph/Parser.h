@@ -9,16 +9,17 @@
  */
 
 #include "Color.h"
+#include "LoaderDefinitions.h"
 #include "libs/RefCounted.h"
 #include <stdexcept>
 
 namespace FileSystem {
 	class FileData;
+	class FileInfo;
 	class FileSource;
 }
 namespace SceneGraph {
 
-	class ModelDefinition;
 	class MaterialDefinition;
 
 	struct ParseError : public std::runtime_error {
@@ -28,14 +29,14 @@ namespace SceneGraph {
 
 	class Parser {
 	public:
-		Parser(FileSystem::FileSource &, const std::string &filename, const std::string &path);
+		Parser(const FileSystem::FileInfo &fi);
 
-		void Parse(ModelDefinition *m);
+		ModelDefinition Parse();
 
 	private:
 		bool m_isMaterial;
 		MaterialDefinition *m_curMat;
-		ModelDefinition *m_model;
+		ModelDefinition m_model;
 		RefCountedPtr<FileSystem::FileData> m_file;
 		std::string m_path;
 

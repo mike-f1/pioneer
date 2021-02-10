@@ -34,11 +34,12 @@ namespace SceneGraph {
 
 		//find & attempt to load a model, based on filename (without path or .model suffix)
 		Model *LoadModel(const std::string &name);
-		Model *LoadModel(const std::string &name, const std::string &basepath);
 
 		const std::vector<std::string> &GetLogMessages() const { return m_logMessages; }
 
 	protected:
+		Model *LoadModel(const std::string &name, const std::string &basepath);
+
 		bool m_doLog;
 		bool m_loadSGMs;
 		bool m_mostDetailedLod;

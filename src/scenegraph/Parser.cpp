@@ -15,29 +15,25 @@
 
 namespace SceneGraph {
 
-	bool LodSortPredicate(const LodDefinition &a, const LodDefinition &b)
-	{
-		return a.pixelSize < b.pixelSize;
-	}
-
-	Parser::Parser(FileSystem::FileSource &fs, const std::string &filename, const std::string &path) :
+	Parser::Parser(const FileSystem::FileInfo &fi) :
 		m_isMaterial(false),
-		m_curMat(0),
-		m_model(0),
-		m_path(path)
+		m_curMat(nullptr)
 	{
-		RefCountedPtr<FileSystem::FileData> data = fs.ReadFile(filename);
-		if (!data) throw ParseError("Could not open");
+		RefCountedPtr<FileSystem::FileData> data = fi.Read();
+		if (!data) throw ParseError("Could not open " + fi.GetName());
 		m_file = data;
+
+		m_path = fi.GetDir();
+		if (m_path[m_path.length() - 1] == '/')
+			m_path = m_path.substr(0, m_path.length() - 1);
 	}
 
-	void Parser::Parse(ModelDefinition *m)
+	ModelDefinition Parser::Parse()
 	{
 		PROFILE_SCOPED()
 		StringRange buffer = m_file->AsStringRange();
 		buffer = buffer.StripUTF8BOM();
 
-		m_model = m;
 		int lineno = 0;
 		while (!buffer.Empty()) {
 			lineno++;
@@ -54,15 +50,19 @@ namespace SceneGraph {
 			}
 		}
 
-		if (m->lodDefs.empty() || m->lodDefs.back().meshNames.empty())
+		if (m_model.lodDefs.empty() || m_model.lodDefs.back().meshNames.empty())
 			throw ParseError("No meshes defined");
 
 		//model without materials is not very useful, but not fatal - add white default mat
-		if (m->matDefs.empty())
-			m->matDefs.push_back(MaterialDefinition("Default"));
+		if (m_model.matDefs.empty())
+			m_model.matDefs.push_back(MaterialDefinition("Default"));
 
 		//sort lods by feature size
-		std::sort(m->lodDefs.begin(), m->lodDefs.end(), LodSortPredicate);
+		std::sort(m_model.lodDefs.begin(), m_model.lodDefs.end(), [](const auto &a, const auto &b) {
+			return a.pixelSize < b.pixelSize;
+		});
+
+		return m_model;
 	}
 
 	bool Parser::isComment(const std::string &s)
@@ -133,8 +133,8 @@ namespace SceneGraph {
 				m_isMaterial = true;
 				string matname;
 				checkMaterialName(ss, matname);
-				m_model->matDefs.push_back(MaterialDefinition(matname));
-				m_curMat = &m_model->matDefs.back();
+				m_model.matDefs.push_back(MaterialDefinition(matname));
+				m_curMat = &m_model.matDefs.back();
 				return true;
 			} else if (match(token, "lod")) {
 				endMaterial();
@@ -143,7 +143,7 @@ namespace SceneGraph {
 					throw ParseError("Detail level must specify a pixel size");
 				if (is_zero_general(featuresize))
 					throw ParseError("Detail level pixel size must be greater than 0");
-				m_model->lodDefs.push_back(LodDefinition(featuresize));
+				m_model.lodDefs.push_back(LodDefinition(featuresize));
 				return true;
 			} else if (match(token, "mesh")) {
 				//mesh definitionss only contain a filename
@@ -151,21 +151,21 @@ namespace SceneGraph {
 				string meshname;
 				checkMesh(ss, meshname);
 				//model might not have specified lods at all.
-				if (m_model->lodDefs.empty()) {
-					m_model->lodDefs.push_back(LodDefinition(100.f));
+				if (m_model.lodDefs.empty()) {
+					m_model.lodDefs.push_back(LodDefinition(100.f));
 				}
-				m_model->lodDefs.back().meshNames.push_back(meshname);
+				m_model.lodDefs.back().meshNames.push_back(meshname);
 				return true;
 			} else if (match(token, "collision")) {
 				//collision mesh definitions contain also only a filename
 				endMaterial();
 				string cmeshname;
 				checkMesh(ss, cmeshname);
-				m_model->collisionDefs.push_back(cmeshname);
+				m_model.collisionDefs.push_back(cmeshname);
 				return true;
 			} else if (match(token, "anim")) {
 				//anims should only affect the previously defined mesh but eh
-				if (m_isMaterial || m_model->lodDefs.empty() || m_model->lodDefs.back().meshNames.empty())
+				if (m_isMaterial || m_model.lodDefs.empty() || m_model.lodDefs.back().meshNames.empty())
 					throw ParseError("Animation definition must come after a mesh definition");
 				std::string animName;
 				double startFrame;
@@ -181,7 +181,7 @@ namespace SceneGraph {
 					loopMode = true;
 				if (startFrame < 0 || endFrame < startFrame)
 					throw ParseError("Animation start/end frames seem wrong");
-				m_model->animDefs.push_back(AnimDefinition(animName, startFrame, endFrame, loopMode));
+				m_model.animDefs.push_back(AnimDefinition(animName, startFrame, endFrame, loopMode));
 				return true;
 			} else {
 				if (m_isMaterial) {

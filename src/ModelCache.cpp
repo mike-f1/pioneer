@@ -24,7 +24,7 @@ SceneGraph::Model *ModelCache::findmodel(const std::string &name)
 	if (it == s_models.end()) {
 		try {
 			SceneGraph::Loader loader;
-			SceneGraph::Model *m = loader.LoadModel(name);
+			SceneGraph::Model *m = loader.FindAndLoadModel(name);
 			s_models[name] = m;
 			return m;
 		} catch (SceneGraph::LoadingError &) {

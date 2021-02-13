@@ -141,12 +141,10 @@ namespace SceneGraph {
 	Loader::~Loader()
 	{}
 
-	Model *Loader::LoadModel(const std::string &filename)
+	Model *Loader::FindAndLoadModel(const std::string &filename)
 	{
 		PROFILE_SCOPED()
 		Model *m = LoadModel(filename, "models");
-		ParseGunTags(m);
-		ShieldHelper::ReparentShieldNodes(m);
 		return m;
 	}
 
@@ -155,8 +153,8 @@ namespace SceneGraph {
 		PROFILE_SCOPED()
 		m_logMessages.clear();
 
-		std::vector<std::string> list_model;
-		std::vector<std::pair<std::string, FileSystem::FileInfo>> list_sgm;
+		std::vector<FileSystem::FileInfo> list_model;
+		std::vector<FileSystem::FileInfo> list_sgm;
 		FileSystem::FileSource &fileSource = FileSystem::gameDataFiles;
 		for (FileSystem::FileEnumerator files(fileSource, basepath, FileSystem::FileEnumerator::Recurse); !files.Finished(); files.Next()) {
 			const FileSystem::FileInfo &info = files.Current();
@@ -165,18 +163,20 @@ namespace SceneGraph {
 			//check it's the expected type
 			if (info.IsFile()) {
 				if (stringUtils::ends_with_ci(fpath, ".model")) { // store the path for ".model" files
-					list_model.push_back(fpath);
+					list_model.push_back(info);
 				} else if (m_loadSGMs & stringUtils::ends_with_ci(fpath, ".sgm")) { // store only the shortname for ".sgm" files.
-					list_sgm.push_back({info.GetName().substr(0, info.GetName().size() - 4), info});
+					list_sgm.push_back(info);
 				}
 			}
 		}
 
 		if (m_loadSGMs) {
-			for (auto &sgmname : list_sgm) {
-				if (sgmname.first == shortname) {
+			for (auto &sgminfo : list_sgm) {
+				if (sgminfo.GetName().substr(0, sgminfo.GetName().size() - 4) == shortname) {
 					SceneGraph::BinaryConverter bc;
-					m_model = bc.Load(sgmname.second);
+					m_model = bc.Load(sgminfo);
+					ParseGunTags(m_model);
+					ShieldHelper::ReparentShieldNodes(m_model);
 					if (m_model)
 						return m_model;
 					else
@@ -185,33 +185,34 @@ namespace SceneGraph {
 			}
 		}
 
-		for (auto &fpath : list_model) {
-			RefCountedPtr<FileSystem::FileData> filedata = FileSystem::gameDataFiles.ReadFile(fpath);
-			if (!filedata) {
-				Output("LoadModel: %s: could not read file\n", fpath.c_str());
-				return nullptr;
-			}
-
+		for (auto &info : list_model) {
 			//check it's the wanted name & load it
-			const FileSystem::FileInfo &info = filedata->GetInfo();
 			const std::string name = info.GetName();
-			if (name.substr(0, name.length() - 6) == shortname) {
-				try {
-					Parser p(info);
-					ModelDefinition modelDefinition = p.Parse();
-					modelDefinition.name = shortname;
-					m_curPath = info.GetDir();
-					// strip trailing slash
-					if (m_curPath[m_curPath.length() - 1] == '/')
-						m_curPath = m_curPath.substr(0, m_curPath.length() - 1);
-					return CreateModel(modelDefinition);
-				} catch (ParseError &err) {
-					Output("%s\n", err.what());
-					throw LoadingError(err.what());
-				}
-			}
+			if (name.substr(0, name.length() - 6) != shortname) continue;
+			m_model = LoadModelByModelDef(info);
+			return m_model;
 		}
 		throw(LoadingError("File not found"));
+	}
+
+	Model *Loader::LoadModelByModelDef(const FileSystem::FileInfo &fi)
+	{
+		try {
+			Parser p(fi);
+			ModelDefinition modelDefinition = p.Parse();
+			modelDefinition.name = fi.GetName().substr(0, fi.GetName().length() - 6);
+			m_curPath = fi.GetDir();
+			// strip trailing slash
+			if (m_curPath[m_curPath.length() - 1] == '/')
+				m_curPath = m_curPath.substr(0, m_curPath.length() - 1);
+			Model *model = CreateModel(modelDefinition);
+			ParseGunTags(model);
+			ShieldHelper::ReparentShieldNodes(model);
+			return model;
+		} catch (ParseError &err) {
+			Output("%s\n", err.what());
+			throw LoadingError(err.what());
+		}
 	}
 
 	Model *Loader::CreateModel(ModelDefinition &def)

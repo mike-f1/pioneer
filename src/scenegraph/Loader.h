@@ -18,6 +18,10 @@ struct aiMesh;
 struct aiScene;
 struct aiNodeAnim;
 
+namespace FileSystem {
+	class FileInfo;
+}
+
 namespace SceneGraph {
 
 	class Animation;
@@ -33,7 +37,11 @@ namespace SceneGraph {
 		~Loader();
 
 		//find & attempt to load a model, based on filename (without path or .model suffix)
-		Model *LoadModel(const std::string &name);
+		//giving precedence to SGM if "loadSGMfiles" is true
+		Model *FindAndLoadModel(const std::string &name);
+
+		// Load model directly, given FileInfo of *.model file
+		Model *LoadModelByModelDef(const FileSystem::FileInfo &fi);
 
 		const std::vector<std::string> &GetLogMessages() const { return m_logMessages; }
 

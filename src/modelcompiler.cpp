@@ -43,25 +43,23 @@ std::unique_ptr<AsyncJobQueue> asyncJobQueue;
 static const std::string s_dummyPath("");
 
 // fwd decl'
-void RunCompiler(const std::string &modelName, const std::string &filepath, const bool bInPlace);
+void RunCompiler(const FileSystem::FileInfo &fi, const bool bInPlace);
 
 // ********************************************************************************
 // Overloaded PureJob class to handle compiling each model
 // ********************************************************************************
 class CompileJob : public Job {
 public:
-	CompileJob(const std::string &name, const std::string &path, const bool inPlace) :
-		m_name(name),
-		m_path(path),
+	CompileJob(FileSystem::FileInfo fi, const bool inPlace) :
+		m_fileInfo(fi),
 		m_inPlace(inPlace) {}
 
-	virtual void OnRun() override final { RunCompiler(m_name, m_path, m_inPlace); } // RUNS IN ANOTHER THREAD!! MUST BE THREAD SAFE!
+	virtual void OnRun() override final { RunCompiler(m_fileInfo, m_inPlace); } // RUNS IN ANOTHER THREAD!! MUST BE THREAD SAFE!
 	virtual void OnFinish() override final {}
 	virtual void OnCancel() override final {}
 
 protected:
-	std::string m_name;
-	std::string m_path;
+	FileSystem::FileInfo m_fileInfo;
 	bool m_inPlace;
 };
 
@@ -112,19 +110,20 @@ void SetupRenderer()
 #endif
 }
 
-void RunCompiler(const std::string &modelName, const std::string &filepath, const bool bInPlace)
+void RunCompiler(const FileSystem::FileInfo &fi, const bool bInPlace)
 {
 	PROFILE_SCOPED()
 	Profiler::Timer timer;
 	timer.Start();
-	Output("\n---\nStarting compiler for (%s)\n", modelName.c_str());
+	Output("\n---\nStarting compiler for (%s)\n", fi.GetName().c_str());
 
 	//load the current model in a pristine state (no navlights, shields...)
 	//and then save it into binary
 	std::unique_ptr<SceneGraph::Model> model;
+	std::string shortname = fi.GetName().substr(0, fi.GetName().length() - 6);
 	try {
 		SceneGraph::Loader ld(true, false);
-		model.reset(ld.LoadModel(modelName));
+		model.reset(ld.LoadModelByModelDef(fi));
 		//dump warnings
 		for (std::vector<std::string>::const_iterator it = ld.GetLogMessages().begin();
 			 it != ld.GetLogMessages().end(); ++it) {
@@ -136,15 +135,15 @@ void RunCompiler(const std::string &modelName, const std::string &filepath, cons
 	}
 
 	try {
-		const std::string DataPath = FileSystem::NormalisePath(filepath.substr(0, filepath.size() - 6));
+		const std::string DataPath = FileSystem::NormalisePath(fi.GetPath().substr(0, fi.GetPath().length() - 6));
 		SceneGraph::BinaryConverter bc;
-		bc.Save(modelName, DataPath, model.get(), bInPlace);
+		bc.Save(shortname, DataPath, model.get(), bInPlace);
 	} catch (const CouldNotOpenFileException &) {
 	} catch (const CouldNotWriteToFileException &) {
 	}
 
 	timer.Stop();
-	Output("Compiling \"%s\" took: %lf\n", modelName.c_str(), timer.millicycles());
+	Output("Compiling \"%s\" took: %lf\n", shortname.c_str(), timer.millicycles());
 }
 
 // ********************************************************************************
@@ -214,9 +213,9 @@ start:
 	switch (mode) {
 	case MODE_MODELCOMPILER: {
 		std::string modelName;
-		std::string filePath;
+		FileSystem::FileInfo fileInfo;
 		if (argc > 2) {
-			filePath = modelName = argv[2];
+			modelName = argv[2];
 			// determine if we're meant to be writing these in the source directory
 			bool isInPlace = false;
 			if (argc > 3) {
@@ -234,7 +233,7 @@ start:
 						if (stringUtils::ends_with_ci(fpath, ".model")) { // store the path for ".model" files
 							const std::string shortname(info.GetName().substr(0, info.GetName().size() - 6));
 							if (shortname == modelName) {
-								filePath = fpath;
+								fileInfo = info;
 								break;
 							}
 						}
@@ -242,7 +241,7 @@ start:
 				}
 			}
 			SetupRenderer();
-			RunCompiler(modelName, filePath, isInPlace);
+			RunCompiler(fileInfo, isInPlace);
 		}
 		break;
 	}
@@ -262,7 +261,7 @@ start:
 		}
 
 		// find all of the models
-		std::vector<std::pair<std::string, std::string>> list_model;
+		std::vector<FileSystem::FileInfo> list_model;
 		FileSystem::FileSource &fileSource = FileSystem::gameDataFiles;
 		for (FileSystem::FileEnumerator files(fileSource, "models", FileSystem::FileEnumerator::Recurse); !files.Finished(); files.Next()) {
 			const FileSystem::FileInfo &info = files.Current();
@@ -271,7 +270,7 @@ start:
 			//check it's the expected type
 			if (info.IsFile()) {
 				if (stringUtils::ends_with_ci(fpath, ".model")) { // store the path for ".model" files
-					list_model.push_back(std::make_pair(info.GetName().substr(0, info.GetName().size() - 6), fpath));
+					list_model.push_back(info);
 				}
 			}
 		}
@@ -279,13 +278,13 @@ start:
 		SetupRenderer();
 
 #ifndef USES_THREADS
-		for (auto &modelName : list_model) {
-			RunCompiler(modelName.first, modelName.second, isInPlace);
+		for (auto &modelInfo : list_model) {
+			RunCompiler(modelInfo, isInPlace);
 		}
 #else
 		std::deque<Job::Handle> handles;
-		for (auto &modelName : list_model) {
-			handles.push_back(asyncJobQueue->Queue(new CompileJob(modelName.first, modelName.second, isInPlace)));
+		for (auto &modelInfo : list_model) {
+			handles.push_back(asyncJobQueue->Queue(new CompileJob(modelInfo, isInPlace)));
 		}
 
 		while (true) {
@@ -335,7 +334,6 @@ start:
 #ifdef USES_THREADS
 	asyncJobQueue.reset();
 #endif
-	//exit(0);
 
 	return 0;
 }

@@ -454,10 +454,10 @@ void ModelViewer::CreateTestResources()
 	//landingpad model for scale test
 	SceneGraph::Loader loader(RendererLocator::getRenderer());
 	try {
-		SceneGraph::Model *m = loader.LoadModel("test_gun");
+		SceneGraph::Model *m = loader.FindAndLoadModel("test_gun");
 		m_gunModel.reset(m);
 
-		m = loader.LoadModel("scale");
+		m = loader.FindAndLoadModel("scale");
 		m_scaleModel.reset(m);
 	} catch (SceneGraph::LoadingError &) {
 		AddLog("Could not load test_gun or scale model");
@@ -925,7 +925,7 @@ void ModelViewer::SaveModelToBinary()
 	std::unique_ptr<SceneGraph::Model> model;
 	try {
 		SceneGraph::Loader ld;
-		model.reset(ld.LoadModel(m_modelName));
+		model.reset(ld.FindAndLoadModel(m_modelName));
 	} catch (...) {
 		//minimal error handling, this is not expected to happen since we got this far.
 		AddLog("Could not load model");
@@ -954,7 +954,6 @@ void ModelViewer::SetModel(const std::string &filename)
 
 	try {
 		if (stringUtils::ends_with_ci(filename, ".sgm")) {
-			//binary loader expects extension-less name. Might want to change this.
 			m_modelName = filename.substr(0, filename.size() - 4);
 
 			/* FIXME: This is a workaround: it seems "FileSystem::FileSource::Lookup" is not working as expected (or I'm unable to get it work...)...
@@ -978,8 +977,8 @@ void ModelViewer::SetModel(const std::string &filename)
 			m_model = bc.Load(list_sgm.front());
 		} else {
 			m_modelName = filename;
-			SceneGraph::Loader loader(true);
-			m_model = loader.LoadModel(filename);
+			SceneGraph::Loader loader(true, false);
+			m_model = loader.FindAndLoadModel(filename);
 
 			//dump warnings
 			for (std::vector<std::string>::const_iterator it = loader.GetLogMessages().begin();

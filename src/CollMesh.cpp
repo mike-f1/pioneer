@@ -52,23 +52,3 @@ CollMesh::~CollMesh()
 		delete *it;
 	delete m_geomTree;
 }
-
-const std::vector<vector3f> &CollMesh::GetGeomTreeVertices() const
-{
-	return m_geomTree->GetVertices();
-}
-
-const std::vector<uint32_t> &CollMesh::GetGeomTreeIndices() const
-{
-	return m_geomTree->GetIndices();
-}
-
-const std::vector<unsigned> &CollMesh::GetGeomTreeTriFlags() const
-{
-	return m_geomTree->GetTriFlags();
-}
-
-unsigned int CollMesh::GetGeomTreeNumTris() const
-{
-	return m_geomTree->GetNumTris();
-}

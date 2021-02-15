@@ -18,7 +18,7 @@
 #include "graphics/RendererLocator.h"
 #include "scenegraph/Animation.h"
 #include "scenegraph/CollisionGeometry.h"
-#include "scenegraph/NodeVisitor.h"
+#include "scenegraph/DynCollisionVisitor.h"
 #include "scenegraph/MatrixTransform.h"
 #include "scenegraph/Model.h"
 #include "libs/gameconsts.h"
@@ -26,59 +26,14 @@
 
 class Space;
 
-class DynGeomFinder : public SceneGraph::NodeVisitor {
-public:
-	virtual void ApplyCollisionGeometry(SceneGraph::CollisionGeometry &cg)
-	{
-		if (cg.IsDynamic())
-			results.push_back(&cg);
-	}
-
-	SceneGraph::CollisionGeometry *GetCgForTree(GeomTree *t)
-	{
-		for (auto it = results.begin(); it != results.end(); ++it)
-			if ((*it)->GetGeomTree() == t) return (*it);
-		return 0;
-	}
-
-	private:
-	std::vector<SceneGraph::CollisionGeometry *> results;
-};
-
-class DynCollUpdateVisitor : public SceneGraph::NodeVisitor {
-public:
-	virtual void ApplyMatrixTransform(SceneGraph::MatrixTransform &m)
-	{
-		matrix4x4f matrix = matrix4x4f::Identity();
-		if (!m_matrixStack.empty()) matrix = m_matrixStack.back();
-
-		m_matrixStack.push_back(matrix * m.GetTransform());
-		m.Traverse(*this);
-		m_matrixStack.pop_back();
-	}
-
-	virtual void ApplyCollisionGeometry(SceneGraph::CollisionGeometry &cg)
-	{
-		if (!cg.GetGeom()) return;
-
-		matrix4x4ftod(m_matrixStack.back(), cg.GetGeom()->m_animTransform);
-	}
-
-private:
-	std::vector<matrix4x4f> m_matrixStack;
-};
-
 ModelBody::ModelBody() :
 	m_isStatic(false),
 	m_colliding(true),
-	m_geom(nullptr),
 	m_idleAnimation(nullptr)
-{
-}
+{}
 
 ModelBody::ModelBody(const Json &jsonObj, Space *space) :
-	Body(jsonObj, space),
-	m_geom(nullptr)
+	Body(jsonObj, space)
 {
 	Json modelBodyObj = jsonObj["model_body"];
 
@@ -98,7 +53,6 @@ ModelBody::ModelBody(const Json &jsonObj, Space *space) :
 ModelBody::~ModelBody()
 {
 	SetFrame(FrameId::Invalid); // Will remove geom from frame if necessary.
-	DeleteGeoms();
 }
 
 Json ModelBody::SaveToJson(Space *space) const
@@ -109,7 +63,8 @@ Json ModelBody::SaveToJson(Space *space) const
 
 	modelBodyObj["is_static"] = m_isStatic;
 	modelBodyObj["is_colliding"] = m_colliding;
-	modelBodyObj["model_name"] = m_modelName;
+	//TODO: is this needed? Model is saved in below line...
+	modelBodyObj["model_name"] = m_model->GetName();
 	m_model->SaveToJson(modelBodyObj);
 	m_shields->SaveToJson(modelBodyObj);
 
@@ -147,9 +102,9 @@ Aabb &ModelBody::GetAabb() const
 	return m_collMesh->GetAabb();
 }
 
-CollMesh *ModelBody::GetCollMesh()
+float ModelBody::GetCollMeshRadius() const
 {
-	return m_collMesh.Get();
+	return m_collMesh->GetRadius();
 }
 
 void ModelBody::RebuildCollisionMesh()
@@ -157,7 +112,7 @@ void ModelBody::RebuildCollisionMesh()
 	Frame *f = Frame::GetFrame(GetFrame());
 	if (m_geom) {
 		if (f) RemoveGeomsFromFrame(f);
-		DeleteGeoms();
+		m_dynGeoms.clear();
 	}
 
 	m_collMesh = m_model->GetCollisionMesh();
@@ -169,17 +124,17 @@ void ModelBody::RebuildCollisionMesh()
 	SetPhysRadius(maxRadius);
 
 	//have to figure out which collision geometries are responsible for which geomtrees
-	DynGeomFinder dgf;
+	SceneGraph::DynGeomFinder dgf;
 	m_model->GetRoot()->Accept(dgf);
 
 	//dynamic geoms
-	for (auto it = m_collMesh->GetDynGeomTrees().begin(); it != m_collMesh->GetDynGeomTrees().end(); ++it) {
-		std::unique_ptr<Geom> dynG = std::make_unique<Geom>(*it, GetOrient(), GetPosition(), this);
+	for (auto *dgt : m_collMesh->GetDynGeomTrees()) {
+		m_dynGeoms.emplace_back(std::make_unique<Geom>(dgt, GetOrient(), GetPosition(), this));
+		auto &dynG = m_dynGeoms.back();
 		dynG->m_animTransform = matrix4x4d::Identity();
-		SceneGraph::CollisionGeometry *cg = dgf.GetCgForTree(*it);
+		SceneGraph::CollisionGeometry *cg = dgf.GetCgForTree(dgt);
 		if (cg)
 			cg->SetGeom(dynG.get());
-		m_dynGeoms.push_back(std::move(dynG));
 	}
 
 	if (f) AddGeomsToFrame(f);
@@ -208,10 +163,9 @@ void ModelBody::SetModel(const char *modelName)
 	//remove old instance
 	m_model.reset();
 
-	m_modelName = modelName;
-
 	//create model instance (some modelbodies, like missiles could avoid this)
-	m_model = ModelCache::FindModel(m_modelName)->MakeInstance();
+	m_model = ModelCache::FindModel(modelName)->MakeInstance();
+	if (!m_model) throw std::runtime_error { std::string("Cannot find model ") + modelName };
 	m_idleAnimation = m_model->FindAnimation("idle");
 
 	SetClipRadius(m_model->GetDrawClipRadius());
@@ -249,11 +203,6 @@ void ModelBody::SetFrame(FrameId fId)
 	if (f) AddGeomsToFrame(f);
 }
 
-void ModelBody::DeleteGeoms()
-{
-	m_dynGeoms.clear();
-}
-
 void ModelBody::AddGeomsToFrame(Frame *f)
 {
 	const int group = f->GetCollisionSpace()->GetGroupHandle();
@@ -288,25 +237,27 @@ void ModelBody::RemoveGeomsFromFrame(Frame *f)
 
 void ModelBody::MoveGeoms(const matrix4x4d &m, const vector3d &p)
 {
+	PROFILE_SCOPED()
+
 	m_geom->MoveTo(m, p);
 
 	//accumulate transforms to animated positions
 	if (!m_dynGeoms.empty()) {
-		DynCollUpdateVisitor dcv;
+		SceneGraph::DynCollUpdateVisitor dcv;
 		m_model->GetRoot()->Accept(dcv);
 	}
 
-	for (auto it = m_dynGeoms.begin(); it != m_dynGeoms.end(); ++it) {
+	for (auto &dg : m_dynGeoms) {
 		//combine orient & pos
 		static matrix4x4d s_tempMat;
-		for (unsigned int i = 0; i < 12; i++)
+		for (unsigned i = 0; i < 12; i++)
 			s_tempMat[i] = m[i];
 		s_tempMat[12] = p.x;
 		s_tempMat[13] = p.y;
 		s_tempMat[14] = p.z;
 		s_tempMat[15] = m[15];
 
-		(*it)->MoveTo(s_tempMat * (*it)->m_animTransform);
+		dg->MoveTo(s_tempMat * dg->m_animTransform);
 	}
 }
 
@@ -462,6 +413,8 @@ void ModelBody::ResetLighting(const std::vector<Graphics::Light> &oldLights, con
 
 void ModelBody::RenderModel(const Camera *camera, const vector3d &viewCoords, const matrix4x4d &viewTransform, const bool setLighting)
 {
+	PROFILE_SCOPED()
+
 	std::vector<Graphics::Light> oldLights;
 	Color oldAmbient;
 	if (setLighting)
@@ -488,6 +441,8 @@ void ModelBody::RenderModel(const Camera *camera, const vector3d &viewCoords, co
 
 void ModelBody::TimeStepUpdate(const float timestep)
 {
+	PROFILE_SCOPED()
+
 	if (m_idleAnimation)
 		// step animation by timestep/total length, loop to 0.0 if it goes >= 1.0
 		m_idleAnimation->SetProgress(fmod(m_idleAnimation->GetProgress() + timestep / m_idleAnimation->GetDuration(), 1.0));

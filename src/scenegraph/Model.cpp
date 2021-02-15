@@ -502,12 +502,13 @@ namespace SceneGraph {
 
 	void Model::SetDebugFlags(DebugFlags flags)
 	{
+		if (m_debugFlags == flags) return;
 		m_debugFlags = flags;
-		if (to_bool(m_debugFlags & SceneGraph::DebugFlags::NONE)) {
+		if (m_debugFlags == SceneGraph::DebugFlags::NONE) {
 			m_modelDebug.reset();
 		} else {
 			if (!m_modelDebug) {
-				m_modelDebug.reset(new ModelDebug(this, m_debugFlags));
+				m_modelDebug = std::make_unique<ModelDebug>(this, m_debugFlags);
 			} else {
 				m_modelDebug->UpdateFlags(m_debugFlags);
 			}

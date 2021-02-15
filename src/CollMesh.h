@@ -19,13 +19,13 @@ namespace Serializer {
 
 //This simply stores the collision GeomTrees
 //and AABB.
-class CollMesh : public RefCounted {
+class CollMesh final: public RefCounted {
 public:
 	CollMesh() :
 		m_geomTree(nullptr),
 		m_totalTris(0)
 	{}
-	virtual ~CollMesh();
+	~CollMesh();
 
 	inline Aabb &GetAabb() { return m_aabb; }
 
@@ -35,11 +35,6 @@ public:
 		//0 radius = trouble
 		m_aabb.radius = std::max(v, 0.1);
 	}
-
-	const std::vector<vector3f> &GetGeomTreeVertices() const;
-	const std::vector<uint32_t> &GetGeomTreeIndices() const;
-	const std::vector<unsigned> &GetGeomTreeTriFlags() const;
-	unsigned GetGeomTreeNumTris() const;
 
 	inline GeomTree *GetGeomTree() const { return m_geomTree; }
 

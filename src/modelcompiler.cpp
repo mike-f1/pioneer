@@ -51,7 +51,7 @@ void RunCompiler(const FileSystem::FileInfo &fi, const bool bInPlace);
 class CompileJob : public Job {
 public:
 	CompileJob(FileSystem::FileInfo fi, const bool inPlace) :
-		m_fileInfo(fi),
+		m_fileInfo(std::move(fi)),
 		m_inPlace(inPlace) {}
 
 	virtual void OnRun() override final { RunCompiler(m_fileInfo, m_inPlace); } // RUNS IN ANOTHER THREAD!! MUST BE THREAD SAFE!

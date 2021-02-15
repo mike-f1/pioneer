@@ -167,21 +167,25 @@ namespace KeyBindings {
 
 	struct ActionBinding {
 		ActionBinding() :
-			m_disabled(false)
+			m_disabled(false),
+			m_isUp(false)
 		{}
 		ActionBinding(KeyBinding b1, KeyBinding b2 = KeyBinding()) :
 			m_disabled(false),
+			m_isUp(false),
 			m_binding({b1, b2})
 		{}
 		// This constructor is just a programmer shortcut.
 		ActionBinding(SDL_Keycode k1, SDL_Keycode k2 = SDLK_UNKNOWN) :
-			m_disabled(false)
+			m_disabled(false),
+			m_isUp(false)
 		{
 			m_binding[0] = KeyBinding(k1);
 			if (k2 != SDLK_UNKNOWN) m_binding[1] = KeyBinding(k2);
 		}
 		ActionBinding(WheelDirection dir, SDL_Keymod mod = KMOD_NONE) :
-			m_disabled(false)
+			m_disabled(false),
+			m_isUp(false)
 		{
 			m_binding[0] = KeyBinding(dir, mod);
 		}

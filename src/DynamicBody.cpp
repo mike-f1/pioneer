@@ -3,19 +3,17 @@
 
 #include "DynamicBody.h"
 
-#include "CollMesh.h"
-#include "FixedGuns.h"
 #include "Frame.h"
 #include "GameSaveError.h"
 #include "Json.h"
+#include "JsonUtils.h"
 #include "Orbit.h"
 #include "Planet.h"
 #include "collider/CollisionContact.h"
 #include "galaxy/SystemBody.h"
-#include "libs/gameconsts.h"
-#include "ship/Propulsion.h"
+#include "libs/utils.h"
 
-static const float KINETIC_ENERGY_MULT = 0.00001f;
+constexpr float KINETIC_ENERGY_MULT = 0.00001f;
 const double DynamicBody::DEFAULT_DRAG_COEFF = 0.1; // 'smooth sphere'
 
 DynamicBody::DynamicBody() :
@@ -264,10 +262,9 @@ void DynamicBody::UpdateInterpTransform(double alpha)
 
 void DynamicBody::SetMassDistributionFromModel()
 {
-	CollMesh *m = GetCollMesh();
 	// XXX totally arbitrarily pick to distribute mass over a half
 	// bounding sphere area
-	m_massRadius = m->GetRadius() * 0.5f;
+	m_massRadius = GetCollMeshRadius() * 0.5f;
 	SetMass(m_mass);
 }
 

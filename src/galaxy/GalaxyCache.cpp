@@ -279,7 +279,7 @@ void GalaxyObjectCache<T, CompareT>::Slave::FillCache(const typename GalaxyObjec
 #endif
 		} else {
 			if (!current_paths) {
-				current_paths.reset(new PathVector);
+				current_paths = std::make_unique<PathVector>();
 				current_paths->reserve(CACHE_JOB_SIZE);
 			}
 			current_paths->push_back(*it);

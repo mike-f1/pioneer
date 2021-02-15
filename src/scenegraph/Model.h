@@ -107,9 +107,11 @@ namespace SceneGraph {
 			std::runtime_error(str.c_str()) {}
 	};
 
-	typedef std::vector<std::pair<std::string, RefCountedPtr<Graphics::Material>>> MaterialContainer;
-	typedef std::vector<Animation> AnimationContainer;
-	typedef std::vector<MatrixTransform *> TagContainer;
+	constexpr unsigned int MAX_DECAL_MATERIALS = 4;
+
+	using MaterialContainer = std::vector<std::pair<std::string, RefCountedPtr<Graphics::Material>>>;
+	using AnimationContainer = std::vector<Animation>;
+	using TagContainer = std::vector<MatrixTransform *>;
 
 	class Model : public DeleteEmitter {
 		friend class BaseLoader;
@@ -188,13 +190,12 @@ namespace SceneGraph {
 		void SetCentralCylinder(std::unique_ptr<CSG_CentralCylinder> centralcylinder);
 		void AddBox(std::unique_ptr<CSG_Box> box);
 
-		const CSG_CentralCylinder *GetCentralCylinder() { return m_centralCylinder.get(); }
-		const std::vector<CSG_Box> &GetBoxes() { return m_Boxes; }
+		const CSG_CentralCylinder *GetCentralCylinder() const { return m_centralCylinder.get(); }
+		const std::vector<CSG_Box> &GetBoxes() const { return m_Boxes; }
 
 	private:
 		Model(const Model &); // copy ctor: used in MakeInstance
 
-		static const unsigned int MAX_DECAL_MATERIALS = 4;
 		ColorMap m_colorMap;
 		float m_boundingRadius;
 		MaterialContainer m_materials; //materials are shared throughout the model graph

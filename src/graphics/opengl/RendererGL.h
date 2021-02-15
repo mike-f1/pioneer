@@ -48,71 +48,71 @@ namespace Graphics {
 		static void RegisterRenderer();
 
 		RendererOGL(SDL_Window *window, const Settings &vs, SDL_GLContext &glContext);
-		virtual ~RendererOGL() override final;
+		~RendererOGL() override final;
 
-		virtual const char *GetName() const override final { return "OpenGL 3.1, with extensions, renderer"; }
-		virtual RendererType GetRendererType() const override final { return RENDERER_OPENGL_3x; }
+		const char *GetName() const override final { return "OpenGL 3.1, with extensions, renderer"; }
+		RendererType GetRendererType() const override final { return RENDERER_OPENGL_3x; }
 
-		virtual void WriteRendererInfo(std::ostream &out) const override final;
+		void WriteRendererInfo(std::ostream &out) const override final;
 
-		virtual void CheckRenderErrors(const char *func = nullptr, const int line = -1) const override final { CheckErrors(func, line); }
+		void CheckRenderErrors(const char *func = nullptr, const int line = -1) const override final { CheckErrors(func, line); }
 		static void CheckErrors(const char *func = nullptr, const int line = -1);
 
-		virtual bool SupportsInstancing() override final { return true; }
+		bool SupportsInstancing() override final { return true; }
 
-		virtual int GetMaximumNumberAASamples() const override final;
-		virtual bool GetNearFarRange(float &near_, float &far_) const override final;
+		int GetMaximumNumberAASamples() const override final;
+		bool GetNearFarRange(float &near_, float &far_) const override final;
 
-		virtual bool BeginFrame() override final;
-		virtual bool EndFrame() override final;
-		virtual bool SwapBuffers() override final;
+		bool BeginFrame() override final;
+		bool EndFrame() override final;
+		bool SwapBuffers() override final;
 
-		virtual bool SetRenderState(RenderState *) override final;
-		virtual bool SetRenderTarget(RenderTarget *) override final;
+		bool SetRenderState(RenderState *) override final;
+		bool SetRenderTarget(RenderTarget *) override final;
 
-		virtual bool SetDepthRange(double znear, double zfar) override final;
+		bool SetDepthRange(double znear, double zfar) override final;
 
-		virtual bool ClearScreen() override final;
-		virtual bool ClearDepthBuffer() override final;
-		virtual bool SetClearColor(const Color &c) override final;
+		bool ClearScreen() override final;
+		bool ClearDepthBuffer() override final;
+		bool SetClearColor(const Color &c) override final;
 
-		virtual bool SetViewport(int x, int y, int width, int height) override final;
+		bool SetViewport(int x, int y, int width, int height) override final;
 
-		virtual bool SetTransform(const matrix4x4d &m) override final;
-		virtual bool SetTransform(const matrix4x4f &m) override final;
-		virtual bool SetPerspectiveProjection(float fov, float aspect, float near_, float far_) override final;
-		virtual bool SetOrthographicProjection(float xmin, float xmax, float ymin, float ymax, float zmin, float zmax) override final;
-		virtual bool SetProjection(const matrix4x4f &m) override final;
+		bool SetTransform(const matrix4x4d &m) override final;
+		bool SetTransform(const matrix4x4f &m) override final;
+		bool SetPerspectiveProjection(float fov, float aspect, float near_, float far_) override final;
+		bool SetOrthographicProjection(float xmin, float xmax, float ymin, float ymax, float zmin, float zmax) override final;
+		bool SetProjection(const matrix4x4f &m) override final;
 
-		virtual bool SetWireFrameMode(bool enabled) override final;
+		bool SetWireFrameMode(bool enabled) override final;
 
-		virtual bool SetLights(uint32_t numlights, const Light *l) override final;
-		virtual uint32_t GetNumLights() const override final { return m_numLights; }
-		virtual bool SetAmbientColor(const Color &c) override final;
+		bool SetLights(uint32_t numlights, const Light *l) override final;
+		uint32_t GetNumLights() const override final { return m_numLights; }
+		bool SetAmbientColor(const Color &c) override final;
 
-		virtual bool SetScissor(bool enabled, const vector2f &pos = vector2f(0.0f), const vector2f &size = vector2f(0.0f)) override final;
+		bool SetScissor(bool enabled, const vector2f &pos = vector2f(0.0f), const vector2f &size = vector2f(0.0f)) override final;
 
-		virtual bool DrawTriangles(const VertexArray *vertices, RenderState *state, Material *material, PrimitiveType type = TRIANGLES) override final;
-		virtual bool DrawPointSprites(const uint32_t count, const vector3f *positions, RenderState *rs, Material *material, float size) override final;
-		virtual bool DrawPointSprites(const uint32_t count, const vector3f *positions, const vector2f *offsets, const float *sizes, RenderState *rs, Material *material) override final;
-		virtual bool DrawBuffer(VertexBuffer *, RenderState *, Material *, PrimitiveType) override final;
-		virtual bool DrawBufferIndexed(VertexBuffer *, IndexBuffer *, RenderState *, Material *, PrimitiveType) override final;
-		virtual bool DrawBufferInstanced(VertexBuffer *, RenderState *, Material *, InstanceBuffer *, PrimitiveType type = TRIANGLES) override final;
-		virtual bool DrawBufferIndexedInstanced(VertexBuffer *, IndexBuffer *, RenderState *, Material *, InstanceBuffer *, PrimitiveType = TRIANGLES) override final;
+		bool DrawTriangles(const VertexArray *vertices, RenderState *state, Material *material, PrimitiveType type = TRIANGLES) override final;
+		bool DrawPointSprites(const uint32_t count, const vector3f *positions, RenderState *rs, Material *material, float size) override final;
+		bool DrawPointSprites(const uint32_t count, const vector3f *positions, const vector2f *offsets, const float *sizes, RenderState *rs, Material *material) override final;
+		bool DrawBuffer(VertexBuffer *, RenderState *, Material *, PrimitiveType) override final;
+		bool DrawBufferIndexed(VertexBuffer *, IndexBuffer *, RenderState *, Material *, PrimitiveType) override final;
+		bool DrawBufferInstanced(VertexBuffer *, RenderState *, Material *, InstanceBuffer *, PrimitiveType type = TRIANGLES) override final;
+		bool DrawBufferIndexedInstanced(VertexBuffer *, IndexBuffer *, RenderState *, Material *, InstanceBuffer *, PrimitiveType = TRIANGLES) override final;
 
-		virtual Material *CreateMaterial(const MaterialDescriptor &descriptor) override final;
-		virtual Texture *CreateTexture(const TextureDescriptor &descriptor) override final;
-		virtual RenderState *CreateRenderState(const RenderStateDesc &) override final;
-		virtual RenderTarget *CreateRenderTarget(const RenderTargetDesc &) override final;
-		virtual VertexBuffer *CreateVertexBuffer(const VertexBufferDesc &) override final;
-		virtual IndexBuffer *CreateIndexBuffer(uint32_t size, BufferUsage) override final;
-		virtual InstanceBuffer *CreateInstanceBuffer(uint32_t size, BufferUsage) override final;
+		Material *CreateMaterial(const MaterialDescriptor &descriptor) override final;
+		Texture *CreateTexture(const TextureDescriptor &descriptor) override final;
+		RenderState *CreateRenderState(const RenderStateDesc &) override final;
+		RenderTarget *CreateRenderTarget(const RenderTargetDesc &) override final;
+		VertexBuffer *CreateVertexBuffer(const VertexBufferDesc &) override final;
+		IndexBuffer *CreateIndexBuffer(uint32_t size, BufferUsage) override final;
+		InstanceBuffer *CreateInstanceBuffer(uint32_t size, BufferUsage) override final;
 
-		virtual bool ReloadShaders() override final;
+		bool ReloadShaders() override final;
 
-		virtual const matrix4x4f &GetCurrentModelView() const override final { return m_modelViewStack.top(); }
-		virtual const matrix4x4f &GetCurrentProjection() const override final { return m_projectionStack.top(); }
-		virtual void GetCurrentViewport(int32_t *vp) const override final
+		const matrix4x4f &GetCurrentModelView() const override final { return m_modelViewStack.top(); }
+		const matrix4x4f &GetCurrentProjection() const override final { return m_projectionStack.top(); }
+		void GetCurrentViewport(int32_t *vp) const override final
 		{
 			const Viewport &cur = m_viewportStack.top();
 			vp[0] = cur.x;
@@ -121,19 +121,19 @@ namespace Graphics {
 			vp[3] = cur.h;
 		}
 
-		virtual void SetMatrixMode(MatrixMode mm) override final;
-		virtual void PushMatrix() override final;
-		virtual void PopMatrix() override final;
-		virtual void LoadIdentity() override final;
-		virtual void LoadMatrix(const matrix4x4f &m) override final;
-		virtual void Translate(const float x, const float y, const float z) override final;
-		virtual void Scale(const float x, const float y, const float z) override final;
+		void SetMatrixMode(MatrixMode mm) override final;
+		void PushMatrix() override final;
+		void PopMatrix() override final;
+		void LoadIdentity() override final;
+		void LoadMatrix(const matrix4x4f &m) override final;
+		void Translate(const float x, const float y, const float z) override final;
+		void Scale(const float x, const float y, const float z) override final;
 
-		virtual bool Screendump(ScreendumpState &sd) override final;
+		bool Screendump(ScreendumpState &sd) override final;
 
 	protected:
-		virtual void PushState() override final;
-		virtual void PopState() override final;
+		void PushState() override final;
+		void PopState() override final;
 
 		uint32_t m_numLights;
 		uint32_t m_numDirLights;

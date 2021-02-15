@@ -144,11 +144,11 @@ namespace SceneGraph {
 	Model *Loader::FindAndLoadModel(const std::string &filename)
 	{
 		PROFILE_SCOPED()
-		Model *m = LoadModel(filename, "models");
+		Model *m = FindAndLoadModel(filename, "models");
 		return m;
 	}
 
-	Model *Loader::LoadModel(const std::string &shortname, const std::string &basepath)
+	Model *Loader::FindAndLoadModel(const std::string &shortname, const std::string &basepath)
 	{
 		PROFILE_SCOPED()
 		m_logMessages.clear();
@@ -367,8 +367,7 @@ namespace SceneGraph {
 
 		//turn all scene aiMeshes into Surfaces
 		//Index matches assimp index.
-		std::vector<RefCountedPtr<StaticGeometry>> geoms;
-		ConvertAiMeshes(geoms, scene);
+		std::vector<RefCountedPtr<StaticGeometry>> geoms = ConvertAiMeshes(scene);
 
 		// Recursive structure conversion. Matrix needs to be accumulated for
 		// special features that are absolute-positioned (thrusters)
@@ -453,7 +452,7 @@ namespace SceneGraph {
 	};
 #pragma pack(pop)
 
-	void Loader::ConvertAiMeshes(std::vector<RefCountedPtr<StaticGeometry>> &geoms, const aiScene *scene)
+	std::vector<RefCountedPtr<StaticGeometry>> Loader::ConvertAiMeshes(const aiScene *scene)
 	{
 		PROFILE_SCOPED()
 		//XXX sigh, workaround for obj loader
@@ -461,6 +460,7 @@ namespace SceneGraph {
 		if (scene->mNumMaterials > scene->mNumMeshes)
 			matIdxOffs = 1;
 
+		std::vector<RefCountedPtr<StaticGeometry>> geoms;
 		//turn meshes into static geometry nodes
 		for (unsigned int i = 0; i < scene->mNumMeshes; i++) {
 			const aiMesh *mesh = scene->mMeshes[i];
@@ -589,9 +589,9 @@ namespace SceneGraph {
 			}
 
 			geom->AddMesh(vb, ib, mat);
-
 			geoms.push_back(geom);
 		}
+		return geoms;
 	}
 
 	void Loader::ConvertAnimations(const aiScene *scene, const AnimList &animDefs, Node *meshRoot)

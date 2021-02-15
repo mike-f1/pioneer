@@ -44,8 +44,8 @@ public:
 	bool IsStatic() const { return m_isStatic; }
 	Aabb &GetAabb() const;
 	SceneGraph::Model *GetModel() const { return m_model.get(); }
-	CollMesh *GetCollMesh();
 	Geom *GetGeom() const { return m_geom.get(); }
+	float GetCollMeshRadius() const;
 
 	void SetCentralCylinder(std::unique_ptr<CSG_CentralCylinder> centralcylinder);
 	void AddBox(std::unique_ptr<CSG_Box> box);
@@ -66,7 +66,6 @@ protected:
 
 private:
 	void RebuildCollisionMesh();
-	void DeleteGeoms();
 	void AddGeomsToFrame(Frame *);
 	void RemoveGeomsFromFrame(Frame *);
 	void MoveGeoms(const matrix4x4d &, const vector3d &);
@@ -77,9 +76,8 @@ private:
 	bool m_colliding;
 	RefCountedPtr<CollMesh> m_collMesh;
 	std::unique_ptr<Geom> m_geom; //static geom
-	std::string m_modelName;
+	std::vector<std::unique_ptr<Geom>> m_dynGeoms; //dynamic geoms
 	std::unique_ptr<SceneGraph::Model> m_model;
-	std::vector<std::unique_ptr<Geom>> m_dynGeoms;
 	SceneGraph::Animation *m_idleAnimation;
 	std::unique_ptr<Shields> m_shields;
 };

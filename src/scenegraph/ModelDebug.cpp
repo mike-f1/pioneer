@@ -4,6 +4,7 @@
 #include "MatrixTransform.h"
 #include "Model.h"
 #include "collider/CSGDefinitions.h"
+#include "collider/GeomTree.h"
 #include "graphics/Drawables.h"
 #include "graphics/Material.h"
 #include "graphics/RenderState.h"
@@ -163,44 +164,52 @@ namespace SceneGraph {
 		}
 	}
 
+	static RefCountedPtr<Graphics::VertexBuffer> createVertexBufferFor(GeomTree *gt)
+	{
+		const std::vector<vector3f> &vertices = gt->GetVertices();
+		const std::vector<uint32_t> &indices = gt->GetIndices();
+		const std::vector<unsigned> &triFlags = gt->GetTriFlags();
+		const unsigned int numIndices = gt->GetNumTris() * 3;
+
+		Graphics::VertexArray va(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE, numIndices * 3);
+		int trindex = -1;
+		for (unsigned int i = 0; i < numIndices; i++) {
+			if (i % 3 == 0)
+				trindex++;
+			const unsigned int flag = triFlags[trindex];
+			//show special geomflags in red
+			va.Add(vertices[indices[i]], flag > 0 ? Color::RED : Color::WHITE);
+		}
+
+		//create buffer and upload data
+		Graphics::VertexBufferDesc vbd;
+		vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
+		vbd.attrib[0].format = Graphics::ATTRIB_FORMAT_FLOAT3;
+		vbd.attrib[1].semantic = Graphics::ATTRIB_DIFFUSE;
+		vbd.attrib[1].format = Graphics::ATTRIB_FORMAT_UBYTE4;
+		vbd.numVertices = va.GetNumVerts();
+		vbd.usage = Graphics::BUFFER_USAGE_STATIC;
+		RefCountedPtr<Graphics::VertexBuffer> collisionMeshVB(RendererLocator::getRenderer()->CreateVertexBuffer(vbd));
+		collisionMeshVB->Populate(va);
+		return collisionMeshVB;
+	}
+
 	// Draw collision mesh as a wireframe overlay
 	void ModelDebug::DrawCollisionMesh()
 	{
 		if (!m_model->GetCollisionMesh()) return;
 
 		if (!m_collisionMeshVB.Valid()) {
-			const std::vector<vector3f> &vertices = m_model->GetCollisionMesh()->GetGeomTreeVertices();
-			const std::vector<uint32_t> &indices = m_model->GetCollisionMesh()->GetGeomTreeIndices();
-			const std::vector<unsigned> &triFlags = m_model->GetCollisionMesh()->GetGeomTreeTriFlags();
-			const unsigned int numIndices = m_model->GetCollisionMesh()->GetGeomTreeNumTris() * 3;
-
-			Graphics::VertexArray va(Graphics::ATTRIB_POSITION | Graphics::ATTRIB_DIFFUSE, numIndices * 3);
-			int trindex = -1;
-			for (unsigned int i = 0; i < numIndices; i++) {
-				if (i % 3 == 0)
-					trindex++;
-				const unsigned int flag = triFlags[trindex];
-				//show special geomflags in red
-				va.Add(vertices[indices[i]], flag > 0 ? Color::RED : Color::WHITE);
-			}
-
-			//create buffer and upload data
-			Graphics::VertexBufferDesc vbd;
-			vbd.attrib[0].semantic = Graphics::ATTRIB_POSITION;
-			vbd.attrib[0].format = Graphics::ATTRIB_FORMAT_FLOAT3;
-			vbd.attrib[1].semantic = Graphics::ATTRIB_DIFFUSE;
-			vbd.attrib[1].format = Graphics::ATTRIB_FORMAT_UBYTE4;
-			vbd.numVertices = va.GetNumVerts();
-			vbd.usage = Graphics::BUFFER_USAGE_STATIC;
-			m_collisionMeshVB.Reset(RendererLocator::getRenderer()->CreateVertexBuffer(vbd));
-			m_collisionMeshVB->Populate(va);
+			// Creating static buffers
+			m_collisionMeshVB = createVertexBufferFor(m_model->GetCollisionMesh()->GetGeomTree());
 		}
 
-		//might want to add some offset
+		// TODO: might want to add some offset
 		RendererLocator::getRenderer()->SetWireFrameMode(true);
 		Graphics::RenderStateDesc rsd;
 		rsd.cullMode = Graphics::CULL_NONE;
-		RendererLocator::getRenderer()->DrawBuffer(m_collisionMeshVB.Get(), RendererLocator::getRenderer()->CreateRenderState(rsd), Graphics::vtxColorMaterial);
+		Graphics::RenderState *rs = RendererLocator::getRenderer()->CreateRenderState(rsd);
+		RendererLocator::getRenderer()->DrawBuffer(m_collisionMeshVB.Get(), rs, Graphics::vtxColorMaterial);
 		RendererLocator::getRenderer()->SetWireFrameMode(false);
 	}
 

@@ -99,7 +99,6 @@ namespace SceneGraph {
 	class BaseLoader;
 	class BinaryConverter;
 	class MatrixTransform;
-	class ModelBinarizer;
 	class ModelDebug;
 
 	struct LoadingError : public std::runtime_error {
@@ -116,12 +115,11 @@ namespace SceneGraph {
 	class Model : public DeleteEmitter {
 		friend class BaseLoader;
 		friend class Loader;
-		friend class ModelBinarizer;
 		friend class BinaryConverter;
 	public:
 		explicit Model(const std::string &name);
 		Model &operator=(const Model &) = delete;
-		~Model();
+		~Model(); // =default, but avoid inclusion of so many includes
 
 		std::unique_ptr<Model> MakeInstance() const;
 
@@ -133,9 +131,7 @@ namespace SceneGraph {
 		void Render(const matrix4x4f &trans, const RenderData *rd = 0); //ModelNode can override RD
 		void Render(const std::vector<matrix4x4f> &trans, const RenderData *rd = 0); //ModelNode can override RD
 
-		RefCountedPtr<CollMesh> CreateCollisionMesh();
 		RefCountedPtr<CollMesh> GetCollisionMesh() const;
-		void SetCollisionMesh(RefCountedPtr<CollMesh> collMesh);
 
 		RefCountedPtr<Group> GetRoot();
 
@@ -195,6 +191,9 @@ namespace SceneGraph {
 
 	private:
 		Model(const Model &); // copy ctor: used in MakeInstance
+
+		// Used by loaders
+		RefCountedPtr<CollMesh> CreateCollisionMesh();
 
 		ColorMap m_colorMap;
 		float m_boundingRadius;

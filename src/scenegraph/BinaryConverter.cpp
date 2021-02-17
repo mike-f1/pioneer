@@ -256,8 +256,7 @@ Model *BinaryConverter::CreateModel(const std::string &filename, Serializer::Rea
 	if (!root) throw LoadingError("Expected root");
 	m_model->m_root.Reset(root);
 
-	RefCountedPtr<CollMesh> collMesh(new CollMesh());
-	collMesh->Load(rd);
+	RefCountedPtr<CollMesh> collMesh(new CollMesh(rd));
 	m_model->SetCollisionMesh(collMesh);
 	m_model->SetDrawClipRadius(rd.Float());
 
@@ -361,16 +360,18 @@ void BinaryConverter::LoadAnimations(Serializer::Reader &rd)
 	PROFILE_SCOPED()
 	//load channels and PRS keys
 	const uint32_t numAnims = rd.Int32();
+	m_model->m_animations.reserve(numAnims);
 	for (uint32_t i = 0; i < numAnims; i++) {
 		const std::string animName = rd.String();
 		const double duration = rd.Double();
-		std::unique_ptr<Animation> anim(new Animation(animName, duration));
+		m_model->m_animations.emplace_back(animName, duration);
+		auto &anim = m_model->m_animations.back();
 		const uint32_t numChans = rd.Int32();
 		for (uint32_t j = 0; j < numChans; j++) {
 			const std::string tgtName = rd.String();
 			MatrixTransform *tgtNode = dynamic_cast<MatrixTransform *>(m_model->m_root->FindNode(tgtName));
-			anim->m_channels.push_back(AnimationChannel(tgtNode));
-			auto &chan = anim->m_channels.back();
+			anim.m_channels.push_back(AnimationChannel(tgtNode));
+			auto &chan = anim.m_channels.back();
 			for (uint32_t numKeys = rd.Int32(); numKeys > 0; numKeys--) {
 				const double ktime = rd.Double();
 				const vector3f kpos = rd.Vector3f();
@@ -387,7 +388,6 @@ void BinaryConverter::LoadAnimations(Serializer::Reader &rd)
 				chan.scaleKeys.push_back(ScaleKey(ktime, kscale));
 			}
 		}
-		m_model->m_animations.push_back(*anim);
 	}
 }
 

@@ -21,42 +21,23 @@ namespace Serializer {
 //and AABB.
 class CollMesh final: public RefCounted {
 public:
-	CollMesh() :
-		m_geomTree(nullptr),
-		m_totalTris(0)
-	{}
+	CollMesh(Aabb aabb, GeomTree *static_gt, std::vector<GeomTree *> dynamic_gt);
+	CollMesh(Serializer::Reader &rd);
+
 	~CollMesh();
 
-	inline Aabb &GetAabb() { return m_aabb; }
+	void Save(Serializer::Writer &wr) const;
 
-	inline double GetRadius() const { return m_aabb.GetRadius(); }
-	inline void SetRadius(double v)
-	{
-		//0 radius = trouble
-		m_aabb.radius = std::max(v, 0.1);
-	}
+	const Aabb &GetAabb() { return m_aabb; }
 
-	inline GeomTree *GetGeomTree() const { return m_geomTree; }
+	double GetRadius() const { return m_aabb.GetRadius(); }
 
-	inline void SetGeomTree(GeomTree *t)
-	{
-		assert(t);
-		m_geomTree = t;
-	}
+	const GeomTree *GetGeomTree() const { return m_geomTree; }
 
-	inline const std::vector<GeomTree *> &GetDynGeomTrees() const { return m_dynGeomTrees; }
-	inline void AddDynGeomTree(GeomTree *t)
-	{
-		assert(t);
-		m_dynGeomTrees.push_back(t);
-	}
+	const std::vector<GeomTree *> &GetDynGeomTrees() const { return m_dynGeomTrees; }
 
 	//for statistics
-	inline unsigned int GetNumTriangles() const { return m_totalTris; }
-	inline void SetNumTriangles(unsigned int i) { m_totalTris = i; }
-
-	void Save(Serializer::Writer &wr) const;
-	void Load(Serializer::Reader &rd);
+	unsigned int GetNumTriangles() const { return m_totalTris; }
 
 protected:
 	Aabb m_aabb;

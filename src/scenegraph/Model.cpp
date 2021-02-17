@@ -66,7 +66,7 @@ namespace SceneGraph {
 		m_root.Reset(dynamic_cast<Group *>(other.m_root->Clone(&cache)));
 
 		//materials are shared by meshes
-		for (unsigned int i = 0; i < MAX_DECAL_MATERIALS; i++)
+		for (unsigned i = 0; i < MAX_DECAL_MATERIALS; i++)
 			m_decalMaterials[i] = other.m_decalMaterials[i];
 		ClearDecals();
 
@@ -88,16 +88,16 @@ namespace SceneGraph {
 		});
 
 		//m_tags needs to be updated
-		for (TagContainer::const_iterator it = other.m_tags.begin(); it != other.m_tags.end(); ++it) {
-			MatrixTransform *t = dynamic_cast<MatrixTransform *>(m_root->FindNode((*it)->GetName()));
+		m_tags.reserve(other.m_tags.size());
+		std::for_each(begin(other.m_tags), end(other.m_tags), [this](const auto *tag) {
+			MatrixTransform *t = dynamic_cast<MatrixTransform *>(m_root->FindNode(tag->GetName()));
 			assert(t != 0);
 			m_tags.push_back(t);
-		}
+		});
 	}
 
 	Model::~Model()
-	{
-	}
+	{}
 
 	std::unique_ptr<Model> Model::MakeInstance() const
 	{
@@ -209,11 +209,6 @@ namespace SceneGraph {
 	RefCountedPtr<CollMesh> Model::GetCollisionMesh() const
 	{
 		return m_collMesh;
-	}
-
-	void Model::SetCollisionMesh(RefCountedPtr<CollMesh> collMesh)
-	{
-		m_collMesh.Reset(collMesh.Get());
 	}
 
 	RefCountedPtr<Group> Model::GetRoot()

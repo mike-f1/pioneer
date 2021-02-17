@@ -16,9 +16,9 @@ namespace SceneGraph {
 	CollisionVisitor::CollisionVisitor() :
 		m_boundingRadius(0.),
 		m_properData(false),
+		m_is_not_moved(false), // ...not moved but empty
 		m_totalTris(0)
 	{
-		m_collMesh.Reset(new CollMesh());
 		m_vertices.reserve(500);
 		m_indices.reserve(500 * 3);
 		m_flags.reserve(500);
@@ -28,21 +28,23 @@ namespace SceneGraph {
 	void CollisionVisitor::ApplyStaticGeometry(StaticGeometry &g)
 	{
 		PROFILE_SCOPED()
+		m_is_not_moved = true;
 		if (m_matrixStack.empty()) {
-			m_collMesh->GetAabb().Update(g.m_boundingBox.min);
-			m_collMesh->GetAabb().Update(g.m_boundingBox.max);
+			m_aabb.Update(g.m_boundingBox.min);
+			m_aabb.Update(g.m_boundingBox.max);
 		} else {
 			const matrix4x4f &matrix = m_matrixStack.back();
-			vector3f min = matrix * vector3f(g.m_boundingBox.min);
-			vector3f max = matrix * vector3f(g.m_boundingBox.max);
-			m_collMesh->GetAabb().Update(vector3d(min));
-			m_collMesh->GetAabb().Update(vector3d(max));
+			const vector3f min = matrix * vector3f(g.m_boundingBox.min);
+			const vector3f max = matrix * vector3f(g.m_boundingBox.max);
+			m_aabb.Update(vector3d(min));
+			m_aabb.Update(vector3d(max));
 		}
 	}
 
 	void CollisionVisitor::ApplyMatrixTransform(MatrixTransform &m)
 	{
 		PROFILE_SCOPED()
+		m_is_not_moved = true;
 		matrix4x4f matrix = matrix4x4f::Identity();
 		if (!m_matrixStack.empty()) matrix = m_matrixStack.back();
 
@@ -53,20 +55,26 @@ namespace SceneGraph {
 
 	void CollisionVisitor::ApplyCollisionGeometry(CollisionGeometry &cg)
 	{
-		PROFILE_SCOPED()
-		using std::vector;
+		m_is_not_moved = true;
+		if (cg.IsDynamic()) ApplyDynamicCollisionGeometry(cg);
+		else ApplyStaticCollisionGeometry(cg);
+	}
 
-		if (cg.IsDynamic()) return ApplyDynamicCollisionGeometry(cg);
+	void CollisionVisitor::ApplyStaticCollisionGeometry(CollisionGeometry &cg)
+	{
+		PROFILE_SCOPED()
+
+		using std::vector;
 
 		const matrix4x4f matrix = m_matrixStack.empty() ? matrix4x4f::Identity() : m_matrixStack.back();
 
 		//copy data (with index offset)
-		int idxOffset = m_vertices.size();
+		unsigned idxOffset = m_vertices.size();
 		m_vertices.reserve(m_vertices.size() + cg.GetVertices().size());
 		for (vector<vector3f>::const_iterator it = cg.GetVertices().begin(); it != cg.GetVertices().end(); ++it) {
 			const vector3f pos = matrix * (*it);
 			m_vertices.emplace_back(pos);
-			m_collMesh->GetAabb().Update(pos.x, pos.y, pos.z);
+			m_aabb.Update(pos.x, pos.y, pos.z);
 		}
 
 		m_indices.reserve(m_indices.size() + cg.GetIndices().size());
@@ -77,9 +85,8 @@ namespace SceneGraph {
 		if (cg.GetTriFlag() == 0)
 			m_properData = true;
 
-		m_flags.reserve(m_flags.size() + cg.GetIndices().size() / 3);
-		for (unsigned int i = 0; i < cg.GetIndices().size() / 3; i++)
-			m_flags.emplace_back(cg.GetTriFlag());
+		//iterator insert(const_iterator position, size_type n, const value_type& val);
+		m_flags.insert(m_flags.end(), cg.GetIndices().size() / 3, cg.GetTriFlag());
 	}
 
 	void CollisionVisitor::ApplyDynamicCollisionGeometry(CollisionGeometry &cg)
@@ -87,31 +94,19 @@ namespace SceneGraph {
 		PROFILE_SCOPED()
 		//don't transform geometry, one geomtree per cg, create tree right away
 
-		const int numVertices = cg.GetVertices().size();
 		const int numIndices = cg.GetIndices().size();
 		const int numTris = numIndices / 3;
-		std::vector<vector3f> vertices(numVertices);
-		uint32_t *indices = new uint32_t[numIndices];
-		unsigned int *triFlags = new unsigned int[numTris];
-
-		for (int i = 0; i < numVertices; i++)
-			vertices[i] = cg.GetVertices()[i];
-
-		for (int i = 0; i < numIndices; i++)
-			indices[i] = cg.GetIndices()[i];
-
-		for (int i = 0; i < numTris; i++)
-			triFlags[i] = cg.GetTriFlag();
+		std::vector<vector3f> vertices = cg.GetVertices();
+		std::vector<uint32_t> indices = cg.GetIndices();
+		std::vector<unsigned> triFlags(numTris, cg.GetTriFlag());
 
 		//create geomtree
 		//takes ownership of data
-		GeomTree *gt = new GeomTree(
-			numVertices, numTris,
-			vertices,
-			indices, triFlags);
+		GeomTree *gt = new GeomTree(numTris,
+			std::move(vertices), std::move(indices), std::move(triFlags));
 		cg.SetGeomTree(gt);
 
-		m_collMesh->AddDynGeomTree(gt);
+		m_dynGeomTree.push_back(gt);
 
 		m_totalTris += numTris;
 	}
@@ -184,41 +179,25 @@ namespace SceneGraph {
 		//Profiler::Timer timer;
 		//timer.Start();
 
+		if (!m_is_not_moved) throw std::runtime_error { "Call of CreateCollisionMesh while data is empty or moved out" };
+
 		//convert from model AABB if no collisiongeoms found
 		if (!m_properData)
-			AabbToMesh(m_collMesh->GetAabb());
+			AabbToMesh(m_aabb);
 
-		assert(m_collMesh->GetGeomTree() == 0);
 		assert(!m_vertices.empty() && !m_indices.empty());
 
-		//duplicate data again for geomtree...
-		const size_t numVertices = m_vertices.size();
-		const size_t numIndices = m_indices.size();
-		const size_t numTris = numIndices / 3;
-		std::vector<vector3f> vertices(numVertices);
-		uint32_t *indices = new uint32_t[numIndices];
-		uint32_t *triFlags = new uint32_t[numTris];
-
-		m_totalTris += numTris;
-
-		for (size_t i = 0; i < numVertices; i++)
-			vertices[i] = m_vertices[i];
-
-		for (size_t i = 0; i < numIndices; i++)
-			indices[i] = m_indices[i];
-
-		for (size_t i = 0; i < numTris; i++)
-			triFlags[i] = m_flags[i];
+		m_totalTris += m_indices.size() / 3;
 
 		//create geomtree
 		//takes ownership of data
-		GeomTree *gt = new GeomTree(
-			numVertices, numTris,
-			vertices,
-			indices, triFlags);
-		m_collMesh->SetGeomTree(gt);
-		m_collMesh->SetNumTriangles(m_totalTris);
-		m_boundingRadius = m_collMesh->GetAabb().GetRadius();
+		GeomTree *gt = new GeomTree(m_indices.size() / 3,
+			std::move(m_vertices), std::move(m_indices), std::move(m_flags));
+
+		RefCountedPtr<CollMesh> collMesh;
+		collMesh.Reset(new CollMesh(m_aabb, gt, m_dynGeomTree));
+
+		m_boundingRadius = collMesh->GetAabb().GetRadius();
 
 		m_vertices.clear();
 		m_indices.clear();
@@ -227,6 +206,7 @@ namespace SceneGraph {
 		//timer.Stop();
 		//Output(" - CreateCollisionMesh took: %lf milliseconds\n", timer.millicycles());
 
-		return m_collMesh;
+		m_is_not_moved = false;
+		return collMesh;
 	}
 } // namespace SceneGraph

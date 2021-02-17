@@ -25,7 +25,7 @@ struct BVHNode;
 
 class GeomTree {
 public:
-	GeomTree(const int numVerts, const int numTris, const std::vector<vector3f> &vertices, const uint32_t *indices, const uint32_t *triflags);
+	GeomTree(const int numTris, std::vector<vector3f> vertices, std::vector<uint32_t> indices, std::vector<uint32_t> triflags);
 	GeomTree(Serializer::Reader &rd);
 	void Save(Serializer::Writer &wr) const;
 

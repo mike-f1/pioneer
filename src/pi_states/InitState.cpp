@@ -74,6 +74,13 @@
 #include "ship/ShipViewController.h"
 #include "ship/PlayerShipController.h"
 
+//#define WANT_SHIP_STAT 1 //TODO: move in an appropriate class
+
+#if WANT_SHIP_STAT
+#include "scenegraph/Model.h"
+#include "CollMesh.h"
+#endif
+
 namespace MainState_ {
 
 	static void draw_progress(float progress, RefCountedPtr<PiGui> pigui = Pi::pigui)
@@ -313,7 +320,7 @@ namespace MainState_ {
 		OS::NotifyLoadEnd();
 		draw_progress(0.95f);
 
-	#if 0
+	#if WANT_SHIP_STAT
 		// test code to produce list of ship stats
 
 		FILE *pStatFile = fopen("shipstat.csv","wt");
@@ -323,7 +330,7 @@ namespace MainState_ {
 			for (auto iter : ShipType::types)
 			{
 				const ShipType *shipdef = &(iter.second);
-				SceneGraph::Model *model = Pi::FindModel(shipdef->modelName, false);
+				SceneGraph::Model *model = ModelCache::FindModel(shipdef->modelName, false);
 
 				double hullmass = shipdef->hullMass;
 				double capacity = shipdef->capacity;
@@ -331,7 +338,6 @@ namespace MainState_ {
 				double xsize = 0.0, ysize = 0.0, zsize = 0.0, fakevol = 0.0, rescale = 0.0, brad = 0.0;
 				if (model) {
 					std::unique_ptr<SceneGraph::Model> inst(model->MakeInstance());
-					model->CreateCollisionMesh();
 					Aabb aabb = model->GetCollisionMesh()->GetAabb();
 					xsize = aabb.max.x-aabb.min.x;
 					ysize = aabb.max.y-aabb.min.y;

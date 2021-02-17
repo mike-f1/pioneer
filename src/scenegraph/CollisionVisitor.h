@@ -9,14 +9,15 @@
  */
 #include "NodeVisitor.h"
 
+#include "Aabb.h"
 #include "libs/RefCounted.h"
 #include "libs/matrix4x4.h"
 #include "libs/vector3.h"
 #include <cstdint>
 #include <vector>
 
-class Aabb;
 class CollMesh;
+class GeomTree;
 
 namespace SceneGraph {
 	class Group;
@@ -34,20 +35,25 @@ namespace SceneGraph {
 		float GetBoundingRadius() const { return m_boundingRadius; }
 
 	private:
+		// Collect all static collision in one single mesh and create a GeomTree
+		void ApplyStaticCollisionGeometry(CollisionGeometry &);
+		// Collect each dynamic collision and create a GeomTree for each geometry
 		void ApplyDynamicCollisionGeometry(CollisionGeometry &);
 		void AabbToMesh(const Aabb &);
 		//geomtree is not built until all nodes are visited and
 		//BuildCollMesh called
-		RefCountedPtr<CollMesh> m_collMesh;
+		Aabb m_aabb;
 		std::vector<matrix4x4f> m_matrixStack;
 		float m_boundingRadius;
 		bool m_properData;
+		bool m_is_not_moved;
 
 		//temporary arrays for static geometry
 		std::vector<vector3f> m_vertices;
 		std::vector<uint32_t> m_indices;
 		std::vector<uint32_t> m_flags;
 
+		std::vector<GeomTree *> m_dynGeomTree;
 		uint32_t m_totalTris;
 	};
 } // namespace SceneGraph

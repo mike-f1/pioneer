@@ -8,27 +8,21 @@
 
 #include "profiler/Profiler.h"
 
+#include <stdexcept>
+
 //This simply stores the collision GeomTrees
 //and AABB.
 
-void CollMesh::Save(Serializer::Writer &wr) const
+CollMesh::CollMesh(Aabb aabb, GeomTree *static_gt, std::vector<GeomTree *> dynamic_gt) :
+	m_aabb(std::move(aabb)),
+	m_geomTree(static_gt),
+	m_dynGeomTrees(std::move(dynamic_gt)),
+	m_totalTris(static_gt->GetNumTris())
 {
-	PROFILE_SCOPED()
-	wr.Vector3d(m_aabb.max);
-	wr.Vector3d(m_aabb.min);
-	wr.Double(m_aabb.radius);
-
-	m_geomTree->Save(wr);
-
-	wr.Int32(m_dynGeomTrees.size());
-	for (auto it : m_dynGeomTrees) {
-		it->Save(wr);
-	}
-
-	wr.Int32(m_totalTris);
+	if (!static_gt) throw std::runtime_error { "CollMesh should be initialized with a non empty static GeomTree\n" };
 }
 
-void CollMesh::Load(Serializer::Reader &rd)
+CollMesh::CollMesh(Serializer::Reader &rd)
 {
 	PROFILE_SCOPED()
 	m_aabb.max = rd.Vector3d();
@@ -51,4 +45,21 @@ CollMesh::~CollMesh()
 	for (auto it = m_dynGeomTrees.begin(); it != m_dynGeomTrees.end(); ++it)
 		delete *it;
 	delete m_geomTree;
+}
+
+void CollMesh::Save(Serializer::Writer &wr) const
+{
+	PROFILE_SCOPED()
+	wr.Vector3d(m_aabb.max);
+	wr.Vector3d(m_aabb.min);
+	wr.Double(m_aabb.radius);
+
+	m_geomTree->Save(wr);
+
+	wr.Int32(m_dynGeomTrees.size());
+	for (auto it : m_dynGeomTrees) {
+		it->Save(wr);
+	}
+
+	wr.Int32(m_totalTris);
 }

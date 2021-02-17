@@ -12,15 +12,11 @@
 
 namespace SceneGraph {
 
-	typedef std::vector<AnimationChannel> ChannelList;
-	typedef ChannelList::iterator ChannelIterator;
-
 	Animation::Animation(const std::string &name, double duration) :
 		m_duration(duration),
 		m_time(0.0),
 		m_name(name)
-	{
-	}
+	{}
 
 	Animation::Animation(const Animation &anim) :
 		m_duration(anim.m_duration),
@@ -48,22 +44,22 @@ namespace SceneGraph {
 		const double mtime = m_time;
 
 		//go through channels and calculate transforms
-		for (ChannelIterator chan = m_channels.begin(); chan != m_channels.end(); ++chan) {
-			matrix4x4f trans = chan->node->GetTransform();
+		for (auto &chan : m_channels) {
+			matrix4x4f trans = chan.node->GetTransform();
 
-			if (!chan->rotationKeys.empty()) {
+			if (!chan.rotationKeys.empty()) {
 				//find a frame. To optimize, should begin search from previous frame (when mTime > previous mTime)
 				unsigned int frame = 0;
-				while (frame + 1 < chan->rotationKeys.size()) {
-					if (mtime < chan->rotationKeys[frame + 1].time)
+				while (frame + 1 < chan.rotationKeys.size()) {
+					if (mtime < chan.rotationKeys[frame + 1].time)
 						break;
 					frame++;
 				}
 
-				const RotationKey &a = chan->rotationKeys[frame];
+				const RotationKey &a = chan.rotationKeys[frame];
 				vector3f saved_position = trans.GetTranslate();
-				if (frame + 1 < chan->rotationKeys.size()) {
-					const RotationKey &b = chan->rotationKeys[frame + 1];
+				if (frame + 1 < chan.rotationKeys.size()) {
+					const RotationKey &b = chan.rotationKeys[frame + 1];
 					double diffTime = b.time - a.time;
 					assert(diffTime > 0.0);
 					const float factor = std::clamp(float((mtime - a.time) / diffTime), 0.f, 1.f);
@@ -77,19 +73,19 @@ namespace SceneGraph {
 			//scaling will not work without rotation since it would
 			//continously scale the transform (would have to add originalTransform or
 			//something to MT)
-			if (!chan->scaleKeys.empty() && !chan->rotationKeys.empty()) {
+			if (!chan.scaleKeys.empty() && !chan.rotationKeys.empty()) {
 				//find a frame. To optimize, should begin search from previous frame (when mTime > previous mTime)
 				unsigned int frame = 0;
-				while (frame + 1 < chan->scaleKeys.size()) {
-					if (mtime < chan->scaleKeys[frame + 1].time)
+				while (frame + 1 < chan.scaleKeys.size()) {
+					if (mtime < chan.scaleKeys[frame + 1].time)
 						break;
 					frame++;
 				}
 
-				const ScaleKey &a = chan->scaleKeys[frame];
+				const ScaleKey &a = chan.scaleKeys[frame];
 				vector3f out;
-				if (frame + 1 < chan->scaleKeys.size()) {
-					const ScaleKey &b = chan->scaleKeys[frame + 1];
+				if (frame + 1 < chan.scaleKeys.size()) {
+					const ScaleKey &b = chan.scaleKeys[frame + 1];
 					double diffTime = b.time - a.time;
 					assert(diffTime > 0.0);
 					const float factor = std::clamp(float((mtime - a.time) / diffTime), 0.f, 1.f);
@@ -100,19 +96,19 @@ namespace SceneGraph {
 				trans.Scale(out.x, out.y, out.z);
 			}
 
-			if (!chan->positionKeys.empty()) {
+			if (!chan.positionKeys.empty()) {
 				//find a frame. To optimize, should begin search from previous frame (when mTime > previous mTime)
 				unsigned int frame = 0;
-				while (frame + 1 < chan->positionKeys.size()) {
-					if (mtime < chan->positionKeys[frame + 1].time)
+				while (frame + 1 < chan.positionKeys.size()) {
+					if (mtime < chan.positionKeys[frame + 1].time)
 						break;
 					frame++;
 				}
 
-				const PositionKey &a = chan->positionKeys[frame];
+				const PositionKey &a = chan.positionKeys[frame];
 				vector3f out;
-				if (frame + 1 < chan->positionKeys.size()) {
-					const PositionKey &b = chan->positionKeys[frame + 1];
+				if (frame + 1 < chan.positionKeys.size()) {
+					const PositionKey &b = chan.positionKeys[frame + 1];
 					double diffTime = b.time - a.time;
 					assert(diffTime > 0.0);
 					const float factor = std::clamp(float((mtime - a.time) / diffTime), 0.f, 1.f);
@@ -123,7 +119,7 @@ namespace SceneGraph {
 				trans.SetTranslate(out);
 			}
 
-			chan->node->SetTransform(trans);
+			chan.node->SetTransform(trans);
 		}
 	}
 

@@ -42,7 +42,7 @@ public:
 	// Static: geoms are static relative to frame
 	void SetStatic(bool isStatic);
 	bool IsStatic() const { return m_isStatic; }
-	Aabb &GetAabb() const;
+	const Aabb &GetAabb() const;
 	SceneGraph::Model *GetModel() const { return m_model.get(); }
 	Geom *GetGeom() const { return m_geom.get(); }
 	float GetCollMeshRadius() const;
@@ -74,7 +74,6 @@ private:
 
 	bool m_isStatic;
 	bool m_colliding;
-	RefCountedPtr<CollMesh> m_collMesh;
 	std::unique_ptr<Geom> m_geom; //static geom
 	std::vector<std::unique_ptr<Geom>> m_dynGeoms; //dynamic geoms
 	std::unique_ptr<SceneGraph::Model> m_model;

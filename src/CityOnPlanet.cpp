@@ -21,9 +21,9 @@
 #include "scenegraph/Model.h"
 #include "libs/stringUtils.h"
 
-static const unsigned int DEFAULT_NUM_BUILDINGS = 1000;
-static const double START_SEG_SIZE = CITY_ON_PLANET_RADIUS;
-static const double START_SEG_SIZE_NO_ATMO = CITY_ON_PLANET_RADIUS / 5.0f;
+constexpr unsigned int DEFAULT_NUM_BUILDINGS = 1000;
+constexpr double START_SEG_SIZE = CITY_ON_PLANET_RADIUS;
+constexpr double START_SEG_SIZE_NO_ATMO = CITY_ON_PLANET_RADIUS / 5.0f;
 
 using SceneGraph::Model;
 
@@ -133,7 +133,7 @@ void CityOnPlanet::LookupBuildingListModels(citybuildinglist_t *list)
 		list->buildings[i].instIndex = i;
 		list->buildings[i].resolvedModel = *m;
 		list->buildings[i].idle = (*m)->FindAnimation("idle");
-		list->buildings[i].collMesh = (*m)->CreateCollisionMesh();
+		list->buildings[i].collMesh = (*m)->GetCollisionMesh();
 		const Aabb &aabb = list->buildings[i].collMesh->GetAabb();
 		const double maxx = std::max(fabs(aabb.max.x), fabs(aabb.min.x));
 		const double maxy = std::max(fabs(aabb.max.z), fabs(aabb.min.z));

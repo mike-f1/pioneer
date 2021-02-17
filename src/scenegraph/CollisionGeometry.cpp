@@ -15,13 +15,14 @@ namespace SceneGraph {
 	CollisionGeometry::CollisionGeometry(const std::vector<vector3f> &vts, const std::vector<uint32_t> &idx,
 		unsigned int geomflag) :
 		Node(),
+		m_vertices(vts),
+		m_indices(idx),
 		m_triFlag(geomflag),
 		m_dynamic(false),
 		m_geomTree(nullptr),
 		m_geom(nullptr)
 	{
 		PROFILE_SCOPED()
-		CopyData(vts, idx);
 	}
 
 	CollisionGeometry::CollisionGeometry(const CollisionGeometry &cg, NodeCopyCache *cache) :
@@ -31,13 +32,13 @@ namespace SceneGraph {
 		m_triFlag(cg.m_triFlag),
 		m_dynamic(cg.m_dynamic),
 		m_geomTree(cg.m_geomTree),
-		m_geom(cg.m_geom){
-			PROFILE_SCOPED()
-		}
+		m_geom(cg.m_geom)
+	{
+		PROFILE_SCOPED()
+	}
 
 	CollisionGeometry::~CollisionGeometry()
-	{
-	}
+	{}
 
 	Node *CollisionGeometry::Clone(NodeCopyCache *cache)
 	{
@@ -96,16 +97,4 @@ namespace SceneGraph {
 		return cg;
 	}
 
-	void CollisionGeometry::CopyData(const std::vector<vector3f> &vts, const std::vector<uint32_t> &idx)
-	{
-		PROFILE_SCOPED()
-		//copy vertices and indices from surface. Add flag for every three indices.
-		using std::vector;
-
-		for (vector<vector3f>::const_iterator it = vts.begin(); it != vts.end(); ++it)
-			m_vertices.push_back(*it);
-
-		for (vector<uint32_t>::const_iterator it = idx.begin(); it != idx.end(); ++it)
-			m_indices.push_back(*it);
-	}
 } // namespace SceneGraph

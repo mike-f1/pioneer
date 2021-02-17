@@ -23,7 +23,10 @@ namespace SceneGraph {
 	public:
 		CollisionGeometry(const std::vector<vector3f> &, const std::vector<uint32_t> &, unsigned int flag);
 		CollisionGeometry(const CollisionGeometry &, NodeCopyCache *cache = 0);
+
 		Node *Clone(NodeCopyCache *cache = 0) override;
+		~CollisionGeometry();
+
 		const char *GetTypeName() const override { return "CollisionGeometry"; }
 		void Accept(NodeVisitor &nv) override;
 		void Save(NodeDatabase &) override;
@@ -43,11 +46,7 @@ namespace SceneGraph {
 		Geom *GetGeom() const { return m_geom; }
 		void SetGeom(Geom *g) { m_geom = g; }
 
-	protected:
-		~CollisionGeometry();
-
 	private:
-		void CopyData(const std::vector<vector3f> &, const std::vector<uint32_t> &);
 		std::vector<vector3f> m_vertices;
 		std::vector<uint32_t> m_indices;
 		unsigned int m_triFlag; //only one per node

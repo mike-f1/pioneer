@@ -97,14 +97,14 @@ void ModelBody::SetColliding(bool colliding)
 		m_geom->Disable();
 }
 
-Aabb &ModelBody::GetAabb() const
+const Aabb &ModelBody::GetAabb() const
 {
-	return m_collMesh->GetAabb();
+	return m_model->GetCollisionMesh()->GetAabb();
 }
 
 float ModelBody::GetCollMeshRadius() const
 {
-	return m_collMesh->GetRadius();
+	return m_model->GetCollisionMesh()->GetRadius();
 }
 
 void ModelBody::RebuildCollisionMesh()
@@ -115,11 +115,11 @@ void ModelBody::RebuildCollisionMesh()
 		m_dynGeoms.clear();
 	}
 
-	m_collMesh = m_model->GetCollisionMesh();
-	double maxRadius = m_collMesh->GetAabb().GetRadius();
+	RefCountedPtr<CollMesh> collMesh = m_model->GetCollisionMesh();
+	double maxRadius = collMesh->GetAabb().GetRadius();
 
 	//static geom
-	m_geom = std::make_unique<Geom>(m_collMesh->GetGeomTree(), GetOrient(), GetPosition(), this);
+	m_geom = std::make_unique<Geom>(collMesh->GetGeomTree(), GetOrient(), GetPosition(), this);
 
 	SetPhysRadius(maxRadius);
 
@@ -128,7 +128,7 @@ void ModelBody::RebuildCollisionMesh()
 	m_model->GetRoot()->Accept(dgf);
 
 	//dynamic geoms
-	for (auto *dgt : m_collMesh->GetDynGeomTrees()) {
+	for (auto *dgt : collMesh->GetDynGeomTrees()) {
 		m_dynGeoms.emplace_back(std::make_unique<Geom>(dgt, GetOrient(), GetPosition(), this));
 		auto &dynG = m_dynGeoms.back();
 		dynG->m_animTransform = matrix4x4d::Identity();

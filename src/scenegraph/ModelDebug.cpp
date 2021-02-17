@@ -164,7 +164,7 @@ namespace SceneGraph {
 		}
 	}
 
-	static RefCountedPtr<Graphics::VertexBuffer> createVertexBufferFor(GeomTree *gt)
+	static RefCountedPtr<Graphics::VertexBuffer> createVertexBufferFor(const GeomTree *gt)
 	{
 		const std::vector<vector3f> &vertices = gt->GetVertices();
 		const std::vector<uint32_t> &indices = gt->GetIndices();

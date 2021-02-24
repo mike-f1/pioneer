@@ -13,6 +13,9 @@
 #include "graphics/VertexArray.h"
 #include "graphics/VertexBuffer.h"
 
+#include "DynCollisionVisitor.h"
+#include "CollisionVisitor.h"
+
 namespace SceneGraph {
 	ModelDebug::ModelDebug(Model *m, DebugFlags flags) :
 		m_model(m),
@@ -197,11 +200,36 @@ namespace SceneGraph {
 	// Draw collision mesh as a wireframe overlay
 	void ModelDebug::DrawCollisionMesh()
 	{
-		if (!m_model->GetCollisionMesh()) return;
+		RefCountedPtr<CollMesh> collMesh = m_model->GetCollisionMesh();
+		if (!collMesh.Valid()) return;
 
 		if (!m_collisionMeshVB.Valid()) {
 			// Creating static buffers
-			m_collisionMeshVB = createVertexBufferFor(m_model->GetCollisionMesh()->GetGeomTree());
+			m_collisionMeshVB = createVertexBufferFor(collMesh->GetGeomTree());
+
+			//have to figure out which collision geometries are responsible for which geomtrees
+			printf("Creating VB\n");
+			//SceneGraph::DynGeomFinder dgf;
+			//m_model->GetRoot()->Accept(dgf);
+
+			for (auto &dgt : collMesh->GetDynGeomTrees()) {
+				printf("dgt.first =**; dgt.second = %p\n", dgt.second);
+				//SceneGraph::CollisionGeometry *cg = dgf.FindCgForTree(dgt);
+				//if (!cg) throw std::runtime_error { "No CollisionGeometry found" };
+				m_dynCollisionMeshVB.push_back({dgt.first, createVertexBufferFor(dgt.second)});
+				dgt.first.Print();
+
+	//dynamic geoms
+/*	for (auto *dgt : m_model->GetCollisionMesh()->GetDynGeomTrees()) {
+		m_dynGeoms.emplace_back(std::make_unique<Geom>(dgt, GetOrient(), GetPosition(), this));
+		auto &dynG = m_dynGeoms.back();
+		dynG->m_animTransform = matrix4x4d::Identity();
+		SceneGraph::CollisionGeometry *cg = dgf.GetCgForTree(dgt);
+		if (cg)
+			cg->SetGeom(dynG.get());
+	}
+*/
+			}
 		}
 
 		// TODO: might want to add some offset
@@ -210,6 +238,13 @@ namespace SceneGraph {
 		rsd.cullMode = Graphics::CULL_NONE;
 		Graphics::RenderState *rs = RendererLocator::getRenderer()->CreateRenderState(rsd);
 		RendererLocator::getRenderer()->DrawBuffer(m_collisionMeshVB.Get(), rs, Graphics::vtxColorMaterial);
+		for (auto &dynVB : m_dynCollisionMeshVB) {
+			Graphics::Renderer::MatrixTicket ticket(RendererLocator::getRenderer(), Graphics::MatrixMode::MODELVIEW);
+			matrix4x4f prev = RendererLocator::getRenderer()->GetCurrentModelView();
+			prev = prev * dynVB.first;
+			RendererLocator::getRenderer()->SetTransform(prev);
+			RendererLocator::getRenderer()->DrawBuffer(dynVB.second.Get(), rs, Graphics::vtxColorMaterial);
+		}
 		RendererLocator::getRenderer()->SetWireFrameMode(false);
 	}
 

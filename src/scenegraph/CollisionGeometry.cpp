@@ -18,9 +18,7 @@ namespace SceneGraph {
 		m_vertices(vts),
 		m_indices(idx),
 		m_triFlag(geomflag),
-		m_dynamic(false),
-		m_geomTree(nullptr),
-		m_geom(nullptr)
+		m_dynamic(false)
 	{
 		PROFILE_SCOPED()
 	}
@@ -30,9 +28,7 @@ namespace SceneGraph {
 		m_vertices(cg.m_vertices),
 		m_indices(cg.m_indices),
 		m_triFlag(cg.m_triFlag),
-		m_dynamic(cg.m_dynamic),
-		m_geomTree(cg.m_geomTree),
-		m_geom(cg.m_geom)
+		m_dynamic(cg.m_dynamic)
 	{
 		PROFILE_SCOPED()
 	}

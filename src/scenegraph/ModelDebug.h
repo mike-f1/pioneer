@@ -18,6 +18,7 @@ namespace Graphics {
 } // namespace Graphics
 
 namespace SceneGraph {
+	class CollisionGeometry;
 	class MatrixTransform;
 	class Model;
 	enum class DebugFlags;
@@ -54,6 +55,7 @@ namespace SceneGraph {
 		std::unique_ptr<Graphics::Drawables::Line3D> m_CCylConnectingLine;
 		std::vector<Graphics::Drawables::Box3D> m_csgBoxes;
 		RefCountedPtr<Graphics::VertexBuffer> m_collisionMeshVB;
+		std::vector<std::pair<matrix4x4f,RefCountedPtr<Graphics::VertexBuffer>>> m_dynCollisionMeshVB;
 		RefCountedPtr<Graphics::Material> m_boxes3DMat;
 	};
 } // namespace SceneGraph

@@ -128,13 +128,14 @@ void ModelBody::RebuildCollisionMesh()
 	m_model->GetRoot()->Accept(dgf);
 
 	//dynamic geoms
-	for (auto *dgt : collMesh->GetDynGeomTrees()) {
-		m_dynGeoms.emplace_back(std::make_unique<Geom>(dgt, GetOrient(), GetPosition(), this));
-		auto &dynG = m_dynGeoms.back();
-		dynG->m_animTransform = matrix4x4d::Identity();
-		SceneGraph::CollisionGeometry *cg = dgf.GetCgForTree(dgt);
-		if (cg)
-			cg->SetGeom(dynG.get());
+	for (auto &dgt : collMesh->GetDynGeomTrees()) {
+		m_dynGeoms.emplace_back(std::make_unique<Geom>(dgt.second, GetOrient(), GetPosition(), this));
+//		auto &dynG = m_dynGeoms.back();
+//		dynG->m_animTransform = matrix4x4d::Identity();
+//		SceneGraph::CollisionGeometry *cg = dgf.FindCgForTree(dgt);
+//		if (cg)
+//			cg->SetGeom(dynG.get());
+//		else throw std::runtime_error { "Collision geometry not found" };
 	}
 
 	if (f) AddGeomsToFrame(f);

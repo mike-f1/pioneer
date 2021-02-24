@@ -10,10 +10,7 @@
 
 #include <stdexcept>
 
-//This simply stores the collision GeomTrees
-//and AABB.
-
-CollMesh::CollMesh(Aabb aabb, GeomTree *static_gt, std::vector<GeomTree *> dynamic_gt) :
+CollMesh::CollMesh(Aabb aabb, GeomTree *static_gt, std::vector<PairOfCollGeomGeomTree> dynamic_gt) :
 	m_aabb(std::move(aabb)),
 	m_geomTree(static_gt),
 	m_dynGeomTrees(std::move(dynamic_gt)),
@@ -34,7 +31,7 @@ CollMesh::CollMesh(Serializer::Reader &rd)
 	const uint32_t numDynGeomTrees = rd.Int32();
 	m_dynGeomTrees.reserve(numDynGeomTrees);
 	for (uint32_t it = 0; it < numDynGeomTrees; ++it) {
-		m_dynGeomTrees.push_back(new GeomTree(rd));
+		m_dynGeomTrees.push_back({nullptr, new GeomTree(rd)}); //FIXME Soooner!!!!!!!!!!
 	}
 
 	m_totalTris = rd.Int32();
@@ -42,8 +39,8 @@ CollMesh::CollMesh(Serializer::Reader &rd)
 
 CollMesh::~CollMesh()
 {
-	for (auto it = m_dynGeomTrees.begin(); it != m_dynGeomTrees.end(); ++it)
-		delete *it;
+	for (auto &it : m_dynGeomTrees)
+		delete it.second;
 	delete m_geomTree;
 }
 
@@ -57,8 +54,8 @@ void CollMesh::Save(Serializer::Writer &wr) const
 	m_geomTree->Save(wr);
 
 	wr.Int32(m_dynGeomTrees.size());
-	for (auto it : m_dynGeomTrees) {
-		it->Save(wr);
+	for (auto &it : m_dynGeomTrees) {
+		it.second->Save(wr);
 	}
 
 	wr.Int32(m_totalTris);

@@ -16,7 +16,9 @@
 #include <cstdint>
 #include <vector>
 
-class CollMesh;
+//class CollMesh;
+#include "CollMesh.h"
+class CollisionGeometry;
 class GeomTree;
 
 namespace SceneGraph {
@@ -43,7 +45,7 @@ namespace SceneGraph {
 		//geomtree is not built until all nodes are visited and
 		//BuildCollMesh called
 		Aabb m_aabb;
-		std::vector<matrix4x4f> m_matrixStack;
+		std::vector<std::pair<MatrixTransform*, matrix4x4f>> m_matrixStack;
 		float m_boundingRadius;
 		bool m_properData;
 		bool m_is_not_moved;
@@ -53,7 +55,7 @@ namespace SceneGraph {
 		std::vector<uint32_t> m_indices;
 		std::vector<uint32_t> m_flags;
 
-		std::vector<GeomTree *> m_dynGeomTree;
+		std::vector<CollMesh::PairOfCollGeomGeomTree> m_dynGeomTree;
 		uint32_t m_totalTris;
 	};
 } // namespace SceneGraph

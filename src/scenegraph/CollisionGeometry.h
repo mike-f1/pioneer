@@ -25,7 +25,6 @@ namespace SceneGraph {
 		CollisionGeometry(const CollisionGeometry &, NodeCopyCache *cache = 0);
 
 		Node *Clone(NodeCopyCache *cache = 0) override;
-		~CollisionGeometry();
 
 		const char *GetTypeName() const override { return "CollisionGeometry"; }
 		void Accept(NodeVisitor &nv) override;
@@ -39,22 +38,14 @@ namespace SceneGraph {
 		bool IsDynamic() const { return m_dynamic; }
 		void SetDynamic(bool b) { m_dynamic = b; }
 
-		//for linking game collision objects with these nodes
-		GeomTree *GetGeomTree() const { return m_geomTree; }
-		void SetGeomTree(GeomTree *c) { m_geomTree = c; }
-
-		Geom *GetGeom() const { return m_geom; }
-		void SetGeom(Geom *g) { m_geom = g; }
+	protected:
+		~CollisionGeometry();
 
 	private:
 		std::vector<vector3f> m_vertices;
 		std::vector<uint32_t> m_indices;
 		unsigned int m_triFlag; //only one per node
 		bool m_dynamic;
-
-		//for dynamic collisions
-		GeomTree *m_geomTree;
-		Geom *m_geom;
 	};
 } // namespace SceneGraph
 

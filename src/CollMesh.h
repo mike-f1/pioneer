@@ -10,6 +10,12 @@
 #include <vector>
 #include <algorithm>
 
+#include <libs/matrix4x4.h>
+namespace SceneGraph {
+	class CollisionGeometry;
+	class MatrixTransform;
+}
+
 class GeomTree;
 
 namespace Serializer {
@@ -17,11 +23,14 @@ namespace Serializer {
 	class Reader;
 } // namespace Serializer
 
-//This simply stores the collision GeomTrees
-//and AABB.
+//This simply stores the collision GeomTrees (both static and dynamic)
+//and AABB for each model
+
 class CollMesh final: public RefCounted {
 public:
-	CollMesh(Aabb aabb, GeomTree *static_gt, std::vector<GeomTree *> dynamic_gt);
+	using PairOfCollGeomGeomTree = std::pair<matrix4x4f, GeomTree *>;
+
+	CollMesh(Aabb aabb, GeomTree *static_gt, std::vector<PairOfCollGeomGeomTree> dynamic_gt);
 	CollMesh(Serializer::Reader &rd);
 
 	~CollMesh();
@@ -34,7 +43,7 @@ public:
 
 	const GeomTree *GetGeomTree() const { return m_geomTree; }
 
-	const std::vector<GeomTree *> &GetDynGeomTrees() const { return m_dynGeomTrees; }
+	const std::vector<PairOfCollGeomGeomTree> &GetDynGeomTrees() const { return m_dynGeomTrees; }
 
 	//for statistics
 	unsigned int GetNumTriangles() const { return m_totalTris; }
@@ -42,7 +51,7 @@ public:
 protected:
 	Aabb m_aabb;
 	GeomTree *m_geomTree;
-	std::vector<GeomTree *> m_dynGeomTrees;
+	std::vector<PairOfCollGeomGeomTree> m_dynGeomTrees;
 	unsigned int m_totalTris;
 };
 

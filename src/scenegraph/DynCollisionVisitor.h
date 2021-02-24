@@ -15,15 +15,21 @@ namespace SceneGraph {
 	public:
 		virtual void ApplyCollisionGeometry(CollisionGeometry &cg)
 		{
-			if (cg.IsDynamic())
+			if (cg.IsDynamic()) {
 				results.push_back(&cg);
+				printf("push %p (size = %lu)\n", &cg, results.size());
+			}
 		}
 
-		CollisionGeometry *GetCgForTree(GeomTree *t)
+		CollisionGeometry *FindCgForTree(GeomTree *t)
 		{
-			for (auto it = results.begin(); it != results.end(); ++it)
-				if ((*it)->GetGeomTree() == t) return (*it);
-			return 0;
+			printf("Results size %lu\n", results.size());
+			for (auto it = results.begin(); it != results.end(); ++it) {
+				//printf("check with %p\n", (*it)->GetGeomTree());
+				//if ((*it)->GetGeomTree() == t) return (*it);
+			}
+			printf("Not found\n");
+			return nullptr;
 		}
 
 	private:
@@ -44,9 +50,9 @@ namespace SceneGraph {
 
 		virtual void ApplyCollisionGeometry(CollisionGeometry &cg)
 		{
-			if (!cg.GetGeom()) return;
+			//if (!cg.GetGeom()) return;
 
-			matrix4x4ftod(m_matrixStack.back(), cg.GetGeom()->m_animTransform);
+			//matrix4x4ftod(m_matrixStack.back(), cg.GetGeom()->m_animTransform);
 		}
 
 	private:

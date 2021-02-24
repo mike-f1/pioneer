@@ -33,7 +33,7 @@ namespace SceneGraph {
 			m_aabb.Update(g.m_boundingBox.min);
 			m_aabb.Update(g.m_boundingBox.max);
 		} else {
-			const matrix4x4f &matrix = m_matrixStack.back();
+			const matrix4x4f &matrix = m_matrixStack.back().second;
 			const vector3f min = matrix * vector3f(g.m_boundingBox.min);
 			const vector3f max = matrix * vector3f(g.m_boundingBox.max);
 			m_aabb.Update(vector3d(min));
@@ -46,9 +46,9 @@ namespace SceneGraph {
 		PROFILE_SCOPED()
 		m_is_not_moved = true;
 		matrix4x4f matrix = matrix4x4f::Identity();
-		if (!m_matrixStack.empty()) matrix = m_matrixStack.back();
+		if (!m_matrixStack.empty()) matrix = m_matrixStack.back().second;
 
-		m_matrixStack.push_back(matrix * m.GetTransform());
+		m_matrixStack.push_back({&m, matrix * m.GetTransform()});
 		m.Traverse(*this);
 		m_matrixStack.pop_back();
 	}
@@ -66,20 +66,20 @@ namespace SceneGraph {
 
 		using std::vector;
 
-		const matrix4x4f matrix = m_matrixStack.empty() ? matrix4x4f::Identity() : m_matrixStack.back();
+		const matrix4x4f matrix = m_matrixStack.empty() ? matrix4x4f::Identity() : m_matrixStack.back().second;
 
 		//copy data (with index offset)
 		unsigned idxOffset = m_vertices.size();
 		m_vertices.reserve(m_vertices.size() + cg.GetVertices().size());
-		for (vector<vector3f>::const_iterator it = cg.GetVertices().begin(); it != cg.GetVertices().end(); ++it) {
-			const vector3f pos = matrix * (*it);
+		for (const auto &vertex : cg.GetVertices()) {
+			const vector3f pos = matrix * vertex;
 			m_vertices.emplace_back(pos);
 			m_aabb.Update(pos.x, pos.y, pos.z);
 		}
 
 		m_indices.reserve(m_indices.size() + cg.GetIndices().size());
-		for (vector<uint32_t>::const_iterator it = cg.GetIndices().begin(); it != cg.GetIndices().end(); ++it)
-			m_indices.emplace_back(*it + idxOffset);
+		for (const auto &it : cg.GetIndices())
+			m_indices.emplace_back(it + idxOffset);
 
 		//at least some of the geoms should be default collision
 		if (cg.GetTriFlag() == 0)
@@ -104,9 +104,9 @@ namespace SceneGraph {
 		//takes ownership of data
 		GeomTree *gt = new GeomTree(numTris,
 			std::move(vertices), std::move(indices), std::move(triFlags));
-		cg.SetGeomTree(gt);
+		printf("CollisionVisitor: SetGeomTree *%p\n", gt);
 
-		m_dynGeomTree.push_back(gt);
+		m_dynGeomTree.push_back(std::make_pair(m_matrixStack.back().second, gt));
 
 		m_totalTris += numTris;
 	}
@@ -169,8 +169,7 @@ namespace SceneGraph {
 		ADDTRI(1, 3, 5);
 #undef ADDTRI
 
-		for (unsigned int i = 0; i < ind.size() / 3; i++)
-			m_flags.push_back(0);
+		m_flags = std::vector<uint32_t>(ind.size() / 3, 0);
 	}
 
 	RefCountedPtr<CollMesh> CollisionVisitor::CreateCollisionMesh()

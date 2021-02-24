@@ -31,7 +31,7 @@ CollMesh::CollMesh(Serializer::Reader &rd)
 	const uint32_t numDynGeomTrees = rd.Int32();
 	m_dynGeomTrees.reserve(numDynGeomTrees);
 	for (uint32_t it = 0; it < numDynGeomTrees; ++it) {
-		m_dynGeomTrees.push_back({nullptr, new GeomTree(rd)}); //FIXME Soooner!!!!!!!!!!
+		m_dynGeomTrees.push_back({nullptr, nullptr, new GeomTree(rd)}); //FIXME Soooner!!!!!!!!!!
 	}
 
 	m_totalTris = rd.Int32();
@@ -40,7 +40,7 @@ CollMesh::CollMesh(Serializer::Reader &rd)
 CollMesh::~CollMesh()
 {
 	for (auto &it : m_dynGeomTrees)
-		delete it.second;
+		delete std::get<2>(it);
 	delete m_geomTree;
 }
 
@@ -55,7 +55,7 @@ void CollMesh::Save(Serializer::Writer &wr) const
 
 	wr.Int32(m_dynGeomTrees.size());
 	for (auto &it : m_dynGeomTrees) {
-		it.second->Save(wr);
+		std::get<2>(it)->Save(wr);
 	}
 
 	wr.Int32(m_totalTris);

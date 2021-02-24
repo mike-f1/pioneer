@@ -45,7 +45,8 @@ namespace SceneGraph {
 		//geomtree is not built until all nodes are visited and
 		//BuildCollMesh called
 		Aabb m_aabb;
-		std::vector<std::pair<MatrixTransform*, matrix4x4f>> m_matrixStack;
+		std::vector<matrix4x4f> m_matrixStack;
+		std::vector<MatrixTransform *> m_animatedMT;
 		float m_boundingRadius;
 		bool m_properData;
 		bool m_is_not_moved;

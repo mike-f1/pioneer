@@ -28,7 +28,7 @@ namespace Serializer {
 
 class CollMesh final: public RefCounted {
 public:
-	using PairOfCollGeomGeomTree = std::pair<matrix4x4f, GeomTree *>;
+	using PairOfCollGeomGeomTree = std::tuple<matrix4x4f, SceneGraph::MatrixTransform *, GeomTree *>;
 
 	CollMesh(Aabb aabb, GeomTree *static_gt, std::vector<PairOfCollGeomGeomTree> dynamic_gt);
 	CollMesh(Serializer::Reader &rd);

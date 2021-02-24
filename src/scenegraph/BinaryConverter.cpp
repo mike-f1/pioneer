@@ -149,10 +149,10 @@ void BinaryConverter::Save(const std::string &filename, const std::string &savep
 	SaveHelperVisitor sv(&wr, m);
 	m->GetRoot()->Accept(sv);
 
+	SaveAnimations(wr, m);
+
 	m->GetCollisionMesh()->Save(wr);
 	wr.Float(m->GetDrawClipRadius());
-
-	SaveAnimations(wr, m);
 
 	//save tags
 	wr.Int32(m->GetNumTags());
@@ -256,14 +256,13 @@ Model *BinaryConverter::CreateModel(const std::string &filename, Serializer::Rea
 	if (!root) throw LoadingError("Expected root");
 	m_model->m_root.Reset(root);
 
+	LoadAnimations(rd);
+	m_model->UpdateAnimations();
+
 	RefCountedPtr<CollMesh> collMesh(new CollMesh(rd));
 	m_model->SetCollisionMesh(collMesh);
 	m_model->SetDrawClipRadius(rd.Float());
 
-	LoadAnimations(rd);
-
-	m_model->UpdateAnimations();
-	//m_model->CreateCollisionMesh();
 	if (m_patternsUsed) SetUpPatterns();
 
 	return m_model;

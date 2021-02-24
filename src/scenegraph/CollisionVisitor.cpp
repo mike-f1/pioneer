@@ -33,7 +33,7 @@ namespace SceneGraph {
 			m_aabb.Update(g.m_boundingBox.min);
 			m_aabb.Update(g.m_boundingBox.max);
 		} else {
-			const matrix4x4f &matrix = m_matrixStack.back().second;
+			const matrix4x4f &matrix = m_matrixStack.back();
 			const vector3f min = matrix * vector3f(g.m_boundingBox.min);
 			const vector3f max = matrix * vector3f(g.m_boundingBox.max);
 			m_aabb.Update(vector3d(min));
@@ -46,11 +46,19 @@ namespace SceneGraph {
 		PROFILE_SCOPED()
 		m_is_not_moved = true;
 		matrix4x4f matrix = matrix4x4f::Identity();
-		if (!m_matrixStack.empty()) matrix = m_matrixStack.back().second;
+		if (!m_matrixStack.empty()) matrix = m_matrixStack.back();
 
-		m_matrixStack.push_back({&m, matrix * m.GetTransform()});
+		if (m.GetIsAnimated()) {
+			m_animatedMT.push_back(&m);
+		} else {
+			m_matrixStack.push_back(matrix * m.GetTransform());
+		}
 		m.Traverse(*this);
-		m_matrixStack.pop_back();
+		if (m.GetIsAnimated()) {
+			m_animatedMT.pop_back();
+		} else {
+			m_matrixStack.pop_back();
+		}
 	}
 
 	void CollisionVisitor::ApplyCollisionGeometry(CollisionGeometry &cg)
@@ -66,7 +74,7 @@ namespace SceneGraph {
 
 		using std::vector;
 
-		const matrix4x4f matrix = m_matrixStack.empty() ? matrix4x4f::Identity() : m_matrixStack.back().second;
+		const matrix4x4f matrix = m_matrixStack.empty() ? matrix4x4f::Identity() : m_matrixStack.back();
 
 		//copy data (with index offset)
 		unsigned idxOffset = m_vertices.size();
@@ -105,8 +113,9 @@ namespace SceneGraph {
 		GeomTree *gt = new GeomTree(numTris,
 			std::move(vertices), std::move(indices), std::move(triFlags));
 		printf("CollisionVisitor: SetGeomTree *%p\n", gt);
+		printf("Seems: matrixStack.size = %lu, while animatedMT.size = %lu\n", m_matrixStack.size(), m_animatedMT.size());
 
-		m_dynGeomTree.push_back(std::make_pair(m_matrixStack.back().second, gt));
+		m_dynGeomTree.push_back(std::make_tuple(m_matrixStack.back(), m_animatedMT.back(), gt));
 
 		m_totalTris += numTris;
 	}

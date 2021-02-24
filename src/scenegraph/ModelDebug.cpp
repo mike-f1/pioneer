@@ -213,11 +213,10 @@ namespace SceneGraph {
 			//m_model->GetRoot()->Accept(dgf);
 
 			for (auto &dgt : collMesh->GetDynGeomTrees()) {
-				printf("dgt.first =**; dgt.second = %p\n", dgt.second);
+				//printf("dgt.first =**; dgt.second = %p\n", dgt.second);
 				//SceneGraph::CollisionGeometry *cg = dgf.FindCgForTree(dgt);
 				//if (!cg) throw std::runtime_error { "No CollisionGeometry found" };
-				m_dynCollisionMeshVB.push_back({dgt.first, createVertexBufferFor(dgt.second)});
-				dgt.first.Print();
+				m_dynCollisionMeshVB.push_back({std::get<0>(dgt), std::get<1>(dgt), createVertexBufferFor(std::get<2>(dgt))});
 
 	//dynamic geoms
 /*	for (auto *dgt : m_model->GetCollisionMesh()->GetDynGeomTrees()) {
@@ -241,9 +240,10 @@ namespace SceneGraph {
 		for (auto &dynVB : m_dynCollisionMeshVB) {
 			Graphics::Renderer::MatrixTicket ticket(RendererLocator::getRenderer(), Graphics::MatrixMode::MODELVIEW);
 			matrix4x4f prev = RendererLocator::getRenderer()->GetCurrentModelView();
-			prev = prev * dynVB.first;
+			prev = prev * std::get<0>(dynVB);
+			prev = prev * std::get<1>(dynVB)->GetTransform();
 			RendererLocator::getRenderer()->SetTransform(prev);
-			RendererLocator::getRenderer()->DrawBuffer(dynVB.second.Get(), rs, Graphics::vtxColorMaterial);
+			RendererLocator::getRenderer()->DrawBuffer(std::get<2>(dynVB).Get(), rs, Graphics::vtxColorMaterial);
 		}
 		RendererLocator::getRenderer()->SetWireFrameMode(false);
 	}

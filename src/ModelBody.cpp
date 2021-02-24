@@ -129,7 +129,7 @@ void ModelBody::RebuildCollisionMesh()
 
 	//dynamic geoms
 	for (auto &dgt : collMesh->GetDynGeomTrees()) {
-		m_dynGeoms.emplace_back(std::make_unique<Geom>(dgt.second, GetOrient(), GetPosition(), this));
+//		m_dynGeoms.emplace_back(std::make_unique<Geom>(dgt.second, GetOrient(), GetPosition(), this));
 //		auto &dynG = m_dynGeoms.back();
 //		dynG->m_animTransform = matrix4x4d::Identity();
 //		SceneGraph::CollisionGeometry *cg = dgf.FindCgForTree(dgt);

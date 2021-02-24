@@ -15,15 +15,15 @@ namespace SceneGraph {
 
 	MatrixTransform::MatrixTransform(const matrix4x4f &m) :
 		Group(),
-		m_transform(m)
-	{
-	}
+		m_transform(m),
+		m_is_animated(false)
+	{}
 
 	MatrixTransform::MatrixTransform(const MatrixTransform &mt, NodeCopyCache *cache) :
 		Group(mt, cache),
-		m_transform(mt.m_transform)
-	{
-	}
+		m_transform(mt.m_transform),
+		m_is_animated(false)
+	{}
 
 	Node *MatrixTransform::Clone(NodeCopyCache *cache)
 	{
@@ -66,6 +66,7 @@ namespace SceneGraph {
 		Group::Save(db);
 		for (uint32_t i = 0; i < 16; i++)
 			db.wr->Float(m_transform[i]);
+		db.wr->Bool(m_is_animated);
 	}
 
 	MatrixTransform *MatrixTransform::Load(NodeDatabase &db)
@@ -73,7 +74,9 @@ namespace SceneGraph {
 		matrix4x4f matrix;
 		for (uint32_t i = 0; i < 16; i++)
 			matrix[i] = db.rd->Float();
+		bool animated = db.rd->Bool();
 		MatrixTransform *mt = new MatrixTransform(matrix);
+		if (animated) mt->SetAnimated();
 		return mt;
 	}
 

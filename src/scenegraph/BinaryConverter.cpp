@@ -332,8 +332,8 @@ void BinaryConverter::SaveAnimations(Serializer::Writer &wr, Model *m)
 	for (const auto &anim : anims) {
 		wr.String(anim.GetName());
 		wr.Double(anim.GetDuration());
-		wr.Int32(anim.GetChannels().size());
-		for (const auto &chan : anim.GetChannels()) {
+		wr.Int32(anim.m_channels.size());
+		for (const auto &chan : anim.m_channels) {
 			wr.String(chan.node->GetName());
 			//write pos/rot/scale keys
 			wr.Int32(chan.positionKeys.size());

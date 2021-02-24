@@ -32,11 +32,14 @@ namespace SceneGraph {
 		const matrix4x4f &GetTransform() const { return m_transform; }
 		void SetTransform(const matrix4x4f &m) { m_transform = m; }
 
+		bool GetIsAnimated() { return m_is_animated; }
+		void SetAnimated() { m_is_animated = true; }
 	protected:
 		virtual ~MatrixTransform() {}
 
 	private:
 		matrix4x4f m_transform;
+		bool m_is_animated; // <- set when animations are "reconnected" or initialized, _not when copied_
 	};
 } // namespace SceneGraph
 #endif

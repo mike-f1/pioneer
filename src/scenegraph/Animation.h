@@ -24,19 +24,20 @@ namespace SceneGraph {
 	public:
 		Animation(const std::string &name, double duration);
 		Animation(const Animation &);
+		// post-copy function which find the corresponding  transform after copy or creation
 		void UpdateChannelTargets(Node *root);
 		double GetDuration() const { return m_duration; }
 		const std::string &GetName() const { return m_name; }
-		double GetProgress();
-		void SetProgress(double); //0.0 -- 1.0, overrides m_time
+		double GetProgress() const;
+		void SetProgress(double); //0.0 -- 1.0, overrides m_time; NOTE: not calling this lead to an early out in Interpolate()
 		void Interpolate(); //update transforms according to m_time;
-		const std::vector<AnimationChannel> &GetChannels() const { return m_channels; }
 
 	private:
 		double m_duration;
 		double m_time;
 		std::string m_name;
 		std::vector<AnimationChannel> m_channels;
+		bool m_noNeedOfUpdate;
 	};
 
 } // namespace SceneGraph

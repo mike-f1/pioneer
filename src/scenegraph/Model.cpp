@@ -431,8 +431,8 @@ namespace SceneGraph {
 		modelObj["visitor"] = visitorArray; // Add visitor array to model object.
 
 		Json animationArray = Json::array(); // Create JSON array to contain animation data.
-		for (auto i : m_animations)
-			animationArray.push_back(i.GetProgress());
+		for (const auto &anim : m_animations)
+			animationArray.push_back(anim.GetProgress());
 		modelObj["animations"] = animationArray; // Add animation array to model object.
 
 		modelObj["cur_pattern_index"] = m_curPatternIndex;
@@ -468,8 +468,8 @@ namespace SceneGraph {
 			Json animationArray = modelObj["animations"].get<Json::array_t>();
 			assert(m_animations.size() == animationArray.size());
 			unsigned int arrayIndex = 0;
-			for (auto i : m_animations)
-				i.SetProgress(animationArray[arrayIndex++]);
+			for (auto &anim : m_animations)
+				anim.SetProgress(animationArray[arrayIndex++]);
 			UpdateAnimations();
 
 			SetPattern(modelObj["cur_pattern_index"]);

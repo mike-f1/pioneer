@@ -15,32 +15,34 @@ namespace SceneGraph {
 	Animation::Animation(const std::string &name, double duration) :
 		m_duration(duration),
 		m_time(0.0),
-		m_name(name)
+		m_name(name),
+		m_noNeedOfUpdate(false)
 	{}
 
 	Animation::Animation(const Animation &anim) :
 		m_duration(anim.m_duration),
 		m_time(0.0),
-		m_name(anim.m_name)
-	{
-		for (ChannelList::const_iterator chan = anim.m_channels.begin(); chan != anim.m_channels.end(); ++chan) {
-			m_channels.push_back(*chan);
-		}
-	}
+		m_name(anim.m_name),
+		m_channels(anim.m_channels),
+		m_noNeedOfUpdate(false)
+	{}
 
 	void Animation::UpdateChannelTargets(Node *root)
 	{
-		for (ChannelList::iterator chan = m_channels.begin(); chan != m_channels.end(); ++chan) {
+		for (auto &chan : m_channels) {
 			//update channels to point to new node structure
-			MatrixTransform *trans = dynamic_cast<MatrixTransform *>(root->FindNode(chan->node->GetName()));
+			MatrixTransform *trans = dynamic_cast<MatrixTransform *>(root->FindNode(chan.node->GetName()));
 			assert(trans);
-			chan->node = trans;
+			chan.node = trans;
+			trans->SetAnimated();
 		}
 	}
 
 	void Animation::Interpolate()
 	{
 		PROFILE_SCOPED()
+		if (m_noNeedOfUpdate) return;
+		m_noNeedOfUpdate = true;
 		const double mtime = m_time;
 
 		//go through channels and calculate transforms
@@ -123,7 +125,7 @@ namespace SceneGraph {
 		}
 	}
 
-	double Animation::GetProgress()
+	double Animation::GetProgress() const
 	{
 		return m_time / m_duration;
 	}
@@ -131,6 +133,7 @@ namespace SceneGraph {
 	void Animation::SetProgress(double prog)
 	{
 		m_time = std::clamp(prog, 0.0, 1.0) * m_duration;
+		m_noNeedOfUpdate = false;
 	}
 
 } // namespace SceneGraph

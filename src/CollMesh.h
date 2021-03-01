@@ -31,11 +31,7 @@ public:
 	using PairOfCollGeomGeomTree = std::tuple<matrix4x4f, SceneGraph::MatrixTransform *, GeomTree *>;
 
 	CollMesh(Aabb aabb, GeomTree *static_gt, std::vector<PairOfCollGeomGeomTree> dynamic_gt);
-	CollMesh(Serializer::Reader &rd);
-
 	~CollMesh();
-
-	void Save(Serializer::Writer &wr) const;
 
 	const Aabb &GetAabb() { return m_aabb; }
 

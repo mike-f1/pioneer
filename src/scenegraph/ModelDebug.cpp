@@ -110,7 +110,7 @@ namespace SceneGraph {
 	{
 		if (!m_model->GetCollisionMesh()) return;
 
-		const Aabb aabb = m_model->GetCollisionMesh()->GetAabb();
+		const Aabb &aabb = m_model->GetCollisionMesh()->GetAabb();
 
 		Graphics::MaterialDescriptor desc;
 		m_aabbMat.Reset(RendererLocator::getRenderer()->CreateMaterial(desc));

@@ -52,8 +52,6 @@ namespace SceneGraph {
 		m_boundingRadius(other.m_boundingRadius),
 		m_materials(other.m_materials),
 		m_patterns(other.m_patterns),
-		m_collMesh(other.m_collMesh) //might have to make this per-instance at some point
-		,
 		m_name(other.m_name),
 		m_curPatternIndex(other.m_curPatternIndex),
 		m_curPattern(other.m_curPattern),
@@ -86,6 +84,10 @@ namespace SceneGraph {
 		std::for_each(begin(m_animations), end(m_animations), [this](Animation &anim) {
 			anim.UpdateChannelTargets(m_root.Get());
 		});
+
+		// create a new collision mesh (as moveable collisions must be _per instance_, because of Animations)
+		// Note: should be after animations retargeting, because MatrixTransform should be marked as  "Animated"
+		CreateCollisionMesh();
 
 		//m_tags needs to be updated
 		m_tags.reserve(other.m_tags.size());
@@ -197,13 +199,12 @@ namespace SceneGraph {
 			RendererLocator::getRenderer()->SetWireFrameMode(false);
 	}
 
-	RefCountedPtr<CollMesh> Model::CreateCollisionMesh()
+	void Model::CreateCollisionMesh()
 	{
 		CollisionVisitor cv;
 		m_root->Accept(cv);
 		m_collMesh = cv.CreateCollisionMesh();
 		m_boundingRadius = cv.GetBoundingRadius();
-		return m_collMesh;
 	}
 
 	RefCountedPtr<CollMesh> Model::GetCollisionMesh() const

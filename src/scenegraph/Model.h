@@ -193,7 +193,7 @@ namespace SceneGraph {
 		Model(const Model &); // copy ctor: used in MakeInstance
 
 		// Used by loaders
-		RefCountedPtr<CollMesh> CreateCollisionMesh();
+		void CreateCollisionMesh();
 
 		ColorMap m_colorMap;
 		float m_boundingRadius;

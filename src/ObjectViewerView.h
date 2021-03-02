@@ -24,21 +24,21 @@ namespace SceneGraph {
 	enum class DebugFlags;
 }
 
-class ObjectViewerView : public UIView {
+class ObjectViewerView final: public UIView {
 public:
 	ObjectViewerView();
 	~ObjectViewerView();
-	virtual void Update(const float frameTime) override;
-	virtual void Draw3D() override;
-	virtual void DrawUI(const float frameTime) override;
+	void Update(const float frameTime) override;
+	void Draw3D() override;
+	void DrawUI(const float frameTime) override;
 
 	void SetObject(Body *b) { m_newTarget = b; }
 
 	static void RegisterInputBindings();
 	void AttachBindingCallback();
 protected:
-	virtual void OnSwitchTo() override;
-	virtual void OnSwitchFrom() override;
+	void OnSwitchTo() override;
+	void OnSwitchFrom() override;
 
 private:
 
@@ -64,7 +64,7 @@ private:
 	GSDebugFlags m_planetDebugFlags;
 
 	float m_viewingDist;
-	Body *m_lastTarget, *m_newTarget;
+	Body *m_actualTarget, *m_newTarget;
 	matrix4x4d m_camRot;
 	matrix3x3d m_camTwist;
 

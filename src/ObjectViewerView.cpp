@@ -48,7 +48,7 @@ ObjectViewerView::ObjectViewerView() :
 	m_debugFlags(SceneGraph::DebugFlags::NONE),
 	m_planetDebugFlags(GSDebugFlags::NONE),
 	m_viewingDist(VIEW_START_DIST),
-	m_lastTarget(nullptr),
+	m_actualTarget(nullptr),
 	m_newTarget(nullptr),
 	m_camRot(INITIAL_CAM_ANGLES),
 	m_camTwist(matrix3x3d::Identity()),
@@ -143,32 +143,30 @@ void ObjectViewerView::Update(const float frameTime)
 		// Make refactor easier when a target will be independent from game
 		m_newTarget = getATarget();
 	}
-	if (m_newTarget != m_lastTarget) {
-		// Re-set debug flags before changing target
-		ModelBody *lastT = dynamic_cast<ModelBody *>(m_lastTarget);
-		if (lastT) lastT->GetModel()->SetDebugFlags(m_debugFlags);
-
+	if (m_newTarget != m_actualTarget) {
+		// Leave old ModelBody flags untouched
 		ModelBody *newT = dynamic_cast<ModelBody *>(m_newTarget);
-		if (newT) m_debugFlags = newT->GetModel()->GetDebugFlags();
+		if (newT)  newT->GetModel()->SetDebugFlags(m_debugFlags);
 		else m_debugFlags = SceneGraph::DebugFlags::NONE;
 
-		TerrainBody *lastTb = dynamic_cast<TerrainBody *>(m_lastTarget);
-		if (lastTb) lastTb->SetDebugFlags(m_planetDebugFlags);
+		// Reset old TerrainBody flags and use actual flag for new
+		TerrainBody *lastTb = dynamic_cast<TerrainBody *>(m_actualTarget);
+		if (lastTb) lastTb->SetDebugFlags(GSDebugFlags::NONE);
 
 		TerrainBody *newTb = dynamic_cast<TerrainBody *>(m_newTarget);
-		if (newTb) m_planetDebugFlags = newTb->GetDebugFlags();
+		if (newTb) newTb->SetDebugFlags(m_planetDebugFlags);
 		else m_planetDebugFlags = GSDebugFlags::NONE;
 
 		m_stats.clear();
 		m_showBoundSphere = false;
 
-		m_lastTarget = m_newTarget;
+		m_actualTarget = m_newTarget;
 		// Reset view parameter for new target.
 		OnResetViewParams();
 		// Update planet parameters for new target
 		OnReloadSBData();
 	}
-	if (m_lastTarget == nullptr) return;
+	if (m_actualTarget == nullptr) return;
 
 	const float moveSpeed = MOVEMENT_SPEED * WHEEL_SENSITIVITY * InputFWD::GetMoveSpeedShiftModifier();
 	float move = moveSpeed * frameTime;
@@ -190,16 +188,16 @@ void ObjectViewerView::Update(const float frameTime)
 	m_viewingDist *= zoom_change;
 
 	float min_distance = 10.0;
-	if (m_lastTarget->IsType(Object::TERRAINBODY)) {
-        TerrainBody *tb = static_cast<TerrainBody *>(m_lastTarget);
+	if (m_actualTarget->IsType(Object::TERRAINBODY)) {
+        TerrainBody *tb = static_cast<TerrainBody *>(m_actualTarget);
         min_distance = tb->GetSystemBodyRadius();
 	} else {
-		min_distance = m_lastTarget->GetClipRadius() * 0.5;
+		min_distance = m_actualTarget->GetClipRadius() * 0.5;
 	}
 	m_viewingDist = std::clamp(m_viewingDist, min_distance, 1e12f);
 	m_zoomChange = Zooming::NONE;
 
-	if (m_inputFrame->IsActive(m_objectViewerBindings.resetZoom) && m_lastTarget != nullptr) {
+	if (m_inputFrame->IsActive(m_objectViewerBindings.resetZoom) && m_actualTarget != nullptr) {
 		OnResetViewParams();
 	}
 
@@ -258,8 +256,8 @@ void ObjectViewerView::Draw3D()
 	cameraContext->SetCameraPosition(camPos);
 	cameraContext->BeginFrame();
 
-	if (m_lastTarget) {
-		if (m_lastTarget->IsType(Object::STAR)) {
+	if (m_actualTarget) {
+		if (m_actualTarget->IsType(Object::STAR)) {
 			light.SetPosition(vector3f(0.f));
 		} else {
 			vector3f pos = vector3f(m_camTwist * vector3d(std::sin(m_lightAngle), 1.0, std::cos(m_lightAngle)));
@@ -268,10 +266,10 @@ void ObjectViewerView::Draw3D()
 		RendererLocator::getRenderer()->SetLights(1, &light);
 
 		matrix4x4d twistMat(m_camTwist);
-		m_lastTarget->Render(m_camera.get(), m_camTwist * camPos, twistMat * m_camRot);
+		m_actualTarget->Render(m_camera.get(), m_camTwist * camPos, twistMat * m_camRot);
 
 		// industry-standard red/green/blue XYZ axis indiactor
-		RendererLocator::getRenderer()->SetTransform(twistMat * matrix4x4d::Translation(camPos) * m_camRot * matrix4x4d::ScaleMatrix(m_lastTarget->GetClipRadius() * 2.0));
+		RendererLocator::getRenderer()->SetTransform(twistMat * matrix4x4d::Translation(camPos) * m_camRot * matrix4x4d::ScaleMatrix(m_actualTarget->GetClipRadius() * 2.0));
 		Graphics::Drawables::GetAxes3DDrawable(RendererLocator::getRenderer())->Draw(RendererLocator::getRenderer());
 	}
 
@@ -283,13 +281,13 @@ void ObjectViewerView::Draw3D()
 void ObjectViewerView::DrawUI(const float frameTime)
 {
 	std::ostringstream pathStr;
-	if (m_lastTarget) {
+	if (m_actualTarget) {
 		// fill in pathStr from sp values and sys->GetName()
 		static const std::string comma(", ");
-		const SystemBody *psb = m_lastTarget->GetSystemBody();
+		const SystemBody *psb = m_actualTarget->GetSystemBody();
 		if (psb) {
 			const SystemPath sp = psb->GetPath();
-			pathStr << m_lastTarget->GetSystemBody()->GetName() << " (" << sp.sectorX << comma << sp.sectorY << comma << sp.sectorZ << comma << sp.systemIndex << comma << sp.bodyIndex << ")";
+			pathStr << m_actualTarget->GetSystemBody()->GetName() << " (" << sp.sectorX << comma << sp.sectorY << comma << sp.sectorZ << comma << sp.systemIndex << comma << sp.bodyIndex << ")";
 		} else {
 			pathStr << "<unknown>";
 		}
@@ -299,7 +297,7 @@ void ObjectViewerView::DrawUI(const float frameTime)
 
 	std::string text;
 	text.reserve(128);
-	text = "View dist: " + stringUtils::format_distance(m_viewingDist) + "Object: " + (m_lastTarget ? m_lastTarget->GetLabel() : "<none>") + pathStr.str();
+	text = "View dist: " + stringUtils::format_distance(m_viewingDist) + "Object: " + (m_actualTarget ? m_actualTarget->GetLabel() : "<none>") + pathStr.str();
 
 	vector2f screen(Graphics::GetScreenWidth(), Graphics::GetScreenHeight());
 	if (!(screen == m_screen)) {
@@ -320,9 +318,9 @@ void ObjectViewerView::DrawUI(const float frameTime)
 
 	ImGui::TextUnformatted(text.c_str());
 
-	if (m_lastTarget) {
+	if (m_actualTarget) {
 		ImGui::Separator();
-		switch (m_lastTarget->GetType()) {
+		switch (m_actualTarget->GetType()) {
 			case Object::CARGOBODY:
 			case Object::PLAYER:
 			case Object::SHIP:
@@ -393,18 +391,18 @@ void ObjectViewerView::DrawAdditionalUIForSysBodies()
 		(m_showNearestBBox ? GSDebugFlags::NEAR_PATCHES_BBOX : GSDebugFlags::NONE) |
 		(m_showBoundSphere ? GSDebugFlags::BOUNDING_SPHERE : GSDebugFlags::NONE);
 
-	TerrainBody *tb = dynamic_cast<TerrainBody *>(m_lastTarget);
+	TerrainBody *tb = dynamic_cast<TerrainBody *>(m_actualTarget);
 	if (tb) tb->SetDebugFlags(m_planetDebugFlags);
 }
 
 void ObjectViewerView::DrawAdditionalUIForBodies()
 {
-	switch (m_lastTarget->GetType()) {
+	switch (m_actualTarget->GetType()) {
 		case Object::CARGOBODY: ImGui::TextUnformatted("Type is CargoBody"); break;
 		case Object::PLAYER:
 		case Object::SHIP:
 		{
-			const ShipType *st = static_cast<Ship *>(m_lastTarget)->GetShipType();
+			const ShipType *st = static_cast<Ship *>(m_actualTarget)->GetShipType();
 			if (st != nullptr) {
 				ImGui::Text("Ship model %s", st->id.c_str());
 			}
@@ -432,7 +430,7 @@ void ObjectViewerView::DrawAdditionalUIForBodies()
 		(m_showTags ? SceneGraph::DebugFlags::TAGS : SceneGraph::DebugFlags::NONE) |
 		(m_showDocking ? SceneGraph::DebugFlags::DOCKING : SceneGraph::DebugFlags::NONE);
 
-	ModelBody *mb = dynamic_cast<ModelBody *>(m_lastTarget);
+	ModelBody *mb = dynamic_cast<ModelBody *>(m_actualTarget);
 
 	if (mb) mb->GetModel()->SetDebugFlags(debug);
 
@@ -456,8 +454,8 @@ void ObjectViewerView::DrawAdditionalUIForBodies()
 
 void ObjectViewerView::OnResetViewParams()
 {
-	if (m_lastTarget != nullptr) {
-		m_viewingDist = m_lastTarget->GetClipRadius() * 2.0f;
+	if (m_actualTarget != nullptr) {
+		m_viewingDist = m_actualTarget->GetClipRadius() * 2.0f;
 	} else {
 		m_viewingDist = VIEW_START_DIST;
 	}
@@ -477,8 +475,8 @@ void ObjectViewerView::OnResetTwistMatrix()
 
 void ObjectViewerView::OnReloadSBData()
 {
-	if (m_lastTarget->IsType(Object::TERRAINBODY)) {
-		TerrainBody *tbody = static_cast<TerrainBody *>(m_lastTarget);
+	if (m_actualTarget->IsType(Object::TERRAINBODY)) {
+		TerrainBody *tbody = static_cast<TerrainBody *>(m_actualTarget);
 		const SystemBody *sbody = tbody->GetSystemBody();
 		m_sbMass = sbody->GetMassAsFixed().ToFloat();
 		m_sbRadius = sbody->GetRadiusAsFixed().ToFloat();
@@ -494,9 +492,9 @@ void ObjectViewerView::OnReloadSBData()
 
 void ObjectViewerView::OnChangeTerrain()
 {
-	if (!m_lastTarget) return;
+	if (!m_actualTarget) return;
 
-	TerrainBody *tbody = static_cast<TerrainBody *>(m_lastTarget);
+	TerrainBody *tbody = static_cast<TerrainBody *>(m_actualTarget);
 	SystemBody *sbody = const_cast<SystemBody *>(tbody->GetSystemBody());
 
 	if (!sbody) return;

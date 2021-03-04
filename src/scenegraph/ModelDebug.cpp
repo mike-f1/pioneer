@@ -13,9 +13,6 @@
 #include "graphics/VertexArray.h"
 #include "graphics/VertexBuffer.h"
 
-#include "DynCollisionVisitor.h"
-#include "CollisionVisitor.h"
-
 namespace SceneGraph {
 	ModelDebug::ModelDebug(Model *m, DebugFlags flags) :
 		m_model(m),

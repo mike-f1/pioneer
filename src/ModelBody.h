@@ -23,6 +23,7 @@ namespace Graphics {
 } // namespace Graphics
 
 namespace SceneGraph {
+	class MatrixTransform;
 	class Model;
 	class Animation;
 } // namespace SceneGraph
@@ -75,7 +76,7 @@ private:
 	bool m_isStatic;
 	bool m_colliding;
 	std::unique_ptr<Geom> m_geom; //static geom
-	std::vector<std::unique_ptr<Geom>> m_dynGeoms; //dynamic geoms
+	std::vector<std::tuple<matrix4x4d, SceneGraph::MatrixTransform *, std::unique_ptr<Geom>>> m_dynGeoms; //dynamic geoms
 	std::unique_ptr<SceneGraph::Model> m_model;
 	SceneGraph::Animation *m_idleAnimation;
 	std::unique_ptr<Shields> m_shields;

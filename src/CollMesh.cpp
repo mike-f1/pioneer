@@ -3,14 +3,11 @@
 
 #include "CollMesh.h"
 
-#include "scenegraph/Serializer.h"
 #include "collider/GeomTree.h"
-
-#include "profiler/Profiler.h"
 
 #include <stdexcept>
 
-CollMesh::CollMesh(Aabb aabb, GeomTree *static_gt, std::vector<PairOfCollGeomGeomTree> dynamic_gt) :
+CollMesh::CollMesh(Aabb aabb, GeomTree *static_gt, std::vector<TupleForDynCollision> dynamic_gt) :
 	m_aabb(std::move(aabb)),
 	m_geomTree(static_gt),
 	m_dynGeomTrees(std::move(dynamic_gt)),

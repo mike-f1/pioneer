@@ -112,10 +112,8 @@ namespace SceneGraph {
 		//takes ownership of data
 		GeomTree *gt = new GeomTree(numTris,
 			std::move(vertices), std::move(indices), std::move(triFlags));
-		printf("CollisionVisitor: SetGeomTree *%p\n", gt);
-		printf("Seems: matrixStack.size = %lu, while animatedMT.size = %lu\n", m_matrixStack.size(), m_animatedMT.size());
 
-		m_dynGeomTree.push_back(std::make_tuple(m_matrixStack.back(), m_animatedMT.back(), gt));
+		m_dynGeomTree.emplace_back(m_matrixStack.back(), m_animatedMT.back(), gt);
 
 		m_totalTris += numTris;
 	}
@@ -206,10 +204,6 @@ namespace SceneGraph {
 		collMesh.Reset(new CollMesh(m_aabb, gt, m_dynGeomTree));
 
 		m_boundingRadius = collMesh->GetAabb().GetRadius();
-
-		m_vertices.clear();
-		m_indices.clear();
-		m_flags.clear();
 
 		//timer.Stop();
 		//Output(" - CreateCollisionMesh took: %lf milliseconds\n", timer.millicycles());

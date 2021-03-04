@@ -1,6 +1,7 @@
 #ifndef MODELDEBUG_H
 #define MODELDEBUG_H
 
+#include "DynCollisionFwd.h"
 #include "libs/matrix4x4.h"
 #include "libs/RefCounted.h"
 #include <memory>
@@ -55,7 +56,7 @@ namespace SceneGraph {
 		std::unique_ptr<Graphics::Drawables::Line3D> m_CCylConnectingLine;
 		std::vector<Graphics::Drawables::Box3D> m_csgBoxes;
 		RefCountedPtr<Graphics::VertexBuffer> m_collisionMeshVB;
-		std::vector<std::tuple<matrix4x4f, MatrixTransform *, RefCountedPtr<Graphics::VertexBuffer>>> m_dynCollisionMeshVB;
+		std::vector<TupleForDynCollisionVB> m_dynCollisionMeshVB;
 		RefCountedPtr<Graphics::Material> m_boxes3DMat;
 	};
 } // namespace SceneGraph

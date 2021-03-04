@@ -43,8 +43,6 @@ public:
 	inline void SetGroup(int g) { m_group = g; }
 	inline int GetGroup() const { return m_group; }
 
-	matrix4x4d m_animTransform;
-
 	void SetCentralCylinder(std::unique_ptr<CSG_CentralCylinder> centralcylinder);
 	void AddBox(std::unique_ptr<CSG_Box> box);
 

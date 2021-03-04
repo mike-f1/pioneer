@@ -10,14 +10,14 @@
 #include "NodeVisitor.h"
 
 #include "Aabb.h"
+#include "scenegraph/DynCollisionFwd.h"
 #include "libs/RefCounted.h"
 #include "libs/matrix4x4.h"
 #include "libs/vector3.h"
 #include <cstdint>
 #include <vector>
 
-//class CollMesh;
-#include "CollMesh.h"
+class CollMesh;
 class CollisionGeometry;
 class GeomTree;
 
@@ -37,13 +37,13 @@ namespace SceneGraph {
 		float GetBoundingRadius() const { return m_boundingRadius; }
 
 	private:
-		// Collect all static collision in one single mesh and create a GeomTree
+		// Collect all static collision in one single mesh and create a GeomTree, already placed and rotated
+		// So geomtree is not built until all nodes are visited and
 		void ApplyStaticCollisionGeometry(CollisionGeometry &);
-		// Collect each dynamic collision and create a GeomTree for each geometry
+		// Collect all dynamic collision and create a GeomTree for each geometry, not placed or rotated (but stores the right transforms)
 		void ApplyDynamicCollisionGeometry(CollisionGeometry &);
 		void AabbToMesh(const Aabb &);
-		//geomtree is not built until all nodes are visited and
-		//BuildCollMesh called
+
 		Aabb m_aabb;
 		std::vector<matrix4x4f> m_matrixStack;
 		std::vector<MatrixTransform *> m_animatedMT;
@@ -56,7 +56,7 @@ namespace SceneGraph {
 		std::vector<uint32_t> m_indices;
 		std::vector<uint32_t> m_flags;
 
-		std::vector<CollMesh::PairOfCollGeomGeomTree> m_dynGeomTree;
+		std::vector<TupleForDynCollision> m_dynGeomTree;
 		uint32_t m_totalTris;
 	};
 } // namespace SceneGraph

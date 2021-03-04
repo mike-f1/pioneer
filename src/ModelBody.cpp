@@ -18,7 +18,6 @@
 #include "graphics/RendererLocator.h"
 #include "scenegraph/Animation.h"
 #include "scenegraph/CollisionGeometry.h"
-#include "scenegraph/DynCollisionVisitor.h"
 #include "scenegraph/MatrixTransform.h"
 #include "scenegraph/Model.h"
 #include "libs/gameconsts.h"
@@ -123,19 +122,11 @@ void ModelBody::RebuildCollisionMesh()
 
 	SetPhysRadius(maxRadius);
 
-	//have to figure out which collision geometries are responsible for which geomtrees
-	SceneGraph::DynGeomFinder dgf;
-	m_model->GetRoot()->Accept(dgf);
-
 	//dynamic geoms
 	for (auto &dgt : collMesh->GetDynGeomTrees()) {
-//		m_dynGeoms.emplace_back(std::make_unique<Geom>(dgt.second, GetOrient(), GetPosition(), this));
-//		auto &dynG = m_dynGeoms.back();
-//		dynG->m_animTransform = matrix4x4d::Identity();
-//		SceneGraph::CollisionGeometry *cg = dgf.FindCgForTree(dgt);
-//		if (cg)
-//			cg->SetGeom(dynG.get());
-//		else throw std::runtime_error { "Collision geometry not found" };
+		matrix4x4d temp;
+		matrix4x4ftod(std::get<0>(dgt), temp);
+		m_dynGeoms.emplace_back(temp, std::get<1>(dgt), std::make_unique<Geom>(std::get<2>(dgt), GetOrient(), GetPosition(), this));
 	}
 
 	if (f) AddGeomsToFrame(f);
@@ -216,9 +207,10 @@ void ModelBody::AddGeomsToFrame(Frame *f)
 		f->AddGeom(m_geom.get());
 	}
 
-	for (auto it = m_dynGeoms.begin(); it != m_dynGeoms.end(); ++it) {
-		(*it)->SetGroup(group);
-		f->AddGeom((*it).get());
+	for (auto &ref : m_dynGeoms) {
+		Geom *g = std::get<2>(ref).get();
+		g->SetGroup(group);
+		f->AddGeom(g);
 	}
 }
 
@@ -232,8 +224,10 @@ void ModelBody::RemoveGeomsFromFrame(Frame *f)
 		f->RemoveGeom(m_geom.get());
 	}
 
-	for (auto it = m_dynGeoms.begin(); it != m_dynGeoms.end(); ++it)
-		f->RemoveGeom((*it).get());
+	for (auto &ref : m_dynGeoms) {
+		Geom *g = std::get<2>(ref).get();
+		f->RemoveGeom(g);
+	}
 }
 
 void ModelBody::MoveGeoms(const matrix4x4d &m, const vector3d &p)
@@ -241,12 +235,6 @@ void ModelBody::MoveGeoms(const matrix4x4d &m, const vector3d &p)
 	PROFILE_SCOPED()
 
 	m_geom->MoveTo(m, p);
-
-	//accumulate transforms to animated positions
-	if (!m_dynGeoms.empty()) {
-		SceneGraph::DynCollUpdateVisitor dcv;
-		m_model->GetRoot()->Accept(dcv);
-	}
 
 	for (auto &dg : m_dynGeoms) {
 		//combine orient & pos
@@ -258,7 +246,9 @@ void ModelBody::MoveGeoms(const matrix4x4d &m, const vector3d &p)
 		s_tempMat[14] = p.z;
 		s_tempMat[15] = m[15];
 
-		dg->MoveTo(s_tempMat * dg->m_animTransform);
+		matrix4x4d temp2;
+		matrix4x4ftod(std::get<1>(dg)->GetTransform(), temp2);
+		std::get<2>(dg)->MoveTo(s_tempMat * std::get<0>(dg) * temp2);
 	}
 }
 
